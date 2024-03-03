@@ -8,3 +8,7 @@ crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 flutter_rust_bridge = "=2.0.0-dev.25"
+
+[build-dependencies]
+flutter_rust_bridge_codegen = { version = "2.0.0-dev.25" }
+anyhow = { version = "1.0.64", features = ["backtrace"] }
