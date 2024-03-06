@@ -6,7 +6,6 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/api/simple.dart';
 import 'package:stride/src/rust/frb_generated.dart';
 import 'package:stride/routes/routes.dart';
-import 'package:stride/src/rust/task.dart';
 import 'package:stride/theme.dart';
 
 Future<void> main() async {

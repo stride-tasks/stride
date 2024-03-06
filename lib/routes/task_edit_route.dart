@@ -103,22 +103,25 @@ class _TaskEditRouteState extends State<TaskEditRoute> {
             return;
           }
 
-          // if (context.mounted) {
-          //   context.read<TaskBloc>().add(
-          //         TaskUpdateEvent(
-          //           task: widget.task.copyWith(
-          //             description: description.text,
-          //             tags: _tags,
-          //             due: _selectedDay,
-          //             status: TaskStatus.pending,
-          //           ),
-          //         ),
-          //       );
-          //   Navigator.pop(context);
-          // }
-
-          // FIXME: this
-          throw Exception("not implemented");
+          if (context.mounted) {
+            context.read<TaskBloc>().add(
+                  TaskUpdateEvent(
+                    task: Task(
+                      uuid: widget.task.uuid,
+                      entry: widget.task.entry,
+                      description: description.text,
+                      tags: _tags,
+                      due: _selectedDay,
+                      status: TaskStatus.pending,
+                      annotations: widget.task.annotations,
+                      depends: widget.task.depends,
+                      uda: widget.task.uda,
+                      modified: DateTime.now(),
+                    ),
+                  ),
+                );
+            Navigator.pop(context);
+          }
         },
         child: Icon(
           color: Theme.of(context).primaryColor,

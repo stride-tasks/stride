@@ -40,10 +40,12 @@ pub struct Task {
     #[builder(default = "TaskStatus::Pending")]
     pub status: TaskStatus,
 
+    pub description: String,
+
     #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub modified_date: Option<Date>,
+    pub modified: Option<Date>,
 
     #[builder(default)]
     #[serde(default)]
@@ -89,8 +91,6 @@ pub struct Task {
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub uda: HashMap<String, String>,
-
-    pub description: String,
 }
 
 impl TaskBuilder {
