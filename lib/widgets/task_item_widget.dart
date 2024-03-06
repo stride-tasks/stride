@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/src/rust/routes/routes.dart';
+import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/task.dart';
 
 class TaskItemWidget extends StatelessWidget {

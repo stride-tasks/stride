@@ -44,3 +44,7 @@ app.*.map.json
 
 # Rust
 /target
+
+# Generated bindings
+rust/src/frb_*.rs
+lib/src/rust/**

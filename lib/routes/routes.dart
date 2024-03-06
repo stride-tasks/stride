@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:stride/src/rust/routes/route_not_found_route.dart';
-import 'package:stride/src/rust/routes/task_add_route.dart';
-import 'package:stride/src/rust/routes/task_edit_route.dart';
-import 'package:stride/src/rust/routes/tasks_route.dart';
+import 'package:stride/routes/route_not_found_route.dart';
+import 'package:stride/routes/task_add_route.dart';
+import 'package:stride/routes/task_edit_route.dart';
+import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/src/rust/task.dart';
 
 class Routes {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/src/rust/routes/routes.dart';
+import 'package:stride/routes/routes.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/task_item_widget.dart';
 
