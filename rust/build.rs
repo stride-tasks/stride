@@ -14,9 +14,11 @@ fn main() -> anyhow::Result<()> {
     // Alternatively, use `cargo build -vvv` (instead of `cargo build`) to see logs on screen
     configure_opinionated_logging("./logs/", true)?;
 
-    // Execute code generator with auto-detected config
-    codegen::generate(
-        Config::from_config_file("../flutter_rust_bridge.yaml")?.unwrap(),
-        Default::default(),
-    )
+    let pubspec_directory = String::from("..");
+    let pubspec_filepath = format!("{pubspec_directory}/pubspec.yaml");
+
+    let mut config = Config::from_pubspec_yaml(&pubspec_filepath)?.unwrap();
+    config.base_dir = Some(pubspec_directory);
+
+    codegen::generate(config, Default::default())
 }

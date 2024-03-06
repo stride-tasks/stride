@@ -7,8 +7,14 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-flutter_rust_bridge = "=2.0.0-dev.25"
+flutter_rust_bridge = { version = "=2.0.0-dev.26", features = ["chrono", "uuid"] }
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = { version = "1.0.114" }
+uuid = { version = "1.7.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.34", features = ["serde"]}
+derive_builder = "0.20.0"
+anyhow = "1.0.80"
 
 [build-dependencies]
-flutter_rust_bridge_codegen = { version = "2.0.0-dev.25" }
+flutter_rust_bridge_codegen = { version = "2.0.0-dev.26" }
 anyhow = { version = "1.0.64", features = ["backtrace"] }
