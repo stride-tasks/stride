@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   rust_lib_stride:
     path: rust_builder
-  flutter_rust_bridge: 2.0.0-dev.26
+  flutter_rust_bridge: 2.0.0-dev.28
   uuid: ^4.3.3
   path: ^1.9.0
   path_provider: ^2.1.2
@@ -22,6 +22,7 @@ dependencies:
   flutter_bloc: ^8.1.4
   catppuccin_flutter: ^1.0.0
   table_calendar: ^3.1.0
+  freezed_annotation: ^2.4.1
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,8 @@ dev_dependencies:
     sdk: flutter
   mocktail: ^1.0.3
   test: ^1.24.9
+  freezed: ^2.4.7
+  build_runner: ^2.4.8
 
 flutter:
   uses-material-design: true

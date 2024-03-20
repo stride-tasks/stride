@@ -1,3 +1,3 @@
-use crate::api::simple::TaskRepository;
+use crate::api::repository::TaskStorage;
 
-impl TaskRepository {}
+impl TaskStorage {}

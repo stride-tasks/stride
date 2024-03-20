@@ -48,3 +48,6 @@ app.*.map.json
 # Generated bindings
 rust/src/frb_*.rs
 lib/src/rust/**
+
+# (my) Notes
+notes.md

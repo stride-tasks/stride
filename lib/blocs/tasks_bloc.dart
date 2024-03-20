@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:stride/src/rust/api/simple.dart';
+import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/task.dart';
 
 @immutable
@@ -34,7 +34,7 @@ class TaskState {
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
-  final TaskRepository repository;
+  final TaskStorage repository;
 
   TaskBloc({required this.repository}) : super(const TaskState(tasks: [])) {
     on<TaskFetchEvent>((event, emit) async {

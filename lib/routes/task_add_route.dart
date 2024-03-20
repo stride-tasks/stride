@@ -98,7 +98,7 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
           if (context.mounted) {
             context.read<TaskBloc>().add(
                   TaskAddEvent(
-                    task: Task(
+                    task: Task.raw(
                       uuid: UuidValue.fromString(const Uuid().v4()),
                       entry: DateTime.now(),
                       description: description.text,

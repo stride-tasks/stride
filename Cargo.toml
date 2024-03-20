@@ -3,3 +3,15 @@ resolver = "2"
 members = [
     "rust",
 ]
+
+[profile.release]
+# Strips debug information and symbols from the binary
+# strip = "symbols"
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+[profile.release-debug]
+inherits = "release"
+debug = true
+# strip = "none"

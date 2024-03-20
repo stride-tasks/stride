@@ -106,7 +106,7 @@ class _TaskEditRouteState extends State<TaskEditRoute> {
           if (context.mounted) {
             context.read<TaskBloc>().add(
                   TaskUpdateEvent(
-                    task: Task(
+                    task: Task.raw(
                       uuid: widget.task.uuid,
                       entry: widget.task.entry,
                       description: description.text,

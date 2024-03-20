@@ -12,7 +12,7 @@ class TaskItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget tags;
     if (task.tags.isEmpty) {
-      tags = const Text("", style: TextStyle(fontSize: 15));
+      tags = const Text("");
     } else {
       tags = Wrap(
         children: task.tags
@@ -41,9 +41,6 @@ class TaskItemWidget extends StatelessWidget {
           children: [
             Text(
               task.description,
-              style: const TextStyle(
-                fontSize: 25,
-              ),
             ),
           ],
         ),
@@ -68,12 +65,7 @@ class TaskItemWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           tags,
-          Text(
-            task.due?.toUtc().toString().substring(0, 16) ?? "",
-            style: const TextStyle(
-              fontSize: 15,
-            ),
-          ),
+          Text(task.due?.toUtc().toString().substring(0, 16) ?? ""),
         ],
       ),
     );

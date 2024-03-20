@@ -2,24 +2,47 @@ import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/src/rust/api/simple.dart';
+import 'package:stride/src/rust/api/paths.dart';
+import 'package:stride/src/rust/api/settings.dart';
+import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/frb_generated.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/theme.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final supportPath = await getApplicationSupportDirectory();
+  final documentPath = await getApplicationDocumentsDirectory();
+  final cachePath = await getApplicationCacheDirectory();
+
   await RustLib.init();
+  await ApplicationPaths.init(
+    paths: ApplicationPaths(
+      supportPath: supportPath.path,
+      documentPath: documentPath.path,
+      cachePath: cachePath.path,
+    ),
+  );
+  // TODO: Better initialize settings.
+  final settings = await Settings.load();
 
-  final pathSupport = await getApplicationSupportDirectory();
-  final repository = await TaskRepository.load(path: pathSupport.path);
+  final repository = await TaskStorage.load(path: supportPath.path);
 
-  runApp(MyApp(repository: repository));
+  runApp(
+    MyApp(
+      repository: repository,
+      settings: settings,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  final TaskRepository repository;
-  const MyApp({super.key, required this.repository});
+  final TaskStorage repository;
+  final Settings settings;
+  const MyApp({super.key, required this.repository, required this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +50,9 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(repository: repository),
+        ),
+        BlocProvider<SettingsBloc>(
+          create: (context) => SettingsBloc(settings: settings),
         ),
       ],
       child: BlocListener<TaskBloc, TaskState>(

@@ -7,14 +7,21 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-flutter_rust_bridge = { version = "=2.0.0-dev.26", features = ["chrono", "uuid"] }
+flutter_rust_bridge = { version = "=2.0.0-dev.28", features = ["chrono", "uuid"] }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = { version = "1.0.114" }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 chrono = { version = "0.4.34", features = ["serde"]}
 derive_builder = "0.20.0"
 anyhow = "1.0.80"
+thiserror = "1.0.58"
+lazy_static = "1.4.0"
+git2 = { version = "0.18.2", default-features = false, features = ["ssh", "ssh_key_from_memory", "vendored-libgit2", "vendored-openssl"] }
+# ssh2 = { version = "0.9.4", features = ["vendored-openssl"] }
+base64 = "0.22.0"
+openssl = { version = "0.10", features = ["vendored"] }
+pem = "3.0.3"
 
 [build-dependencies]
-flutter_rust_bridge_codegen = { version = "2.0.0-dev.26" }
+flutter_rust_bridge_codegen = { version = "2.0.0-dev.28" }
 anyhow = { version = "1.0.64", features = ["backtrace"] }
