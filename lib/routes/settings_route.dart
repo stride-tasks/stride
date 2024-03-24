@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
+import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
@@ -160,6 +161,11 @@ class SettingsRoute extends StatelessWidget {
               SettingsSection(
                 title: Text("Misc", style: headingStyle),
                 tiles: [
+                  SettingsTileNavigation(
+                    leading: const Icon(Icons.file_open),
+                    title: const Text("Logs"),
+                    builder: (context) => const LoggingRoute(),
+                  ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.file_copy_outlined),
                     title: const Text("Open Source and Licence"),

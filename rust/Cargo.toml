@@ -21,6 +21,8 @@ git2 = { version = "0.18.2", default-features = false, features = ["ssh", "ssh_k
 base64 = "0.22.0"
 openssl = { version = "0.10", features = ["vendored"] }
 pem = "3.0.3"
+log = "0.4.21"
+env_logger = "0.11.3"
 
 [build-dependencies]
 flutter_rust_bridge_codegen = { version = "2.0.0-dev.28" }

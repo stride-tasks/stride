@@ -5,6 +5,8 @@ use std::{
     sync::Mutex,
 };
 
+use super::logging::init_logger;
+
 lazy_static! {
     pub(crate) static ref APPLICATION_PATHS_INSTANCE: Mutex<ApplicationPaths> =
         ApplicationPaths::default().into();
@@ -16,6 +18,8 @@ pub struct ApplicationPaths {
     pub support_path: String,
     pub document_path: String,
     pub cache_path: String,
+
+    pub log_path: String,
 }
 
 impl ApplicationPaths {
@@ -26,6 +30,8 @@ impl ApplicationPaths {
 
         std::fs::create_dir_all(&ssh_path);
         std::fs::write(ssh_path.join("known_hosts"), "\n").unwrap();
+
+        init_logger(Path::new(&paths.log_path));
 
         *APPLICATION_PATHS_INSTANCE.lock().unwrap() = paths;
     }
@@ -62,4 +68,8 @@ pub(crate) fn application_cache_path() -> PathBuf {
             .cache_path
             .clone(),
     )
+}
+
+pub(crate) fn application_log_path() -> PathBuf {
+    PathBuf::from(APPLICATION_PATHS_INSTANCE.lock().unwrap().log_path.clone())
 }

@@ -10,6 +10,7 @@ import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/frb_generated.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/theme.dart';
+import 'package:path/path.dart' as path;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,7 @@ Future<void> main() async {
       supportPath: supportPath.path,
       documentPath: documentPath.path,
       cachePath: cachePath.path,
+      logPath: path.joinAll([cachePath.path, "logs", "log.txt"]),
     ),
   );
   // TODO: Better initialize settings.

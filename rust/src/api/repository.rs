@@ -348,6 +348,8 @@ pub fn add_and_commit() -> anyhow::Result<()> {
         };
     }
 
+    log::info!("Task sync finished!");
+
     Result::Ok(())
 }
 

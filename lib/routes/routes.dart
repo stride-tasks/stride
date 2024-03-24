@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/route_not_found_route.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
@@ -15,6 +16,7 @@ class Routes {
   static const settings = '/settings/';
   static const sshKeys = '/sshKeys/';
   static const sshKeysAdd = '/sshKeysAdd/';
+  static const logging = '/logging/';
 
   static Route onGenerateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -34,6 +36,8 @@ class Routes {
         return MaterialPageRoute(builder: (context) => const SshKeysRoute());
       case sshKeysAdd:
         return MaterialPageRoute(builder: (context) => const SshKeyAddRoute());
+      case logging:
+        return MaterialPageRoute(builder: (context) => const LoggingRoute());
       default:
         return MaterialPageRoute(
           builder: (context) => const RouteNotFoundRoute(),
