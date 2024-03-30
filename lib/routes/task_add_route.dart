@@ -16,7 +16,7 @@ class TaskAddRoute extends StatefulWidget {
 }
 
 class _TaskAddRouteState extends State<TaskAddRoute> {
-  TextEditingController description = TextEditingController();
+  String title = "";
   DateTime? _selectedDay;
   List<String> _tags = [];
 
@@ -45,11 +45,20 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
             child: Column(
               children: [
                 TextFormField(
-                  controller: description,
                   autofocus: true,
                   decoration: const InputDecoration(
                     hintText: "Description",
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Cannot add task without a description";
+                    }
+                    return null;
+                  },
+                  onSaved: (newValue) {
+                    title = newValue!;
+                  },
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -79,15 +88,11 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         onPressed: () async {
-          if (description.value.text.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Cannot add task without a description'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+          if (!_formKey.currentState!.validate()) {
             return;
           }
+
+          _formKey.currentState!.save();
 
           if (context.mounted) {
             context.read<TaskBloc>().add(
@@ -95,7 +100,7 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
                     task: Task.raw(
                       uuid: UuidValue.fromString(const Uuid().v4()),
                       entry: DateTime.now(),
-                      description: description.text,
+                      description: title,
                       tags: _tags,
                       due: _selectedDay,
                       status: TaskStatus.pending,
@@ -105,6 +110,12 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
                     ),
                   ),
                 );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('New Task added'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
             Navigator.pop(context);
           }
         },
