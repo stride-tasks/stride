@@ -30,7 +30,6 @@ class TagsWidgetState extends State<TagsWidget> {
       children: [
         TextField(
           decoration: const InputDecoration(
-            border: OutlineInputBorder(),
             labelText: "Tags",
           ),
           onSubmitted: (text) {

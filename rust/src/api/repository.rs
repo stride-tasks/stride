@@ -200,6 +200,11 @@ pub fn clone() -> Result<(), ConnectionError> {
         };
     }
 
+    log::info!(
+        "Repository {} cloned successfully!",
+        settings.repository.origin
+    );
+
     Ok(())
 }
 
@@ -451,6 +456,7 @@ fn with_authentication(
     // See: https://github.com/rust-lang/git2-rs/issues/347
     callbacks.credentials(move |_url, username_from_url, allowed_types| {
         if tried_ssh {
+            log::error!("Failed to authenticate with credentials");
             return Err(git2::Error::new(
                 ErrorCode::Auth,
                 ErrorClass::Ssh,

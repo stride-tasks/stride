@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
+import 'package:stride/widgets/icon_text_button.dart';
 import 'package:stride/widgets/tags_widget.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskAddRoute extends StatefulWidget {
@@ -16,14 +17,18 @@ class TaskAddRoute extends StatefulWidget {
 
 class _TaskAddRouteState extends State<TaskAddRoute> {
   TextEditingController description = TextEditingController();
-  CalendarFormat _calendarFormat = CalendarFormat.month;
-  final DateTime _focusedDate = DateTime.now();
   DateTime? _selectedDay;
   List<String> _tags = [];
 
-  final DateTime _firstDay =
-      DateTime.now().subtract(const Duration(days: 365 * 100));
-  final DateTime _lastDay = DateTime.now().add(const Duration(days: 365 * 100));
+  final _formKey = GlobalKey<FormState>();
+
+  String _dueButtonText() {
+    String result = "Due";
+    if (_selectedDay == null) {
+      return result;
+    }
+    return "$result - ${_selectedDay!.toIso8601String()}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,50 +40,39 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
           horizontal: 20,
         ),
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              TextField(
-                controller: description,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "Description",
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: description,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: "Description",
+                  ),
                 ),
-              ),
-              TableCalendar(
-                firstDay: _firstDay,
-                lastDay: _lastDay,
-                focusedDay: _focusedDate,
-                selectedDayPredicate: (day) {
-                  return _selectedDay == day;
-                },
-                calendarFormat: _calendarFormat,
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _selectedDay = selectedDay;
-                  });
-                },
-                onFormatChanged: (format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 5,
-                  horizontal: 10,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconTextButton(
+                    icon: const Icon(Icons.date_range),
+                    text: _dueButtonText(),
+                    onPressed: () async {
+                      var datetime = await showPickDateTime(context: context);
+                      setState(() {
+                        _selectedDay = datetime;
+                      });
+                    },
+                  ),
                 ),
-                child: TagsWidget(
-                  tags: const [],
-                  onSubmit: (tags) {
-                    _tags = tags;
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                // TagsWidget(
+                //   tags: const [],
+                //   onSubmit: (tags) {
+                //     _tags = tags;
+                //   },
+                // ),
+                // const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),

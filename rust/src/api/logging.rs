@@ -50,7 +50,7 @@ pub(crate) fn init_logger(path: &Path) {
         })
         .filter_level(log::LevelFilter::Trace)
         .target(env_logger::Target::Pipe(target))
-        .init();
+        .try_init();
 }
 
 pub fn get_logs() -> String {

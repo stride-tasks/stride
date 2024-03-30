@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
+import 'package:stride/widgets/icon_text_button.dart';
 import 'package:stride/widgets/tags_widget.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 class TaskEditRoute extends StatefulWidget {
   final Task task;
@@ -16,14 +17,16 @@ class TaskEditRoute extends StatefulWidget {
 
 class _TaskEditRouteState extends State<TaskEditRoute> {
   late TextEditingController description;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
-  final DateTime _focusedDate = DateTime.now();
   DateTime? _selectedDay;
   List<String> _tags = [];
 
-  final DateTime _firstDay =
-      DateTime.now().subtract(const Duration(days: 365 * 100));
-  final DateTime _lastDay = DateTime.now().add(const Duration(days: 365 * 100));
+  String _dueButtonText() {
+    String result = "Due";
+    if (_selectedDay == null) {
+      return result;
+    }
+    return "$result - ${_selectedDay!.toIso8601String()}";
+  }
 
   @override
   void initState() {
@@ -51,41 +54,34 @@ class _TaskEditRouteState extends State<TaskEditRoute> {
                 controller: description,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "Description",
+                  hintText: "Description",
                 ),
-              ),
-              TableCalendar(
-                firstDay: _firstDay,
-                lastDay: _lastDay,
-                focusedDay: _focusedDate,
-                selectedDayPredicate: (day) {
-                  return _selectedDay == day;
-                },
-                calendarFormat: _calendarFormat,
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _selectedDay = selectedDay;
-                  });
-                },
-                onFormatChanged: (format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                },
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 5,
-                  horizontal: 10,
-                ),
-                child: TagsWidget(
-                  tags: const [],
-                  onSubmit: (tags) {
-                    _tags = tags;
+                padding: const EdgeInsets.all(8.0),
+                child: IconTextButton(
+                  icon: const Icon(Icons.date_range),
+                  text: _dueButtonText(),
+                  onPressed: () async {
+                    var datetime = await showPickDateTime(context: context);
+                    setState(() {
+                      _selectedDay = datetime;
+                    });
                   },
                 ),
               ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(
+              //     vertical: 5,
+              //     horizontal: 10,
+              //   ),
+              //   child: TagsWidget(
+              //     tags: const [],
+              //     onSubmit: (tags) {
+              //       _tags = tags;
+              //     },
+              //   ),
+              // ),
             ],
           ),
         ),
