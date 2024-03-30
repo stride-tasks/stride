@@ -2,32 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/src/rust/task/annotation.dart';
+import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/icon_text_button.dart';
-import 'package:stride/widgets/tags_widget.dart';
 import 'package:uuid/uuid.dart';
 
-class TaskAddRoute extends StatefulWidget {
-  const TaskAddRoute({super.key});
+class TaskRoute extends StatefulWidget {
+  final Task? task;
+  const TaskRoute({
+    super.key,
+    this.task,
+  });
 
   @override
-  State<TaskAddRoute> createState() => _TaskAddRouteState();
+  State<TaskRoute> createState() => _TaskRouteState();
 }
 
-class _TaskAddRouteState extends State<TaskAddRoute> {
-  String title = "";
-  DateTime? _selectedDay;
-  List<String> _tags = [];
+class _TaskRouteState extends State<TaskRoute> {
+  String description = "";
+  DateTime? due;
+  List<String> tags = [];
+  List<Annotation> annotations = [];
+  List<UuidValue> depends = [];
+  // Map<String, String> uda = {};
 
   final _formKey = GlobalKey<FormState>();
 
+  @override
+  void initState() {
+    super.initState();
+
+    description = widget.task?.description ?? description;
+    due = widget.task?.due;
+    tags = widget.task?.tags.toList() ?? tags;
+    annotations = widget.task?.annotations.toList() ?? annotations;
+    depends = widget.task?.depends.toList() ?? depends;
+    // uda = widget.task?.uda ?? uda;
+  }
+
   String _dueButtonText() {
     String result = "Due";
-    if (_selectedDay == null) {
+    if (due == null) {
       return result;
     }
-    return "$result - ${_selectedDay!.toIso8601String()}";
+    return "$result - ${due!.toHumanString()}";
   }
 
   @override
@@ -45,18 +65,19 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
             child: Column(
               children: [
                 TextFormField(
+                  initialValue: description,
                   autofocus: true,
                   decoration: const InputDecoration(
                     hintText: "Description",
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Cannot add task without a description";
+                      return "Task must have a description";
                     }
                     return null;
                   },
                   onSaved: (newValue) {
-                    title = newValue!;
+                    description = newValue!;
                   },
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
@@ -68,7 +89,7 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
                     onPressed: () async {
                       var datetime = await showPickDateTime(context: context);
                       setState(() {
-                        _selectedDay = datetime;
+                        due = datetime;
                       });
                     },
                   ),
@@ -95,24 +116,31 @@ class _TaskAddRouteState extends State<TaskAddRoute> {
           _formKey.currentState!.save();
 
           if (context.mounted) {
-            context.read<TaskBloc>().add(
-                  TaskAddEvent(
-                    task: Task.raw(
-                      uuid: UuidValue.fromString(const Uuid().v4()),
-                      entry: DateTime.now(),
-                      description: title,
-                      tags: _tags,
-                      due: _selectedDay,
-                      status: TaskStatus.pending,
-                      annotations: [],
-                      depends: [],
-                      uda: {},
-                    ),
-                  ),
-                );
+            final task = Task.raw(
+              uuid:
+                  widget.task?.uuid ?? UuidValue.fromString(const Uuid().v4()),
+              entry: widget.task?.entry ?? DateTime.now(),
+              description: description,
+              tags: tags,
+              due: due,
+              status: TaskStatus.pending,
+              annotations: annotations,
+              depends: depends,
+              uda: {},
+            );
+
+            if (widget.task == null) {
+              context.read<TaskBloc>().add(TaskAddEvent(task: task));
+            } else {
+              context.read<TaskBloc>().add(TaskUpdateEvent(task: task));
+            }
+
+            String text =
+                widget.task == null ? "New Task added" : "Task modified";
+
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('New Task added'),
+              SnackBar(
+                content: Text(text),
                 behavior: SnackBarBehavior.floating,
               ),
             );

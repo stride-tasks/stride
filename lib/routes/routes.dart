@@ -4,8 +4,7 @@ import 'package:stride/routes/route_not_found_route.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
-import 'package:stride/routes/task_add_route.dart';
-import 'package:stride/routes/task_edit_route.dart';
+import 'package:stride/routes/task_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/src/rust/task.dart';
 
@@ -23,10 +22,10 @@ class Routes {
       case start:
         return MaterialPageRoute(builder: (context) => const TasksRoute());
       case taskAdd:
-        return MaterialPageRoute(builder: (context) => const TaskAddRoute());
+        return MaterialPageRoute(builder: (context) => const TaskRoute());
       case taskEdit:
         return MaterialPageRoute(
-          builder: (context) => TaskEditRoute(
+          builder: (context) => TaskRoute(
             task: routeSettings.arguments as Task,
           ),
         );

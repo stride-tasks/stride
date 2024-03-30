@@ -43,7 +43,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
               icon: FutureBuilder(
                 future: syncTasksFuture,
                 builder: (context, snapshot) {
-                  print(snapshot);
                   if (snapshot.connectionState == ConnectionState.done) {
                     return const Icon(Icons.sync);
                   }
