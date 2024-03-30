@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/icon_text_button.dart';
@@ -25,7 +26,7 @@ class _TaskEditRouteState extends State<TaskEditRoute> {
     if (_selectedDay == null) {
       return result;
     }
-    return "$result - ${_selectedDay!.toIso8601String()}";
+    return "$result - ${_selectedDay!.toHumanString()}";
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/utils/extensions.dart';
 
 class TaskItemWidget extends StatelessWidget {
   final Task task;
@@ -65,7 +66,7 @@ class TaskItemWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           tags,
-          Text(task.due?.toUtc().toString().substring(0, 16) ?? ""),
+          Text(task.due?.toUtc().toHumanString() ?? ""),
         ],
       ),
     );
