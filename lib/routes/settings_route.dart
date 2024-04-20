@@ -6,7 +6,6 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
-import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
@@ -117,11 +116,8 @@ class SettingsRoute extends StatelessWidget {
                   SettingsTile(
                     leading: const Icon(Icons.delete),
                     title: const Text("Remove Repository"),
-                    onTap: (context) async {
-                      await removeRepository();
-                      if (context.mounted) {
-                        context.read<TaskBloc>().add(TaskFetchEvent());
-                      }
+                    onTap: (context) {
+                      context.read<TaskBloc>().add(TaskRemoveAllEvent());
                     },
                   ),
                 ],

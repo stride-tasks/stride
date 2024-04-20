@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/routes.dart';
-import 'package:stride/src/rust/api/repository.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
@@ -38,22 +37,16 @@ class _CustomAppBarState extends State<CustomAppBar> {
           actions: [
             IconButton(
               color: Theme.of(context).secondaryHeaderColor,
-              icon: FutureBuilder(
-                future: syncTasksFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    return const Icon(Icons.sync);
+              icon: BlocBuilder<TaskBloc, TaskState>(
+                builder: (context, state) {
+                  if (state.syncing) {
+                    return const CircularProgressIndicator();
                   }
-                  return const CircularProgressIndicator();
+                  return const Icon(Icons.sync);
                 },
               ),
               onPressed: () {
-                setState(() {
-                  syncTasksFuture = syncTasks();
-                });
-                if (context.mounted) {
-                  context.read<TaskBloc>().add(TaskFetchEvent());
-                }
+                context.read<TaskBloc>().add(TaskSyncEvent());
               },
             ),
             IconButton(

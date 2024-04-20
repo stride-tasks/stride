@@ -31,7 +31,7 @@ Future<void> main() async {
   // TODO: Better initialize settings.
   final settings = await Settings.load();
 
-  final repository = await TaskStorage.load(path: supportPath.path);
+  final repository = TaskStorage(path: supportPath.path);
 
   runApp(
     MyApp(

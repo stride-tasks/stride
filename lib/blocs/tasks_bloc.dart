@@ -18,9 +18,17 @@ final class TaskRemoveEvent extends TaskEvent {
   TaskRemoveEvent({required this.task});
 }
 
+final class TaskRemoveAllEvent extends TaskEvent {
+  TaskRemoveAllEvent();
+}
+
 final class TaskUpdateEvent extends TaskEvent {
   final Task task;
   TaskUpdateEvent({required this.task});
+}
+
+final class TaskSyncEvent extends TaskEvent {
+  TaskSyncEvent();
 }
 
 final class TaskSearchEvent extends TaskEvent {
@@ -30,7 +38,8 @@ final class TaskSearchEvent extends TaskEvent {
 
 class TaskState {
   final List<Task> tasks;
-  const TaskState({required this.tasks});
+  final bool syncing;
+  const TaskState({required this.tasks, this.syncing = false});
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
@@ -38,6 +47,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   TaskBloc({required this.repository}) : super(const TaskState(tasks: [])) {
     on<TaskFetchEvent>((event, emit) async {
+      await repository.load();
       final tasks = await repository.tasks();
       emit(TaskState(tasks: tasks));
     });
@@ -54,10 +64,25 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskState(tasks: tasks));
     });
 
+    on<TaskRemoveAllEvent>((event, emit) async {
+      await repository.clearContents();
+      final tasks = await repository.tasks();
+      emit(TaskState(tasks: tasks));
+    });
+
     on<TaskUpdateEvent>((event, emit) async {
       await repository.update(task: event.task);
       final tasks = await repository.tasks();
       emit(TaskState(tasks: tasks));
+    });
+
+    on<TaskSyncEvent>((event, emit) async {
+      final tasksOld = await repository.tasks();
+      emit(TaskState(tasks: tasksOld, syncing: true));
+
+      await repository.sync();
+      final tasksNew = await repository.tasks();
+      emit(TaskState(tasks: tasksNew));
     });
 
     on<TaskSearchEvent>((event, emit) async {

@@ -2,7 +2,7 @@ use std::{
     cell::RefCell,
     fs::File,
     io::{BufRead, BufReader, ErrorKind},
-    path::PathBuf,
+    path::{Path, PathBuf},
     rc::Rc,
 };
 
@@ -17,34 +17,62 @@ use crate::{
     task::{Task, TaskBuilder},
 };
 
+use git2::{
+    CertificateCheckStatus, Cred, ErrorClass, ErrorCode, Mempack, RemoteCallbacks, Repository,
+    Signature,
+};
+
+use super::settings::SshKey;
+
 #[frb(init)]
 pub fn init_app() {
     // Default utilities - feel free to customize
     flutter_rust_bridge::setup_default_user_utils();
 }
 
+impl Task {
+    #[frb(sync)]
+    pub fn new(description: String) -> Self {
+        TaskBuilder::with_description(description)
+            .build()
+            .expect("All other fields are default initialized")
+    }
+}
+
 #[frb(opaque)]
 pub struct TaskStorage {
     path: PathBuf,
     tasks: Vec<Task>,
+    loaded: bool,
 }
 
 impl TaskStorage {
-    const PENDING_DATA_FILENAME: &'static str = "repository/pending.data";
+    const PENDING_DATA_FILENAME: &'static str = "pending.data";
     // const COMPLETE_DATA_FILENAME: &'static str = "complete.data";
     // const DELETED_DATA_FILENAME: &'static str = "deleted.data";
 
-    pub fn load(path: String) -> Result<Self> {
-        let path = PathBuf::from(path);
+    #[frb(sync)]
+    pub fn new(path: &str) -> Self {
+        let path = Path::new(path).join("repoitory");
+        Self {
+            path,
+            tasks: Vec::default(),
+            loaded: false,
+        }
+    }
+
+    pub fn load(&mut self) -> Result<()> {
+        if self.loaded {
+            return Ok(());
+        }
+
         let mut tasks = Vec::new();
 
-        let pending_filepath = path.join(Self::PENDING_DATA_FILENAME);
+        let pending_filepath = self.path.join(Self::PENDING_DATA_FILENAME);
         if !pending_filepath.exists() {
-            return Ok(Self {
-                path,
-                tasks: Vec::new(),
-            });
+            return Ok(());
         }
+
         let file = File::open(pending_filepath)?;
         let buf = BufReader::new(file);
         for line in buf.lines() {
@@ -57,12 +85,14 @@ impl TaskStorage {
             tasks.push(task);
         }
 
-        Ok(Self { path, tasks })
+        self.tasks = tasks;
+        self.loaded = true;
+        Ok(())
     }
 
     fn save(&mut self) -> Result<()> {
         if !self.path.join(Self::PENDING_DATA_FILENAME).exists() {
-            init_repository()?;
+            self.init_repotitory()?;
         }
 
         let mut content = String::new();
@@ -117,245 +147,226 @@ impl TaskStorage {
     pub fn tasks(&self) -> Vec<Task> {
         self.tasks.clone()
     }
-}
 
-impl Task {
-    #[frb(sync)]
-    pub fn new(description: String) -> Self {
-        TaskBuilder::with_description(description)
-            .build()
-            .expect("All other fields are default initialized")
+    pub fn sync(&mut self) -> Result<(), ConnectionError> {
+        if self.path.exists() {
+            self.add_and_commit().unwrap();
+            Ok(())
+        } else {
+            self.clone_repository()
+        }
     }
-}
 
-use git2::{
-    CertificateCheckStatus, Cred, ErrorClass, ErrorCode, Mempack, RemoteCallbacks, Repository,
-    Signature,
-};
+    pub fn clear_contents(&mut self) {
+        self.tasks.clear();
+        std::fs::remove_dir_all(&self.path).unwrap();
+    }
 
-use super::settings::SshKey;
+    pub fn clone_repository(&mut self) -> Result<(), ConnectionError> {
+        let settings = Settings::get();
 
-pub fn sync_tasks() -> Result<(), ConnectionError> {
-    let path = application_support_path();
+        let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
+            return Err(ConnectionError::NoSshKeysProvided);
+        };
+        let ssh_key = settings
+            .ssh_key(ssh_key_uuid)
+            .expect("there should be a key with the specified uuid");
 
-    if path.join("repository").exists() {
-        add_and_commit().unwrap();
+        let mut callbacks = RemoteCallbacks::new();
+        let callback_error = with_authentication(
+            ssh_key.clone(),
+            settings.known_hosts.clone(),
+            &mut callbacks,
+        );
+
+        let mut fo = git2::FetchOptions::new();
+        fo.remote_callbacks(callbacks);
+
+        let mut builder = git2::build::RepoBuilder::new();
+        builder.fetch_options(fo);
+
+        let connection = builder.clone(&settings.repository.origin, &self.path);
+
+        if let Err(error) = &connection {
+            return match error.class() {
+                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                    message: error.message().to_owned(),
+                }),
+                ErrorClass::Net => Err(ConnectionError::Network {
+                    message: error.message().to_owned(),
+                }),
+                ErrorClass::Callback => {
+                    let mut callback_error = callback_error.borrow_mut();
+                    if let Some(callback_error) = callback_error.take() {
+                        return Err(callback_error.clone());
+                    }
+                    Err(ConnectionError::Other {
+                        message: error.message().to_owned(),
+                    })
+                }
+                _ => Err(ConnectionError::Other {
+                    message: error.message().to_owned(),
+                }),
+            };
+        }
+
+        log::info!(
+            "Repository {} cloned successfully!",
+            settings.repository.origin
+        );
+
+        self.loaded = false;
+
         Ok(())
-    } else {
-        clone()
-    }
-}
-
-pub fn remove_repository() {
-    let path = application_support_path();
-    std::fs::remove_dir_all(path.join("repository")).unwrap();
-}
-
-pub fn clone() -> Result<(), ConnectionError> {
-    let settings = Settings::get();
-    let path = application_support_path();
-
-    let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-        return Err(ConnectionError::NoSshKeysProvided);
-    };
-    let ssh_key = settings
-        .ssh_key(ssh_key_uuid)
-        .expect("there should be a key with the specified uuid");
-
-    let mut callbacks = RemoteCallbacks::new();
-    let callback_error = with_authentication(
-        ssh_key.clone(),
-        settings.known_hosts.clone(),
-        &mut callbacks,
-    );
-
-    let mut fo = git2::FetchOptions::new();
-    fo.remote_callbacks(callbacks);
-
-    let mut builder = git2::build::RepoBuilder::new();
-    builder.fetch_options(fo);
-
-    let connection = builder.clone(&settings.repository.origin, &path.join("repository"));
-
-    if let Err(error) = &connection {
-        return match error.class() {
-            ErrorClass::Ssh => Err(ConnectionError::Authentication {
-                message: error.message().to_owned(),
-            }),
-            ErrorClass::Net => Err(ConnectionError::Network {
-                message: error.message().to_owned(),
-            }),
-            ErrorClass::Callback => {
-                let mut callback_error = callback_error.borrow_mut();
-                if let Some(callback_error) = callback_error.take() {
-                    return Err(callback_error.clone());
-                }
-                Err(ConnectionError::Other {
-                    message: error.message().to_owned(),
-                })
-            }
-            _ => Err(ConnectionError::Other {
-                message: error.message().to_owned(),
-            }),
-        };
     }
 
-    log::info!(
-        "Repository {} cloned successfully!",
-        settings.repository.origin
-    );
+    pub fn init_repotitory(&self) -> anyhow::Result<()> {
+        let settings = Settings::get();
 
-    Ok(())
-}
+        let repository = Repository::init(&self.path)?;
 
-pub fn init_repository() -> anyhow::Result<()> {
-    let settings = Settings::get();
-    let path = application_support_path();
+        let mut index = repository.index()?;
 
-    let repository = Repository::init(path.join("repository"))?;
+        index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
+        index.write()?;
 
-    let mut index = repository.index()?;
+        let tree = index.write_tree()?;
+        let tree = repository.find_tree(tree)?;
 
-    index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
-    index.write()?;
+        let author = Signature::now(&settings.repository.author, &settings.repository.email)?;
 
-    let tree = index.write_tree()?;
-    let tree = repository.find_tree(tree)?;
+        let commit = repository.commit(None, &author, &author, "Initial Commit", &tree, &[])?;
+        let commit = repository.find_commit(commit)?;
 
-    let author = Signature::now(&settings.repository.author, &settings.repository.email)?;
+        let branch = repository.branch("main", &commit, true)?;
+        let mut branch_ref = branch.into_reference();
+        branch_ref.set_target(commit.id(), "update it")?;
+        let branch_ref_name = branch_ref.name().unwrap();
+        repository.set_head(branch_ref_name)?;
 
-    let commit = repository.commit(None, &author, &author, "Initial Commit", &tree, &[])?;
-    let commit = repository.find_commit(commit)?;
-
-    let branch = repository.branch("main", &commit, true)?;
-    let mut branch_ref = branch.into_reference();
-    branch_ref.set_target(commit.id(), "update it")?;
-    let branch_ref_name = branch_ref.name().unwrap();
-    repository.set_head(branch_ref_name)?;
-
-    Result::Ok(())
-}
-
-pub fn add_and_commit() -> anyhow::Result<()> {
-    let settings = Settings::get();
-    let path = application_support_path();
-
-    let repository = Repository::open(path.join("repository"))?;
-
-    if repository.statuses(None)?.is_empty() {
-        println!("Skipping sync, no changes done");
-        return Ok(());
-    }
-
-    let mut index = repository.index()?;
-
-    index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
-    index.write()?;
-
-    let tree = index.write_tree()?;
-    let tree = repository.find_tree(tree)?;
-
-    let author = Signature::now(&settings.repository.author, &settings.repository.email)?;
-
-    let parent_commit = repository.head()?.peel_to_commit()?;
-
-    let commit = repository.commit(
-        Some("HEAD"),
-        &author,
-        &author,
-        "initial",
-        &tree,
-        &[&parent_commit],
-    )?;
-    let commit = repository.find_commit(commit)?;
-
-    let branch = repository.find_branch("main", git2::BranchType::Local)?;
-    let mut branch_ref = branch.into_reference();
-    branch_ref.set_target(commit.id(), "update it")?;
-    let branch_ref_name = branch_ref.name().unwrap();
-    repository.set_head(branch_ref_name)?;
-
-    let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-        return Err(ConnectionError::NoSshKeysProvided.into());
-    };
-    let ssh_key = settings
-        .ssh_key(ssh_key_uuid)
-        .expect("there should be a key with the specified uuid");
-    let mut callbacks = RemoteCallbacks::new();
-    let callback_error = with_authentication(
-        ssh_key.clone(),
-        settings.known_hosts.clone(),
-        &mut callbacks,
-    );
-    callbacks.push_update_reference(|name, status| {
-        println!("{name}: {status:?}");
         Result::Ok(())
-    });
-
-    let _ = repository.remote("origin", &settings.repository.origin);
-    let _ = repository.remote_set_url("origin", &settings.repository.origin);
-
-    let mut origin = repository.find_remote("origin")?;
-    let connection = origin.connect_auth(git2::Direction::Push, Some(callbacks), None);
-
-    if let Err(error) = &connection {
-        return match error.class() {
-            ErrorClass::Ssh => Err(ConnectionError::Authentication {
-                message: error.message().to_owned(),
-            }
-            .into()),
-            ErrorClass::Net => Err(ConnectionError::Network {
-                message: error.message().to_owned(),
-            }
-            .into()),
-            ErrorClass::Callback => {
-                let mut callback_error = callback_error.borrow_mut();
-                if let Some(callback_error) = callback_error.take() {
-                    return Err(callback_error.clone().into());
-                }
-                Err(ConnectionError::Other {
-                    message: error.message().to_owned(),
-                }
-                .into())
-            }
-            _ => Err(ConnectionError::Other {
-                message: error.message().to_owned(),
-            }
-            .into()),
-        };
-    }
-    let connection = connection.unwrap().remote().push(&[branch_ref_name], None);
-
-    if let Err(error) = &connection {
-        return match error.class() {
-            ErrorClass::Ssh => Err(ConnectionError::Authentication {
-                message: error.message().to_owned(),
-            }
-            .into()),
-            ErrorClass::Net => Err(ConnectionError::Network {
-                message: error.message().to_owned(),
-            }
-            .into()),
-            ErrorClass::Callback => {
-                let mut callback_error = callback_error.borrow_mut();
-                if let Some(callback_error) = callback_error.take() {
-                    return Err(callback_error.clone().into());
-                }
-                Err(ConnectionError::Other {
-                    message: error.message().to_owned(),
-                }
-                .into())
-            }
-            _ => Err(ConnectionError::Other {
-                message: error.message().to_owned(),
-            }
-            .into()),
-        };
     }
 
-    log::info!("Task sync finished!");
+    pub fn add_and_commit(&self) -> anyhow::Result<()> {
+        let settings = Settings::get();
 
-    Result::Ok(())
+        let repository = Repository::open(&self.path)?;
+
+        if repository.statuses(None)?.is_empty() {
+            println!("Skipping sync, no changes done");
+            return Ok(());
+        }
+
+        let mut index = repository.index()?;
+
+        index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
+        index.write()?;
+
+        let tree = index.write_tree()?;
+        let tree = repository.find_tree(tree)?;
+
+        let author = Signature::now(&settings.repository.author, &settings.repository.email)?;
+
+        let parent_commit = repository.head()?.peel_to_commit()?;
+
+        let commit = repository.commit(
+            Some("HEAD"),
+            &author,
+            &author,
+            "initial",
+            &tree,
+            &[&parent_commit],
+        )?;
+        let commit = repository.find_commit(commit)?;
+
+        let branch = repository.find_branch("main", git2::BranchType::Local)?;
+        let mut branch_ref = branch.into_reference();
+        branch_ref.set_target(commit.id(), "update it")?;
+        let branch_ref_name = branch_ref.name().unwrap();
+        repository.set_head(branch_ref_name)?;
+
+        let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
+            return Err(ConnectionError::NoSshKeysProvided.into());
+        };
+        let ssh_key = settings
+            .ssh_key(ssh_key_uuid)
+            .expect("there should be a key with the specified uuid");
+        let mut callbacks = RemoteCallbacks::new();
+        let callback_error = with_authentication(
+            ssh_key.clone(),
+            settings.known_hosts.clone(),
+            &mut callbacks,
+        );
+        callbacks.push_update_reference(|name, status| {
+            println!("{name}: {status:?}");
+            Result::Ok(())
+        });
+
+        let _ = repository.remote("origin", &settings.repository.origin);
+        let _ = repository.remote_set_url("origin", &settings.repository.origin);
+
+        let mut origin = repository.find_remote("origin")?;
+        let connection = origin.connect_auth(git2::Direction::Push, Some(callbacks), None);
+
+        if let Err(error) = &connection {
+            return match error.class() {
+                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Net => Err(ConnectionError::Network {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Callback => {
+                    let mut callback_error = callback_error.borrow_mut();
+                    if let Some(callback_error) = callback_error.take() {
+                        return Err(callback_error.clone().into());
+                    }
+                    Err(ConnectionError::Other {
+                        message: error.message().to_owned(),
+                    }
+                    .into())
+                }
+                _ => Err(ConnectionError::Other {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+            };
+        }
+        let connection = connection.unwrap().remote().push(&[branch_ref_name], None);
+
+        if let Err(error) = &connection {
+            return match error.class() {
+                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Net => Err(ConnectionError::Network {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Callback => {
+                    let mut callback_error = callback_error.borrow_mut();
+                    if let Some(callback_error) = callback_error.take() {
+                        return Err(callback_error.clone().into());
+                    }
+                    Err(ConnectionError::Other {
+                        message: error.message().to_owned(),
+                    }
+                    .into())
+                }
+                _ => Err(ConnectionError::Other {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+            };
+        }
+
+        log::info!("Task sync finished!");
+
+        Result::Ok(())
+    }
 }
 
 #[derive(thiserror::Error, Debug, Clone)]
