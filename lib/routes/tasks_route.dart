@@ -22,9 +22,7 @@ class _TasksRouteState extends State<TasksRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: "Task List",
-      ),
+      appBar: const CustomAppBar(title: "Task List"),
       body: BlocBuilder<TaskBloc, TaskState>(
         builder: (context, state) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10.0),
@@ -40,13 +38,19 @@ class _TasksRouteState extends State<TasksRoute> {
                   context.read<TaskBloc>().add(TaskSearchEvent(text: text));
                 },
               ),
-              const SizedBox(height: 20.0),
+              const SizedBox(height: 10.0),
               Expanded(
                 child: ListView.builder(
-                  itemCount: state.tasks.length,
-                  itemBuilder: (context, index) => Card(
-                    child: TaskItemWidget(task: state.tasks[index]),
-                  ),
+                  itemCount: state.tasks.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == state.tasks.length) {
+                      return const SizedBox(height: 50);
+                    }
+
+                    return Card(
+                      child: TaskItemWidget(task: state.tasks[index]),
+                    );
+                  },
                 ),
               ),
             ],

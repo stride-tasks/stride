@@ -6,9 +6,11 @@ import 'package:stride/routes/routes.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
+  final Widget? leading;
 
   const CustomAppBar({
     super.key,
+    this.leading,
     required this.title,
   });
 
@@ -21,9 +23,6 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _CustomAppBarState extends State<CustomAppBar> {
   Future<void>? sync;
-  bool seenError = false;
-
-  Future<void> syncTasksFuture = Future.value();
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +33,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
             widget.title,
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
+          leading: widget.leading,
           actions: [
             IconButton(
               color: Theme.of(context).secondaryHeaderColor,
