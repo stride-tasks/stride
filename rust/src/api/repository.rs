@@ -1,12 +1,12 @@
 use std::{
     cell::RefCell,
     fs::File,
-    io::{BufRead, BufReader, ErrorKind},
+    io::{BufRead, BufReader, ErrorKind, Write},
     path::{Path, PathBuf},
     rc::Rc,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use base64::Engine;
 use flutter_rust_bridge::frb;
 use uuid::Uuid;
@@ -42,27 +42,32 @@ impl Task {
 #[frb(opaque)]
 pub struct TaskStorage {
     path: PathBuf,
-    tasks: Vec<Task>,
-    loaded: bool,
+    pending_tasks: Vec<Task>,
+    pending_loaded: bool,
+
+    deleted_tasks: Vec<Task>,
+    deleted_loaded: bool,
 }
 
 impl TaskStorage {
     const PENDING_DATA_FILENAME: &'static str = "pending.data";
     // const COMPLETE_DATA_FILENAME: &'static str = "complete.data";
-    // const DELETED_DATA_FILENAME: &'static str = "deleted.data";
+    const DELETED_DATA_FILENAME: &'static str = "deleted.data";
 
     #[frb(sync)]
     pub fn new(path: &str) -> Self {
-        let path = Path::new(path).join("repoitory");
+        let path = Path::new(path).join("repository");
         Self {
             path,
-            tasks: Vec::default(),
-            loaded: false,
+            pending_tasks: Vec::default(),
+            pending_loaded: false,
+            deleted_tasks: Vec::default(),
+            deleted_loaded: false,
         }
     }
 
     pub fn load(&mut self) -> Result<()> {
-        if self.loaded {
+        if self.pending_loaded {
             return Ok(());
         }
 
@@ -85,39 +90,84 @@ impl TaskStorage {
             tasks.push(task);
         }
 
-        self.tasks = tasks;
-        self.loaded = true;
+        self.pending_tasks = tasks;
+        self.pending_loaded = true;
+        Ok(())
+    }
+
+    pub fn load_deleted(&mut self) -> Result<()> {
+        if self.deleted_loaded {
+            return Ok(());
+        }
+
+        let mut tasks = Vec::new();
+
+        let deleted_filepath = self.path.join(Self::DELETED_DATA_FILENAME);
+        if !deleted_filepath.exists() {
+            return Ok(());
+        }
+
+        let file = File::open(deleted_filepath)?;
+        let buf = BufReader::new(file);
+        for line in buf.lines() {
+            let line = line?;
+            if line.is_empty() {
+                continue;
+            }
+            let task = serde_json::from_str(&line)?;
+
+            tasks.push(task);
+        }
+
+        self.deleted_tasks = tasks;
+        self.deleted_loaded = true;
         Ok(())
     }
 
     fn save(&mut self) -> Result<()> {
-        if !self.path.join(Self::PENDING_DATA_FILENAME).exists() {
+        let pending_path = self.path.join(Self::PENDING_DATA_FILENAME);
+        if !pending_path.exists() {
             self.init_repotitory()?;
         }
 
         let mut content = String::new();
-        for task in &self.tasks {
+        for task in &self.pending_tasks {
             content += &serde_json::to_string(task)?;
             content.push('\n');
         }
 
-        std::fs::write(self.path.join(Self::PENDING_DATA_FILENAME), content)?;
-
+        std::fs::write(pending_path, content)?;
         Ok(())
     }
 
     pub fn add(&mut self, task: Task) -> Result<()> {
-        self.tasks.push(task);
+        let pending_path = self.path.join(Self::PENDING_DATA_FILENAME);
+        if !pending_path.exists() {
+            self.init_repotitory()?;
+        }
 
-        self.save()
+        let mut file = File::options()
+            .append(true)
+            .create(true)
+            .open(pending_path)?;
+
+        let mut content = serde_json::to_string(&task)?;
+        content.push('\n');
+        file.write_all(content.as_bytes())?;
+
+        self.pending_tasks.push(task);
+        Ok(())
     }
 
     pub fn task_by_uuid(&mut self, uuid: Uuid) -> Option<Task> {
-        self.tasks.iter().find(|task| task.uuid == uuid).cloned()
+        self.pending_tasks
+            .iter()
+            .find(|task| task.uuid == uuid)
+            .cloned()
     }
 
     pub fn tasks_by_description(&mut self, search: String) -> Vec<Task> {
-        self.tasks
+        self.pending_tasks
             .iter()
             .filter(|task| task.description.contains(&search))
             .cloned()
@@ -126,7 +176,7 @@ impl TaskStorage {
 
     pub fn update(&mut self, task: Task) -> Result<bool> {
         let current = self
-            .tasks
+            .pending_tasks
             .iter_mut()
             .find(|element| element.uuid == task.uuid);
         let Some(current) = current else {
@@ -139,13 +189,32 @@ impl TaskStorage {
     }
 
     pub fn delete(&mut self, uuid: Uuid) -> Result<()> {
-        self.tasks.retain(|task| task.uuid != uuid);
+        let index = self
+            .pending_tasks
+            .iter()
+            .position(|task| task.uuid == uuid)
+            .with_context(|| format!("No task found with uuid: {uuid}"))?;
+
+        let task = self.pending_tasks.remove(index);
         self.save()?;
+
+        let delete_filepath = self.path.join(Self::DELETED_DATA_FILENAME);
+        let mut file = File::options()
+            .append(true)
+            .create(true)
+            .open(delete_filepath)?;
+
+        let mut content = serde_json::to_string(&task)?;
+        content.push('\n');
+        file.write_all(content.as_bytes())?;
         Ok(())
     }
 
     pub fn tasks(&self) -> Vec<Task> {
-        self.tasks.clone()
+        self.pending_tasks.clone()
+    }
+    pub fn deleted_tasks(&self) -> Vec<Task> {
+        self.deleted_tasks.clone()
     }
 
     pub fn sync(&mut self) -> Result<(), ConnectionError> {
@@ -158,7 +227,7 @@ impl TaskStorage {
     }
 
     pub fn clear_contents(&mut self) {
-        self.tasks.clear();
+        self.pending_tasks.clear();
         std::fs::remove_dir_all(&self.path).unwrap();
     }
 
@@ -215,7 +284,8 @@ impl TaskStorage {
             settings.repository.origin
         );
 
-        self.loaded = false;
+        self.pending_loaded = false;
+        self.deleted_loaded = false;
 
         Ok(())
     }

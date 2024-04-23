@@ -39,6 +39,13 @@ class _TasksRouteState extends State<TasksRoute> {
                 },
               ),
               const SizedBox(height: 10.0),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<TaskBloc>().add(TaskLoadDeletedEvent());
+                },
+                child: const Icon(Icons.switch_access_shortcut),
+              ),
+              const SizedBox(height: 10.0),
               Expanded(
                 child: ListView.builder(
                   itemCount: state.tasks.length + 1,

@@ -36,6 +36,10 @@ final class TaskSearchEvent extends TaskEvent {
   TaskSearchEvent({required this.text});
 }
 
+final class TaskLoadDeletedEvent extends TaskEvent {
+  TaskLoadDeletedEvent();
+}
+
 class TaskState {
   final List<Task> tasks;
   final bool syncing;
@@ -87,6 +91,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskSearchEvent>((event, emit) async {
       final tasks = await repository.tasksByDescription(search: event.text);
+      emit(TaskState(tasks: tasks));
+    });
+
+    on<TaskLoadDeletedEvent>((event, emit) async {
+      await repository.loadDeleted();
+      final tasks = await repository.deletedTasks();
       emit(TaskState(tasks: tasks));
     });
   }
