@@ -98,11 +98,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
                   );
               Navigator.pop(context);
             },
-            child: Icon(
-              color: Theme.of(context).primaryColor,
-              Icons.add_task_sharp,
-              size: 50,
-            ),
+            child: const Icon(Icons.add_task_sharp, size: 50),
           ),
         );
       },

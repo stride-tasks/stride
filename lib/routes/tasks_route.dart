@@ -69,11 +69,7 @@ class _TasksRouteState extends State<TasksRoute> {
         onPressed: () async {
           await Navigator.of(context).pushNamed(Routes.taskAdd);
         },
-        child: Icon(
-          color: Theme.of(context).primaryColor,
-          Icons.add_circle,
-          size: 50,
-        ),
+        child: const Icon(Icons.add_circle, size: 50),
       ),
     );
   }

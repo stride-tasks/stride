@@ -1,4 +1,3 @@
-import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
@@ -63,11 +62,17 @@ class MyApp extends StatelessWidget {
             // _scheduleNotification(state.tasks[i]);
           }
         },
-        child: MaterialApp(
-          title: 'Stride',
-          theme: catppuccinTheme(catppuccin.frappe),
-          darkTheme: catppuccinTheme(catppuccin.macchiato),
-          onGenerateRoute: Routes.onGenerateRoute,
+        child: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, state) {
+            return MaterialApp(
+              title: 'Stride',
+              theme: generateTheme(darkMode: false),
+              darkTheme: generateTheme(darkMode: true),
+              themeMode:
+                  state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+              onGenerateRoute: Routes.onGenerateRoute,
+            );
+          },
         ),
       ),
     );

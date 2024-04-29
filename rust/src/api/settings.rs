@@ -111,6 +111,8 @@ pub struct Repository {
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default)]
+    pub dark_mode: bool,
     pub keys: Vec<SshKey>,
     pub known_hosts: KnownHosts,
     pub repository: Repository,

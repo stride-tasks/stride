@@ -34,6 +34,10 @@ final class SettingsAddSshKeyEvent extends SettingsEvent {
   SettingsAddSshKeyEvent({required this.key});
 }
 
+final class SettingsToggleTheme extends SettingsEvent {
+  SettingsToggleTheme();
+}
+
 class SettingsState {
   final Settings settings;
   const SettingsState({required this.settings});
@@ -94,6 +98,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       settings = settings.copyWith(
         keys: settings.keys.toList()..add(event.key),
       );
+      await Settings.save(settings: settings);
+      emit(SettingsState(settings: settings));
+    });
+
+    on<SettingsToggleTheme>((event, emit) async {
+      settings = settings.copyWith(darkMode: !settings.darkMode);
       await Settings.save(settings: settings);
       emit(SettingsState(settings: settings));
     });

@@ -34,15 +34,9 @@ class SettingsRoute extends StatelessWidget {
                     title: const Text("Theme"),
                     leading: const Icon(Icons.color_lens),
                     description: const Text("Choose the theme mode"),
-                    value: true,
-                    onChanged: (val) {
-                      context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              // TODO: Add theme to Settings
-                              settings: settings.copyWith(),
-                            ),
-                          );
-                    },
+                    value: settings.darkMode,
+                    onChanged: (val) =>
+                        context.read<SettingsBloc>().add(SettingsToggleTheme()),
                   ),
                 ],
               ),

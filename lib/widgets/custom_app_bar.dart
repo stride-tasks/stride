@@ -36,7 +36,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
           leading: widget.leading,
           actions: [
             IconButton(
-              color: Theme.of(context).secondaryHeaderColor,
               icon: BlocBuilder<TaskBloc, TaskState>(
                 builder: (context, state) {
                   if (state.syncing) {
