@@ -45,13 +45,16 @@ pub struct TaskStorage {
     pending_tasks: Vec<Task>,
     pending_loaded: bool,
 
+    completed_tasks: Vec<Task>,
+    completed_loaded: bool,
+
     deleted_tasks: Vec<Task>,
     deleted_loaded: bool,
 }
 
 impl TaskStorage {
     const PENDING_DATA_FILENAME: &'static str = "pending.data";
-    // const COMPLETE_DATA_FILENAME: &'static str = "complete.data";
+    const COMPLETE_DATA_FILENAME: &'static str = "complete.data";
     const DELETED_DATA_FILENAME: &'static str = "deleted.data";
 
     #[frb(sync)]
@@ -63,6 +66,8 @@ impl TaskStorage {
             pending_loaded: false,
             deleted_tasks: Vec::default(),
             deleted_loaded: false,
+            completed_tasks: Vec::default(),
+            completed_loaded: false,
         }
     }
 
@@ -121,6 +126,35 @@ impl TaskStorage {
 
         self.deleted_tasks = tasks;
         self.deleted_loaded = true;
+        Ok(())
+    }
+
+    pub fn load_completed(&mut self) -> Result<()> {
+        if self.completed_loaded {
+            return Ok(());
+        }
+
+        let mut tasks = Vec::new();
+
+        let completed_filepath = self.path.join(Self::COMPLETE_DATA_FILENAME);
+        if !completed_filepath.exists() {
+            return Ok(());
+        }
+
+        let file = File::open(completed_filepath)?;
+        let buf = BufReader::new(file);
+        for line in buf.lines() {
+            let line = line?;
+            if line.is_empty() {
+                continue;
+            }
+            let task = serde_json::from_str(&line)?;
+
+            tasks.push(task);
+        }
+
+        self.completed_tasks = tasks;
+        self.completed_loaded = true;
         Ok(())
     }
 
@@ -188,6 +222,28 @@ impl TaskStorage {
         Ok(true)
     }
 
+    pub fn complete(&mut self, uuid: Uuid) -> Result<()> {
+        let index = self
+            .pending_tasks
+            .iter()
+            .position(|task| task.uuid == uuid)
+            .with_context(|| format!("No task found with uuid: {uuid}"))?;
+
+        let task = self.pending_tasks.remove(index);
+        self.save()?;
+
+        let completed_filepath = self.path.join(Self::COMPLETE_DATA_FILENAME);
+        let mut file = File::options()
+            .append(true)
+            .create(true)
+            .open(completed_filepath)?;
+
+        let mut content = serde_json::to_string(&task)?;
+        content.push('\n');
+        file.write_all(content.as_bytes())?;
+        Ok(())
+    }
+
     pub fn delete(&mut self, uuid: Uuid) -> Result<()> {
         let index = self
             .pending_tasks
@@ -214,6 +270,9 @@ impl TaskStorage {
         self.pending_tasks.clone()
     }
     pub fn deleted_tasks(&self) -> Vec<Task> {
+        self.deleted_tasks.clone()
+    }
+    pub fn completed_tasks(&self) -> Vec<Task> {
         self.deleted_tasks.clone()
     }
 
@@ -286,6 +345,7 @@ impl TaskStorage {
 
         self.pending_loaded = false;
         self.deleted_loaded = false;
+        self.completed_loaded = false;
 
         Ok(())
     }

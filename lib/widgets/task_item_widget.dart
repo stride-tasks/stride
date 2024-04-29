@@ -34,40 +34,50 @@ class TaskItemWidget extends StatelessWidget {
       );
     }
 
-    return ListTile(
-      title: Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+    return Dismissible(
+      key: Key(task.uuid.toString()),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
+      },
+      child: ListTile(
+        title: Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                task.description,
+              ),
+            ],
+          ),
+        ),
+        trailing: Wrap(
           children: [
-            Text(
-              task.description,
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.of(context)
+                    .pushNamed(Routes.taskEdit, arguments: task);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: () {
+                context
+                    .read<TaskBloc>()
+                    .add(TaskCompleteEvent(uuid: task.uuid));
+              },
             ),
           ],
         ),
-      ),
-      trailing: Wrap(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.of(context).pushNamed(Routes.taskEdit, arguments: task);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () {
-              context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
-            },
-          ),
-        ],
-      ),
-      subtitle: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          tags,
-          Text(task.due?.toUtc().toHumanString() ?? ""),
-        ],
+        subtitle: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            tags,
+            Text(task.due?.toUtc().toHumanString() ?? ""),
+          ],
+        ),
       ),
     );
   }

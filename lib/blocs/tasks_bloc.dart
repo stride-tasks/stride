@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:uuid/uuid.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -20,6 +21,11 @@ final class TaskRemoveEvent extends TaskEvent {
 
 final class TaskRemoveAllEvent extends TaskEvent {
   TaskRemoveAllEvent();
+}
+
+final class TaskCompleteEvent extends TaskEvent {
+  final UuidValue uuid;
+  TaskCompleteEvent({required this.uuid});
 }
 
 final class TaskUpdateEvent extends TaskEvent {
@@ -70,6 +76,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskRemoveAllEvent>((event, emit) async {
       await repository.clearContents();
+      final tasks = await repository.tasks();
+      emit(TaskState(tasks: tasks));
+    });
+
+    on<TaskCompleteEvent>((event, emit) async {
+      await repository.complete(uuid: event.uuid);
       final tasks = await repository.tasks();
       emit(TaskState(tasks: tasks));
     });
