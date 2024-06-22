@@ -10,48 +10,10 @@ use uuid::Uuid;
 
 use crate::git::known_hosts::{Host, KnownHosts};
 
-use super::paths::application_support_path;
-
-/*
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SshKey {
-    pub uuid: Uuid,
-    pub note: String,
-
-    pub public: String,
-    pub private: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Capsule {
-    pub name: String,
-
-    pub origin: String,
-    pub branch: String,
-    pub author: String,
-    pub email: String,
-
-    pub ssh_id: Uuid,
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct ApplicationSettings {
-    pub keys: Vec<SshKey>,
-    pub known_hosts: Vec<Host>,
-    pub capsules: Vec<Capsule>,
-}
-
-impl ApplicationSettings {
-    #[frb(sync)]
-    pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
-}
-
-*/
+use super::{
+    filter::{Filter, FilterSelection},
+    paths::application_support_path,
+};
 
 lazy_static! {
     pub(crate) static ref SETTINGS_INSTANCE: Mutex<Settings> = Settings::default().into();
@@ -116,6 +78,11 @@ pub struct Settings {
     pub keys: Vec<SshKey>,
     pub known_hosts: KnownHosts,
     pub repository: Repository,
+
+    #[serde(default)]
+    pub filters: Vec<Filter>,
+    #[serde(default)]
+    pub selected_filter: Option<FilterSelection>,
 }
 
 impl Settings {

@@ -1,5 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/blocs/settings_bloc.dart';
+import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/task.dart';
 import 'package:uuid/uuid.dart';
@@ -35,6 +37,11 @@ final class TaskUpdateEvent extends TaskEvent {
 
 final class TaskSyncEvent extends TaskEvent {
   TaskSyncEvent();
+}
+
+final class TaskFilterEvent extends TaskEvent {
+  final Filter? filter;
+  TaskFilterEvent({this.filter});
 }
 
 final class TaskSearchEvent extends TaskEvent {
@@ -99,6 +106,16 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       await repository.sync();
       final tasksNew = await repository.tasks();
       emit(TaskState(tasks: tasksNew));
+    });
+
+    on<TaskFilterEvent>((event, emit) async {
+      if (event.filter == null) {
+        final tasks = await repository.tasks();
+        emit(TaskState(tasks: tasks));
+      } else {
+        final tasks = await repository.tasksWithFilter(filter: event.filter!);
+        emit(TaskState(tasks: tasks));
+      }
     });
 
     on<TaskSearchEvent>((event, emit) async {

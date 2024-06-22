@@ -22,7 +22,10 @@ use git2::{
     Signature,
 };
 
-use super::settings::SshKey;
+use super::{
+    filter::{Filter, FilterSelection},
+    settings::SshKey,
+};
 
 #[frb(init)]
 pub fn init_app() {
@@ -204,6 +207,14 @@ impl TaskStorage {
         self.pending_tasks
             .iter()
             .filter(|task| task.description.contains(&search))
+            .cloned()
+            .collect()
+    }
+
+    pub fn tasks_with_filter(&mut self, filter: &Filter) -> Vec<Task> {
+        self.pending_tasks
+            .iter()
+            .filter(|task| task.description.contains(&filter.search))
             .cloned()
             .collect()
     }

@@ -25,8 +25,9 @@ class SshKeysRoute extends StatelessWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                ElevatedButton(
-                  child: const Icon(Icons.generating_tokens),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.generating_tokens),
+                  label: const Text("Generate Key"),
                   onPressed: () async {
                     final sshKey = await SshKey.generate();
                     if (context.mounted) {
@@ -36,6 +37,7 @@ class SshKeysRoute extends StatelessWidget {
                     }
                   },
                 ),
+                const SizedBox(height: 5),
                 ListView.builder(
                   shrinkWrap: true,
                   itemCount: keys.length,
@@ -71,7 +73,7 @@ class SshKeysRoute extends StatelessWidget {
         },
       ),
       floatingActionButton: IconButton(
-        icon: const Icon(Icons.add_circle_outline),
+        icon: const Icon(Icons.add_circle_outline, size: 50),
         onPressed: () {
           Navigator.of(context).pushNamed(Routes.sshKeysAdd);
         },

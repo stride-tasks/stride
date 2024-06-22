@@ -4,14 +4,17 @@ import 'package:stride/routes/route_not_found_route.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
+import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/routes/task_route.dart';
 import 'package:stride/routes/tasks_route.dart';
+import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/task.dart';
 
 class Routes {
   static const start = '/';
   static const taskAdd = '/taskAdd/';
   static const taskEdit = '/taskEdit/';
+  static const taskFilter = '/taskFilter/';
   static const settings = '/settings/';
   static const sshKeys = '/sshKeys/';
   static const sshKeysAdd = '/sshKeysAdd/';
@@ -27,6 +30,14 @@ class Routes {
         return MaterialPageRoute(
           builder: (context) => TaskRoute(
             task: routeSettings.arguments as Task,
+          ),
+        );
+      case taskFilter:
+        return MaterialPageRoute(
+          builder: (context) => TaskFilterRoute(
+            filter: routeSettings.arguments == null
+                ? null
+                : routeSettings.arguments as Filter,
           ),
         );
       case settings:

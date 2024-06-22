@@ -28,6 +28,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
+        final hasFilter = state.settings.selectedFilter != null;
         return AppBar(
           title: Text(
             widget.title,
@@ -35,6 +36,37 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
           leading: widget.leading,
           actions: [
+            InkWell(
+              child: Ink(
+                child: hasFilter
+                    ? const Icon(Icons.filter_alt_off)
+                    : const Icon(Icons.filter_alt),
+              ),
+              onTap: () async {
+                await Navigator.of(context).pushNamed(Routes.taskFilter);
+              },
+              onLongPress: () {
+                if (!hasFilter) {
+                  return;
+                }
+                var newSettings = state.settings.copyWith(selectedFilter: null);
+                context
+                    .read<SettingsBloc>()
+                    .add(SettingsUpdateEvent(settings: newSettings));
+                context.read<TaskBloc>().add(TaskFilterEvent(filter: null));
+              },
+            ),
+            // IconButton(
+            //   icon: hasFilter
+            //       ? const Icon(Icons.filter_alt_off)
+            //       : const Icon(Icons.filter_alt),
+            //   onPressed: () async {
+            //     if (hasFilter) {
+            //       return;
+            //     }
+            //     await Navigator.of(context).pushNamed(Routes.taskFilter);
+            //   },
+            // ),
             IconButton(
               icon: BlocBuilder<TaskBloc, TaskState>(
                 builder: (context, state) {
