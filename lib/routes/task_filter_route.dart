@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/api/filter.dart';
+import 'package:stride/src/rust/task.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskFilterRoute extends StatefulWidget {
@@ -20,6 +23,7 @@ class TaskFilterRoute extends StatefulWidget {
 class _TaskFilterRouteState extends State<TaskFilterRoute> {
   TextEditingController nameController = TextEditingController(text: "");
   TextEditingController searchController = TextEditingController(text: "");
+  Set<TaskStatus> status = <TaskStatus>{TaskStatus.pending};
 
   @override
   void initState() {
@@ -29,20 +33,17 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
       final filter = widget.filter!;
       nameController.text = filter.name;
       searchController.text = filter.search;
+      status = filter.status.toSet();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Filters",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: AppBar(title: const Text("Filters")),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
+          final isMobilePlatform = Platform.isAndroid || Platform.isIOS;
           return Padding(
             padding: const EdgeInsets.symmetric(
               vertical: 20.0,
@@ -56,6 +57,46 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                     border: OutlineInputBorder(),
                     labelText: "Search",
                   ),
+                ),
+                const SizedBox(height: 8.0),
+                SegmentedButton<TaskStatus>(
+                  segments: <ButtonSegment<TaskStatus>>[
+                    ButtonSegment<TaskStatus>(
+                      value: TaskStatus.pending,
+                      icon: const Icon(Icons.calendar_month),
+                      label: isMobilePlatform ? null : const Text('Pending'),
+                    ),
+                    ButtonSegment<TaskStatus>(
+                      value: TaskStatus.complete,
+                      icon: const Icon(Icons.check_box),
+                      label: isMobilePlatform ? null : const Text('Completed'),
+                    ),
+                    ButtonSegment<TaskStatus>(
+                      value: TaskStatus.deleted,
+                      icon: const Icon(Icons.delete),
+                      label: isMobilePlatform ? null : const Text('Deleted'),
+                    ),
+                    ButtonSegment<TaskStatus>(
+                      value: TaskStatus.waiting,
+                      icon: const Icon(Icons.alarm),
+                      label: isMobilePlatform ? null : const Text('Waiting'),
+                    ),
+                    ButtonSegment<TaskStatus>(
+                      value: TaskStatus.recurring,
+                      icon: const Icon(Icons.repeat_on),
+                      label: isMobilePlatform ? null : const Text('Recurring'),
+                    ),
+                  ],
+                  selected: status,
+                  onSelectionChanged: (Set<TaskStatus> newSelection) {
+                    setState(() {
+                      status = newSelection;
+                    });
+                  },
+                  multiSelectionEnabled: true,
+                  emptySelectionAllowed: false,
+                  showSelectedIcon: !isMobilePlatform,
+                  selectedIcon: const Icon(Icons.check),
                 ),
                 const SizedBox(height: 10.0),
                 Row(
@@ -79,6 +120,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
         onPressed: () {
           var filter = Filter(
             uuid: const Uuid().v4obj(),
+            status: status,
             name: "Temporary",
             search: searchController.text,
           );
@@ -151,6 +193,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                           : nameController.text;
                       var filter = Filter(
                         uuid: const Uuid().v4obj(),
+                        status: status,
                         name: name,
                         search: searchController.text,
                       );
@@ -165,10 +208,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                         ));
 
                     // Pop to first route.
-                    Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    );
+                    Navigator.popUntil(context, (route) => route.isFirst);
                   },
                 ),
               ],
@@ -237,10 +277,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                         ));
 
                     // Pop to first route.
-                    Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    );
+                    Navigator.popUntil(context, (route) => route.isFirst);
                   },
                 ),
               ],

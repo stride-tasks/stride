@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/src/rust/api/settings.dart';
-import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
 
@@ -24,7 +23,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
       builder: (context, state) {
         final keys = state.settings.keys;
         return Scaffold(
-          appBar: const CustomAppBar(title: "SSH Key"),
+          appBar: AppBar(title: const Text("SSH Key")),
           body: Container(
             padding: const EdgeInsets.symmetric(
               vertical: 10,

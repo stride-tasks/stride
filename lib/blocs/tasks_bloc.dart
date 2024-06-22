@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/task.dart';
@@ -44,19 +43,11 @@ final class TaskFilterEvent extends TaskEvent {
   TaskFilterEvent({this.filter});
 }
 
-final class TaskSearchEvent extends TaskEvent {
-  final String text;
-  TaskSearchEvent({required this.text});
-}
-
-final class TaskLoadDeletedEvent extends TaskEvent {
-  TaskLoadDeletedEvent();
-}
-
 class TaskState {
   final List<Task> tasks;
   final bool syncing;
-  const TaskState({required this.tasks, this.syncing = false});
+  final ConnectionError? error;
+  const TaskState({required this.tasks, this.syncing = false, this.error});
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
@@ -64,7 +55,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   TaskBloc({required this.repository}) : super(const TaskState(tasks: [])) {
     on<TaskFetchEvent>((event, emit) async {
-      await repository.load();
+      await repository.loadPending();
       final tasks = await repository.tasks();
       emit(TaskState(tasks: tasks));
     });
@@ -103,7 +94,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final tasksOld = await repository.tasks();
       emit(TaskState(tasks: tasksOld, syncing: true));
 
-      await repository.sync();
+      try {
+        await repository.sync();
+      } on ConnectionError catch (error) {
+        emit(TaskState(tasks: tasksOld, syncing: false, error: error));
+        return;
+      }
+
       final tasksNew = await repository.tasks();
       emit(TaskState(tasks: tasksNew));
     });
@@ -116,17 +113,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         final tasks = await repository.tasksWithFilter(filter: event.filter!);
         emit(TaskState(tasks: tasks));
       }
-    });
-
-    on<TaskSearchEvent>((event, emit) async {
-      final tasks = await repository.tasksByDescription(search: event.text);
-      emit(TaskState(tasks: tasks));
-    });
-
-    on<TaskLoadDeletedEvent>((event, emit) async {
-      await repository.loadDeleted();
-      final tasks = await repository.deletedTasks();
-      emit(TaskState(tasks: tasks));
     });
   }
 }

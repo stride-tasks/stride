@@ -6,7 +6,6 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
-import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class SettingsRoute extends StatelessWidget {
@@ -21,7 +20,7 @@ class SettingsRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Settings"),
+      appBar: AppBar(title: const Text("Settings")),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final settings = state.settings;

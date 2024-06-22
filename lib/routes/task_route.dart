@@ -5,7 +5,6 @@ import 'package:stride/src/rust/task.dart';
 import 'package:stride/src/rust/task/annotation.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
-import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/icon_text_button.dart';
 import 'package:uuid/uuid.dart';
 
@@ -53,7 +52,7 @@ class _TaskRouteState extends State<TaskRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Tasks"),
+      appBar: AppBar(title: const Text("Tasks")),
       body: Container(
         padding: const EdgeInsets.symmetric(
           vertical: 10,

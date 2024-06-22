@@ -14,7 +14,7 @@ pub type Tag = String;
 pub type Project = String;
 pub type Priority = String;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TaskStatus {
     #[serde(rename = "pending")]
     Pending,

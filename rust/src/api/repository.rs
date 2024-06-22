@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::{
     api::{paths::application_support_path, settings::Settings},
     git::known_hosts::{self, HostKeyType, KnownHosts, KnownHostsError},
-    task::{Task, TaskBuilder},
+    task::{Task, TaskBuilder, TaskStatus},
 };
 
 use git2::{
@@ -74,7 +74,7 @@ impl TaskStorage {
         }
     }
 
-    pub fn load(&mut self) -> Result<()> {
+    pub fn load_pending(&mut self) -> Result<()> {
         if self.pending_loaded {
             return Ok(());
         }
@@ -203,20 +203,51 @@ impl TaskStorage {
             .cloned()
     }
 
-    pub fn tasks_by_description(&mut self, search: String) -> Vec<Task> {
-        self.pending_tasks
-            .iter()
-            .filter(|task| task.description.contains(&search))
-            .cloned()
-            .collect()
-    }
+    pub fn tasks_with_filter(&mut self, filter: &Filter) -> anyhow::Result<Vec<Task>> {
+        let mut tasks = Vec::new();
+        for status in &filter.status {
+            match *status {
+                TaskStatus::Pending => {
+                    if !self.pending_loaded {
+                        self.load_pending()?;
+                    }
+                    for task in self
+                        .pending_tasks
+                        .iter()
+                        .filter(|task| task.description.contains(&filter.search))
+                    {
+                        tasks.push(task.clone());
+                    }
+                }
+                TaskStatus::Complete => {
+                    if !self.completed_loaded {
+                        self.load_completed()?;
+                    }
+                    for task in self
+                        .completed_tasks
+                        .iter()
+                        .filter(|task| task.description.contains(&filter.search))
+                    {
+                        tasks.push(task.clone());
+                    }
+                }
+                TaskStatus::Deleted => {
+                    if !self.deleted_loaded {
+                        self.load_deleted()?;
+                    }
+                    for task in self
+                        .deleted_tasks
+                        .iter()
+                        .filter(|task| task.description.contains(&filter.search))
+                    {
+                        tasks.push(task.clone());
+                    }
+                }
+                TaskStatus::Waiting | TaskStatus::Recurring => {}
+            }
+        }
 
-    pub fn tasks_with_filter(&mut self, filter: &Filter) -> Vec<Task> {
-        self.pending_tasks
-            .iter()
-            .filter(|task| task.description.contains(&filter.search))
-            .cloned()
-            .collect()
+        Ok(tasks)
     }
 
     pub fn update(&mut self, task: Task) -> Result<bool> {

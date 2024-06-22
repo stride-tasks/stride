@@ -71,10 +71,7 @@ class _TasksRouteState extends State<TasksRoute> {
               children: [
                 const Text(
                   "Filters",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 const Divider(),
                 Expanded(

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/api/settings.dart';
-import 'package:stride/widgets/custom_app_bar.dart';
 
 class SshKeysRoute extends StatelessWidget {
   final void Function(SshKey key)? onTap;
@@ -18,7 +17,7 @@ class SshKeysRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "SSH Keys"),
+      appBar: AppBar(title: const Text("SSH Keys")),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final keys = state.settings.keys;
