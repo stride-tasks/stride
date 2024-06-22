@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 Iterable<T> insertBetween<T>(Iterable<T> iterable, T element) sync* {
@@ -138,18 +140,23 @@ class SettingsTileText extends SettingsTile {
     this.hidden = false,
     this.multiline = false,
   }) : super(
-          trailing: hidden ? const Icon(Icons.arrow_forward) : Text(text),
+          trailing: (hidden || Platform.isAndroid || Platform.isIOS)
+              ? const Icon(Icons.arrow_forward)
+              : Text(text),
           onTap: (context) async {
             var controller = TextEditingController(text: text);
             await showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                content: TextField(
-                  controller: controller,
-                  autocorrect: false,
-                  autofocus: true,
-                  maxLines: multiline ? null : 1,
-                  keyboardType: multiline ? TextInputType.multiline : null,
+                content: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.90,
+                  child: TextField(
+                    controller: controller,
+                    autocorrect: false,
+                    autofocus: true,
+                    maxLines: multiline ? null : 1,
+                    keyboardType: multiline ? TextInputType.multiline : null,
+                  ),
                 ),
                 actions: [
                   IconButton(
