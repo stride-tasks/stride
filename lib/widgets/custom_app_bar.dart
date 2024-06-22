@@ -104,8 +104,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
               child: InkWell(
                 child: Ink(
                   child: hasFilter
-                      ? const Icon(Icons.filter_alt_off)
-                      : const Icon(Icons.filter_alt),
+                      ? const Icon(Icons.filter_alt)
+                      : const Icon(Icons.filter_alt_off),
                 ),
                 onTap: () async {
                   await Navigator.of(context).pushNamed(Routes.taskFilter);

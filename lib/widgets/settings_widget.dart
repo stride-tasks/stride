@@ -121,6 +121,9 @@ class SettingsTileSwitch extends SettingsTile {
             activeColor: Colors.redAccent,
             onChanged: onChanged,
           ),
+          onTap: (context) {
+            onChanged(value);
+          },
         );
 }
 
