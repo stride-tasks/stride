@@ -25,13 +25,19 @@ class TaskItem extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget tags;
     if (task.tags.isEmpty) {
-      tags = const Text("");
+      tags = const Text(
+        "",
+        style: TextStyle(fontSize: 12),
+      );
     } else {
       tags = Wrap(
         children: task.tags
             .map(
               (tag) => Chip(
-                label: Text(tag),
+                label: Text(
+                  tag,
+                  style: const TextStyle(fontSize: 12),
+                ),
                 labelPadding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100),
@@ -46,16 +52,24 @@ class TaskItem extends StatelessWidget {
       );
     }
 
-    Widget widget = ListTile(
-      title: Text(task.description),
-      onLongPress: onLongPress,
-      subtitle: Row(
+    Widget? subtitle;
+    if (task.tags.isNotEmpty || task.due != null) {
+      subtitle = Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           tags,
-          Text(task.due?.toUtc().toHumanString() ?? ""),
+          Text(
+            task.due?.toUtc().toHumanString() ?? "",
+            style: const TextStyle(fontSize: 12),
+          ),
         ],
-      ),
+      );
+    }
+
+    Widget widget = ListTile(
+      title: Text(task.description),
+      onLongPress: onLongPress,
+      subtitle: subtitle,
     );
 
     if (onSwipeLeft != null && onSwipeRight != null) {
