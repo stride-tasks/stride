@@ -39,8 +39,55 @@ class _TasksRouteState extends State<TasksRoute> {
                       return const SizedBox(height: 50);
                     }
 
+                    final task = state.tasks[index];
                     return Card(
-                      child: TaskItemWidget(task: state.tasks[index]),
+                      child: TaskItem(
+                        task: task,
+                        onSwipeRight: () async {
+                          context
+                              .read<TaskBloc>()
+                              .add(TaskRemoveEvent(task: task));
+                          return true;
+                        },
+                        onSwipeLeft: () async {
+                          bool result = true;
+                          await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              content: SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.90,
+                                child: const Text(
+                                  "Are you sure you want to delete this task?",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              actions: [
+                                IconButton(
+                                  icon: const Icon(Icons.cancel),
+                                  onPressed: () {
+                                    result = false;
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.check),
+                                  onPressed: () {
+                                    context.read<TaskBloc>().add(
+                                        TaskCompleteEvent(uuid: task.uuid));
+
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                          return result;
+                        },
+                        onLongPress: () {
+                          Navigator.of(context)
+                              .pushNamed(Routes.taskEdit, arguments: task);
+                        },
+                      ),
                     );
                   },
                 ),

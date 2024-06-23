@@ -506,7 +506,7 @@ impl TaskStorage {
                 .into()),
             };
         }
-        let connection = connection.unwrap().remote().push(&[branch_ref_name], None);
+        let connection = connection?.remote().push(&[branch_ref_name], None);
 
         if let Err(error) = &connection {
             return match error.class() {
@@ -719,41 +719,5 @@ fn with_authentication(
         Result::Ok(CertificateCheckStatus::CertificateOk)
     });
 
-    // let connection = f(callbacks);
-
-    // if let Err(error) = &connection {
-    //     return match error.class() {
-    //         ErrorClass::Ssh => Err(ConnectionError::Authentication {
-    //             message: error.message().to_owned(),
-    //         }),
-    //         ErrorClass::Net => Err(ConnectionError::Network {
-    //             message: error.message().to_owned(),
-    //         }),
-    //         ErrorClass::Callback => {
-    //             if let Some(certificate_error) = &error {
-    //                 return Err(certificate_error.clone());
-    //             }
-    //             Err(ConnectionError::Other {
-    //                 message: error.message().to_owned(),
-    //             })
-    //         }
-    //         _ => Err(ConnectionError::Other {
-    //             message: error.message().to_owned(),
-    //         }),
-    //     };
-    // }
-
     error
 }
-
-// fn clone(url: String) -> Result<(), ConnectionError> {
-//     let settings = Settings::load().unwrap();
-//     let mut callbacks = RemoteCallbacks::new();
-//     let error = with_authentication(
-//         settings.keys[0].public.clone(),
-//         settings.keys[0].private.clone(),
-//         &mut callbacks,
-//     );
-
-//     Result::Ok(())
-// }
