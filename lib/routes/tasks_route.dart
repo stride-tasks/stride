@@ -77,7 +77,7 @@ class _TasksRouteState extends State<TasksRoute> {
     onSwipeLeft() async {
       final additionalMessage =
           task.status == TaskStatus.deleted ? " forever" : "";
-      bool result = true;
+      bool result = false;
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -92,7 +92,6 @@ class _TasksRouteState extends State<TasksRoute> {
             IconButton(
               icon: const Icon(Icons.cancel),
               onPressed: () {
-                result = false;
                 Navigator.pop(context);
               },
             ),
@@ -100,7 +99,7 @@ class _TasksRouteState extends State<TasksRoute> {
               icon: const Icon(Icons.check),
               onPressed: () {
                 context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
-
+                result = true;
                 Navigator.of(context).pop();
               },
             ),
