@@ -58,16 +58,33 @@ impl SshKey {
     }
 }
 
+fn default_branch_name() -> String {
+    String::from("main")
+}
+
 #[frb(dart_metadata=("freezed"))]
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Repository {
     // pub name: String,
-    // pub branch: String,
     pub origin: String,
     pub author: String,
     pub email: String,
+    #[serde(default = "default_branch_name")]
+    pub branch: String,
 
     pub ssh_key_uuid: Option<Uuid>,
+}
+
+impl Default for Repository {
+    fn default() -> Self {
+        Self {
+            origin: "".into(),
+            author: "".into(),
+            email: "".into(),
+            branch: default_branch_name(),
+            ssh_key_uuid: None,
+        }
+    }
 }
 
 #[frb(dart_metadata=("freezed"))]

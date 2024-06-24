@@ -16,6 +16,7 @@ use uuid::Uuid;
 use crate::{
     api::{paths::application_support_path, settings::Settings},
     git::known_hosts::{self, HostKeyType, KnownHosts, KnownHostsError},
+    repository,
     task::{Task, TaskBuilder, TaskStatus},
 };
 
@@ -180,7 +181,7 @@ impl Storage {
         Ok(())
     }
     fn unload(&mut self) {
-        self.loaded = true;
+        self.loaded = false;
         self.tasks.clear();
     }
 }
@@ -393,6 +394,7 @@ impl TaskStorage {
 
         let mut builder = git2::build::RepoBuilder::new();
         builder.fetch_options(fo);
+        builder.branch(&settings.repository.branch);
 
         let connection = builder.clone(&settings.repository.origin, &self.path);
 
@@ -429,6 +431,27 @@ impl TaskStorage {
         Ok(())
     }
 
+    pub fn checkout(&mut self) -> Result<()> {
+        let settings = Settings::get();
+
+        self.sync()?;
+        self.unload();
+
+        let mut repository = Repository::open(&self.path)?;
+        let branch =
+            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let reference = branch.into_reference();
+        let tree = reference.peel_to_tree()?;
+        repository.checkout_tree(tree.as_object(), None)?;
+
+        let name = reference
+            .name()
+            .context("invalid UTF-8 reference name of branch")?;
+        repository.set_head(name)?;
+
+        Ok(())
+    }
+
     pub fn init_repotitory(&self) -> anyhow::Result<()> {
         let settings = Settings::get();
 
@@ -447,7 +470,7 @@ impl TaskStorage {
         let commit = repository.commit(None, &author, &author, "Initial Commit", &tree, &[])?;
         let commit = repository.find_commit(commit)?;
 
-        let branch = repository.branch("main", &commit, true)?;
+        let branch = repository.branch(&settings.repository.branch, &commit, true)?;
         let mut branch_ref = branch.into_reference();
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();
@@ -488,7 +511,8 @@ impl TaskStorage {
         )?;
         let commit = repository.find_commit(commit)?;
 
-        let branch = repository.find_branch("main", git2::BranchType::Local)?;
+        let branch =
+            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
         let mut branch_ref = branch.into_reference();
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();

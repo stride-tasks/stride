@@ -43,6 +43,10 @@ final class TaskFilterEvent extends TaskEvent {
   TaskFilterEvent({this.filter});
 }
 
+final class TaskCheckoutBranchEvent extends TaskEvent {
+  TaskCheckoutBranchEvent();
+}
+
 class TaskState {
   final List<Task> tasks;
   final bool syncing;
@@ -122,6 +126,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskFilterEvent>((event, emit) async {
       filter = event.filter;
+      emit(TaskState(tasks: await _tasks()));
+    });
+
+    on<TaskCheckoutBranchEvent>((event, emit) async {
+      await repository.checkout();
       emit(TaskState(tasks: await _tasks()));
     });
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
@@ -85,6 +86,22 @@ class SettingsRoute extends StatelessWidget {
                               ),
                             ),
                           );
+                    },
+                  ),
+                  SettingsTileText(
+                    leading: const FaIcon(FontAwesomeIcons.codeBranch),
+                    title: const Text("Branch"),
+                    text: settings.repository.branch,
+                    onChanged: (text) {
+                      context.read<SettingsBloc>().add(
+                            SettingsUpdateEvent(
+                              settings: settings.copyWith(
+                                repository:
+                                    settings.repository.copyWith(branch: text),
+                              ),
+                            ),
+                          );
+                      context.read<TaskBloc>().add(TaskCheckoutBranchEvent());
                     },
                   ),
                   SettingsTileNavigation(
