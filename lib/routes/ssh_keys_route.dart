@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/routes/routes.dart';
+import 'package:stride/src/rust/api/logging.dart';
 import 'package:stride/src/rust/api/settings.dart';
 
 class SshKeysRoute extends StatelessWidget {
@@ -34,6 +35,8 @@ class SshKeysRoute extends StatelessWidget {
                           .read<SettingsBloc>()
                           .add(SettingsAddSshKeyEvent(key: sshKey));
                     }
+
+                    Logger.trace(message: "SSH Key generated");
                   },
                 ),
                 const SizedBox(height: 5),

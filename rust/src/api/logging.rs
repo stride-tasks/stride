@@ -60,3 +60,27 @@ pub fn get_logs() -> String {
     }
     std::fs::read_to_string(path).expect("could not read logs")
 }
+
+pub struct Logger {}
+
+impl Logger {
+    pub fn debug(message: &str) {
+        log::debug!("{message}")
+    }
+
+    pub fn trace(message: &str) {
+        log::trace!("{message}")
+    }
+
+    pub fn info(message: &str) {
+        log::info!("{message}")
+    }
+
+    pub fn warn(message: &str) {
+        log::warn!("{message}")
+    }
+
+    pub fn error(message: &str) {
+        log::error!("{message}")
+    }
+}
