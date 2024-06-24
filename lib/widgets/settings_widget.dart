@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:stride/utils/functions.dart';
 
 Iterable<T> insertBetween<T>(Iterable<T> iterable, T element) sync* {
   final iterator = iterable.iterator;
@@ -148,35 +149,20 @@ class SettingsTileText extends SettingsTile {
               : Text(text),
           onTap: (context) async {
             var controller = TextEditingController(text: text);
-            await showDialog(
+            await showAlertDialog(
               context: context,
-              builder: (context) => AlertDialog(
-                content: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.90,
-                  child: TextField(
-                    controller: controller,
-                    autocorrect: false,
-                    autofocus: true,
-                    maxLines: multiline ? null : 1,
-                    keyboardType: multiline ? TextInputType.multiline : null,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.cancel),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: () {
-                      onChanged(controller.text);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
+              content: TextField(
+                controller: controller,
+                autocorrect: false,
+                autofocus: true,
+                maxLines: multiline ? null : 1,
+                keyboardType: multiline ? TextInputType.multiline : null,
               ),
+              onConfirm: (context) async {
+                onChanged(controller.text);
+                Navigator.pop(context);
+                return true;
+              },
             );
           },
         );

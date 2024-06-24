@@ -6,6 +6,7 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskFilterRoute extends StatefulWidget {
@@ -146,73 +147,58 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
         icon: const Icon(Icons.save),
         label: const Text("Save"),
         onPressed: () async {
-          await showDialog(
+          await showAlertDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              content: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.90,
-                child: TextField(
-                  controller: nameController,
-                  autocorrect: false,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: "Filter name...",
-                  ),
-                ),
+            content: TextField(
+              controller: nameController,
+              autocorrect: false,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: "Filter name...",
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.cancel),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: () {
-                    if (nameController.text.isEmpty) {
-                      return;
-                    }
-
-                    var filters = state.settings.filters.toList();
-                    if (widget.filter != null) {
-                      var filterIndex = filters.indexWhere(
-                        (element) => element.uuid == widget.filter!.uuid,
-                      );
-                      var filter = widget.filter!.copyWith(
-                        name: nameController.text,
-                        search: searchController.text,
-                      );
-                      filters[filterIndex] = filter;
-                    } else {
-                      final hasSameName = state.settings.filters.every(
-                        (element) => element.name == nameController.text,
-                      );
-                      var name = hasSameName
-                          ? "${nameController.text} 2"
-                          : nameController.text;
-                      var filter = Filter(
-                        uuid: const Uuid().v4obj(),
-                        status: status,
-                        name: name,
-                        search: searchController.text,
-                      );
-
-                      filters.add(filter);
-                    }
-
-                    context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                          settings: state.settings.copyWith(
-                            filters: filters,
-                          ),
-                        ));
-
-                    // Pop to first route.
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                ),
-              ],
             ),
+            onConfirm: (context) async {
+              if (nameController.text.isEmpty) {
+                return false;
+              }
+
+              var filters = state.settings.filters.toList();
+              if (widget.filter != null) {
+                var filterIndex = filters.indexWhere(
+                  (element) => element.uuid == widget.filter!.uuid,
+                );
+                var filter = widget.filter!.copyWith(
+                  name: nameController.text,
+                  search: searchController.text,
+                );
+                filters[filterIndex] = filter;
+              } else {
+                final hasSameName = state.settings.filters.every(
+                  (element) => element.name == nameController.text,
+                );
+                var name = hasSameName
+                    ? "${nameController.text} 2"
+                    : nameController.text;
+                var filter = Filter(
+                  uuid: const Uuid().v4obj(),
+                  status: status,
+                  name: name,
+                  search: searchController.text,
+                );
+
+                filters.add(filter);
+              }
+
+              context.read<SettingsBloc>().add(SettingsUpdateEvent(
+                    settings: state.settings.copyWith(
+                      filters: filters,
+                    ),
+                  ));
+
+              // Pop to first route.
+              Navigator.popUntil(context, (route) => route.isFirst);
+              return false;
+            },
           );
         },
       ),

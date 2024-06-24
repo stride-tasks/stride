@@ -5,6 +5,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/task.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/task_item_widget.dart';
 
@@ -78,33 +79,17 @@ class _TasksRouteState extends State<TasksRoute> {
       final additionalMessage =
           task.status == TaskStatus.deleted ? " forever" : "";
       bool result = false;
-      await showDialog(
+      await showAlertDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.90,
-            child: Text(
-              "Are you sure you want to delete this task$additionalMessage?",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.cancel),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: () {
-                context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
-                result = true;
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        content: Text(
+          "Are you sure you want to delete this task$additionalMessage?",
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        onConfirm: (context) async {
+          context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
+          Navigator.of(context).pop();
+          return true;
+        },
       );
       return result;
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 Future<DateTime?> showPickDateTime({required BuildContext context}) async {
   final firstDate = DateTime.now().subtract(const Duration(days: 365 * 100));
@@ -25,4 +26,42 @@ Future<DateTime?> showPickDateTime({required BuildContext context}) async {
     time.hour,
     time.minute,
   );
+}
+
+Future<bool> showAlertDialog({
+  required BuildContext context,
+  required Widget content,
+  Future<bool> Function(BuildContext context)? onCancel,
+  required Future<bool> Function(BuildContext context) onConfirm,
+}) async {
+  var result = false;
+  await showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.95,
+        child: content,
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.cancel),
+          onPressed: () async {
+            if (onCancel == null) {
+              Navigator.pop(context);
+              return;
+            }
+            await onCancel(context);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.check),
+          onPressed: () async {
+            await onConfirm(context);
+            result = true;
+          },
+        ),
+      ],
+    ),
+  );
+  return result;
 }

@@ -5,6 +5,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/git/known_hosts.dart';
+import 'package:stride/utils/functions.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
@@ -44,60 +45,42 @@ class _CustomAppBarState extends State<CustomAppBar> {
                       :final keyType,
                       :final hostKey
                     )) {
-                  await showDialog(
+                  await showAlertDialog(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      content: SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.90,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Accept Unknown Host: $hostname",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              "Host Key: ${keyType.name} $hostKey",
-                              softWrap: true,
-                            ),
-                          ],
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Accept Unknown Host: $hostname",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      actions: [
-                        IconButton(
-                          icon: const Icon(Icons.cancel),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.check),
-                          onPressed: () {
-                            context.read<SettingsBloc>().add(
-                                  SettingsUpdateEvent(
-                                    settings: state.settings.copyWith(
-                                      knownHosts:
-                                          state.settings.knownHosts.copyWith(
-                                        hosts: state.settings.knownHosts.hosts
-                                            .toList()
-                                          ..add(
-                                            Host(
-                                              hostname: hostname,
-                                              remoteKeyType: keyType,
-                                              remoteHostKey: hostKey,
-                                            ),
-                                          ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                            Navigator.pop(context);
-                          },
+                        Text(
+                          "Host Key: ${keyType.name} $hostKey",
+                          softWrap: true,
                         ),
                       ],
                     ),
+                    onConfirm: (context) async {
+                      context.read<SettingsBloc>().add(
+                            SettingsUpdateEvent(
+                              settings: state.settings.copyWith(
+                                knownHosts: state.settings.knownHosts.copyWith(
+                                  hosts:
+                                      state.settings.knownHosts.hosts.toList()
+                                        ..add(
+                                          Host(
+                                            hostname: hostname,
+                                            remoteKeyType: keyType,
+                                            remoteHostKey: hostKey,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          );
+                      Navigator.pop(context);
+                      return true;
+                    },
                   );
                 }
               },

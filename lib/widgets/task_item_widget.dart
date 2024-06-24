@@ -113,7 +113,7 @@ class TaskItem extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             swipeRightIcon,
             const SizedBox(width: 5),
             Text(
@@ -148,7 +148,7 @@ class TaskItem extends StatelessWidget {
               ),
               textAlign: TextAlign.right,
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
           ],
         ),
       ),
