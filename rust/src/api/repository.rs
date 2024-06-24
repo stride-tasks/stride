@@ -1,5 +1,7 @@
+use core::task;
 use std::{
     cell::RefCell,
+    collections::HashSet,
     fs::File,
     io::{BufRead, BufReader, ErrorKind, Write},
     path::{Path, PathBuf},
@@ -42,280 +44,313 @@ impl Task {
     }
 }
 
+struct Storage {
+    loaded: bool,
+    tasks: Vec<Task>,
+    path: PathBuf,
+    kind: TaskStatus,
+}
+
+impl Storage {
+    fn new(path: PathBuf, kind: TaskStatus) -> Self {
+        Self {
+            loaded: false,
+            tasks: Vec::new(),
+            path,
+            kind,
+        }
+    }
+
+    fn load(&mut self) -> Result<()> {
+        if self.loaded {
+            return Ok(());
+        }
+
+        if !self.path.exists() {
+            return Ok(());
+        }
+
+        let file = File::open(&self.path)?;
+        let buf = BufReader::new(file);
+        let mut tasks = Vec::new();
+        for line in buf.lines() {
+            let line = line?;
+            if line.is_empty() {
+                continue;
+            }
+            let task = serde_json::from_str(&line)?;
+
+            tasks.push(task);
+        }
+
+        self.tasks = tasks;
+        self.loaded = true;
+        Ok(())
+    }
+
+    fn append(&mut self, mut task: Task) -> Result<()> {
+        task.status = self.kind;
+
+        let mut file = File::options().append(true).create(true).open(&self.path)?;
+
+        let mut content = serde_json::to_string(&task)?;
+        content.push('\n');
+        file.write_all(content.as_bytes())?;
+        self.tasks.push(task);
+        Ok(())
+    }
+
+    fn save(&mut self) -> Result<()> {
+        let mut content = String::new();
+        for task in &self.tasks {
+            content += &serde_json::to_string(task)?;
+            content.push('\n');
+        }
+
+        std::fs::write(&self.path, content)?;
+        Ok(())
+    }
+
+    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>> {
+        self.load()?;
+        Ok(self.tasks.iter().find(|task| &task.uuid == uuid))
+    }
+
+    fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>> {
+        self.load()?;
+        Ok(self.tasks.iter().position(|task| &task.uuid == uuid))
+    }
+
+    fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<()> {
+        if !filter.status.contains(&self.kind) {
+            return Ok(());
+        }
+
+        self.load()?;
+        for task in self
+            .tasks
+            .iter()
+            .filter(|task| task.description.contains(&filter.search))
+        {
+            result.push(task.clone());
+        }
+
+        Ok(())
+    }
+
+    fn update(&mut self, task: &Task) -> Result<bool> {
+        if task.status != self.kind {
+            return Ok(false);
+        }
+
+        self.load()?;
+        let current = self
+            .tasks
+            .iter_mut()
+            .find(|element| element.uuid == task.uuid);
+        let Some(current) = current else {
+            return Ok(false);
+        };
+        *current = task.clone();
+
+        self.save()?;
+        Ok(true)
+    }
+
+    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+        self.load()?;
+        let index = self
+            .tasks
+            .iter_mut()
+            .position(|element| &element.uuid == uuid);
+        let Some(index) = index else {
+            return Ok(None);
+        };
+
+        let task = self.tasks.remove(index);
+        self.save()?;
+        Ok(Some(task))
+    }
+
+    fn clear(&mut self) -> Result<()> {
+        self.loaded = true;
+        self.tasks.clear();
+        self.save()?;
+        Ok(())
+    }
+    fn unload(&mut self) {
+        self.loaded = true;
+        self.tasks.clear();
+    }
+}
+
 #[frb(opaque)]
 pub struct TaskStorage {
     path: PathBuf,
-    pending_tasks: Vec<Task>,
-    pending_loaded: bool,
 
-    completed_tasks: Vec<Task>,
-    completed_loaded: bool,
-
-    deleted_tasks: Vec<Task>,
-    deleted_loaded: bool,
+    pending: Storage,
+    completed: Storage,
+    deleted: Storage,
+    waiting: Storage,
+    recurring: Storage,
 }
 
 impl TaskStorage {
     const PENDING_DATA_FILENAME: &'static str = "pending.data";
     const COMPLETE_DATA_FILENAME: &'static str = "complete.data";
     const DELETED_DATA_FILENAME: &'static str = "deleted.data";
+    const WAITING_DATA_FILENAME: &'static str = "waiting.data";
+    const RECURRING_DATA_FILENAME: &'static str = "recurring.data";
 
     #[frb(sync)]
     pub fn new(path: &str) -> Self {
         let path = Path::new(path).join("repository");
         Self {
+            pending: Storage::new(path.join(Self::PENDING_DATA_FILENAME), TaskStatus::Pending),
+            completed: Storage::new(
+                path.join(Self::COMPLETE_DATA_FILENAME),
+                TaskStatus::Complete,
+            ),
+            deleted: Storage::new(path.join(Self::DELETED_DATA_FILENAME), TaskStatus::Deleted),
+            waiting: Storage::new(path.join(Self::WAITING_DATA_FILENAME), TaskStatus::Waiting),
+            recurring: Storage::new(
+                path.join(Self::RECURRING_DATA_FILENAME),
+                TaskStatus::Recurring,
+            ),
             path,
-            pending_tasks: Vec::default(),
-            pending_loaded: false,
-            deleted_tasks: Vec::default(),
-            deleted_loaded: false,
-            completed_tasks: Vec::default(),
-            completed_loaded: false,
         }
     }
 
-    pub fn load_pending(&mut self) -> Result<()> {
-        if self.pending_loaded {
-            return Ok(());
-        }
-
-        let mut tasks = Vec::new();
-
-        let pending_filepath = self.path.join(Self::PENDING_DATA_FILENAME);
-        if !pending_filepath.exists() {
-            return Ok(());
-        }
-
-        let file = File::open(pending_filepath)?;
-        let buf = BufReader::new(file);
-        for line in buf.lines() {
-            let line = line?;
-            if line.is_empty() {
-                continue;
-            }
-            let task = serde_json::from_str(&line)?;
-
-            tasks.push(task);
-        }
-
-        self.pending_tasks = tasks;
-        self.pending_loaded = true;
-        Ok(())
+    fn storage_mut(&mut self) -> [&mut Storage; 5] {
+        [
+            &mut self.pending,
+            &mut self.waiting,
+            &mut self.recurring,
+            &mut self.deleted,
+            &mut self.completed,
+        ]
     }
 
-    pub fn load_deleted(&mut self) -> Result<()> {
-        if self.deleted_loaded {
-            return Ok(());
+    pub fn unload(&mut self) {
+        for storage in self.storage_mut() {
+            storage.unload();
         }
-
-        let mut tasks = Vec::new();
-
-        let deleted_filepath = self.path.join(Self::DELETED_DATA_FILENAME);
-        if !deleted_filepath.exists() {
-            return Ok(());
-        }
-
-        let file = File::open(deleted_filepath)?;
-        let buf = BufReader::new(file);
-        for line in buf.lines() {
-            let line = line?;
-            if line.is_empty() {
-                continue;
-            }
-            let task = serde_json::from_str(&line)?;
-
-            tasks.push(task);
-        }
-
-        self.deleted_tasks = tasks;
-        self.deleted_loaded = true;
-        Ok(())
-    }
-
-    pub fn load_completed(&mut self) -> Result<()> {
-        if self.completed_loaded {
-            return Ok(());
-        }
-
-        let mut tasks = Vec::new();
-
-        let completed_filepath = self.path.join(Self::COMPLETE_DATA_FILENAME);
-        if !completed_filepath.exists() {
-            return Ok(());
-        }
-
-        let file = File::open(completed_filepath)?;
-        let buf = BufReader::new(file);
-        for line in buf.lines() {
-            let line = line?;
-            if line.is_empty() {
-                continue;
-            }
-            let task = serde_json::from_str(&line)?;
-
-            tasks.push(task);
-        }
-
-        self.completed_tasks = tasks;
-        self.completed_loaded = true;
-        Ok(())
-    }
-
-    fn save(&mut self) -> Result<()> {
-        let pending_path = self.path.join(Self::PENDING_DATA_FILENAME);
-        if !pending_path.exists() {
-            self.init_repotitory()?;
-        }
-
-        let mut content = String::new();
-        for task in &self.pending_tasks {
-            content += &serde_json::to_string(task)?;
-            content.push('\n');
-        }
-
-        std::fs::write(pending_path, content)?;
-        Ok(())
     }
 
     pub fn add(&mut self, task: Task) -> Result<()> {
-        let pending_path = self.path.join(Self::PENDING_DATA_FILENAME);
-        if !pending_path.exists() {
+        if !self.path.exists() {
             self.init_repotitory()?;
         }
 
-        let mut file = File::options()
-            .append(true)
-            .create(true)
-            .open(pending_path)?;
-
-        let mut content = serde_json::to_string(&task)?;
-        content.push('\n');
-        file.write_all(content.as_bytes())?;
-
-        self.pending_tasks.push(task);
+        self.pending.append(task)?;
         Ok(())
     }
 
-    pub fn task_by_uuid(&mut self, uuid: Uuid) -> Option<Task> {
-        self.pending_tasks
-            .iter()
-            .find(|task| task.uuid == uuid)
-            .cloned()
+    pub fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+        for storage in self.storage_mut() {
+            let task = storage.get_by_id(uuid)?;
+
+            if let Some(task) = task {
+                return Ok(Some(task.clone()));
+            }
+        }
+        Ok(None)
     }
 
     pub fn tasks_with_filter(&mut self, filter: &Filter) -> anyhow::Result<Vec<Task>> {
         let mut tasks = Vec::new();
-        for status in &filter.status {
-            match *status {
-                TaskStatus::Pending => {
-                    if !self.pending_loaded {
-                        self.load_pending()?;
-                    }
-                    for task in self
-                        .pending_tasks
-                        .iter()
-                        .filter(|task| task.description.contains(&filter.search))
-                    {
-                        tasks.push(task.clone());
-                    }
-                }
-                TaskStatus::Complete => {
-                    if !self.completed_loaded {
-                        self.load_completed()?;
-                    }
-                    for task in self
-                        .completed_tasks
-                        .iter()
-                        .filter(|task| task.description.contains(&filter.search))
-                    {
-                        tasks.push(task.clone());
-                    }
-                }
-                TaskStatus::Deleted => {
-                    if !self.deleted_loaded {
-                        self.load_deleted()?;
-                    }
-                    for task in self
-                        .deleted_tasks
-                        .iter()
-                        .filter(|task| task.description.contains(&filter.search))
-                    {
-                        tasks.push(task.clone());
-                    }
-                }
-                TaskStatus::Waiting | TaskStatus::Recurring => {}
-            }
+        for storage in self.storage_mut() {
+            storage.filter(filter, &mut tasks)?;
         }
 
         Ok(tasks)
     }
 
+    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+        for storage in self.storage_mut() {
+            if let Some(task) = storage.remove(uuid)? {
+                return Ok(Some(task));
+            }
+        }
+        Ok(None)
+    }
+
     pub fn update(&mut self, task: Task) -> Result<bool> {
-        let current = self
-            .pending_tasks
-            .iter_mut()
-            .find(|element| element.uuid == task.uuid);
-        let Some(current) = current else {
-            return Ok(false);
-        };
-        *current = task;
-
-        self.save()?;
-        Ok(true)
+        for storage in self.storage_mut() {
+            if storage.update(&task)? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
-    pub fn complete(&mut self, uuid: Uuid) -> Result<()> {
-        let index = self
-            .pending_tasks
-            .iter()
-            .position(|task| task.uuid == uuid)
-            .with_context(|| format!("No task found with uuid: {uuid}"))?;
+    pub fn change_category(&mut self, task: Task, status: TaskStatus) -> Result<bool> {
+        if task.status == status {
+            return Ok(true);
+        }
 
-        let task = self.pending_tasks.remove(index);
-        self.save()?;
+        let mut found_task = None;
+        for storage in self.storage_mut() {
+            if task.status != storage.kind {
+                continue;
+            }
 
-        let completed_filepath = self.path.join(Self::COMPLETE_DATA_FILENAME);
-        let mut file = File::options()
-            .append(true)
-            .create(true)
-            .open(completed_filepath)?;
+            storage.load()?;
+            let index = storage
+                .tasks
+                .iter()
+                .position(|element| element.uuid == task.uuid);
+            let Some(index) = index else {
+                break;
+            };
 
-        let mut content = serde_json::to_string(&task)?;
-        content.push('\n');
-        file.write_all(content.as_bytes())?;
-        Ok(())
+            found_task = Some(storage.tasks.remove(index));
+
+            storage.save()?;
+        }
+
+        let mut found_task =
+            found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
+
+        found_task.status = status;
+
+        self.storage_mut()[status as usize].append(found_task)?;
+        Ok(false)
     }
 
-    pub fn delete(&mut self, uuid: Uuid) -> Result<()> {
-        let index = self
-            .pending_tasks
-            .iter()
-            .position(|task| task.uuid == uuid)
-            .with_context(|| format!("No task found with uuid: {uuid}"))?;
+    pub fn remove_task(&mut self, task: &Task) -> Result<bool> {
+        let mut found_task = None;
+        for storage in self.storage_mut() {
+            if task.status != storage.kind {
+                continue;
+            }
 
-        let task = self.pending_tasks.remove(index);
-        self.save()?;
+            storage.load()?;
+            let index = storage
+                .tasks
+                .iter()
+                .position(|element| element.uuid == task.uuid);
+            let Some(index) = index else {
+                break;
+            };
 
-        let delete_filepath = self.path.join(Self::DELETED_DATA_FILENAME);
-        let mut file = File::options()
-            .append(true)
-            .create(true)
-            .open(delete_filepath)?;
+            found_task = Some(storage.tasks.remove(index));
 
-        let mut content = serde_json::to_string(&task)?;
-        content.push('\n');
-        file.write_all(content.as_bytes())?;
-        Ok(())
+            storage.save()?;
+        }
+
+        let mut _found_task =
+            found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
+        Ok(false)
     }
 
-    pub fn tasks(&self) -> Vec<Task> {
-        self.pending_tasks.clone()
-    }
-    pub fn deleted_tasks(&self) -> Vec<Task> {
-        self.deleted_tasks.clone()
-    }
-    pub fn completed_tasks(&self) -> Vec<Task> {
-        self.deleted_tasks.clone()
+    pub fn tasks(&mut self) -> Result<Vec<Task>> {
+        self.tasks_with_filter(&Filter {
+            name: "default".to_owned(),
+            status: HashSet::from_iter([TaskStatus::Pending]),
+            uuid: Uuid::new_v4(),
+            search: String::new(),
+        })
     }
 
     pub fn sync(&mut self) -> Result<(), ConnectionError> {
@@ -327,9 +362,12 @@ impl TaskStorage {
         }
     }
 
-    pub fn clear_contents(&mut self) {
-        self.pending_tasks.clear();
-        std::fs::remove_dir_all(&self.path).unwrap();
+    pub fn clear(&mut self) -> Result<()> {
+        for storage in self.storage_mut() {
+            storage.clear()?;
+        }
+        std::fs::remove_dir_all(&self.path)?;
+        Ok(())
     }
 
     pub fn clone_repository(&mut self) -> Result<(), ConnectionError> {
@@ -385,9 +423,7 @@ impl TaskStorage {
             settings.repository.origin
         );
 
-        self.pending_loaded = false;
-        self.deleted_loaded = false;
-        self.completed_loaded = false;
+        self.unload();
 
         Ok(())
     }

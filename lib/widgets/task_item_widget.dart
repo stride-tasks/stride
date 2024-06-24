@@ -7,8 +7,12 @@ class TaskItem extends StatelessWidget {
 
   final Future<bool> Function()? onSwipeRight;
   final Color swipeRightColor;
+  final Icon swipeRightIcon;
+  final String? swipeRightText;
   final Future<bool> Function()? onSwipeLeft;
   final Color swipeLeftColor;
+  final Icon swipeLeftIcon;
+  final String? swipeLeftText;
   final Function()? onLongPress;
 
   const TaskItem({
@@ -16,8 +20,12 @@ class TaskItem extends StatelessWidget {
     required this.task,
     this.onSwipeRight,
     this.swipeRightColor = Colors.greenAccent,
+    this.swipeRightIcon = const Icon(Icons.check),
+    this.swipeRightText,
     this.onSwipeLeft,
     this.swipeLeftColor = Colors.redAccent,
+    this.swipeLeftIcon = const Icon(Icons.delete),
+    this.swipeLeftText,
     this.onLongPress,
   });
 
@@ -72,9 +80,9 @@ class TaskItem extends StatelessWidget {
       subtitle: subtitle,
     );
 
-    if (onSwipeLeft != null && onSwipeRight != null) {
+    if (onSwipeLeft != null || onSwipeRight != null) {
       widget = Dismissible(
-        key: Key("${task.uuid}left"),
+        key: Key("${task.uuid}"),
         direction: switch ((onSwipeLeft != null, onSwipeRight != null)) {
           (true, true) => DismissDirection.horizontal,
           (true, false) => DismissDirection.endToStart,
@@ -101,17 +109,16 @@ class TaskItem extends StatelessWidget {
     return Container(
       color: swipeRightColor,
       alignment: Alignment.centerLeft,
-      child: const Align(
+      child: Align(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            SizedBox(
-              width: 20,
-            ),
-            Icon(Icons.check, color: Colors.white),
+            const SizedBox(width: 20),
+            swipeRightIcon,
+            const SizedBox(width: 5),
             Text(
-              " Complete",
-              style: TextStyle(
+              swipeRightText == null ? "Complete" : swipeRightText!,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
@@ -127,22 +134,21 @@ class TaskItem extends StatelessWidget {
     return Container(
       color: swipeLeftColor,
       alignment: Alignment.centerRight,
-      child: const Align(
+      child: Align(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
-            Icon(Icons.delete, color: Colors.white),
+            swipeLeftIcon,
+            const SizedBox(width: 5),
             Text(
-              " Delete",
-              style: TextStyle(
+              swipeLeftText == null ? "Delete" : swipeLeftText!,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.right,
             ),
-            SizedBox(
-              width: 20,
-            ),
+            const SizedBox(width: 20),
           ],
         ),
       ),

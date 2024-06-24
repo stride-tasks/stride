@@ -20,5 +20,7 @@ fn main() -> anyhow::Result<()> {
     let mut config = Config::from_pubspec_yaml(&pubspec_filepath)?.unwrap();
     config.base_dir = Some(pubspec_directory);
 
-    codegen::generate(config, Default::default())
+    codegen::generate(config, Default::default())?;
+
+    Ok(())
 }

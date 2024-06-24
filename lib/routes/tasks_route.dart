@@ -4,6 +4,7 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/api/filter.dart';
+import 'package:stride/src/rust/task.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/task_item_widget.dart';
 
@@ -41,53 +42,7 @@ class _TasksRouteState extends State<TasksRoute> {
 
                     final task = state.tasks[index];
                     return Card(
-                      child: TaskItem(
-                        task: task,
-                        onSwipeRight: () async {
-                          context
-                              .read<TaskBloc>()
-                              .add(TaskRemoveEvent(task: task));
-                          return true;
-                        },
-                        onSwipeLeft: () async {
-                          bool result = true;
-                          await showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              content: SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.90,
-                                child: const Text(
-                                  "Are you sure you want to delete this task?",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              actions: [
-                                IconButton(
-                                  icon: const Icon(Icons.cancel),
-                                  onPressed: () {
-                                    result = false;
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.check),
-                                  onPressed: () {
-                                    context.read<TaskBloc>().add(
-                                        TaskCompleteEvent(uuid: task.uuid));
-
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                          return result;
-                        },
-                        onLongPress: () {
-                          Navigator.of(context)
-                              .pushNamed(Routes.taskEdit, arguments: task);
-                        },
-                      ),
+                      child: _taskItem(task, context),
                     );
                   },
                 ),
@@ -103,6 +58,80 @@ class _TasksRouteState extends State<TasksRoute> {
         },
         child: const Icon(Icons.add_circle, size: 50),
       ),
+    );
+  }
+
+  TaskItem _taskItem(Task task, BuildContext context) {
+    onSwipeRight() async {
+      var status = TaskStatus.complete;
+      if (task.status == TaskStatus.complete ||
+          task.status == TaskStatus.deleted) {
+        status = TaskStatus.pending;
+      }
+      context
+          .read<TaskBloc>()
+          .add(TaskChangeStatusEvent(task: task, status: status));
+      return true;
+    }
+
+    onSwipeLeft() async {
+      final additionalMessage =
+          task.status == TaskStatus.deleted ? " forever" : "";
+      bool result = true;
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.90,
+            child: Text(
+              "Are you sure you want to delete this task$additionalMessage?",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.cancel),
+              onPressed: () {
+                result = false;
+                Navigator.pop(context);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: () {
+                context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
+
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      );
+      return result;
+    }
+
+    return TaskItem(
+      task: task,
+      onSwipeRight: onSwipeRight,
+      swipeRightIcon: (task.status == TaskStatus.complete ||
+              task.status == TaskStatus.deleted)
+          ? const Icon(Icons.calendar_month, color: Colors.white)
+          : const Icon(Icons.check, color: Colors.white),
+      swipeRightColor: (task.status == TaskStatus.complete ||
+              task.status == TaskStatus.deleted)
+          ? Colors.purpleAccent
+          : Colors.greenAccent,
+      swipeRightText: (task.status == TaskStatus.complete ||
+              task.status == TaskStatus.deleted)
+          ? "Pending"
+          : null,
+      onSwipeLeft: onSwipeLeft,
+      swipeLeftIcon: task.status == TaskStatus.deleted
+          ? const Icon(Icons.delete_forever, color: Colors.white)
+          : const Icon(Icons.delete, color: Colors.white),
+      onLongPress: () {
+        Navigator.of(context).pushNamed(Routes.taskEdit, arguments: task);
+      },
     );
   }
 

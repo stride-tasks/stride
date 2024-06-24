@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/task.dart';
-import 'package:uuid/uuid.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -24,9 +23,10 @@ final class TaskRemoveAllEvent extends TaskEvent {
   TaskRemoveAllEvent();
 }
 
-final class TaskCompleteEvent extends TaskEvent {
-  final UuidValue uuid;
-  TaskCompleteEvent({required this.uuid});
+final class TaskChangeStatusEvent extends TaskEvent {
+  final Task task;
+  final TaskStatus status;
+  TaskChangeStatusEvent({required this.task, required this.status});
 }
 
 final class TaskUpdateEvent extends TaskEvent {
@@ -52,46 +52,62 @@ class TaskState {
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskStorage repository;
+  Filter? filter;
+
+  Future<List<Task>> _tasks() async {
+    if (filter == null) {
+      final tasks = await repository.tasks();
+      return tasks;
+    } else {
+      final tasks = await repository.tasksWithFilter(filter: filter!);
+      return tasks;
+    }
+  }
 
   TaskBloc({required this.repository}) : super(const TaskState(tasks: [])) {
     on<TaskFetchEvent>((event, emit) async {
-      await repository.loadPending();
       final tasks = await repository.tasks();
       emit(TaskState(tasks: tasks));
     });
 
     on<TaskAddEvent>((event, emit) async {
       await repository.add(task: event.task);
-      final tasks = await repository.tasks();
-      emit(TaskState(tasks: tasks));
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskRemoveEvent>((event, emit) async {
-      await repository.delete(uuid: event.task.uuid);
-      final tasks = await repository.tasks();
-      emit(TaskState(tasks: tasks));
+      if (event.task.status == TaskStatus.deleted) {
+        await repository.removeTask(task: event.task);
+      } else {
+        await repository.changeCategory(
+          task: event.task,
+          status: TaskStatus.deleted,
+        );
+      }
+
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskRemoveAllEvent>((event, emit) async {
-      await repository.clearContents();
-      final tasks = await repository.tasks();
-      emit(TaskState(tasks: tasks));
+      await repository.clear();
+      emit(TaskState(tasks: await _tasks()));
     });
 
-    on<TaskCompleteEvent>((event, emit) async {
-      await repository.complete(uuid: event.uuid);
-      final tasks = await repository.tasks();
-      emit(TaskState(tasks: tasks));
+    on<TaskChangeStatusEvent>((event, emit) async {
+      await repository.changeCategory(
+        task: event.task,
+        status: event.status,
+      );
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskUpdateEvent>((event, emit) async {
       await repository.update(task: event.task);
-      final tasks = await repository.tasks();
-      emit(TaskState(tasks: tasks));
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskSyncEvent>((event, emit) async {
-      final tasksOld = await repository.tasks();
+      final tasksOld = await _tasks();
       emit(TaskState(tasks: tasksOld, syncing: true));
 
       try {
@@ -101,18 +117,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         return;
       }
 
-      final tasksNew = await repository.tasks();
-      emit(TaskState(tasks: tasksNew));
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskFilterEvent>((event, emit) async {
-      if (event.filter == null) {
-        final tasks = await repository.tasks();
-        emit(TaskState(tasks: tasks));
-      } else {
-        final tasks = await repository.tasksWithFilter(filter: event.filter!);
-        emit(TaskState(tasks: tasks));
-      }
+      filter = event.filter;
+      emit(TaskState(tasks: await _tasks()));
     });
   }
 }

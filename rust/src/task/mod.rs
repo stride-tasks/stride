@@ -15,17 +15,18 @@ pub type Project = String;
 pub type Priority = String;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[repr(u8)]
 pub enum TaskStatus {
     #[serde(rename = "pending")]
     Pending,
-    #[serde(rename = "complete")]
-    Complete,
-    #[serde(rename = "deleted")]
-    Deleted,
-    #[serde(rename = "recurring")]
-    Recurring,
     #[serde(rename = "waiting")]
     Waiting,
+    #[serde(rename = "recurring")]
+    Recurring,
+    #[serde(rename = "deleted")]
+    Deleted,
+    #[serde(rename = "complete")]
+    Complete,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Builder)]
