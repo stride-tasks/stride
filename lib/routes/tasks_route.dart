@@ -78,12 +78,13 @@ class _TasksRouteState extends State<TasksRoute> {
     onSwipeLeft() async {
       final additionalMessage =
           task.status == TaskStatus.deleted ? " forever" : "";
-      bool result = false;
-      await showAlertDialog(
+
+      return await showAlertDialog(
         context: context,
         content: Text(
           "Are you sure you want to delete this task$additionalMessage?",
           style: const TextStyle(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
         onConfirm: (context) async {
           context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
@@ -91,7 +92,6 @@ class _TasksRouteState extends State<TasksRoute> {
           return true;
         },
       );
-      return result;
     }
 
     return TaskItem(

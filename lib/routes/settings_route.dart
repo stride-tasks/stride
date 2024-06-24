@@ -7,6 +7,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class SettingsRoute extends StatelessWidget {
@@ -126,8 +127,20 @@ class SettingsRoute extends StatelessWidget {
                   SettingsTile(
                     leading: const Icon(Icons.delete),
                     title: const Text("Remove Repository"),
-                    onTap: (context) {
-                      context.read<TaskBloc>().add(TaskRemoveAllEvent());
+                    onTap: (context) async {
+                      await showAlertDialog(
+                        context: context,
+                        content: const Text(
+                          "Are you sure you want to delete the (local) repository?",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        onConfirm: (context) async {
+                          context.read<TaskBloc>().add(TaskRemoveAllEvent());
+                          Navigator.of(context).pop();
+                          return true;
+                        },
+                      );
                     },
                   ),
                 ],

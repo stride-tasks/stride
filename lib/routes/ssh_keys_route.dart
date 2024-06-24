@@ -4,6 +4,7 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/api/logging.dart';
 import 'package:stride/src/rust/api/settings.dart';
+import 'package:stride/utils/functions.dart';
 
 class SshKeysRoute extends StatelessWidget {
   final void Function(SshKey key)? onTap;
@@ -45,28 +46,7 @@ class SshKeysRoute extends StatelessWidget {
                   itemCount: keys.length,
                   itemBuilder: (context, index) {
                     final key = keys[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(key.public),
-                        trailing: !hasDelete
-                            ? null
-                            : IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  context.read<SettingsBloc>().add(
-                                        SettingsRemoveSshKeyEvent(
-                                          uuid: key.uuid,
-                                        ),
-                                      );
-                                },
-                              ),
-                        onTap: onTap == null
-                            ? null
-                            : () {
-                                onTap!(key);
-                              },
-                      ),
-                    );
+                    return Card(child: _listItem(context, key));
                   },
                 ),
               ],
@@ -80,6 +60,44 @@ class SshKeysRoute extends StatelessWidget {
           Navigator.of(context).pushNamed(Routes.sshKeysAdd);
         },
       ),
+    );
+  }
+
+  ListTile _listItem(BuildContext context, SshKey key) {
+    return ListTile(
+      title: Text(key.public),
+      trailing: !hasDelete
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                await showAlertDialog(
+                  context: context,
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Are you sure you want to delete the ssh key? (action is irreversible)",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 5),
+                      Text(key.public),
+                    ],
+                  ),
+                  onConfirm: (context) {
+                    context
+                        .read<SettingsBloc>()
+                        .add(SettingsRemoveSshKeyEvent(uuid: key.uuid));
+                    Navigator.of(context).pop();
+
+                    Logger.trace(message: "SSH Key deleted");
+                    return Future.value(true);
+                  },
+                );
+              },
+            ),
+      onTap: onTap == null ? null : () => onTap!(key),
     );
   }
 }

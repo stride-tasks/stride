@@ -221,53 +221,38 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
           iconColor: WidgetStateProperty.all(Colors.redAccent),
         ),
         onPressed: () async {
-          await showDialog(
+          await showAlertDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              content: Text(
-                "Are you sure you want to delete ${filter.name} filter?",
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.cancel),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: () {
-                    var filters = state.settings.filters.toList();
-                    filters.removeWhere(
-                      (element) => element.uuid == filter.uuid,
-                    );
-
-                    if (state.settings.selectedFilter
-                        case FilterSelection_Predefined(:final uuid)) {
-                      if (uuid == filter.uuid) {
-                        context
-                            .read<TaskBloc>()
-                            .add(TaskFilterEvent(filter: null));
-                        context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                              settings: state.settings.copyWith(
-                                selectedFilter: null,
-                              ),
-                            ));
-                      }
-                    }
-
-                    context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                          settings: state.settings.copyWith(
-                            filters: filters,
-                          ),
-                        ));
-
-                    // Pop to first route.
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                ),
-              ],
+            content: Text(
+              "Are you sure you want to delete ${filter.name} filter?",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
+            onConfirm: (context) {
+              var filters = state.settings.filters.toList();
+              filters.removeWhere(
+                (element) => element.uuid == filter.uuid,
+              );
+
+              if (state.settings.selectedFilter
+                  case FilterSelection_Predefined(:final uuid)) {
+                if (uuid == filter.uuid) {
+                  context.read<TaskBloc>().add(TaskFilterEvent(filter: null));
+                  context.read<SettingsBloc>().add(SettingsUpdateEvent(
+                      settings: state.settings.copyWith(selectedFilter: null)));
+                }
+              }
+
+              context.read<SettingsBloc>().add(SettingsUpdateEvent(
+                    settings: state.settings.copyWith(
+                      filters: filters,
+                    ),
+                  ));
+
+              // Pop to first route.
+              Navigator.popUntil(context, (route) => route.isFirst);
+              return Future.value(true);
+            },
           );
         },
       )

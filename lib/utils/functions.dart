@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 Future<DateTime?> showPickDateTime({required BuildContext context}) async {
   final firstDate = DateTime.now().subtract(const Duration(days: 365 * 100));
@@ -42,6 +41,7 @@ Future<bool> showAlertDialog({
         width: MediaQuery.of(context).size.width * 0.95,
         child: content,
       ),
+      actionsAlignment: MainAxisAlignment.center,
       actions: [
         IconButton(
           icon: const Icon(Icons.cancel),
