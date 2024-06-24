@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, default};
 
 use chrono::NaiveDateTime;
 
@@ -14,9 +14,10 @@ pub type Tag = String;
 pub type Project = String;
 pub type Priority = String;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum TaskStatus {
+    #[default]
     #[serde(rename = "pending")]
     Pending,
     #[serde(rename = "waiting")]
@@ -39,6 +40,7 @@ pub struct Task {
     pub entry: Date,
 
     #[builder(default = "TaskStatus::Pending")]
+    #[serde(skip)]
     pub status: TaskStatus,
 
     pub description: String,

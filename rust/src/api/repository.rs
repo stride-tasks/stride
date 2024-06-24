@@ -78,7 +78,8 @@ impl Storage {
             if line.is_empty() {
                 continue;
             }
-            let task = serde_json::from_str(&line)?;
+            let mut task: Task = serde_json::from_str(&line)?;
+            task.status = self.kind;
 
             tasks.push(task);
         }
