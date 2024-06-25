@@ -26,7 +26,6 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _CustomAppBarState extends State<CustomAppBar> {
   Future<void>? sync;
-  bool dialogDisplayed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -38,51 +37,50 @@ class _CustomAppBarState extends State<CustomAppBar> {
           leading: widget.leading,
           actions: [
             BlocListener<TaskBloc, TaskState>(
+              listenWhen: (previous, current) =>
+                  current.error is ConnectionError_UnknownHost,
               listener: (context, taskState) async {
-                if (taskState.error
-                    case ConnectionError_UnknownHost(
-                      :final hostname,
-                      :final keyType,
-                      :final hostKey
-                    )) {
-                  await showAlertDialog(
-                    context: context,
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Accept Unknown Host: $hostname",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "Host Key: ${keyType.name} $hostKey",
-                          softWrap: true,
-                        ),
-                      ],
-                    ),
-                    onConfirm: (context) async {
-                      context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              settings: state.settings.copyWith(
-                                knownHosts: state.settings.knownHosts.copyWith(
-                                  hosts:
-                                      state.settings.knownHosts.hosts.toList()
-                                        ..add(
-                                          Host(
-                                            hostname: hostname,
-                                            remoteKeyType: keyType,
-                                            remoteHostKey: hostKey,
-                                          ),
-                                        ),
-                                ),
+                final ConnectionError_UnknownHost(
+                  :hostname,
+                  :keyType,
+                  :hostKey
+                ) = taskState.error as ConnectionError_UnknownHost;
+                await showAlertDialog(
+                  context: context,
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Accept Unknown Host: $hostname",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "Host Key: ${keyType.name} $hostKey",
+                        softWrap: true,
+                      ),
+                    ],
+                  ),
+                  onConfirm: (context) async {
+                    context.read<SettingsBloc>().add(
+                          SettingsUpdateEvent(
+                            settings: state.settings.copyWith(
+                              knownHosts: state.settings.knownHosts.copyWith(
+                                hosts: state.settings.knownHosts.hosts.toList()
+                                  ..add(
+                                    Host(
+                                      hostname: hostname,
+                                      remoteKeyType: keyType,
+                                      remoteHostKey: hostKey,
+                                    ),
+                                  ),
                               ),
                             ),
-                          );
-                      Navigator.pop(context);
-                      return true;
-                    },
-                  );
-                }
+                          ),
+                        );
+                    Navigator.pop(context);
+                    return true;
+                  },
+                );
               },
               child: InkWell(
                 child: Ink(
