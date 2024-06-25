@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
@@ -34,18 +36,31 @@ class _TasksRouteState extends State<TasksRoute> {
           child: Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  itemCount: state.tasks.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == state.tasks.length) {
-                      return const SizedBox(height: 50);
-                    }
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    dragDevices: {
+                      PointerDeviceKind.touch,
+                      PointerDeviceKind.mouse,
+                      PointerDeviceKind.trackpad,
+                      PointerDeviceKind.stylus,
+                    },
+                  ),
+                  child: RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: ListView.builder(
+                      itemCount: state.tasks.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == state.tasks.length) {
+                          return const SizedBox(height: 50);
+                        }
 
-                    final task = state.tasks[index];
-                    return Card(
-                      child: _taskItem(task, context),
-                    );
-                  },
+                        final task = state.tasks[index];
+                        return Card(
+                          child: _taskItem(task, context),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -60,6 +75,16 @@ class _TasksRouteState extends State<TasksRoute> {
         child: const Icon(Icons.add_circle, size: 50),
       ),
     );
+  }
+
+  Future<void> _onRefresh() async {
+    var stream = context.read<TaskBloc>().stream.asBroadcastStream();
+    context.read<TaskBloc>().add(TaskSyncEvent());
+    await for (final state in stream) {
+      if (!state.syncing) {
+        break;
+      }
+    }
   }
 
   TaskItem _taskItem(Task task, BuildContext context) {
