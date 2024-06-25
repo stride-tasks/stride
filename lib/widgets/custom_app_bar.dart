@@ -6,6 +6,7 @@ import 'package:stride/routes/routes.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
+import 'package:stride/widgets/infinite_rotation_animation.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
@@ -108,7 +109,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
               icon: BlocBuilder<TaskBloc, TaskState>(
                 builder: (context, state) {
                   if (state.syncing) {
-                    return const CircularProgressIndicator();
+                    return const InfiniteRotationAnimation(
+                        child: Icon(Icons.sync));
                   }
                   return state.error == null
                       ? const Icon(Icons.sync)
