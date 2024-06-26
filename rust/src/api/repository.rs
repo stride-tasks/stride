@@ -245,6 +245,7 @@ impl TaskStorage {
         }
 
         self.pending.append(task)?;
+        self.add_and_commit()?;
         Ok(())
     }
 
@@ -317,6 +318,7 @@ impl TaskStorage {
         found_task.status = status;
 
         self.storage_mut()[status as usize].append(found_task)?;
+        self.add_and_commit()?;
         Ok(false)
     }
 
@@ -343,6 +345,8 @@ impl TaskStorage {
 
         let mut _found_task =
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
+
+        self.add_and_commit()?;
         Ok(false)
     }
 
@@ -357,7 +361,10 @@ impl TaskStorage {
 
     pub fn sync(&mut self) -> Result<(), ConnectionError> {
         if self.path.exists() {
-            self.add_and_commit().unwrap();
+            self.add_and_commit();
+            self.push().unwrap();
+
+            log::info!("Task sync finished!");
             Ok(())
         } else {
             self.clone_repository()
@@ -485,7 +492,7 @@ impl TaskStorage {
         let repository = Repository::open(&self.path)?;
 
         if repository.statuses(None)?.is_empty() {
-            println!("Skipping sync, no changes done");
+            log::trace!("Skipping sync, no changes done");
             return Ok(());
         }
 
@@ -517,6 +524,14 @@ impl TaskStorage {
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();
         repository.set_head(branch_ref_name)?;
+
+        Result::Ok(())
+    }
+
+    pub fn push(&self) -> anyhow::Result<()> {
+        let settings = Settings::get();
+
+        let repository = Repository::open(&self.path)?;
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
             return Err(ConnectionError::NoSshKeysProvided.into());
@@ -567,6 +582,11 @@ impl TaskStorage {
                 .into()),
             };
         }
+
+        let branch =
+            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let mut branch_ref = branch.into_reference();
+        let branch_ref_name = branch_ref.name().unwrap();
         let connection = connection?.remote().push(&[branch_ref_name], None);
 
         if let Err(error) = &connection {
@@ -631,61 +651,6 @@ pub enum ConnectionError {
 
     #[error("{message}")]
     Other { message: String },
-}
-
-pub fn test_connection(
-    url: String,
-    public_key: String,
-    private_key: String,
-) -> Result<(), ConnectionError> {
-    let settings = Settings::get();
-
-    let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-        return Err(ConnectionError::NoSshKeysProvided);
-    };
-    let ssh_key = settings
-        .ssh_key(ssh_key_uuid)
-        .expect("there should be a key with the specified uuid");
-
-    let mut callbacks = RemoteCallbacks::new();
-    let callback_error = with_authentication(
-        ssh_key.clone(),
-        settings.known_hosts.clone(),
-        &mut callbacks,
-    );
-
-    let mut remote =
-        git2::Remote::create_detached(url).map_err(|error| ConnectionError::Other {
-            message: error.to_string(),
-        })?;
-    let connection = remote
-        .connect_auth(git2::Direction::Fetch, Some(callbacks), None)
-        .map(|_| ());
-
-    if let Err(error) = &connection {
-        return match error.class() {
-            ErrorClass::Ssh => Err(ConnectionError::Authentication {
-                message: error.message().to_owned(),
-            }),
-            ErrorClass::Net => Err(ConnectionError::Network {
-                message: error.message().to_owned(),
-            }),
-            ErrorClass::Callback => {
-                let mut callback_error = callback_error.borrow_mut();
-                if let Some(callback_error) = callback_error.take() {
-                    return Err(callback_error.clone());
-                }
-                Err(ConnectionError::Other {
-                    message: error.message().to_owned(),
-                })
-            }
-            _ => Err(ConnectionError::Other {
-                message: error.message().to_owned(),
-            }),
-        };
-    }
-
-    Result::Ok(())
 }
 
 fn with_authentication(
