@@ -22,8 +22,8 @@ use crate::{
 };
 
 use git2::{
-    CertificateCheckStatus, Cred, ErrorClass, ErrorCode, Mempack, RemoteCallbacks, Repository,
-    Signature,
+    CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions, Mempack, RemoteCallbacks,
+    Repository, Signature,
 };
 
 use super::{
@@ -365,6 +365,12 @@ impl TaskStorage {
     pub fn sync(&mut self) -> Result<(), ConnectionError> {
         if self.path.exists() {
             self.add_and_commit();
+
+            if self.pull().unwrap() {
+                log::info!("Pulled tasks");
+                self.unload();
+            }
+
             self.push().unwrap();
 
             log::info!("Task sync finished!");
@@ -531,21 +537,131 @@ impl TaskStorage {
         Result::Ok(true)
     }
 
-    pub fn push(&self) -> anyhow::Result<()> {
+    fn pull(&self) -> anyhow::Result<bool> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.path)?;
 
-        // let local = repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
-        // let remote = local.upstream()?;
-        // let (ahead, behind) = repository.graph_ahead_behind(
-        //     local.into_reference().peel_to_commit()?.id(),
-        //     remote.into_reference().peel_to_commit()?.id(),
-        // )?;
+        let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
+            return Err(ConnectionError::NoSshKeysProvided.into());
+        };
+        let ssh_key = settings
+            .ssh_key(ssh_key_uuid)
+            .expect("there should be a key with the specified uuid");
+        let mut callbacks = RemoteCallbacks::new();
+        let callback_error = with_authentication(
+            ssh_key.clone(),
+            settings.known_hosts.clone(),
+            &mut callbacks,
+        );
+        callbacks.push_update_reference(|name, status| {
+            println!("{name}: {status:?}");
+            Result::Ok(())
+        });
 
-        // if behind == 0 && ahead == 0 {
-        //     return Ok(());
-        // }
+        let _ = repository.remote("origin", &settings.repository.origin);
+        let _ = repository.remote_set_url("origin", &settings.repository.origin);
+
+        let mut origin = repository.find_remote("origin")?;
+        let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
+
+        if let Err(error) = &connection {
+            return match error.class() {
+                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Net => Err(ConnectionError::Network {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Callback => {
+                    let mut callback_error = callback_error.borrow_mut();
+                    if let Some(callback_error) = callback_error.take() {
+                        return Err(callback_error.clone().into());
+                    }
+                    Err(ConnectionError::Other {
+                        message: error.message().to_owned(),
+                    }
+                    .into())
+                }
+                _ => Err(ConnectionError::Other {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+            };
+        }
+
+        let branch =
+            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let mut branch_ref = branch.into_reference();
+        let branch_ref_name = branch_ref.name().unwrap();
+        let mut fetch_options = FetchOptions::new();
+        fetch_options.prune(git2::FetchPrune::On);
+        fetch_options.download_tags(git2::AutotagOption::All);
+        let connection =
+            connection?
+                .remote()
+                .fetch(&[branch_ref_name], Some(&mut fetch_options), None);
+
+        if let Err(error) = &connection {
+            return match error.class() {
+                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Net => Err(ConnectionError::Network {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+                ErrorClass::Callback => {
+                    let mut callback_error = callback_error.borrow_mut();
+                    if let Some(callback_error) = callback_error.take() {
+                        return Err(callback_error.clone().into());
+                    }
+                    Err(ConnectionError::Other {
+                        message: error.message().to_owned(),
+                    }
+                    .into())
+                }
+                _ => Err(ConnectionError::Other {
+                    message: error.message().to_owned(),
+                }
+                .into()),
+            };
+        }
+
+        let local = repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let remote = local.upstream()?;
+        let (ahead, behind) = repository.graph_ahead_behind(
+            local.into_reference().peel_to_commit()?.id(),
+            remote.into_reference().peel_to_commit()?.id(),
+        )?;
+
+        if behind == 0 {
+            return Ok(false);
+        }
+
+        if ahead != 0 {
+            log::error!("Cannot handle merge conflicts, not yet implemented");
+            return Ok(false);
+        }
+
+        let fetch_head = repository.find_reference("FETCH_HEAD")?;
+        let fetch_commit = repository.reference_to_annotated_commit(&fetch_head)?;
+
+        let remote_name = "origin";
+        let remote_branch = &settings.repository.branch;
+        let mut remote = repository.find_remote(remote_name)?;
+        do_merge(&repository, remote_branch, fetch_commit)?;
+
+        Result::Ok(true)
+    }
+
+    pub fn push(&self) -> anyhow::Result<()> {
+        let settings = Settings::get();
+
+        let repository = Repository::open(&self.path)?;
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
             return Err(ConnectionError::NoSshKeysProvided.into());
@@ -758,4 +874,75 @@ fn with_authentication(
     });
 
     error
+}
+
+fn fast_forward(
+    repo: &Repository,
+    lb: &mut git2::Reference,
+    rc: &git2::AnnotatedCommit,
+) -> Result<(), git2::Error> {
+    let name = match lb.name() {
+        Some(s) => s.to_string(),
+        None => String::from_utf8_lossy(lb.name_bytes()).to_string(),
+    };
+    let msg = format!("Fast-Forward: Setting {} to id: {}", name, rc.id());
+    log::info!("{}", msg);
+
+    lb.set_target(rc.id(), &msg)?;
+    repo.set_head(&name)?;
+    repo.checkout_head(Some(
+        git2::build::CheckoutBuilder::default()
+            // For some reason the force is required to make the working directory actually get updated
+            // I suspect we should be adding some logic to handle dirty working directory states
+            // but this is just an example so maybe not.
+            .force(),
+    ))?;
+    Ok(())
+}
+
+fn do_merge<'a>(
+    repo: &'a Repository,
+    remote_branch: &str,
+    fetch_commit: git2::AnnotatedCommit<'a>,
+) -> Result<bool, git2::Error> {
+    // 1. do a merge analysis
+    let (analysis, _) = repo.merge_analysis(&[&fetch_commit])?;
+
+    // 2. Do the appropriate merge
+    if !analysis.is_fast_forward() {
+        return Ok(false);
+    }
+
+    if analysis.is_up_to_date() {
+        return Ok(false);
+    }
+
+    log::trace!("Doing a fast forward");
+    // do a fast forward
+    let refname = format!("refs/heads/{}", remote_branch);
+    match repo.find_reference(&refname) {
+        Ok(mut r) => {
+            fast_forward(repo, &mut r, &fetch_commit)?;
+        }
+        Err(_) => {
+            // The branch doesn't exist so just set the reference to the
+            // commit directly. Usually this is because you are pulling
+            // into an empty repository.
+            repo.reference(
+                &refname,
+                fetch_commit.id(),
+                true,
+                &format!("Setting {} to {}", remote_branch, fetch_commit.id()),
+            )?;
+            repo.set_head(&refname)?;
+            repo.checkout_head(Some(
+                git2::build::CheckoutBuilder::default()
+                    .allow_conflicts(true)
+                    .conflict_style_merge(true)
+                    .force(),
+            ))?;
+        }
+    };
+
+    Ok(true)
 }
