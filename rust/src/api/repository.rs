@@ -486,14 +486,14 @@ impl TaskStorage {
         Result::Ok(())
     }
 
-    pub fn add_and_commit(&self) -> anyhow::Result<()> {
+    pub fn add_and_commit(&self) -> anyhow::Result<bool> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.path)?;
 
         if repository.statuses(None)?.is_empty() {
             log::trace!("Skipping sync, no changes done");
-            return Ok(());
+            return Ok(false);
         }
 
         let mut index = repository.index()?;
@@ -525,13 +525,24 @@ impl TaskStorage {
         let branch_ref_name = branch_ref.name().unwrap();
         repository.set_head(branch_ref_name)?;
 
-        Result::Ok(())
+        Result::Ok(true)
     }
 
     pub fn push(&self) -> anyhow::Result<()> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.path)?;
+
+        // let local = repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        // let remote = local.upstream()?;
+        // let (ahead, behind) = repository.graph_ahead_behind(
+        //     local.into_reference().peel_to_commit()?.id(),
+        //     remote.into_reference().peel_to_commit()?.id(),
+        // )?;
+
+        // if behind == 0 && ahead == 0 {
+        //     return Ok(());
+        // }
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
             return Err(ConnectionError::NoSshKeysProvided.into());
@@ -615,8 +626,6 @@ impl TaskStorage {
                 .into()),
             };
         }
-
-        log::info!("Task sync finished!");
 
         Result::Ok(())
     }
