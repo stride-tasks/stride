@@ -10,6 +10,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use base64::Engine;
+use chrono::NaiveDateTime;
 use flutter_rust_bridge::frb;
 use uuid::Uuid;
 
@@ -17,7 +18,7 @@ use crate::{
     api::{paths::application_support_path, settings::Settings},
     git::known_hosts::{self, HostKeyType, KnownHosts, KnownHostsError},
     repository,
-    task::{Task, TaskBuilder, TaskStatus},
+    task::{Date, Task, TaskBuilder, TaskStatus},
 };
 
 use git2::{
@@ -154,6 +155,7 @@ impl Storage {
             return Ok(false);
         };
         *current = task.clone();
+        current.modified = Some(Date::from(chrono::Utc::now().naive_utc()));
 
         self.save()?;
         Ok(true)
@@ -316,6 +318,7 @@ impl TaskStorage {
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
         found_task.status = status;
+        found_task.modified = Some(Date::from(chrono::Utc::now().naive_utc()));
 
         self.storage_mut()[status as usize].append(found_task)?;
         self.add_and_commit()?;
