@@ -1796,6 +1796,7 @@ impl SseDecode for crate::api::settings::Settings {
         let mut var_keys = <Vec<crate::api::settings::SshKey>>::sse_decode(deserializer);
         let mut var_knownHosts = <crate::git::known_hosts::KnownHosts>::sse_decode(deserializer);
         let mut var_repository = <crate::api::settings::Repository>::sse_decode(deserializer);
+        let mut var_periodicSync = <bool>::sse_decode(deserializer);
         let mut var_filters = <Vec<crate::api::filter::Filter>>::sse_decode(deserializer);
         let mut var_selectedFilter =
             <Option<crate::api::filter::FilterSelection>>::sse_decode(deserializer);
@@ -1804,6 +1805,7 @@ impl SseDecode for crate::api::settings::Settings {
             keys: var_keys,
             known_hosts: var_knownHosts,
             repository: var_repository,
+            periodic_sync: var_periodicSync,
             filters: var_filters,
             selected_filter: var_selectedFilter,
         };
@@ -2270,6 +2272,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Settings {
             self.keys.into_into_dart().into_dart(),
             self.known_hosts.into_into_dart().into_dart(),
             self.repository.into_into_dart().into_dart(),
+            self.periodic_sync.into_into_dart().into_dart(),
             self.filters.into_into_dart().into_dart(),
             self.selected_filter.into_into_dart().into_dart(),
         ]
@@ -2747,6 +2750,7 @@ impl SseEncode for crate::api::settings::Settings {
         <Vec<crate::api::settings::SshKey>>::sse_encode(self.keys, serializer);
         <crate::git::known_hosts::KnownHosts>::sse_encode(self.known_hosts, serializer);
         <crate::api::settings::Repository>::sse_encode(self.repository, serializer);
+        <bool>::sse_encode(self.periodic_sync, serializer);
         <Vec<crate::api::filter::Filter>>::sse_encode(self.filters, serializer);
         <Option<crate::api::filter::FilterSelection>>::sse_encode(self.selected_filter, serializer);
     }

@@ -97,6 +97,9 @@ pub struct Settings {
     pub repository: Repository,
 
     #[serde(default)]
+    pub periodic_sync: bool,
+
+    #[serde(default)]
     pub filters: Vec<Filter>,
     #[serde(default)]
     pub selected_filter: Option<FilterSelection>,

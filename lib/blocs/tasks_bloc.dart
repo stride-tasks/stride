@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/task.dart';
@@ -55,20 +58,41 @@ class TaskState {
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
+  final SettingsBloc settingsBloc;
+  StreamSubscription<SettingsState>? settingsSubscription;
+
   final TaskStorage repository;
   Filter? filter;
 
-  Future<List<Task>> _tasks() async {
-    if (filter == null) {
-      final tasks = await repository.tasks();
-      return tasks;
-    } else {
-      final tasks = await repository.tasksWithFilter(filter: filter!);
-      return tasks;
+  Timer? syncTimer;
+
+  void _initializeSettingsStream() {
+    if (settingsBloc.settings.periodicSync) {
+      syncTimer = Timer.periodic(
+        const Duration(minutes: 5),
+        (timer) => add(TaskSyncEvent()),
+      );
     }
+
+    settingsSubscription = settingsBloc.stream.listen((event) {
+      if (event.settings.periodicSync) {
+        syncTimer ??= Timer.periodic(
+          const Duration(minutes: 5),
+          (timer) => add(TaskSyncEvent()),
+        );
+      } else {
+        syncTimer?.cancel();
+        syncTimer = null;
+      }
+    });
   }
 
-  TaskBloc({required this.repository}) : super(const TaskState(tasks: [])) {
+  TaskBloc({
+    required this.settingsBloc,
+    required this.repository,
+  }) : super(const TaskState(tasks: [])) {
+    _initializeSettingsStream();
+
     on<TaskFetchEvent>((event, emit) async {
       final tasks = await repository.tasks();
       emit(TaskState(tasks: tasks));
@@ -133,5 +157,21 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       await repository.checkout();
       emit(TaskState(tasks: await _tasks()));
     });
+  }
+
+  Future<List<Task>> _tasks() async {
+    if (filter == null) {
+      final tasks = await repository.tasks();
+      return tasks;
+    } else {
+      final tasks = await repository.tasksWithFilter(filter: filter!);
+      return tasks;
+    }
+  }
+
+  @override
+  Future<void> close() {
+    settingsSubscription?.cancel();
+    return super.close();
   }
 }

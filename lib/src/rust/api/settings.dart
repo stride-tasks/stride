@@ -35,6 +35,7 @@ class Settings with _$Settings {
     required List<SshKey> keys,
     required KnownHosts knownHosts,
     required Repository repository,
+    required bool periodicSync,
     required List<Filter> filters,
     FilterSelection? selectedFilter,
   }) = _Settings;

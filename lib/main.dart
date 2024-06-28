@@ -49,11 +49,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<TaskBloc>(
-          create: (context) => TaskBloc(repository: repository),
-        ),
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(settings: settings),
+        ),
+        BlocProvider<TaskBloc>(
+          create: (context) => TaskBloc(
+            settingsBloc: context.read<SettingsBloc>(),
+            repository: repository,
+          ),
         ),
       ],
       child: BlocListener<TaskBloc, TaskState>(

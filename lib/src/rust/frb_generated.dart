@@ -95,7 +95,7 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiRepositoryTaskStorageAdd(
       {required TaskStorage that, required Task task});
 
-  Future<void> crateApiRepositoryTaskStorageAddAndCommit(
+  Future<bool> crateApiRepositoryTaskStorageAddAndCommit(
       {required TaskStorage that});
 
   Future<bool> crateApiRepositoryTaskStorageChangeCategory(
@@ -364,7 +364,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiRepositoryTaskStorageAddAndCommit(
+  Future<bool> crateApiRepositoryTaskStorageAddAndCommit(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -375,7 +375,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             funcId: 9, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
+        decodeSuccessData: sse_decode_bool,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiRepositoryTaskStorageAddAndCommitConstMeta,
@@ -1309,15 +1309,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
       keys: dco_decode_list_ssh_key(arr[1]),
       knownHosts: dco_decode_known_hosts(arr[2]),
       repository: dco_decode_repository(arr[3]),
-      filters: dco_decode_list_filter(arr[4]),
-      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[5]),
+      periodicSync: dco_decode_bool(arr[4]),
+      filters: dco_decode_list_filter(arr[5]),
+      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[6]),
     );
   }
 
@@ -1842,6 +1843,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_keys = sse_decode_list_ssh_key(deserializer);
     var var_knownHosts = sse_decode_known_hosts(deserializer);
     var var_repository = sse_decode_repository(deserializer);
+    var var_periodicSync = sse_decode_bool(deserializer);
     var var_filters = sse_decode_list_filter(deserializer);
     var var_selectedFilter =
         sse_decode_opt_box_autoadd_filter_selection(deserializer);
@@ -1850,6 +1852,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         keys: var_keys,
         knownHosts: var_knownHosts,
         repository: var_repository,
+        periodicSync: var_periodicSync,
         filters: var_filters,
         selectedFilter: var_selectedFilter);
   }
@@ -2336,6 +2339,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_ssh_key(self.keys, serializer);
     sse_encode_known_hosts(self.knownHosts, serializer);
     sse_encode_repository(self.repository, serializer);
+    sse_encode_bool(self.periodicSync, serializer);
     sse_encode_list_filter(self.filters, serializer);
     sse_encode_opt_box_autoadd_filter_selection(
         self.selectedFilter, serializer);
@@ -2414,7 +2418,7 @@ class TaskStorageImpl extends RustOpaque implements TaskStorage {
   Future<void> add({required Task task}) => RustLib.instance.api
       .crateApiRepositoryTaskStorageAdd(that: this, task: task);
 
-  Future<void> addAndCommit() =>
+  Future<bool> addAndCommit() =>
       RustLib.instance.api.crateApiRepositoryTaskStorageAddAndCommit(
         that: this,
       );

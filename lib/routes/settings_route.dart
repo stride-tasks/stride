@@ -39,6 +39,17 @@ class SettingsRoute extends StatelessWidget {
                     onChanged: (val) =>
                         context.read<SettingsBloc>().add(SettingsToggleTheme()),
                   ),
+                  SettingsTileSwitch(
+                    title: const Text("Periodic Sync"),
+                    leading: const Icon(Icons.timer),
+                    description:
+                        const Text("Periodically sync every 5 minutes"),
+                    value: settings.periodicSync,
+                    onChanged: (val) =>
+                        context.read<SettingsBloc>().add(SettingsUpdateEvent(
+                              settings: settings.copyWith(periodicSync: val),
+                            )),
+                  ),
                 ],
               ),
               SettingsSection(

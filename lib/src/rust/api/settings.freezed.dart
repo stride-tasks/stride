@@ -223,6 +223,7 @@ mixin _$Settings {
   List<SshKey> get keys => throw _privateConstructorUsedError;
   KnownHosts get knownHosts => throw _privateConstructorUsedError;
   Repository get repository => throw _privateConstructorUsedError;
+  bool get periodicSync => throw _privateConstructorUsedError;
   List<Filter> get filters => throw _privateConstructorUsedError;
   FilterSelection? get selectedFilter => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -232,6 +233,7 @@ mixin _$Settings {
             List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
+            bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)
         raw,
@@ -244,6 +246,7 @@ mixin _$Settings {
             List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
+            bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
         raw,
@@ -256,6 +259,7 @@ mixin _$Settings {
             List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
+            bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
         raw,
@@ -294,6 +298,7 @@ abstract class $SettingsCopyWith<$Res> {
       List<SshKey> keys,
       KnownHosts knownHosts,
       Repository repository,
+      bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter});
 
@@ -319,6 +324,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? keys = null,
     Object? knownHosts = null,
     Object? repository = null,
+    Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
   }) {
@@ -339,6 +345,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.repository
           : repository // ignore: cast_nullable_to_non_nullable
               as Repository,
+      periodicSync: null == periodicSync
+          ? _value.periodicSync
+          : periodicSync // ignore: cast_nullable_to_non_nullable
+              as bool,
       filters: null == filters
           ? _value.filters
           : filters // ignore: cast_nullable_to_non_nullable
@@ -392,6 +402,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       List<SshKey> keys,
       KnownHosts knownHosts,
       Repository repository,
+      bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter});
 
@@ -418,6 +429,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? keys = null,
     Object? knownHosts = null,
     Object? repository = null,
+    Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
   }) {
@@ -438,6 +450,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.repository
           : repository // ignore: cast_nullable_to_non_nullable
               as Repository,
+      periodicSync: null == periodicSync
+          ? _value.periodicSync
+          : periodicSync // ignore: cast_nullable_to_non_nullable
+              as bool,
       filters: null == filters
           ? _value._filters
           : filters // ignore: cast_nullable_to_non_nullable
@@ -458,6 +474,7 @@ class _$SettingsImpl extends _Settings {
       required final List<SshKey> keys,
       required this.knownHosts,
       required this.repository,
+      required this.periodicSync,
       required final List<Filter> filters,
       this.selectedFilter})
       : _keys = keys,
@@ -478,6 +495,8 @@ class _$SettingsImpl extends _Settings {
   final KnownHosts knownHosts;
   @override
   final Repository repository;
+  @override
+  final bool periodicSync;
   final List<Filter> _filters;
   @override
   List<Filter> get filters {
@@ -491,7 +510,7 @@ class _$SettingsImpl extends _Settings {
 
   @override
   String toString() {
-    return 'Settings.raw(darkMode: $darkMode, keys: $keys, knownHosts: $knownHosts, repository: $repository, filters: $filters, selectedFilter: $selectedFilter)';
+    return 'Settings.raw(darkMode: $darkMode, keys: $keys, knownHosts: $knownHosts, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
   }
 
   @override
@@ -506,6 +525,8 @@ class _$SettingsImpl extends _Settings {
                 other.knownHosts == knownHosts) &&
             (identical(other.repository, repository) ||
                 other.repository == repository) &&
+            (identical(other.periodicSync, periodicSync) ||
+                other.periodicSync == periodicSync) &&
             const DeepCollectionEquality().equals(other._filters, _filters) &&
             (identical(other.selectedFilter, selectedFilter) ||
                 other.selectedFilter == selectedFilter));
@@ -518,6 +539,7 @@ class _$SettingsImpl extends _Settings {
       const DeepCollectionEquality().hash(_keys),
       knownHosts,
       repository,
+      periodicSync,
       const DeepCollectionEquality().hash(_filters),
       selectedFilter);
 
@@ -535,11 +557,13 @@ class _$SettingsImpl extends _Settings {
             List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
+            bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)
         raw,
   }) {
-    return raw(darkMode, keys, knownHosts, repository, filters, selectedFilter);
+    return raw(darkMode, keys, knownHosts, repository, periodicSync, filters,
+        selectedFilter);
   }
 
   @override
@@ -550,12 +574,13 @@ class _$SettingsImpl extends _Settings {
             List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
+            bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
         raw,
   }) {
-    return raw?.call(
-        darkMode, keys, knownHosts, repository, filters, selectedFilter);
+    return raw?.call(darkMode, keys, knownHosts, repository, periodicSync,
+        filters, selectedFilter);
   }
 
   @override
@@ -566,14 +591,15 @@ class _$SettingsImpl extends _Settings {
             List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
+            bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
         raw,
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(
-          darkMode, keys, knownHosts, repository, filters, selectedFilter);
+      return raw(darkMode, keys, knownHosts, repository, periodicSync, filters,
+          selectedFilter);
     }
     return orElse();
   }
@@ -613,6 +639,7 @@ abstract class _Settings extends Settings {
       required final List<SshKey> keys,
       required final KnownHosts knownHosts,
       required final Repository repository,
+      required final bool periodicSync,
       required final List<Filter> filters,
       final FilterSelection? selectedFilter}) = _$SettingsImpl;
   const _Settings._() : super._();
@@ -625,6 +652,8 @@ abstract class _Settings extends Settings {
   KnownHosts get knownHosts;
   @override
   Repository get repository;
+  @override
+  bool get periodicSync;
   @override
   List<Filter> get filters;
   @override
