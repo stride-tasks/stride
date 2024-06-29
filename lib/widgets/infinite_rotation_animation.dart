@@ -29,8 +29,8 @@ class _InfiniteRotationAnimationState extends State<InfiniteRotationAnimation>
       duration: Duration(seconds: widget.durationInSeconds),
     );
     animation = Tween<double>(
-      begin: 0,
-      end: 12.5664, // 2Radians (360 degrees)
+      begin: 12.5664, // 2Radians (360 degrees)
+      end: 0,
     ).animate(animationController);
 
     animationController.forward();
