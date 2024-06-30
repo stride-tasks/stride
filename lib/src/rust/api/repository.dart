@@ -21,7 +21,7 @@ part 'repository.freezed.dart';
 abstract class TaskStorage implements RustOpaqueInterface {
   Future<void> add({required Task task});
 
-  Future<bool> addAndCommit();
+  Future<bool> addAndCommit({required String message});
 
   Future<bool> changeCategory({required Task task, required TaskStatus status});
 

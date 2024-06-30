@@ -368,6 +368,7 @@ fn wire__crate__api__repository__TaskStorage_add_and_commit_impl(
             let api_that = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>,
             >>::sse_decode(&mut deserializer);
+            let api_message = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -386,8 +387,10 @@ fn wire__crate__api__repository__TaskStorage_add_and_commit_impl(
                             }
                         }
                         let api_that_guard = api_that_guard.unwrap();
-                        let output_ok =
-                            crate::api::repository::TaskStorage::add_and_commit(&*api_that_guard)?;
+                        let output_ok = crate::api::repository::TaskStorage::add_and_commit(
+                            &*api_that_guard,
+                            &api_message,
+                        )?;
                         Ok(output_ok)
                     })(),
                 )

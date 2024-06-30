@@ -19,6 +19,7 @@ use crate::{
     git::known_hosts::{self, HostKeyType, KnownHosts, KnownHostsError},
     repository,
     task::{Date, Task, TaskBuilder, TaskStatus},
+    ToBase64,
 };
 
 use git2::{
@@ -246,8 +247,9 @@ impl TaskStorage {
             self.init_repotitory()?;
         }
 
+        let message = format!("$ADD {}", task.uuid.to_base64());
         self.pending.append(task)?;
-        self.add_and_commit()?;
+        self.add_and_commit(&message)?;
         Ok(())
     }
 
@@ -281,12 +283,17 @@ impl TaskStorage {
     }
 
     pub fn update(&mut self, task: Task) -> Result<bool> {
+        let mut updated = false;
         for storage in self.storage_mut() {
             if storage.update(&task)? {
-                return Ok(true);
+                updated = true;
+                break;
             }
         }
-        Ok(false)
+        if updated {
+            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()));
+        }
+        Ok(updated)
     }
 
     pub fn change_category(&mut self, task: Task, status: TaskStatus) -> Result<bool> {
@@ -320,8 +327,17 @@ impl TaskStorage {
         found_task.status = status;
         found_task.modified = Some(Date::from(chrono::Utc::now().naive_utc()));
 
+        let transition = match status {
+            TaskStatus::Pending => "PEND",
+            TaskStatus::Waiting => "WAIT",
+            TaskStatus::Recurring => "RECUR",
+            TaskStatus::Deleted => "DELETE",
+            TaskStatus::Complete => "DONE",
+        };
+
+        let message = format!("${transition} {}", found_task.uuid.to_base64());
         self.storage_mut()[status as usize].append(found_task)?;
-        self.add_and_commit()?;
+        self.add_and_commit(&message)?;
         Ok(false)
     }
 
@@ -346,10 +362,12 @@ impl TaskStorage {
             storage.save()?;
         }
 
-        let mut _found_task =
+        let mut found_task =
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
-        self.add_and_commit()?;
+        let message = format!("$PURGE {}", found_task.uuid.to_base64());
+
+        self.add_and_commit(&message)?;
         Ok(false)
     }
 
@@ -364,7 +382,7 @@ impl TaskStorage {
 
     pub fn sync(&mut self) -> Result<(), ConnectionError> {
         if self.path.exists() {
-            self.add_and_commit();
+            // TODO: Make sure that nothing is left behind!
 
             if self.pull().unwrap() {
                 log::info!("Pulled tasks");
@@ -495,7 +513,7 @@ impl TaskStorage {
         Result::Ok(())
     }
 
-    pub fn add_and_commit(&self) -> anyhow::Result<bool> {
+    pub fn add_and_commit(&self, message: &str) -> anyhow::Result<bool> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.path)?;
@@ -521,7 +539,7 @@ impl TaskStorage {
             Some("HEAD"),
             &author,
             &author,
-            "initial",
+            message,
             &tree,
             &[&parent_commit],
         )?;

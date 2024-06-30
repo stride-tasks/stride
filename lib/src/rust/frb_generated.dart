@@ -96,7 +96,7 @@ abstract class RustLibApi extends BaseApi {
       {required TaskStorage that, required Task task});
 
   Future<bool> crateApiRepositoryTaskStorageAddAndCommit(
-      {required TaskStorage that});
+      {required TaskStorage that, required String message});
 
   Future<bool> crateApiRepositoryTaskStorageChangeCategory(
       {required TaskStorage that,
@@ -365,12 +365,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<bool> crateApiRepositoryTaskStorageAddAndCommit(
-      {required TaskStorage that}) {
+      {required TaskStorage that, required String message}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
+        sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 9, port: port_);
       },
@@ -379,7 +380,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiRepositoryTaskStorageAddAndCommitConstMeta,
-      argValues: [that],
+      argValues: [that, message],
       apiImpl: this,
     ));
   }
@@ -387,7 +388,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiRepositoryTaskStorageAddAndCommitConstMeta =>
       const TaskConstMeta(
         debugName: "TaskStorage_add_and_commit",
-        argNames: ["that"],
+        argNames: ["that", "message"],
       );
 
   @override
@@ -2418,10 +2419,8 @@ class TaskStorageImpl extends RustOpaque implements TaskStorage {
   Future<void> add({required Task task}) => RustLib.instance.api
       .crateApiRepositoryTaskStorageAdd(that: this, task: task);
 
-  Future<bool> addAndCommit() =>
-      RustLib.instance.api.crateApiRepositoryTaskStorageAddAndCommit(
-        that: this,
-      );
+  Future<bool> addAndCommit({required String message}) => RustLib.instance.api
+      .crateApiRepositoryTaskStorageAddAndCommit(that: this, message: message);
 
   Future<bool> changeCategory(
           {required Task task, required TaskStatus status}) =>
