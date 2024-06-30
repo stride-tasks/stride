@@ -10,9 +10,14 @@ pub use annotation::Annotation;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::ToBase64;
 pub type Tag = String;
 pub type Project = String;
 pub type Priority = String;
+
+#[cfg(test)]
+mod tests;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u8)]
@@ -105,32 +110,17 @@ impl TaskBuilder {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::{TaskBuilder, TaskStatus};
-
-    #[test]
-    fn conversion_task_status() -> anyhow::Result<()> {
-        assert_eq!(
-            serde_json::to_string(&TaskStatus::Complete)?,
-            "\"complete\""
-        );
-        assert_eq!(serde_json::to_string(&TaskStatus::Deleted)?, "\"deleted\"");
-        assert_eq!(serde_json::to_string(&TaskStatus::Pending)?, "\"pending\"");
-        assert_eq!(
-            serde_json::to_string(&TaskStatus::Recurring)?,
-            "\"recurring\""
-        );
-        assert_eq!(serde_json::to_string(&TaskStatus::Waiting)?, "\"waiting\"");
-        Ok(())
-    }
-
-    #[test]
-    fn create_task() -> anyhow::Result<()> {
-        let task = TaskBuilder::with_description("work on ...").build()?;
-
-        assert_eq!(task.description, "work on ...");
-
-        Ok(())
+impl Task {
+    fn to_data(&self) -> String {
+        let mut result = self.uuid.to_base64();
+        for c in self.description.chars() {
+            if c == '\n' {
+                result.push('\\');
+                result.push('n');
+            } else {
+                result.push(c);
+            }
+        }
+        result
     }
 }
