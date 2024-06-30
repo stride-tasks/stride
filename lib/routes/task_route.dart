@@ -78,6 +78,7 @@ class _TaskRouteState extends State<TaskRoute> {
                   onSaved: (newValue) {
                     description = newValue!;
                   },
+                  textCapitalization: TextCapitalization.sentences,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 Padding(
