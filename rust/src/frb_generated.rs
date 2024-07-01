@@ -1341,13 +1341,16 @@ impl SseDecode for TaskStorage {
     }
 }
 
-impl SseDecode for chrono::NaiveDateTime {
+impl SseDecode for chrono::DateTime<chrono::Utc> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <i64>::sse_decode(deserializer);
-        return chrono::DateTime::from_timestamp_micros(inner)
-            .expect("invalid or out-of-range datetime")
-            .naive_utc();
+        return chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+            chrono::DateTime::from_timestamp_micros(inner)
+                .expect("invalid or out-of-range datetime")
+                .naive_utc(),
+            chrono::Utc,
+        );
     }
 }
 
@@ -1396,7 +1399,7 @@ impl SseDecode for uuid::Uuid {
 impl SseDecode for crate::task::annotation::Annotation {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_entry = <chrono::NaiveDateTime>::sse_decode(deserializer);
+        let mut var_entry = <chrono::DateTime<chrono::Utc>>::sse_decode(deserializer);
         let mut var_description = <String>::sse_decode(deserializer);
         return crate::task::annotation::Annotation {
             entry: var_entry,
@@ -1579,18 +1582,6 @@ impl SseDecode for crate::git::known_hosts::KnownHosts {
     }
 }
 
-impl SseDecode for Vec<String> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut len_ = <i32>::sse_decode(deserializer);
-        let mut ans_ = vec![];
-        for idx_ in 0..len_ {
-            ans_.push(<String>::sse_decode(deserializer));
-        }
-        return ans_;
-    }
-}
-
 impl SseDecode for Vec<uuid::Uuid> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1636,6 +1627,18 @@ impl SseDecode for Vec<crate::git::known_hosts::Host> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<crate::git::known_hosts::Host>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<u32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<u32>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1708,17 +1711,6 @@ impl SseDecode for crate::api::logging::Logger {
     }
 }
 
-impl SseDecode for Option<String> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        if (<bool>::sse_decode(deserializer)) {
-            return Some(<String>::sse_decode(deserializer));
-        } else {
-            return None;
-        }
-    }
-}
-
 impl SseDecode for Option<uuid::Uuid> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1730,11 +1722,11 @@ impl SseDecode for Option<uuid::Uuid> {
     }
 }
 
-impl SseDecode for Option<chrono::NaiveDateTime> {
+impl SseDecode for Option<chrono::DateTime<chrono::Utc>> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
-            return Some(<chrono::NaiveDateTime>::sse_decode(deserializer));
+            return Some(<chrono::DateTime<chrono::Utc>>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -1759,6 +1751,17 @@ impl SseDecode for Option<crate::task::Task> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<crate::task::Task>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<u32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<u32>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -1833,23 +1836,21 @@ impl SseDecode for crate::task::Task {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
-        let mut var_entry = <chrono::NaiveDateTime>::sse_decode(deserializer);
         let mut var_status = <crate::task::TaskStatus>::sse_decode(deserializer);
         let mut var_description = <String>::sse_decode(deserializer);
-        let mut var_modified = <Option<chrono::NaiveDateTime>>::sse_decode(deserializer);
-        let mut var_due = <Option<chrono::NaiveDateTime>>::sse_decode(deserializer);
-        let mut var_project = <Option<String>>::sse_decode(deserializer);
-        let mut var_tags = <Vec<String>>::sse_decode(deserializer);
+        let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
+        let mut var_due = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
+        let mut var_project = <Option<u32>>::sse_decode(deserializer);
+        let mut var_tags = <Vec<u32>>::sse_decode(deserializer);
         let mut var_annotations =
             <Vec<crate::task::annotation::Annotation>>::sse_decode(deserializer);
-        let mut var_priority = <Option<String>>::sse_decode(deserializer);
-        let mut var_wait = <Option<chrono::NaiveDateTime>>::sse_decode(deserializer);
-        let mut var_end = <Option<chrono::NaiveDateTime>>::sse_decode(deserializer);
+        let mut var_priority = <Option<u32>>::sse_decode(deserializer);
+        let mut var_wait = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
+        let mut var_end = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_depends = <Vec<uuid::Uuid>>::sse_decode(deserializer);
         let mut var_uda = <std::collections::HashMap<String, String>>::sse_decode(deserializer);
         return crate::task::Task {
             uuid: var_uuid,
-            entry: var_entry,
             status: var_status,
             description: var_description,
             modified: var_modified,
@@ -1878,6 +1879,13 @@ impl SseDecode for crate::task::TaskStatus {
             4 => crate::task::TaskStatus::Complete,
             _ => unreachable!("Invalid variant for TaskStatus: {}", inner),
         };
+    }
+}
+
+impl SseDecode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u32::<NativeEndian>().unwrap()
     }
 }
 
@@ -2317,7 +2325,6 @@ impl flutter_rust_bridge::IntoDart for crate::task::Task {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.uuid.into_into_dart().into_dart(),
-            self.entry.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),
             self.description.into_into_dart().into_dart(),
             self.modified.into_into_dart().into_dart(),
@@ -2374,10 +2381,10 @@ impl SseEncode for TaskStorage {
     }
 }
 
-impl SseEncode for chrono::NaiveDateTime {
+impl SseEncode for chrono::DateTime<chrono::Utc> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i64>::sse_encode(self.and_utc().timestamp_micros(), serializer);
+        <i64>::sse_encode(self.timestamp_micros(), serializer);
     }
 }
 
@@ -2423,7 +2430,7 @@ impl SseEncode for uuid::Uuid {
 impl SseEncode for crate::task::annotation::Annotation {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <chrono::NaiveDateTime>::sse_encode(self.entry, serializer);
+        <chrono::DateTime<chrono::Utc>>::sse_encode(self.entry, serializer);
         <String>::sse_encode(self.description, serializer);
     }
 }
@@ -2572,16 +2579,6 @@ impl SseEncode for crate::git::known_hosts::KnownHosts {
     }
 }
 
-impl SseEncode for Vec<String> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(self.len() as _, serializer);
-        for item in self {
-            <String>::sse_encode(item, serializer);
-        }
-    }
-}
-
 impl SseEncode for Vec<uuid::Uuid> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2618,6 +2615,16 @@ impl SseEncode for Vec<crate::git::known_hosts::Host> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::git::known_hosts::Host>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<u32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <u32>::sse_encode(item, serializer);
         }
     }
 }
@@ -2677,16 +2684,6 @@ impl SseEncode for crate::api::logging::Logger {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
 }
 
-impl SseEncode for Option<String> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <bool>::sse_encode(self.is_some(), serializer);
-        if let Some(value) = self {
-            <String>::sse_encode(value, serializer);
-        }
-    }
-}
-
 impl SseEncode for Option<uuid::Uuid> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2697,12 +2694,12 @@ impl SseEncode for Option<uuid::Uuid> {
     }
 }
 
-impl SseEncode for Option<chrono::NaiveDateTime> {
+impl SseEncode for Option<chrono::DateTime<chrono::Utc>> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <chrono::NaiveDateTime>::sse_encode(value, serializer);
+            <chrono::DateTime<chrono::Utc>>::sse_encode(value, serializer);
         }
     }
 }
@@ -2723,6 +2720,16 @@ impl SseEncode for Option<crate::task::Task> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::task::Task>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<u32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <u32>::sse_encode(value, serializer);
         }
     }
 }
@@ -2772,17 +2779,16 @@ impl SseEncode for crate::task::Task {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <uuid::Uuid>::sse_encode(self.uuid, serializer);
-        <chrono::NaiveDateTime>::sse_encode(self.entry, serializer);
         <crate::task::TaskStatus>::sse_encode(self.status, serializer);
         <String>::sse_encode(self.description, serializer);
-        <Option<chrono::NaiveDateTime>>::sse_encode(self.modified, serializer);
-        <Option<chrono::NaiveDateTime>>::sse_encode(self.due, serializer);
-        <Option<String>>::sse_encode(self.project, serializer);
-        <Vec<String>>::sse_encode(self.tags, serializer);
+        <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);
+        <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.due, serializer);
+        <Option<u32>>::sse_encode(self.project, serializer);
+        <Vec<u32>>::sse_encode(self.tags, serializer);
         <Vec<crate::task::annotation::Annotation>>::sse_encode(self.annotations, serializer);
-        <Option<String>>::sse_encode(self.priority, serializer);
-        <Option<chrono::NaiveDateTime>>::sse_encode(self.wait, serializer);
-        <Option<chrono::NaiveDateTime>>::sse_encode(self.end, serializer);
+        <Option<u32>>::sse_encode(self.priority, serializer);
+        <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.wait, serializer);
+        <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.end, serializer);
         <Vec<uuid::Uuid>>::sse_encode(self.depends, serializer);
         <std::collections::HashMap<String, String>>::sse_encode(self.uda, serializer);
     }
@@ -2804,6 +2810,13 @@ impl SseEncode for crate::task::TaskStatus {
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u32::<NativeEndian>(self).unwrap();
     }
 }
 

@@ -10,15 +10,14 @@ import 'task/annotation.dart';
 
 class Task {
   final UuidValue uuid;
-  final DateTime entry;
   final TaskStatus status;
   final String description;
   final DateTime? modified;
   final DateTime? due;
-  final String? project;
-  final List<String> tags;
+  final int? project;
+  final Uint32List tags;
   final List<Annotation> annotations;
-  final String? priority;
+  final int? priority;
   final DateTime? wait;
   final DateTime? end;
   final List<UuidValue> depends;
@@ -26,7 +25,6 @@ class Task {
 
   const Task.raw({
     required this.uuid,
-    required this.entry,
     required this.status,
     required this.description,
     this.modified,
@@ -47,7 +45,6 @@ class Task {
   @override
   int get hashCode =>
       uuid.hashCode ^
-      entry.hashCode ^
       status.hashCode ^
       description.hashCode ^
       modified.hashCode ^
@@ -67,7 +64,6 @@ class Task {
       other is Task &&
           runtimeType == other.runtimeType &&
           uuid == other.uuid &&
-          entry == other.entry &&
           status == other.status &&
           description == other.description &&
           modified == other.modified &&

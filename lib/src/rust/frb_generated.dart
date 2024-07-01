@@ -953,7 +953,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime dco_decode_Chrono_Naive(dynamic raw) {
+  DateTime dco_decode_Chrono_Utc(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeTimestamp(ts: dco_decode_i_64(raw).toInt(), isUtc: true);
   }
@@ -998,7 +998,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return Annotation(
-      entry: dco_decode_Chrono_Naive(arr[0]),
+      entry: dco_decode_Chrono_Utc(arr[0]),
       description: dco_decode_String(arr[1]),
     );
   }
@@ -1024,9 +1024,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime dco_decode_box_autoadd_Chrono_Naive(dynamic raw) {
+  DateTime dco_decode_box_autoadd_Chrono_Utc(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_Chrono_Naive(raw);
+    return dco_decode_Chrono_Utc(raw);
   }
 
   @protected
@@ -1057,6 +1057,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task dco_decode_box_autoadd_task(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_task(raw);
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -1173,12 +1179,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<String> dco_decode_list_String(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_String).toList();
-  }
-
-  @protected
   List<UuidValue> dco_decode_list_Uuid(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     const kUuidSizeInBytes = 16;
@@ -1207,6 +1207,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<Host> dco_decode_list_host(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_host).toList();
+  }
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Uint32List;
   }
 
   @protected
@@ -1249,21 +1255,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  String? dco_decode_opt_String(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_String(raw);
-  }
-
-  @protected
   UuidValue? dco_decode_opt_Uuid(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_Uuid(raw);
   }
 
   @protected
-  DateTime? dco_decode_opt_box_autoadd_Chrono_Naive(dynamic raw) {
+  DateTime? dco_decode_opt_box_autoadd_Chrono_Utc(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_Chrono_Naive(raw);
+    return raw == null ? null : dco_decode_box_autoadd_Chrono_Utc(raw);
   }
 
   @protected
@@ -1276,6 +1276,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task? dco_decode_opt_box_autoadd_task(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_task(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
   }
 
   @protected
@@ -1340,23 +1346,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task dco_decode_task(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 14)
-      throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return Task.raw(
       uuid: dco_decode_Uuid(arr[0]),
-      entry: dco_decode_Chrono_Naive(arr[1]),
-      status: dco_decode_task_status(arr[2]),
-      description: dco_decode_String(arr[3]),
-      modified: dco_decode_opt_box_autoadd_Chrono_Naive(arr[4]),
-      due: dco_decode_opt_box_autoadd_Chrono_Naive(arr[5]),
-      project: dco_decode_opt_String(arr[6]),
-      tags: dco_decode_list_String(arr[7]),
-      annotations: dco_decode_list_annotation(arr[8]),
-      priority: dco_decode_opt_String(arr[9]),
-      wait: dco_decode_opt_box_autoadd_Chrono_Naive(arr[10]),
-      end: dco_decode_opt_box_autoadd_Chrono_Naive(arr[11]),
-      depends: dco_decode_list_Uuid(arr[12]),
-      uda: dco_decode_Map_String_String(arr[13]),
+      status: dco_decode_task_status(arr[1]),
+      description: dco_decode_String(arr[2]),
+      modified: dco_decode_opt_box_autoadd_Chrono_Utc(arr[3]),
+      due: dco_decode_opt_box_autoadd_Chrono_Utc(arr[4]),
+      project: dco_decode_opt_box_autoadd_u_32(arr[5]),
+      tags: dco_decode_list_prim_u_32_strict(arr[6]),
+      annotations: dco_decode_list_annotation(arr[7]),
+      priority: dco_decode_opt_box_autoadd_u_32(arr[8]),
+      wait: dco_decode_opt_box_autoadd_Chrono_Utc(arr[9]),
+      end: dco_decode_opt_box_autoadd_Chrono_Utc(arr[10]),
+      depends: dco_decode_list_Uuid(arr[11]),
+      uda: dco_decode_Map_String_String(arr[12]),
     );
   }
 
@@ -1364,6 +1369,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskStatus dco_decode_task_status(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return TaskStatus.values[raw as int];
+  }
+
+  @protected
+  int dco_decode_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -1419,7 +1430,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime sse_decode_Chrono_Naive(SseDeserializer deserializer) {
+  DateTime sse_decode_Chrono_Utc(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_64(deserializer);
     return DateTime.fromMicrosecondsSinceEpoch(inner.toInt(), isUtc: true);
@@ -1466,7 +1477,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Annotation sse_decode_annotation(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_entry = sse_decode_Chrono_Naive(deserializer);
+    var var_entry = sse_decode_Chrono_Utc(deserializer);
     var var_description = sse_decode_String(deserializer);
     return Annotation(entry: var_entry, description: var_description);
   }
@@ -1492,9 +1503,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime sse_decode_box_autoadd_Chrono_Naive(SseDeserializer deserializer) {
+  DateTime sse_decode_box_autoadd_Chrono_Utc(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_Chrono_Naive(deserializer));
+    return (sse_decode_Chrono_Utc(deserializer));
   }
 
   @protected
@@ -1527,6 +1538,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task sse_decode_box_autoadd_task(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_task(deserializer));
+  }
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_32(deserializer));
   }
 
   @protected
@@ -1634,18 +1651,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<String> sse_decode_list_String(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <String>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_String(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
   List<UuidValue> sse_decode_list_Uuid(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1691,6 +1696,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_host(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint32List(len_);
   }
 
   @protected
@@ -1756,17 +1768,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  String? sse_decode_opt_String(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return (sse_decode_String(deserializer));
-    } else {
-      return null;
-    }
-  }
-
-  @protected
   UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1778,12 +1779,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime? sse_decode_opt_box_autoadd_Chrono_Naive(
+  DateTime? sse_decode_opt_box_autoadd_Chrono_Utc(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
-      return (sse_decode_box_autoadd_Chrono_Naive(deserializer));
+      return (sse_decode_box_autoadd_Chrono_Utc(deserializer));
     } else {
       return null;
     }
@@ -1807,6 +1808,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_task(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_32(deserializer));
     } else {
       return null;
     }
@@ -1871,22 +1883,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task sse_decode_task(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_uuid = sse_decode_Uuid(deserializer);
-    var var_entry = sse_decode_Chrono_Naive(deserializer);
     var var_status = sse_decode_task_status(deserializer);
     var var_description = sse_decode_String(deserializer);
-    var var_modified = sse_decode_opt_box_autoadd_Chrono_Naive(deserializer);
-    var var_due = sse_decode_opt_box_autoadd_Chrono_Naive(deserializer);
-    var var_project = sse_decode_opt_String(deserializer);
-    var var_tags = sse_decode_list_String(deserializer);
+    var var_modified = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
+    var var_due = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
+    var var_project = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_tags = sse_decode_list_prim_u_32_strict(deserializer);
     var var_annotations = sse_decode_list_annotation(deserializer);
-    var var_priority = sse_decode_opt_String(deserializer);
-    var var_wait = sse_decode_opt_box_autoadd_Chrono_Naive(deserializer);
-    var var_end = sse_decode_opt_box_autoadd_Chrono_Naive(deserializer);
+    var var_priority = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_wait = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
+    var var_end = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     var var_depends = sse_decode_list_Uuid(deserializer);
     var var_uda = sse_decode_Map_String_String(deserializer);
     return Task.raw(
         uuid: var_uuid,
-        entry: var_entry,
         status: var_status,
         description: var_description,
         modified: var_modified,
@@ -1906,6 +1916,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return TaskStatus.values[inner];
+  }
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint32();
   }
 
   @protected
@@ -1962,7 +1978,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_Chrono_Naive(DateTime self, SseSerializer serializer) {
+  void sse_encode_Chrono_Utc(DateTime self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_64(
         PlatformInt64Util.from(self.microsecondsSinceEpoch), serializer);
@@ -2007,7 +2023,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_annotation(Annotation self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Chrono_Naive(self.entry, serializer);
+    sse_encode_Chrono_Utc(self.entry, serializer);
     sse_encode_String(self.description, serializer);
   }
 
@@ -2028,10 +2044,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_box_autoadd_Chrono_Naive(
+  void sse_encode_box_autoadd_Chrono_Utc(
       DateTime self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Chrono_Naive(self, serializer);
+    sse_encode_Chrono_Utc(self, serializer);
   }
 
   @protected
@@ -2065,6 +2081,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_box_autoadd_task(Task self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_task(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self, serializer);
   }
 
   @protected
@@ -2167,15 +2189,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_String(item, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_list_Uuid(List<UuidValue> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -2210,6 +2223,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_host(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+      Uint32List self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint32List(self);
   }
 
   @protected
@@ -2264,16 +2285,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_opt_String(String? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_String(self, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2284,13 +2295,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_opt_box_autoadd_Chrono_Naive(
+  void sse_encode_opt_box_autoadd_Chrono_Utc(
       DateTime? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
     if (self != null) {
-      sse_encode_box_autoadd_Chrono_Naive(self, serializer);
+      sse_encode_box_autoadd_Chrono_Utc(self, serializer);
     }
   }
 
@@ -2312,6 +2323,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_task(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_32(self, serializer);
     }
   }
 
@@ -2358,17 +2379,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_task(Task self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_Uuid(self.uuid, serializer);
-    sse_encode_Chrono_Naive(self.entry, serializer);
     sse_encode_task_status(self.status, serializer);
     sse_encode_String(self.description, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Naive(self.modified, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Naive(self.due, serializer);
-    sse_encode_opt_String(self.project, serializer);
-    sse_encode_list_String(self.tags, serializer);
+    sse_encode_opt_box_autoadd_Chrono_Utc(self.modified, serializer);
+    sse_encode_opt_box_autoadd_Chrono_Utc(self.due, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.project, serializer);
+    sse_encode_list_prim_u_32_strict(self.tags, serializer);
     sse_encode_list_annotation(self.annotations, serializer);
-    sse_encode_opt_String(self.priority, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Naive(self.wait, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Naive(self.end, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.priority, serializer);
+    sse_encode_opt_box_autoadd_Chrono_Utc(self.wait, serializer);
+    sse_encode_opt_box_autoadd_Chrono_Utc(self.end, serializer);
     sse_encode_list_Uuid(self.depends, serializer);
     sse_encode_Map_String_String(self.uda, serializer);
   }
@@ -2377,6 +2397,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_task_status(TaskStatus self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint32(self);
   }
 
   @protected

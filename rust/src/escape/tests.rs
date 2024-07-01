@@ -189,7 +189,7 @@ fn escaping_single_quotes() {
     let mut out = String::new();
     escape(input, &mut out);
 
-    assert_eq!(out, input);
+    assert_eq!(out, "'Hello, world'");
 }
 
 #[test]
@@ -209,7 +209,7 @@ fn escaping_double_quotes() {
     let mut out = String::new();
     escape(input, &mut out);
 
-    assert_eq!(out, "\\\"Hello, world\\\"");
+    assert_eq!(out, "\"Hello, world\"");
 }
 
 #[test]

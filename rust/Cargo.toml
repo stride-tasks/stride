@@ -10,7 +10,7 @@ crate-type = ["cdylib", "staticlib"]
 flutter_rust_bridge = { version = "=2.0.0", features = ["chrono", "uuid"] }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = { version = "1.0.114" }
-uuid = { version = "1.7.0", features = ["v4", "serde"] }
+uuid = { version = "1.7.0", features = ["v7", "serde"] }
 chrono = { version = "0.4.34", features = ["serde"]}
 derive_builder = "0.20.0"
 anyhow = "1.0.80"

@@ -8,7 +8,8 @@ pub(crate) fn escape(input: &str, out: &mut String) {
             '\x08' => out.push_str("\\b"), // Backspace
             '\x0B' => out.push_str("\\v"), // Vertical tab
             '\x0C' => out.push_str("\\f"), // Form feed
-            '\'' => out.push('\''),        // Form feed
+            '\'' => out.push('\''),        // Quote escape
+            '"' => out.push('"'),          // Double escape
             c => out.extend(c.escape_debug()),
         }
     }
@@ -28,6 +29,7 @@ pub(crate) fn unescape(input: &str, out: &mut String) {
         };
 
         match c2 {
+            '0' => out.push('\0'),   // Null
             'a' => out.push('\x07'), // Bell
             'b' => out.push('\x08'), // Backspace
             'n' => out.push('\n'),   // Newline

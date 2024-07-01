@@ -51,7 +51,7 @@ impl SshKey {
         let public = base64::engine::general_purpose::STANDARD.encode(data);
 
         SshKey {
-            uuid: Uuid::new_v4(),
+            uuid: Uuid::now_v7(),
             private,
             public: format!("{} {public}", Self::SSH_ED25519),
         }

@@ -45,6 +45,13 @@ impl Task {
             .build()
             .expect("All other fields are default initialized")
     }
+
+    pub(crate) fn with_uuid(uuid: Uuid, description: String) -> Self {
+        TaskBuilder::with_description(description)
+            .uuid(uuid)
+            .build()
+            .expect("All other fields are default initialized")
+    }
 }
 
 struct Storage {
@@ -81,7 +88,7 @@ impl Storage {
             if line.is_empty() {
                 continue;
             }
-            let mut task: Task = serde_json::from_str(&line)?;
+            let mut task = Task::from_data(&line).context("invalid task")?;
             task.status = self.kind;
 
             tasks.push(task);
@@ -97,7 +104,7 @@ impl Storage {
 
         let mut file = File::options().append(true).create(true).open(&self.path)?;
 
-        let mut content = serde_json::to_string(&task)?;
+        let mut content = task.to_data();
         content.push('\n');
         file.write_all(content.as_bytes())?;
         self.tasks.push(task);
@@ -107,7 +114,7 @@ impl Storage {
     fn save(&mut self) -> Result<()> {
         let mut content = String::new();
         for task in &self.tasks {
-            content += &serde_json::to_string(task)?;
+            content += &task.to_data();
             content.push('\n');
         }
 
@@ -156,7 +163,7 @@ impl Storage {
             return Ok(false);
         };
         *current = task.clone();
-        current.modified = Some(Date::from(chrono::Utc::now().naive_utc()));
+        current.modified = Some(chrono::Utc::now());
 
         self.save()?;
         Ok(true)
@@ -325,7 +332,7 @@ impl TaskStorage {
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
         found_task.status = status;
-        found_task.modified = Some(Date::from(chrono::Utc::now().naive_utc()));
+        found_task.modified = Some(chrono::Utc::now());
 
         let transition = match status {
             TaskStatus::Pending => "PEND",
@@ -375,7 +382,7 @@ impl TaskStorage {
         self.tasks_with_filter(&Filter {
             name: "default".to_owned(),
             status: HashSet::from_iter([TaskStatus::Pending]),
-            uuid: Uuid::new_v4(),
+            uuid: Uuid::now_v7(),
             search: String::new(),
         })
     }

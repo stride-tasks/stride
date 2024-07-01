@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
@@ -22,7 +24,7 @@ class TaskRoute extends StatefulWidget {
 class _TaskRouteState extends State<TaskRoute> {
   String description = "";
   DateTime? due;
-  List<String> tags = [];
+  List<int> tags = [];
   List<Annotation> annotations = [];
   List<UuidValue> depends = [];
   // Map<String, String> uda = {};
@@ -118,10 +120,9 @@ class _TaskRouteState extends State<TaskRoute> {
           if (context.mounted) {
             final task = Task.raw(
               uuid:
-                  widget.task?.uuid ?? UuidValue.fromString(const Uuid().v4()),
-              entry: widget.task?.entry ?? DateTime.now(),
+                  widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
               description: description,
-              tags: tags,
+              tags: Uint32List.fromList(tags),
               due: due,
               status: TaskStatus.pending,
               annotations: annotations,

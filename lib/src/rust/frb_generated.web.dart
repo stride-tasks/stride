@@ -51,7 +51,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           dynamic raw);
 
   @protected
-  DateTime dco_decode_Chrono_Naive(dynamic raw);
+  DateTime dco_decode_Chrono_Utc(dynamic raw);
 
   @protected
   Map<String, String> dco_decode_Map_String_String(dynamic raw);
@@ -80,7 +80,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
-  DateTime dco_decode_box_autoadd_Chrono_Naive(dynamic raw);
+  DateTime dco_decode_box_autoadd_Chrono_Utc(dynamic raw);
 
   @protected
   ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw);
@@ -96,6 +96,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Task dco_decode_box_autoadd_task(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
   ConnectionError dco_decode_connection_error(dynamic raw);
@@ -122,9 +125,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnownHosts dco_decode_known_hosts(dynamic raw);
 
   @protected
-  List<String> dco_decode_list_String(dynamic raw);
-
-  @protected
   List<UuidValue> dco_decode_list_Uuid(dynamic raw);
 
   @protected
@@ -135,6 +135,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Host> dco_decode_list_host(dynamic raw);
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -155,19 +158,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Logger dco_decode_logger(dynamic raw);
 
   @protected
-  String? dco_decode_opt_String(dynamic raw);
-
-  @protected
   UuidValue? dco_decode_opt_Uuid(dynamic raw);
 
   @protected
-  DateTime? dco_decode_opt_box_autoadd_Chrono_Naive(dynamic raw);
+  DateTime? dco_decode_opt_box_autoadd_Chrono_Utc(dynamic raw);
 
   @protected
   FilterSelection? dco_decode_opt_box_autoadd_filter_selection(dynamic raw);
 
   @protected
   Task? dco_decode_opt_box_autoadd_task(dynamic raw);
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
@@ -186,6 +189,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaskStatus dco_decode_task_status(dynamic raw);
+
+  @protected
+  int dco_decode_u_32(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -215,7 +221,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           SseDeserializer deserializer);
 
   @protected
-  DateTime sse_decode_Chrono_Naive(SseDeserializer deserializer);
+  DateTime sse_decode_Chrono_Utc(SseDeserializer deserializer);
 
   @protected
   Map<String, String> sse_decode_Map_String_String(
@@ -245,7 +251,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
-  DateTime sse_decode_box_autoadd_Chrono_Naive(SseDeserializer deserializer);
+  DateTime sse_decode_box_autoadd_Chrono_Utc(SseDeserializer deserializer);
 
   @protected
   ApplicationPaths sse_decode_box_autoadd_application_paths(
@@ -263,6 +269,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Task sse_decode_box_autoadd_task(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
   ConnectionError sse_decode_connection_error(SseDeserializer deserializer);
@@ -289,9 +298,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnownHosts sse_decode_known_hosts(SseDeserializer deserializer);
 
   @protected
-  List<String> sse_decode_list_String(SseDeserializer deserializer);
-
-  @protected
   List<UuidValue> sse_decode_list_Uuid(SseDeserializer deserializer);
 
   @protected
@@ -302,6 +308,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Host> sse_decode_list_host(SseDeserializer deserializer);
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -323,14 +332,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Logger sse_decode_logger(SseDeserializer deserializer);
 
   @protected
-  String? sse_decode_opt_String(SseDeserializer deserializer);
-
-  @protected
   UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer);
 
   @protected
-  DateTime? sse_decode_opt_box_autoadd_Chrono_Naive(
-      SseDeserializer deserializer);
+  DateTime? sse_decode_opt_box_autoadd_Chrono_Utc(SseDeserializer deserializer);
 
   @protected
   FilterSelection? sse_decode_opt_box_autoadd_filter_selection(
@@ -338,6 +343,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Task? sse_decode_opt_box_autoadd_task(SseDeserializer deserializer);
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
   (String, String) sse_decode_record_string_string(
@@ -357,6 +365,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaskStatus sse_decode_task_status(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -387,7 +398,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           TaskStorage self, SseSerializer serializer);
 
   @protected
-  void sse_encode_Chrono_Naive(DateTime self, SseSerializer serializer);
+  void sse_encode_Chrono_Utc(DateTime self, SseSerializer serializer);
 
   @protected
   void sse_encode_Map_String_String(
@@ -419,7 +430,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
-  void sse_encode_box_autoadd_Chrono_Naive(
+  void sse_encode_box_autoadd_Chrono_Utc(
       DateTime self, SseSerializer serializer);
 
   @protected
@@ -438,6 +449,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_task(Task self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_connection_error(
@@ -466,9 +480,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_known_hosts(KnownHosts self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_String(List<String> self, SseSerializer serializer);
-
-  @protected
   void sse_encode_list_Uuid(List<UuidValue> self, SseSerializer serializer);
 
   @protected
@@ -480,6 +491,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_host(List<Host> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+      Uint32List self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
@@ -503,13 +518,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_logger(Logger self, SseSerializer serializer);
 
   @protected
-  void sse_encode_opt_String(String? self, SseSerializer serializer);
-
-  @protected
   void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer);
 
   @protected
-  void sse_encode_opt_box_autoadd_Chrono_Naive(
+  void sse_encode_opt_box_autoadd_Chrono_Utc(
       DateTime? self, SseSerializer serializer);
 
   @protected
@@ -518,6 +530,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_task(Task? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_record_string_string(
@@ -537,6 +552,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_task_status(TaskStatus self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

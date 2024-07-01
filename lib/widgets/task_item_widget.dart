@@ -43,7 +43,7 @@ class TaskItem extends StatelessWidget {
             .map(
               (tag) => Chip(
                 label: Text(
-                  tag,
+                  tag.toString(),
                   style: const TextStyle(fontSize: 12),
                 ),
                 labelPadding: EdgeInsets.zero,

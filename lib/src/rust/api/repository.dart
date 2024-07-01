@@ -13,7 +13,7 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:uuid/uuid.dart';
 part 'repository.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `get_by_id`, `get_index`, `load`, `new`, `pull`, `remove`, `remove`, `save`, `storage_mut`, `unload`, `update`, `with_authentication`
+// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `get_by_id`, `get_index`, `load`, `new`, `pull`, `remove`, `remove`, `save`, `storage_mut`, `unload`, `update`, `with_authentication`, `with_uuid`
 // These types are ignored because they are not used by any `pub` functions: `Storage`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `fmt`
 
