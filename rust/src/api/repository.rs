@@ -5,6 +5,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, ErrorKind, Write},
     path::{Path, PathBuf},
+    process::abort,
     rc::Rc,
 };
 
@@ -23,8 +24,8 @@ use crate::{
 };
 
 use git2::{
-    CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions, Mempack, RemoteCallbacks,
-    Repository, Signature,
+    build::CheckoutBuilder, AnnotatedCommit, CertificateCheckStatus, Cred, ErrorClass, ErrorCode,
+    FetchOptions, Mempack, RebaseOptions, RemoteCallbacks, Repository, Signature,
 };
 
 use super::{
@@ -54,6 +55,23 @@ impl Task {
     }
 }
 
+#[cfg(unix)]
+pub fn bytes2path(b: &[u8]) -> &Path {
+    use std::os::unix::prelude::*;
+    Path::new(std::ffi::OsStr::from_bytes(b))
+}
+#[cfg(windows)]
+pub fn bytes2path(b: &[u8]) -> &Path {
+    use std::str;
+    Path::new(str::from_utf8(b).unwrap())
+}
+
+pub(crate) struct TaskDiff {
+    path: PathBuf,
+    adding: bool,
+    content: String,
+}
+
 struct Storage {
     loaded: bool,
     tasks: Vec<Task>,
@@ -80,7 +98,7 @@ impl Storage {
             return Ok(());
         }
 
-        let file = File::open(&self.path)?;
+        let file: File = File::open(&self.path)?;
         let buf = BufReader::new(file);
         let mut tasks = Vec::new();
         for line in buf.lines() {
@@ -289,7 +307,7 @@ impl TaskStorage {
         Ok(None)
     }
 
-    pub fn update(&mut self, task: Task) -> Result<bool> {
+    pub fn update2(&mut self, task: Task) -> Result<bool> {
         let mut updated = false;
         for storage in self.storage_mut() {
             if storage.update(&task)? {
@@ -297,8 +315,14 @@ impl TaskStorage {
                 break;
             }
         }
+        Ok(updated)
+    }
+
+    pub fn update(&mut self, task: Task) -> Result<bool> {
+        let uuid = task.uuid;
+        let updated = self.update2(task)?;
         if updated {
-            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()));
+            self.add_and_commit(&format!("$UPDATE {}", uuid.to_base64()));
         }
         Ok(updated)
     }
@@ -348,7 +372,7 @@ impl TaskStorage {
         Ok(false)
     }
 
-    pub fn remove_task(&mut self, task: &Task) -> Result<bool> {
+    pub fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>> {
         let mut found_task = None;
         for storage in self.storage_mut() {
             if task.status != storage.kind {
@@ -368,6 +392,11 @@ impl TaskStorage {
 
             storage.save()?;
         }
+        Ok(found_task)
+    }
+
+    pub fn remove_task(&mut self, task: &Task) -> Result<bool> {
+        let found_task = self.remove_task2(task)?;
 
         let mut found_task =
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
@@ -562,7 +591,167 @@ impl TaskStorage {
         Result::Ok(true)
     }
 
-    fn pull(&self) -> anyhow::Result<bool> {
+    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> anyhow::Result<()> {
+        let mut tasks = Vec::<Task>::new();
+        for TaskDiff {
+            path,
+            adding,
+            content,
+        } in diffs
+        {
+            if !adding {
+                continue;
+            }
+
+            let mut status = if path == Path::new("pending.data") {
+                TaskStatus::Pending
+            } else if path == Path::new("complete.data") {
+                TaskStatus::Complete
+            } else if path == Path::new("deleted.data") {
+                TaskStatus::Deleted
+            } else {
+                log::warn!("skipping unknown path: {}", path.display());
+                continue;
+            };
+
+            let mut current = Task::from_data(content).context("invalid task")?;
+            current.status = status;
+
+            let Some(previous) = self.task_by_uuid(&current.uuid)? else {
+                self.storage_mut()[status as usize].append(current);
+                continue;
+            };
+
+            let mut first = true;
+            match (previous.modified, current.modified) {
+                (Some(previous_modified), Some(current_modified)) => {
+                    first = previous_modified >= current_modified;
+                }
+                (None, Some(current)) => {
+                    first = false;
+                }
+                (Some(previous), None) => {
+                    first = true;
+                }
+                (None, None) => {
+                    // TODO: This should not be possible in normal circumstances.
+                    //       For now choose the current.
+                    first = true;
+                }
+            }
+
+            // First is already set to the working dir and tasks are loaded.
+            if first {
+                continue;
+            }
+
+            if previous.status == current.status {
+                self.update2(current);
+                continue;
+            }
+
+            self.remove_task2(&previous)?;
+            self.storage_mut()[status as usize].append(current)?;
+        }
+        Ok(())
+    }
+
+    fn rebase(
+        &mut self,
+        settings: &Settings,
+        repository: &Repository,
+        remote: &AnnotatedCommit,
+    ) -> anyhow::Result<()> {
+        let mut opts = RebaseOptions::new();
+
+        let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
+        let mut patch = rebase.orig_head_id().unwrap();
+        let merge_base = repository.merge_base(patch, remote.id())?;
+        let mut patch = merge_base;
+
+        let remote_commit = repository.find_commit(remote.id())?;
+        // let base_commit = repository.find_commit(patch)?;
+        let base_commit = remote_commit;
+
+        patch = base_commit.id();
+
+        while let Some(step) = rebase.next() {
+            let step = step?;
+
+            let cid = step.id();
+            let commit = repository.find_commit(cid)?;
+
+            let base_commit = repository.find_commit(patch)?;
+            let base_commit_tree = base_commit.tree()?;
+
+            let mut checkout_options = CheckoutBuilder::new();
+            checkout_options.force();
+            repository.checkout_tree(base_commit_tree.as_object(), Some(&mut checkout_options))?;
+
+            self.unload();
+
+            let mut diffs = Vec::new();
+
+            let diff = repository.diff_tree_to_tree(
+                Some(&base_commit.tree()?),
+                Some(&commit.tree()?),
+                None,
+            )?;
+            diff.print(git2::DiffFormat::Patch, |delta, _, line| {
+                if !matches!(
+                    line.origin_value(),
+                    git2::DiffLineType::Addition | git2::DiffLineType::Deletion
+                ) {
+                    return true;
+                }
+                let path = delta.new_file().path().unwrap();
+                let mut content = std::str::from_utf8(line.content())
+                    .unwrap()
+                    .trim_end_matches('\n');
+                println!("AT:{} {} {content}", path.display(), line.origin());
+
+                diffs.push(TaskDiff {
+                    path: path.to_owned(),
+                    adding: line.origin_value() == git2::DiffLineType::Addition,
+                    content: content.to_owned(),
+                });
+
+                true
+            })?;
+
+            println!("\n--------------------------\n");
+
+            self.resolve_conflicts(&diffs)?;
+
+            // Skip the commit if it's empty.
+            if repository.statuses(None)?.is_empty() {
+                log::info!(
+                    "Skipping commit (empty) {cid}{}",
+                    commit
+                        .message()
+                        .map(|x| format!(": {x}"))
+                        .unwrap_or_default()
+                );
+                continue;
+            }
+
+            let mut index = repository.index()?;
+
+            index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
+            index.write()?;
+
+            let committer =
+                Signature::now(&settings.repository.author, &settings.repository.email)?;
+            patch = rebase.commit(None, &committer, None)?;
+        }
+
+        rebase.finish(None)?;
+
+        Ok(())
+    }
+
+    #[frb(ignore)]
+    pub fn pull(&mut self) -> anyhow::Result<bool> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.path)?;
@@ -658,18 +847,21 @@ impl TaskStorage {
 
         let local = repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
         let remote = local.upstream()?;
+        let remote = remote.into_reference();
         let (ahead, behind) = repository.graph_ahead_behind(
             local.into_reference().peel_to_commit()?.id(),
-            remote.into_reference().peel_to_commit()?.id(),
+            remote.peel_to_commit()?.id(),
         )?;
 
         if behind == 0 {
             return Ok(false);
         }
 
+        let remote = repository.reference_to_annotated_commit(&remote)?;
+
         if ahead != 0 {
-            log::error!("Cannot handle merge conflicts, not yet implemented");
-            return Ok(false);
+            self.rebase(&settings, &repository, &remote)?;
+            return Ok(true);
         }
 
         let fetch_head = repository.find_reference("FETCH_HEAD")?;
