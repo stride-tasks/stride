@@ -226,15 +226,15 @@ pub struct TaskStorage {
 }
 
 impl TaskStorage {
-    const PENDING_DATA_FILENAME: &'static str = "pending.data";
-    const COMPLETE_DATA_FILENAME: &'static str = "complete.data";
-    const DELETED_DATA_FILENAME: &'static str = "deleted.data";
-    const WAITING_DATA_FILENAME: &'static str = "waiting.data";
-    const RECURRING_DATA_FILENAME: &'static str = "recurring.data";
+    const PENDING_DATA_FILENAME: &'static str = "pending";
+    const COMPLETE_DATA_FILENAME: &'static str = "complete";
+    const DELETED_DATA_FILENAME: &'static str = "deleted";
+    const WAITING_DATA_FILENAME: &'static str = "waiting";
+    const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
     #[frb(sync)]
     pub fn new(path: &str) -> Self {
-        let path = Path::new(path).join("repository");
+        let path = Path::new(path).join("repository").join("tasks");
         Self {
             pending: Storage::new(path.join(Self::PENDING_DATA_FILENAME), TaskStatus::Pending),
             completed: Storage::new(
@@ -603,11 +603,11 @@ impl TaskStorage {
                 continue;
             }
 
-            let mut status = if path == Path::new("pending.data") {
+            let mut status = if path == Path::new("pending") {
                 TaskStatus::Pending
-            } else if path == Path::new("complete.data") {
+            } else if path == Path::new("complete") {
                 TaskStatus::Complete
-            } else if path == Path::new("deleted.data") {
+            } else if path == Path::new("deleted") {
                 TaskStatus::Deleted
             } else {
                 log::warn!("skipping unknown path: {}", path.display());
