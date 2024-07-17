@@ -1,8 +1,15 @@
 [workspace]
 resolver = "2"
 members = [
-    "rust",
+    "crates/flutter_bridge",
 ]
+
+exclude = [
+    "flutter",
+]
+
+[workspace.dependencies]
+stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 
 [profile.release]
 # Strips debug information and symbols from the binary

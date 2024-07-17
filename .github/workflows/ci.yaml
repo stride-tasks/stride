@@ -1,11 +1,10 @@
 name: ci
 
-
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 concurrency:
@@ -22,18 +21,18 @@ jobs:
     name: Rust Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: subosito/flutter-action@v1
-      with:
-        components: clippy, rustfmt
-    - uses: Swatinem/rust-cache@v2
-      with:
-        key: lint
-    - name: Check rustfmt
-      run: cargo fmt --all -- --check
-    - name: Check clippy
-      run: cargo clippy --all-targets --all-features
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: subosito/flutter-action@v1
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: lint
+      - name: Check rustfmt
+        run: cargo fmt --all -- --check
+      - name: Check clippy
+        run: cargo clippy --all-targets --all-features
 
   rust-test:
     name: Rust Test (${{ matrix.rust.name }}, ${{ matrix.os }})
@@ -79,7 +78,6 @@ jobs:
     name: Flutter Test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: subosito/flutter-action@v1
-    - run: flutter test
-
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v1
+      - run: cd flutter && flutter test
