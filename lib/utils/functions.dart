@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 Future<DateTime?> showPickDateTime({required BuildContext context}) async {
   final firstDate = DateTime.now().subtract(const Duration(days: 365 * 100));
   final lastDate = DateTime.now().add(const Duration(days: 365 * 100));
-  DateTime? date = await showDatePicker(
+  final date = await showDatePicker(
     context: context,
     firstDate: firstDate,
     lastDate: lastDate,
@@ -12,7 +12,7 @@ Future<DateTime?> showPickDateTime({required BuildContext context}) async {
   if (date == null) return null;
   if (!context.mounted) return null;
 
-  TimeOfDay? time = await showTimePicker(
+  final time = await showTimePicker(
     context: context,
     initialTime: TimeOfDay.now(),
   );
@@ -34,7 +34,7 @@ Future<bool> showAlertDialog({
   required Future<bool> Function(BuildContext context) onConfirm,
 }) async {
   var result = false;
-  await showDialog(
+  await showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
       content: SizedBox(

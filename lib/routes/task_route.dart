@@ -22,7 +22,7 @@ class TaskRoute extends StatefulWidget {
 }
 
 class _TaskRouteState extends State<TaskRoute> {
-  String description = "";
+  String description = '';
   DateTime? due;
   List<int> tags = [];
   List<Annotation> annotations = [];
@@ -44,17 +44,17 @@ class _TaskRouteState extends State<TaskRoute> {
   }
 
   String _dueButtonText() {
-    String result = "Due";
+    const result = 'Due';
     if (due == null) {
       return result;
     }
-    return "$result - ${due!.toHumanString()}";
+    return '$result - ${due!.toHumanString()}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Tasks")),
+      appBar: AppBar(title: const Text('Tasks')),
       body: Container(
         padding: const EdgeInsets.symmetric(
           vertical: 10,
@@ -68,12 +68,10 @@ class _TaskRouteState extends State<TaskRoute> {
                 TextFormField(
                   initialValue: description,
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: "Description",
-                  ),
+                  decoration: const InputDecoration(hintText: 'Description'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Task must have a description";
+                      return 'Task must have a description';
                     }
                     return null;
                   },
@@ -89,7 +87,7 @@ class _TaskRouteState extends State<TaskRoute> {
                     icon: const Icon(Icons.date_range),
                     text: _dueButtonText(),
                     onPressed: () async {
-                      var datetime = await showPickDateTime(context: context);
+                      final datetime = await showPickDateTime(context: context);
                       setState(() {
                         due = datetime;
                       });
@@ -136,8 +134,8 @@ class _TaskRouteState extends State<TaskRoute> {
               context.read<TaskBloc>().add(TaskUpdateEvent(task: task));
             }
 
-            String text =
-                widget.task == null ? "New Task added" : "Task modified";
+            final text =
+                widget.task == null ? 'New Task added' : 'Task modified';
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

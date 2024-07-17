@@ -45,18 +45,18 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   :hostname,
                   :keyType,
                   :hostKey
-                ) = taskState.error as ConnectionError_UnknownHost;
+                ) = taskState.error! as ConnectionError_UnknownHost;
                 await showAlertDialog(
                   context: context,
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "Accept Unknown Host: $hostname",
+                        'Accept Unknown Host: $hostname',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        "Host Key: ${keyType.name} $hostKey",
+                        'Host Key: ${keyType.name} $hostKey',
                         softWrap: true,
                       ),
                     ],
@@ -96,12 +96,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   if (!hasFilter) {
                     return;
                   }
-                  var newSettings =
+                  final newSettings =
                       state.settings.copyWith(selectedFilter: null);
                   context
                       .read<SettingsBloc>()
                       .add(SettingsUpdateEvent(settings: newSettings));
-                  context.read<TaskBloc>().add(TaskFilterEvent(filter: null));
+                  context.read<TaskBloc>().add(TaskFilterEvent());
                 },
               ),
             ),
@@ -110,7 +110,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 builder: (context, state) {
                   if (state.syncing) {
                     return const InfiniteRotationAnimation(
-                        child: Icon(Icons.sync));
+                      child: Icon(Icons.sync),
+                    );
                   }
                   return state.error == null
                       ? const Icon(Icons.sync)

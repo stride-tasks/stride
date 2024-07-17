@@ -1,8 +1,9 @@
-import 'package:stride/src/rust/frb_generated.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:stride/src/rust/frb_generated.dart';
 import 'package:test/test.dart';
 
 // Surely, you can use Mockito or whatever other mocking packages
+// ignore: unreachable_from_main
 class MockRustLibApi extends Mock implements RustLibApi {}
 
 Future<void> main() async {
@@ -22,5 +23,5 @@ Future<void> main() async {
   //   verifyNever(() => mockApi.greet(name: "Haled"));
   // });
 
-  test("dummy test", () {});
+  test('dummy test', () {});
 }

@@ -19,7 +19,7 @@ class SshKeysRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("SSH Keys")),
+      appBar: AppBar(title: const Text('SSH Keys')),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final keys = state.settings.keys;
@@ -28,7 +28,7 @@ class SshKeysRoute extends StatelessWidget {
               children: [
                 ElevatedButton.icon(
                   icon: const Icon(Icons.generating_tokens),
-                  label: const Text("Generate Key"),
+                  label: const Text('Generate Key'),
                   onPressed: () async {
                     final sshKey = await SshKey.generate();
                     if (context.mounted) {
@@ -37,7 +37,7 @@ class SshKeysRoute extends StatelessWidget {
                           .add(SettingsAddSshKeyEvent(key: sshKey));
                     }
 
-                    Logger.trace(message: "SSH Key generated");
+                    Logger.trace(message: 'SSH Key generated');
                   },
                 ),
                 const SizedBox(height: 5),
@@ -77,7 +77,7 @@ class SshKeysRoute extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
-                        "Are you sure you want to delete the ssh key? (action is irreversible)",
+                        'Are you sure you want to delete the ssh key? (action is irreversible)',
                         style: TextStyle(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
@@ -91,7 +91,7 @@ class SshKeysRoute extends StatelessWidget {
                         .add(SettingsRemoveSshKeyEvent(uuid: key.uuid));
                     Navigator.of(context).pop();
 
-                    Logger.trace(message: "SSH Key deleted");
+                    Logger.trace(message: 'SSH Key deleted');
                     return Future.value(true);
                   },
                 );

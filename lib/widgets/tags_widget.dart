@@ -30,7 +30,7 @@ class TagsWidgetState extends State<TagsWidget> {
       children: [
         TextField(
           decoration: const InputDecoration(
-            labelText: "Tags",
+            labelText: 'Tags',
           ),
           onSubmitted: (text) {
             setState(() {
@@ -55,10 +55,12 @@ class TagsWidgetState extends State<TagsWidget> {
               });
             }),
           )
-          .map((e) => Padding(
-                padding: const EdgeInsets.all(2),
-                child: e,
-              ))
+          .map(
+            (e) => Padding(
+              padding: const EdgeInsets.all(2),
+              child: e,
+            ),
+          )
           .toList(),
     );
   }

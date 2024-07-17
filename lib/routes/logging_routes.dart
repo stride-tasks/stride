@@ -21,7 +21,7 @@ class _LoggingRouteState extends State<LoggingRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Logging")),
+      appBar: AppBar(title: const Text('Logging')),
       body: FutureBuilder(
         future: future,
         builder: (context, state) {
@@ -30,7 +30,7 @@ class _LoggingRouteState extends State<LoggingRoute> {
           }
           final data = state.data!;
 
-          final lines = data.trim().split("\n");
+          final lines = data.trim().split('\n');
           final length = lines.length;
 
           return Column(
@@ -39,32 +39,27 @@ class _LoggingRouteState extends State<LoggingRoute> {
                 child: ListView.builder(
                   itemCount: length,
                   itemBuilder: (context, index) {
-                    final parts = lines[length - 1 - index].split(": ");
-                    final time = parts[0].split(" ")[0].replaceFirst("T", " ");
-                    final level = parts[0].split(" ")[1];
-                    final title = parts.sublist(1).join(": ");
+                    final parts = lines[length - 1 - index].split(': ');
+                    final time = parts[0].split(' ')[0].replaceFirst('T', ' ');
+                    final level = parts[0].split(' ')[1];
+                    final title = parts.sublist(1).join(': ');
                     var levelIcon = const Icon(Icons.question_mark);
 
                     // Log Levels: "OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"
                     switch (level) {
-                      case "DEBUG":
+                      case 'DEBUG':
                         levelIcon = const Icon(Icons.bug_report);
-                        break;
-                      case "TRACE":
+                      case 'TRACE':
                         levelIcon = const Icon(Icons.track_changes);
-                        break;
-                      case "INFO":
+                      case 'INFO':
                         levelIcon = const Icon(Icons.info);
-                        break;
-                      case "WARN":
+                      case 'WARN':
                         levelIcon = const Icon(Icons.warning);
-                        break;
-                      case "ERROR":
+                      case 'ERROR':
                         levelIcon = const Icon(
                           Icons.error,
                           color: Colors.redAccent,
                         );
-                        break;
                     }
                     return Card(
                       child: ListTile(

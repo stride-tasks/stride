@@ -13,7 +13,7 @@ class TaskItem extends StatelessWidget {
   final Color swipeLeftColor;
   final Icon swipeLeftIcon;
   final String? swipeLeftText;
-  final Function()? onLongPress;
+  final void Function()? onLongPress;
 
   const TaskItem({
     super.key,
@@ -34,7 +34,7 @@ class TaskItem extends StatelessWidget {
     Widget tags;
     if (task.tags.isEmpty) {
       tags = const Text(
-        "",
+        '',
         style: TextStyle(fontSize: 12),
       );
     } else {
@@ -52,10 +52,12 @@ class TaskItem extends StatelessWidget {
                 ),
               ),
             )
-            .map((chip) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: chip,
-                ))
+            .map(
+              (chip) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: chip,
+              ),
+            )
             .toList(),
       );
     }
@@ -67,7 +69,7 @@ class TaskItem extends StatelessWidget {
         children: [
           tags,
           Text(
-            task.due?.toUtc().toHumanString() ?? "",
+            task.due?.toUtc().toHumanString() ?? '',
             style: const TextStyle(fontSize: 12),
           ),
         ],
@@ -82,7 +84,7 @@ class TaskItem extends StatelessWidget {
 
     if (onSwipeLeft != null || onSwipeRight != null) {
       widget = Dismissible(
-        key: Key("${task.uuid}"),
+        key: Key('${task.uuid}'),
         direction: switch ((onSwipeLeft != null, onSwipeRight != null)) {
           (true, true) => DismissDirection.horizontal,
           (true, false) => DismissDirection.endToStart,
@@ -91,9 +93,9 @@ class TaskItem extends StatelessWidget {
         },
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd) {
-            return await onSwipeRight!();
+            return onSwipeRight!();
           } else {
-            return await onSwipeLeft!();
+            return onSwipeLeft!();
           }
         },
         background: _slideRightBackground(),
@@ -111,13 +113,12 @@ class TaskItem extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Align(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             const SizedBox(width: 16),
             swipeRightIcon,
             const SizedBox(width: 5),
             Text(
-              swipeRightText == null ? "Complete" : swipeRightText!,
+              swipeRightText == null ? 'Complete' : swipeRightText!,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -141,7 +142,7 @@ class TaskItem extends StatelessWidget {
             swipeLeftIcon,
             const SizedBox(width: 5),
             Text(
-              swipeLeftText == null ? "Delete" : swipeLeftText!,
+              swipeLeftText == null ? 'Delete' : swipeLeftText!,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,

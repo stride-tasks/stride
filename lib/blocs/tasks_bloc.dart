@@ -141,7 +141,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       try {
         await repository.sync_();
       } on ConnectionError catch (error) {
-        emit(TaskState(tasks: tasksOld, syncing: false, error: error));
+        emit(TaskState(tasks: tasksOld, error: error));
         return;
       }
 

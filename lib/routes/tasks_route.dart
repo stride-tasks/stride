@@ -29,7 +29,7 @@ class _TasksRouteState extends State<TasksRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: _drawer(),
-      appBar: const CustomAppBar(title: "Task List"),
+      appBar: const CustomAppBar(title: 'Task List'),
       body: BlocBuilder<TaskBloc, TaskState>(
         builder: (context, state) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 5.0),
@@ -78,7 +78,7 @@ class _TasksRouteState extends State<TasksRoute> {
   }
 
   Future<void> _onRefresh() async {
-    var stream = context.read<TaskBloc>().stream.asBroadcastStream();
+    final stream = context.read<TaskBloc>().stream.asBroadcastStream();
     context.read<TaskBloc>().add(TaskSyncEvent());
     await for (final state in stream) {
       if (!state.syncing) {
@@ -88,7 +88,7 @@ class _TasksRouteState extends State<TasksRoute> {
   }
 
   TaskItem _taskItem(Task task, BuildContext context) {
-    onSwipeRight() async {
+    Future<bool> onSwipeRight() async {
       var status = TaskStatus.complete;
       if (task.status == TaskStatus.complete ||
           task.status == TaskStatus.deleted) {
@@ -100,14 +100,14 @@ class _TasksRouteState extends State<TasksRoute> {
       return true;
     }
 
-    onSwipeLeft() async {
+    Future<bool> onSwipeLeft() async {
       final additionalMessage =
-          task.status == TaskStatus.deleted ? " forever" : "";
+          task.status == TaskStatus.deleted ? ' forever' : '';
 
-      return await showAlertDialog(
+      return showAlertDialog(
         context: context,
         content: Text(
-          "Are you sure you want to delete this task$additionalMessage?",
+          'Are you sure you want to delete this task$additionalMessage?',
           style: const TextStyle(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -132,7 +132,7 @@ class _TasksRouteState extends State<TasksRoute> {
           : Colors.greenAccent,
       swipeRightText: (task.status == TaskStatus.complete ||
               task.status == TaskStatus.deleted)
-          ? "Pending"
+          ? 'Pending'
           : null,
       onSwipeLeft: onSwipeLeft,
       swipeLeftIcon: task.status == TaskStatus.deleted
@@ -155,7 +155,7 @@ class _TasksRouteState extends State<TasksRoute> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Filters",
+                  'Filters',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 const Divider(),
@@ -181,24 +181,24 @@ class _TasksRouteState extends State<TasksRoute> {
                           },
                           onTap: () {
                             if (selected) {
-                              var newSettings = state.settings.copyWith(
+                              final newSettings = state.settings.copyWith(
                                 selectedFilter: null,
                               );
                               context.read<SettingsBloc>().add(
-                                  SettingsUpdateEvent(settings: newSettings));
-                              context
-                                  .read<TaskBloc>()
-                                  .add(TaskFilterEvent(filter: null));
+                                    SettingsUpdateEvent(settings: newSettings),
+                                  );
+                              context.read<TaskBloc>().add(TaskFilterEvent());
                               return;
                             }
 
-                            var newSettings = state.settings.copyWith(
+                            final newSettings = state.settings.copyWith(
                               selectedFilter: FilterSelection.predefined(
                                 uuid: filter.uuid,
                               ),
                             );
                             context.read<SettingsBloc>().add(
-                                SettingsUpdateEvent(settings: newSettings));
+                                  SettingsUpdateEvent(settings: newSettings),
+                                );
                             context
                                 .read<TaskBloc>()
                                 .add(TaskFilterEvent(filter: filter));

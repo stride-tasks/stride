@@ -51,10 +51,7 @@ class SettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [title],
-        ),
+        Row(children: [title]),
         ...insertBetween(tiles, const Divider()),
       ],
     );
@@ -84,9 +81,7 @@ class SettingsTile extends StatelessWidget {
       title: title,
       subtitle: description,
       trailing: trailing,
-      onTap: () {
-        if (onTap != null) onTap!(context);
-      },
+      onTap: () => onTap?.call(context),
     );
   }
 }
@@ -101,6 +96,7 @@ class SettingsTileNavigation extends SettingsTile {
     required this.builder,
   }) : super(
           onTap: (context) {
+            // ignore: inference_failure_on_instance_creation
             Navigator.of(context).push(MaterialPageRoute(builder: builder));
           },
         );
@@ -148,7 +144,7 @@ class SettingsTileText extends SettingsTile {
               ? const Icon(Icons.arrow_forward)
               : Text(text),
           onTap: (context) async {
-            var controller = TextEditingController(text: text);
+            final controller = TextEditingController(text: text);
             await showAlertDialog(
               context: context,
               content: TextField(

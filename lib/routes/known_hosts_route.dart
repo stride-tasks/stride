@@ -18,7 +18,7 @@ class KnownHostsRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("SSH Known Hosts")),
+      appBar: AppBar(title: const Text('SSH Known Hosts')),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final hosts = state.settings.knownHosts.hosts;
@@ -36,7 +36,7 @@ class KnownHostsRoute extends StatelessWidget {
 
   ListTile _listItem(Host host, BuildContext context) {
     return ListTile(
-      title: Text("${host.hostname} - ${host.remoteKeyType.name}"),
+      title: Text('${host.hostname} - ${host.remoteKeyType.name}'),
       subtitle: Text(host.remoteHostKey),
       trailing: !hasDelete
           ? null
@@ -49,13 +49,13 @@ class KnownHostsRoute extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "Are you sure you want to delete the known host ${host.hostname}? (action is irreversible)",
+                        'Are you sure you want to delete the known host ${host.hostname}? (action is irreversible)',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        "${host.hostname} - ${host.remoteKeyType.name} - ${host.remoteHostKey}",
+                        '${host.hostname} - ${host.remoteKeyType.name} - ${host.remoteHostKey}',
                       ),
                     ],
                   ),
@@ -65,7 +65,7 @@ class KnownHostsRoute extends StatelessWidget {
                         .add(SettingsRemoveKnownHostEvent(host: host));
                     Navigator.of(context).pop();
 
-                    Logger.trace(message: "SSH Key deleted");
+                    Logger.trace(message: 'SSH Key deleted');
                     return Future.value(true);
                   },
                 );

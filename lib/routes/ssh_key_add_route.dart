@@ -13,9 +13,9 @@ class SshKeyAddRoute extends StatefulWidget {
 }
 
 class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
-  String note = "";
-  String publicKey = "";
-  String privateKey = "";
+  String note = '';
+  String publicKey = '';
+  String privateKey = '';
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
       builder: (context, state) {
         final keys = state.settings.keys;
         return Scaffold(
-          appBar: AppBar(title: const Text("SSH Key")),
+          appBar: AppBar(title: const Text('SSH Key')),
           body: Container(
             padding: const EdgeInsets.symmetric(
               vertical: 10,
@@ -33,7 +33,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
               children: [
                 SettingsTileText(
                   leading: const Icon(Icons.public_sharp),
-                  title: const Text("Public Key"),
+                  title: const Text('Public Key'),
                   text: publicKey,
                   hidden: true,
                   onChanged: (text) {
@@ -45,7 +45,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
                 const Divider(),
                 SettingsTileText(
                   leading: const Icon(Icons.key),
-                  title: const Text("Private Key"),
+                  title: const Text('Private Key'),
                   text: privateKey,
                   hidden: true,
                   multiline: true,

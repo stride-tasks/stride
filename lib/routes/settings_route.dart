@@ -11,52 +11,53 @@ import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class SettingsRoute extends StatelessWidget {
-  final TextStyle headingStyle = const TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: Colors.red,
-  );
+  TextStyle get headingStyle => const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Colors.red,
+      );
 
   const SettingsRoute({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Settings")),
+      appBar: AppBar(title: const Text('Settings')),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final settings = state.settings;
           return SettingsList(
             sections: [
               SettingsSection(
-                title: Text("General", style: headingStyle),
+                title: Text('General', style: headingStyle),
                 tiles: [
                   SettingsTileSwitch(
-                    title: const Text("Theme"),
+                    title: const Text('Theme'),
                     leading: const Icon(Icons.color_lens),
-                    description: const Text("Choose the theme mode"),
+                    description: const Text('Choose the theme mode'),
                     value: settings.darkMode,
                     onChanged: (val) =>
                         context.read<SettingsBloc>().add(SettingsToggleTheme()),
                   ),
                   SettingsTileSwitch(
-                    title: const Text("Periodic Sync"),
+                    title: const Text('Periodic Sync'),
                     leading: const Icon(Icons.timer),
                     description:
-                        const Text("Periodically sync every 5 minutes"),
+                        const Text('Periodically sync every 5 minutes'),
                     value: settings.periodicSync,
-                    onChanged: (val) =>
-                        context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                              settings: settings.copyWith(periodicSync: val),
-                            )),
+                    onChanged: (val) => context.read<SettingsBloc>().add(
+                          SettingsUpdateEvent(
+                            settings: settings.copyWith(periodicSync: val),
+                          ),
+                        ),
                   ),
                 ],
               ),
               SettingsSection(
-                title: Text("Git Integration", style: headingStyle),
+                title: Text('Git Integration', style: headingStyle),
                 tiles: [
                   SettingsTileText(
-                    title: const Text("Repository URL"),
+                    title: const Text('Repository URL'),
                     leading: const Icon(Icons.code),
                     text: settings.repository.origin,
                     onChanged: (text) {
@@ -72,7 +73,7 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTileText(
                     leading: const Icon(Icons.mail),
-                    title: const Text("Email"),
+                    title: const Text('Email'),
                     text: settings.repository.email,
                     onChanged: (text) {
                       context.read<SettingsBloc>().add(
@@ -87,7 +88,7 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTileText(
                     leading: const Icon(Icons.person),
-                    title: const Text("Author"),
+                    title: const Text('Author'),
                     text: settings.repository.author,
                     onChanged: (text) {
                       context.read<SettingsBloc>().add(
@@ -102,7 +103,7 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTileText(
                     leading: const FaIcon(FontAwesomeIcons.codeBranch),
-                    title: const Text("Branch"),
+                    title: const Text('Branch'),
                     text: settings.repository.branch,
                     onChanged: (text) {
                       context.read<SettingsBloc>().add(
@@ -118,7 +119,7 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.key),
-                    title: const Text("SSH Key"),
+                    title: const Text('SSH Key'),
                     builder: (context) => SshKeysRoute(
                       hasDelete: false,
                       onTap: (key) {
@@ -137,12 +138,12 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTile(
                     leading: const Icon(Icons.delete),
-                    title: const Text("Remove Repository"),
+                    title: const Text('Remove Repository'),
                     onTap: (context) async {
                       await showAlertDialog(
                         context: context,
                         content: const Text(
-                          "Are you sure you want to delete the (local) repository?",
+                          'Are you sure you want to delete the (local) repository?',
                           style: TextStyle(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
@@ -157,11 +158,11 @@ class SettingsRoute extends StatelessWidget {
                 ],
               ),
               SettingsSection(
-                title: Text("Security", style: headingStyle),
+                title: Text('Security', style: headingStyle),
                 tiles: [
                   SettingsTileNavigation(
                     leading: const Icon(Icons.key_sharp),
-                    title: const Text("SSH Keys"),
+                    title: const Text('SSH Keys'),
                     builder: (context) => SshKeysRoute(
                       onTap: (key) async {
                         await Clipboard.setData(
@@ -173,7 +174,7 @@ class SettingsRoute extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                "Copied to clipbard!",
+                                'Copied to clipbard!',
                               ),
                             ),
                           );
@@ -183,22 +184,22 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.key_sharp),
-                    title: const Text("SSH Known Hosts"),
+                    title: const Text('SSH Known Hosts'),
                     builder: (context) => const KnownHostsRoute(),
                   ),
                 ],
               ),
               SettingsSection(
-                title: Text("Misc", style: headingStyle),
+                title: Text('Misc', style: headingStyle),
                 tiles: [
                   SettingsTileNavigation(
                     leading: const Icon(Icons.file_open),
-                    title: const Text("Logs"),
+                    title: const Text('Logs'),
                     builder: (context) => const LoggingRoute(),
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.file_copy_outlined),
-                    title: const Text("Open Source and Licence"),
+                    title: const Text('Open Source and Licence'),
                     builder: (context) => const SshKeysRoute(),
                   ),
                 ],

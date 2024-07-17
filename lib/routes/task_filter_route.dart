@@ -22,8 +22,8 @@ class TaskFilterRoute extends StatefulWidget {
 }
 
 class _TaskFilterRouteState extends State<TaskFilterRoute> {
-  TextEditingController nameController = TextEditingController(text: "");
-  TextEditingController searchController = TextEditingController(text: "");
+  TextEditingController nameController = TextEditingController(text: '');
+  TextEditingController searchController = TextEditingController(text: '');
   Set<TaskStatus> status = <TaskStatus>{TaskStatus.pending};
 
   @override
@@ -41,7 +41,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Filters")),
+      appBar: AppBar(title: const Text('Filters')),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final isMobilePlatform = Platform.isAndroid || Platform.isIOS;
@@ -56,7 +56,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                   controller: searchController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: "Search",
+                    labelText: 'Search',
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -89,19 +89,17 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                     ),
                   ],
                   selected: status,
-                  onSelectionChanged: (Set<TaskStatus> newSelection) {
+                  onSelectionChanged: (newSelection) {
                     setState(() {
                       status = newSelection;
                     });
                   },
                   multiSelectionEnabled: true,
-                  emptySelectionAllowed: false,
                   showSelectedIcon: !isMobilePlatform,
                   selectedIcon: const Icon(Icons.check),
                 ),
                 const SizedBox(height: 10.0),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: _actions(state, context),
                 ),
@@ -117,15 +115,15 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
     return [
       ElevatedButton.icon(
         icon: const Icon(Icons.check),
-        label: const Text("Apply"),
+        label: const Text('Apply'),
         onPressed: () {
-          var filter = Filter(
+          final filter = Filter(
             uuid: const Uuid().v4obj(),
             status: status,
-            name: "Temporary",
+            name: 'Temporary',
             search: searchController.text,
           );
-          var newSettings = state.settings.copyWith(
+          final newSettings = state.settings.copyWith(
             selectedFilter: FilterSelection.temporary(
               filter: filter,
             ),
@@ -145,7 +143,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
       const SizedBox(width: 20),
       ElevatedButton.icon(
         icon: const Icon(Icons.save),
-        label: const Text("Save"),
+        label: const Text('Save'),
         onPressed: () async {
           await showAlertDialog(
             context: context,
@@ -154,7 +152,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
               autocorrect: false,
               autofocus: true,
               decoration: const InputDecoration(
-                hintText: "Filter name...",
+                hintText: 'Filter name...',
               ),
             ),
             onConfirm: (context) async {
@@ -162,12 +160,12 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                 return false;
               }
 
-              var filters = state.settings.filters.toList();
+              final filters = state.settings.filters.toList();
               if (widget.filter != null) {
-                var filterIndex = filters.indexWhere(
+                final filterIndex = filters.indexWhere(
                   (element) => element.uuid == widget.filter!.uuid,
                 );
-                var filter = widget.filter!.copyWith(
+                final filter = widget.filter!.copyWith(
                   name: nameController.text,
                   search: searchController.text,
                 );
@@ -176,10 +174,10 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                 final hasSameName = state.settings.filters.every(
                   (element) => element.name == nameController.text,
                 );
-                var name = hasSameName
-                    ? "${nameController.text} 2"
+                final name = hasSameName
+                    ? '${nameController.text} 2'
                     : nameController.text;
-                var filter = Filter(
+                final filter = Filter(
                   uuid: const Uuid().v4obj(),
                   status: status,
                   name: name,
@@ -189,11 +187,13 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                 filters.add(filter);
               }
 
-              context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                    settings: state.settings.copyWith(
-                      filters: filters,
+              context.read<SettingsBloc>().add(
+                    SettingsUpdateEvent(
+                      settings: state.settings.copyWith(
+                        filters: filters,
+                      ),
                     ),
-                  ));
+                  );
 
               // Pop to first route.
               Navigator.popUntil(context, (route) => route.isFirst);
@@ -216,7 +216,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
       const SizedBox(width: 20),
       ElevatedButton.icon(
         icon: const Icon(Icons.remove_circle),
-        label: const Text("Delete"),
+        label: const Text('Delete'),
         style: ButtonStyle(
           iconColor: WidgetStateProperty.all(Colors.redAccent),
         ),
@@ -224,30 +224,36 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
           await showAlertDialog(
             context: context,
             content: Text(
-              "Are you sure you want to delete ${filter.name} filter?",
+              'Are you sure you want to delete ${filter.name} filter?',
               style: const TextStyle(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             onConfirm: (context) {
-              var filters = state.settings.filters.toList();
-              filters.removeWhere(
-                (element) => element.uuid == filter.uuid,
-              );
+              final filters = state.settings.filters.toList()
+                ..removeWhere(
+                  (element) => element.uuid == filter.uuid,
+                );
 
               if (state.settings.selectedFilter
                   case FilterSelection_Predefined(:final uuid)) {
                 if (uuid == filter.uuid) {
-                  context.read<TaskBloc>().add(TaskFilterEvent(filter: null));
-                  context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                      settings: state.settings.copyWith(selectedFilter: null)));
+                  context.read<TaskBloc>().add(TaskFilterEvent());
+                  context.read<SettingsBloc>().add(
+                        SettingsUpdateEvent(
+                          settings:
+                              state.settings.copyWith(selectedFilter: null),
+                        ),
+                      );
                 }
               }
 
-              context.read<SettingsBloc>().add(SettingsUpdateEvent(
-                    settings: state.settings.copyWith(
-                      filters: filters,
+              context.read<SettingsBloc>().add(
+                    SettingsUpdateEvent(
+                      settings: state.settings.copyWith(
+                        filters: filters,
+                      ),
                     ),
-                  ));
+                  );
 
               // Pop to first route.
               Navigator.popUntil(context, (route) => route.isFirst);
@@ -255,7 +261,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
             },
           );
         },
-      )
+      ),
     ];
   }
 }

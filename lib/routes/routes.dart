@@ -20,6 +20,7 @@ class Routes {
   static const sshKeysAdd = '/sshKeysAdd/';
   static const logging = '/logging/';
 
+  // ignore: strict_raw_type
   static Route onGenerateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
       case start:
@@ -29,7 +30,7 @@ class Routes {
       case taskEdit:
         return MaterialPageRoute(
           builder: (context) => TaskRoute(
-            task: routeSettings.arguments as Task,
+            task: routeSettings.arguments! as Task,
           ),
         );
       case taskFilter:
@@ -37,7 +38,7 @@ class Routes {
           builder: (context) => TaskFilterRoute(
             filter: routeSettings.arguments == null
                 ? null
-                : routeSettings.arguments as Filter,
+                : routeSettings.arguments! as Filter,
           ),
         );
       case settings:

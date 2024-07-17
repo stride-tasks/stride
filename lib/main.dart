@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/src/rust/api/paths.dart';
-import 'package:stride/src/rust/api/settings.dart';
-import 'package:stride/src/rust/api/repository.dart';
-import 'package:stride/src/rust/frb_generated.dart';
 import 'package:stride/routes/routes.dart';
+import 'package:stride/src/rust/api/paths.dart';
+import 'package:stride/src/rust/api/repository.dart';
+import 'package:stride/src/rust/api/settings.dart';
+import 'package:stride/src/rust/frb_generated.dart';
 import 'package:stride/theme.dart';
-import 'package:path/path.dart' as path;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +24,7 @@ Future<void> main() async {
       supportPath: supportPath.path,
       documentPath: documentPath.path,
       cachePath: cachePath.path,
-      logPath: path.joinAll([cachePath.path, "logs", "log.txt"]),
+      logPath: path.joinAll([cachePath.path, 'logs', 'log.txt']),
     ),
   );
   // TODO: Better initialize settings.
@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocListener<TaskBloc, TaskState>(
         listener: (context, state) {
-          for (int i = 0; i < state.tasks.length; i++) {
+          for (var i = 0; i < state.tasks.length; i++) {
             // _scheduleNotification(state.tasks[i]);
           }
         },
