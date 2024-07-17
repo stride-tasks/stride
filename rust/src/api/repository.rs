@@ -216,7 +216,8 @@ impl Storage {
 
 #[frb(opaque)]
 pub struct TaskStorage {
-    path: PathBuf,
+    repository_path: PathBuf,
+    tasks_path: PathBuf,
 
     pending: Storage,
     completed: Storage,
@@ -234,20 +235,31 @@ impl TaskStorage {
 
     #[frb(sync)]
     pub fn new(path: &str) -> Self {
-        let path = Path::new(path).join("repository").join("tasks");
+        let repository_path = Path::new(path).join("repository");
+        let tasks_path = repository_path.join("tasks");
         Self {
-            pending: Storage::new(path.join(Self::PENDING_DATA_FILENAME), TaskStatus::Pending),
+            repository_path,
+            pending: Storage::new(
+                tasks_path.join(Self::PENDING_DATA_FILENAME),
+                TaskStatus::Pending,
+            ),
             completed: Storage::new(
-                path.join(Self::COMPLETE_DATA_FILENAME),
+                tasks_path.join(Self::COMPLETE_DATA_FILENAME),
                 TaskStatus::Complete,
             ),
-            deleted: Storage::new(path.join(Self::DELETED_DATA_FILENAME), TaskStatus::Deleted),
-            waiting: Storage::new(path.join(Self::WAITING_DATA_FILENAME), TaskStatus::Waiting),
+            deleted: Storage::new(
+                tasks_path.join(Self::DELETED_DATA_FILENAME),
+                TaskStatus::Deleted,
+            ),
+            waiting: Storage::new(
+                tasks_path.join(Self::WAITING_DATA_FILENAME),
+                TaskStatus::Waiting,
+            ),
             recurring: Storage::new(
-                path.join(Self::RECURRING_DATA_FILENAME),
+                tasks_path.join(Self::RECURRING_DATA_FILENAME),
                 TaskStatus::Recurring,
             ),
-            path,
+            tasks_path,
         }
     }
 
@@ -268,7 +280,7 @@ impl TaskStorage {
     }
 
     pub fn add(&mut self, task: Task) -> Result<()> {
-        if !self.path.exists() {
+        if !self.repository_path.exists() {
             self.init_repotitory()?;
         }
 
@@ -417,7 +429,7 @@ impl TaskStorage {
     }
 
     pub fn sync(&mut self) -> Result<(), ConnectionError> {
-        if self.path.exists() {
+        if self.repository_path.exists() {
             // TODO: Make sure that nothing is left behind!
 
             if self.pull().unwrap() {
@@ -438,7 +450,7 @@ impl TaskStorage {
         for storage in self.storage_mut() {
             storage.clear()?;
         }
-        std::fs::remove_dir_all(&self.path)?;
+        std::fs::remove_dir_all(&self.repository_path)?;
         Ok(())
     }
 
@@ -466,7 +478,7 @@ impl TaskStorage {
         builder.fetch_options(fo);
         builder.branch(&settings.repository.branch);
 
-        let connection = builder.clone(&settings.repository.origin, &self.path);
+        let connection = builder.clone(&settings.repository.origin, &self.repository_path);
 
         if let Err(error) = &connection {
             return match error.class() {
@@ -498,6 +510,11 @@ impl TaskStorage {
 
         self.unload();
 
+        if !self.tasks_path.exists() {
+            std::fs::create_dir(&self.tasks_path)
+                .expect("creating the tasks directory should not fail");
+        }
+
         Ok(())
     }
 
@@ -507,7 +524,7 @@ impl TaskStorage {
         self.sync()?;
         self.unload();
 
-        let mut repository = Repository::open(&self.path)?;
+        let mut repository = Repository::open(&self.repository_path)?;
         let branch =
             repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
         let reference = branch.into_reference();
@@ -519,13 +536,18 @@ impl TaskStorage {
             .context("invalid UTF-8 reference name of branch")?;
         repository.set_head(name)?;
 
+        if !self.tasks_path.exists() {
+            std::fs::create_dir(&self.tasks_path)
+                .expect("creating the tasks directory should not fail");
+        }
+
         Ok(())
     }
 
     pub fn init_repotitory(&self) -> anyhow::Result<()> {
         let settings = Settings::get();
 
-        let repository = Repository::init(&self.path)?;
+        let repository = Repository::init(&self.repository_path)?;
 
         let mut index = repository.index()?;
 
@@ -546,13 +568,17 @@ impl TaskStorage {
         let branch_ref_name = branch_ref.name().unwrap();
         repository.set_head(branch_ref_name)?;
 
+        if !self.tasks_path.exists() {
+            std::fs::create_dir_all(&self.tasks_path)?;
+        }
+
         Result::Ok(())
     }
 
     pub fn add_and_commit(&self, message: &str) -> anyhow::Result<bool> {
         let settings = Settings::get();
 
-        let repository = Repository::open(&self.path)?;
+        let repository = Repository::open(&self.repository_path)?;
 
         if repository.statuses(None)?.is_empty() {
             log::trace!("Skipping sync, no changes done");
@@ -754,7 +780,7 @@ impl TaskStorage {
     pub fn pull(&mut self) -> anyhow::Result<bool> {
         let settings = Settings::get();
 
-        let repository = Repository::open(&self.path)?;
+        let repository = Repository::open(&self.repository_path)?;
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
             return Err(ConnectionError::NoSshKeysProvided.into());
@@ -878,7 +904,7 @@ impl TaskStorage {
     pub fn push(&self) -> anyhow::Result<()> {
         let settings = Settings::get();
 
-        let repository = Repository::open(&self.path)?;
+        let repository = Repository::open(&self.repository_path)?;
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
             return Err(ConnectionError::NoSshKeysProvided.into());
