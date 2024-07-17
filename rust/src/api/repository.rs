@@ -56,12 +56,12 @@ impl Task {
 }
 
 #[cfg(unix)]
-pub fn bytes2path(b: &[u8]) -> &Path {
+pub(crate) fn bytes2path(b: &[u8]) -> &Path {
     use std::os::unix::prelude::*;
     Path::new(std::ffi::OsStr::from_bytes(b))
 }
 #[cfg(windows)]
-pub fn bytes2path(b: &[u8]) -> &Path {
+pub(crate) fn bytes2path(b: &[u8]) -> &Path {
     use std::str;
     Path::new(str::from_utf8(b).unwrap())
 }
@@ -298,7 +298,7 @@ impl TaskStorage {
         Ok(tasks)
     }
 
-    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+    pub(crate) fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
         for storage in self.storage_mut() {
             if let Some(task) = storage.remove(uuid)? {
                 return Ok(Some(task));
@@ -307,7 +307,7 @@ impl TaskStorage {
         Ok(None)
     }
 
-    pub fn update2(&mut self, task: Task) -> Result<bool> {
+    pub(crate) fn update2(&mut self, task: Task) -> Result<bool> {
         let mut updated = false;
         for storage in self.storage_mut() {
             if storage.update(&task)? {
@@ -372,7 +372,7 @@ impl TaskStorage {
         Ok(false)
     }
 
-    pub fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>> {
+    pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>> {
         let mut found_task = None;
         for storage in self.storage_mut() {
             if task.status != storage.kind {

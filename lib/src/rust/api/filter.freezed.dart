@@ -123,13 +123,14 @@ class __$$FilterImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$FilterImpl implements _Filter {
+class _$FilterImpl extends _Filter {
   const _$FilterImpl(
       {required this.uuid,
       required this.name,
       required final Set<TaskStatus> status,
       required this.search})
-      : _status = status;
+      : _status = status,
+        super._();
 
   @override
   final UuidValue uuid;
@@ -173,12 +174,13 @@ class _$FilterImpl implements _Filter {
       __$$FilterImplCopyWithImpl<_$FilterImpl>(this, _$identity);
 }
 
-abstract class _Filter implements Filter {
+abstract class _Filter extends Filter {
   const factory _Filter(
       {required final UuidValue uuid,
       required final String name,
       required final Set<TaskStatus> status,
       required final String search}) = _$FilterImpl;
+  const _Filter._() : super._();
 
   @override
   UuidValue get uuid;

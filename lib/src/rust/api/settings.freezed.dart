@@ -145,13 +145,14 @@ class __$$RepositoryImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$RepositoryImpl implements _Repository {
+class _$RepositoryImpl extends _Repository {
   const _$RepositoryImpl(
       {required this.origin,
       required this.author,
       required this.email,
       required this.branch,
-      this.sshKeyUuid});
+      this.sshKeyUuid})
+      : super._();
 
   @override
   final String origin;
@@ -193,13 +194,14 @@ class _$RepositoryImpl implements _Repository {
       __$$RepositoryImplCopyWithImpl<_$RepositoryImpl>(this, _$identity);
 }
 
-abstract class _Repository implements Repository {
+abstract class _Repository extends Repository {
   const factory _Repository(
       {required final String origin,
       required final String author,
       required final String email,
       required final String branch,
       final UuidValue? sshKeyUuid}) = _$RepositoryImpl;
+  const _Repository._() : super._();
 
   @override
   String get origin;
