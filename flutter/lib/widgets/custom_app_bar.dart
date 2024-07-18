@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/routes/routes.dart';
+import 'package:stride/routes/settings_route.dart';
+import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
@@ -90,7 +91,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
                       : const Icon(Icons.filter_alt_off),
                 ),
                 onTap: () async {
-                  await Navigator.of(context).pushNamed(Routes.taskFilter);
+                  await Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (context) => const TaskFilterRoute(),
+                    ),
+                  );
                 },
                 onLongPress: () {
                   if (!hasFilter) {
@@ -125,7 +130,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                Navigator.pushNamed(context, Routes.settings);
+                Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsRoute(),
+                  ),
+                );
               },
             ),
           ],

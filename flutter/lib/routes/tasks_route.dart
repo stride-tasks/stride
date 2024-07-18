@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/routes/routes.dart';
+import 'package:stride/routes/task_filter_route.dart';
+import 'package:stride/routes/task_route.dart';
 import 'package:stride/src/rust/api/filter.dart';
 import 'package:stride/src/rust/task.dart';
 import 'package:stride/utils/functions.dart';
@@ -70,7 +71,9 @@ class _TasksRouteState extends State<TasksRoute> {
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         onPressed: () async {
-          await Navigator.of(context).pushNamed(Routes.taskAdd);
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute(builder: (context) => const TaskRoute()),
+          );
         },
         child: const Icon(Icons.add_circle, size: 50),
       ),
@@ -139,7 +142,9 @@ class _TasksRouteState extends State<TasksRoute> {
           ? const Icon(Icons.delete_forever, color: Colors.white)
           : const Icon(Icons.delete, color: Colors.white),
       onLongPress: () {
-        Navigator.of(context).pushNamed(Routes.taskEdit, arguments: task);
+        Navigator.of(context).push<void>(
+          MaterialPageRoute(builder: (context) => TaskRoute(task: task)),
+        );
       },
     );
   }
@@ -174,9 +179,11 @@ class _TasksRouteState extends State<TasksRoute> {
                           selected: selected,
                           selectedColor: Colors.amber[900],
                           onLongPress: () {
-                            Navigator.of(context).pushNamed(
-                              Routes.taskFilter,
-                              arguments: filter,
+                            Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    TaskFilterRoute(filter: filter),
+                              ),
                             );
                           },
                           onTap: () {

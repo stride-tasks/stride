@@ -4,7 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/routes/routes.dart';
+import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/src/rust/api/paths.dart';
 import 'package:stride/src/rust/api/repository.dart';
 import 'package:stride/src/rust/api/settings.dart';
@@ -73,7 +73,7 @@ class MyApp extends StatelessWidget {
               darkTheme: generateTheme(darkMode: true),
               themeMode:
                   state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
-              onGenerateRoute: Routes.onGenerateRoute,
+              home: const TasksRoute(),
             );
           },
         ),

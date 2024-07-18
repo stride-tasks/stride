@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/routes/routes.dart';
+import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/src/rust/api/logging.dart';
 import 'package:stride/src/rust/api/settings.dart';
 import 'package:stride/utils/functions.dart';
@@ -57,7 +57,9 @@ class SshKeysRoute extends StatelessWidget {
       floatingActionButton: IconButton(
         icon: const Icon(Icons.add_circle_outline, size: 50),
         onPressed: () {
-          Navigator.of(context).pushNamed(Routes.sshKeysAdd);
+          Navigator.of(context).push<void>(
+            MaterialPageRoute(builder: (context) => const SshKeyAddRoute()),
+          );
         },
       ),
     );
