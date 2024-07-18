@@ -1,6 +1,6 @@
 [package]
-name = "stride_encryption"
-description = "Stride encrypiton"
+name = "stride_crypto"
+description = "Stride related cryptography."
 keywords = ["stride"]
 categories = []
 version.workspace = true

@@ -911,7 +911,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "stride_encryption"
+name = "stride_crypto"
 version = "0.1.0"
 dependencies = [
  "base64",
