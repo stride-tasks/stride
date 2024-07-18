@@ -23,6 +23,9 @@ pub struct ApplicationPaths {
 }
 
 impl ApplicationPaths {
+    /// # Panics
+    ///
+    /// If it cannot create the the application paths.
     pub fn init(paths: ApplicationPaths) {
         std::env::set_var("HOME", &paths.support_path);
 

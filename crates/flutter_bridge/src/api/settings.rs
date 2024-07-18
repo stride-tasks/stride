@@ -30,6 +30,8 @@ pub struct SshKey {
 impl SshKey {
     const SSH_ED25519: &'static str = "ssh-ed25519";
 
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
     pub fn generate() -> SshKey {
         let rsa = PKey::generate_ed25519().unwrap();
 
@@ -78,9 +80,9 @@ pub struct Repository {
 impl Default for Repository {
     fn default() -> Self {
         Self {
-            origin: "".into(),
-            author: "".into(),
-            email: "".into(),
+            origin: String::new(),
+            author: String::new(),
+            email: String::new(),
             branch: default_branch_name(),
             ssh_key_uuid: None,
         }

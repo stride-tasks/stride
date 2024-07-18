@@ -53,6 +53,10 @@ pub(crate) fn init_logger(path: &Path) {
         .try_init();
 }
 
+/// # Panics
+///
+/// If the logger file cannot be read.
+#[must_use]
 pub fn get_logs() -> String {
     let path = application_log_path();
     if !path.exists() {
@@ -61,26 +65,27 @@ pub fn get_logs() -> String {
     std::fs::read_to_string(path).expect("could not read logs")
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct Logger {}
 
 impl Logger {
     pub fn debug(message: &str) {
-        log::debug!("{message}")
+        log::debug!("{message}");
     }
 
     pub fn trace(message: &str) {
-        log::trace!("{message}")
+        log::trace!("{message}");
     }
 
     pub fn info(message: &str) {
-        log::info!("{message}")
+        log::info!("{message}");
     }
 
     pub fn warn(message: &str) {
-        log::warn!("{message}")
+        log::warn!("{message}");
     }
 
     pub fn error(message: &str) {
-        log::error!("{message}")
+        log::error!("{message}");
     }
 }

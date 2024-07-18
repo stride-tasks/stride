@@ -43,6 +43,9 @@ class ApplicationPaths {
   static Future<ApplicationPaths> default_() =>
       RustLib.instance.api.crateApiPathsApplicationPathsDefault();
 
+  /// # Panics
+  ///
+  /// If it cannot create the the application paths.
   static Future<void> init({required ApplicationPaths paths}) =>
       RustLib.instance.api.crateApiPathsApplicationPathsInit(paths: paths);
 

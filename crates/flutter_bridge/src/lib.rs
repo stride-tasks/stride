@@ -1,6 +1,10 @@
 // TODO: Remove
 #![allow(dead_code)]
 #![allow(unused)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+#![allow(clippy::similar_names)]
+#![allow(clippy::module_name_repetitions)]
 
 use base64::Engine;
 use chrono::{DateTime, Datelike, Timelike};
@@ -14,6 +18,16 @@ pub mod task;
 
 pub(crate) mod escape;
 
+#[allow(clippy::unreadable_literal)]
+#[allow(unused_qualifications)]
+#[allow(clippy::redundant_else)]
+#[allow(unreachable_pub)]
+#[allow(clippy::wildcard_imports)]
+#[allow(clippy::semicolon_if_nothing_returned)]
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::uninlined_format_args)]
+#[allow(clippy::cast_possible_wrap)]
+#[allow(clippy::cast_lossless)]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 
 pub(crate) trait ToBase64 {
@@ -27,13 +41,13 @@ pub(crate) trait ToBase64Array<const N: usize> {
         Self: Sized;
 }
 
-impl ToBase64 for uuid::Uuid {
+impl ToBase64 for Uuid {
     fn to_base64(&self) -> String {
         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(self.as_bytes())
     }
 }
 
-impl ToBase64Array<22> for uuid::Uuid {
+impl ToBase64Array<22> for Uuid {
     fn to_base64_array(&self) -> [u8; 22] {
         let mut result = [0u8; 22];
         base64::engine::general_purpose::URL_SAFE_NO_PAD

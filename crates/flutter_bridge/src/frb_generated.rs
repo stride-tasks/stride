@@ -510,7 +510,7 @@ fn wire__crate__api__repository__TaskStorage_change_category_impl(
                         let mut api_that_guard = api_that_guard.unwrap();
                         let output_ok = crate::api::repository::TaskStorage::change_category(
                             &mut *api_that_guard,
-                            api_task,
+                            &api_task,
                             api_status,
                         )?;
                         Ok(output_ok)
@@ -1176,7 +1176,7 @@ fn wire__crate__api__repository__TaskStorage_update_impl(
                         let mut api_that_guard = api_that_guard.unwrap();
                         let output_ok = crate::api::repository::TaskStorage::update(
                             &mut *api_that_guard,
-                            api_task,
+                            &api_task,
                         )?;
                         Ok(output_ok)
                     })(),

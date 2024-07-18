@@ -22,12 +22,14 @@ pub enum HostKeyType {
 }
 
 impl HostKeyType {
-    /// The name of the key type as encoded in the known_hosts file.
+    /// The name of the key type as encoded in the `known_hosts` file.
+    #[must_use]
     pub fn name(&self) -> &'static str {
         SshHostKeyType::from(*self).name()
     }
 
     /// A short name of the key type, the colloquial form used as a human-readable description.
+    #[must_use]
     pub fn short_name(&self) -> &'static str {
         SshHostKeyType::from(*self).short_name()
     }
@@ -46,9 +48,9 @@ impl From<HostKeyType> for SshHostKeyType {
     }
 }
 
-impl TryFrom<git2::cert::SshHostKeyType> for HostKeyType {
+impl TryFrom<SshHostKeyType> for HostKeyType {
     type Error = HostKeyTypeError;
-    fn try_from(value: git2::cert::SshHostKeyType) -> Result<Self, Self::Error> {
+    fn try_from(value: SshHostKeyType) -> Result<Self, Self::Error> {
         match value {
             SshHostKeyType::Rsa => Ok(Self::Rsa),
             SshHostKeyType::Dss => Ok(Self::Dss),
@@ -100,6 +102,7 @@ pub struct Host {
     pub remote_host_key: String,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct HostRef<'a> {
     hostname: &'a str,
     key_type: HostKeyType,
@@ -107,6 +110,7 @@ pub struct HostRef<'a> {
 }
 
 impl Host {
+    #[must_use]
     pub fn new(hostname: String, key_type: HostKeyType, remote_host_key: String) -> Self {
         Self {
             hostname,
@@ -115,6 +119,7 @@ impl Host {
         }
     }
 
+    #[must_use]
     pub fn as_ref(&self) -> HostRef<'_> {
         HostRef {
             hostname: &self.hostname,
@@ -196,6 +201,7 @@ pub struct KnownHosts {
 impl KnownHosts {
     const SSH_KNOWN_HOSTS_STANDARD_LOCATION: &'static str = ".ssh/known_hosts";
 
+    #[must_use]
     pub fn new() -> Self {
         Self { hosts: Vec::new() }
     }
@@ -240,10 +246,12 @@ impl KnownHosts {
         self.hosts.push(host);
     }
 
+    #[must_use]
     pub fn hosts(&self) -> &[Host] {
         &self.hosts
     }
 
+    #[must_use]
     pub fn host(&self, hostname: &str, host_key_type: HostKeyType) -> Option<&Host> {
         self.hosts
             .iter()

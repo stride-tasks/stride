@@ -301,7 +301,7 @@ impl TaskStorage {
         Ok(None)
     }
 
-    pub fn tasks_with_filter(&mut self, filter: &Filter) -> anyhow::Result<Vec<Task>> {
+    pub fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>> {
         let mut tasks = Vec::new();
         for storage in self.storage_mut() {
             storage.filter(filter, &mut tasks)?;
@@ -319,10 +319,10 @@ impl TaskStorage {
         Ok(None)
     }
 
-    pub(crate) fn update2(&mut self, task: Task) -> Result<bool> {
+    pub(crate) fn update2(&mut self, task: &Task) -> Result<bool> {
         let mut updated = false;
         for storage in self.storage_mut() {
-            if storage.update(&task)? {
+            if storage.update(task)? {
                 updated = true;
                 break;
             }
@@ -330,16 +330,15 @@ impl TaskStorage {
         Ok(updated)
     }
 
-    pub fn update(&mut self, task: Task) -> Result<bool> {
-        let uuid = task.uuid;
+    pub fn update(&mut self, task: &Task) -> Result<bool> {
         let updated = self.update2(task)?;
         if updated {
-            self.add_and_commit(&format!("$UPDATE {}", uuid.to_base64()));
+            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()));
         }
         Ok(updated)
     }
 
-    pub fn change_category(&mut self, task: Task, status: TaskStatus) -> Result<bool> {
+    pub fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool> {
         if task.status == status {
             return Ok(true);
         }
@@ -471,7 +470,7 @@ impl TaskStorage {
             &mut callbacks,
         );
 
-        let mut fo = git2::FetchOptions::new();
+        let mut fo = FetchOptions::new();
         fo.remote_callbacks(callbacks);
 
         let mut builder = git2::build::RepoBuilder::new();
@@ -544,7 +543,7 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn init_repotitory(&self) -> anyhow::Result<()> {
+    pub fn init_repotitory(&self) -> Result<()> {
         let settings = Settings::get();
 
         let repository = Repository::init(&self.repository_path)?;
@@ -575,7 +574,7 @@ impl TaskStorage {
         Result::Ok(())
     }
 
-    pub fn add_and_commit(&self, message: &str) -> anyhow::Result<bool> {
+    pub fn add_and_commit(&self, message: &str) -> Result<bool> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
@@ -617,7 +616,7 @@ impl TaskStorage {
         Result::Ok(true)
     }
 
-    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> anyhow::Result<()> {
+    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<()> {
         let mut tasks = Vec::<Task>::new();
         for TaskDiff {
             path,
@@ -672,7 +671,7 @@ impl TaskStorage {
             }
 
             if previous.status == current.status {
-                self.update2(current);
+                self.update2(&current);
                 continue;
             }
 
@@ -686,8 +685,8 @@ impl TaskStorage {
         &mut self,
         settings: &Settings,
         repository: &Repository,
-        remote: &AnnotatedCommit,
-    ) -> anyhow::Result<()> {
+        remote: &AnnotatedCommit<'_>,
+    ) -> Result<()> {
         let mut opts = RebaseOptions::new();
 
         let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
@@ -777,7 +776,7 @@ impl TaskStorage {
     }
 
     #[frb(ignore)]
-    pub fn pull(&mut self) -> anyhow::Result<bool> {
+    pub fn pull(&mut self) -> Result<bool> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
@@ -799,8 +798,14 @@ impl TaskStorage {
             Result::Ok(())
         });
 
-        let _ = repository.remote("origin", &settings.repository.origin);
-        let _ = repository.remote_set_url("origin", &settings.repository.origin);
+        let remote = repository.remote("origin", &settings.repository.origin);
+        if let Err(error) = remote {
+            if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
+                log::warn!("Couldn't create remote origin: {error}");
+                return Err(error.into());
+            }
+        }
+        repository.remote_set_url("origin", &settings.repository.origin)?;
 
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
@@ -896,12 +901,12 @@ impl TaskStorage {
         let remote_name = "origin";
         let remote_branch = &settings.repository.branch;
         let mut remote = repository.find_remote(remote_name)?;
-        do_merge(&repository, remote_branch, fetch_commit)?;
+        do_merge(&repository, remote_branch, &fetch_commit)?;
 
         Result::Ok(true)
     }
 
-    pub fn push(&self) -> anyhow::Result<()> {
+    pub fn push(&self) -> Result<()> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
@@ -923,8 +928,14 @@ impl TaskStorage {
             Result::Ok(())
         });
 
-        let _ = repository.remote("origin", &settings.repository.origin);
-        let _ = repository.remote_set_url("origin", &settings.repository.origin);
+        let remote = repository.remote("origin", &settings.repository.origin);
+        if let Err(error) = remote {
+            if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
+                log::warn!("Couldn't create remote origin: {error}");
+                return Err(error.into());
+            }
+        }
+        repository.remote_set_url("origin", &settings.repository.origin)?;
 
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Push, Some(callbacks), None);
@@ -1103,7 +1114,7 @@ fn with_authentication(
 
         if host.remote_host_key != host_key {
             *certificate_error.borrow_mut() = Some(ConnectionError::MissmatchRemoteKey {
-                expected: host.remote_host_key.to_owned(),
+                expected: host.remote_host_key.clone(),
                 actual: host_key,
             });
             return Err(git2::Error::new(
@@ -1121,8 +1132,8 @@ fn with_authentication(
 
 fn fast_forward(
     repo: &Repository,
-    lb: &mut git2::Reference,
-    rc: &git2::AnnotatedCommit,
+    lb: &mut git2::Reference<'_>,
+    rc: &AnnotatedCommit<'_>,
 ) -> Result<(), git2::Error> {
     let name = match lb.name() {
         Some(s) => s.to_string(),
@@ -1134,7 +1145,7 @@ fn fast_forward(
     lb.set_target(rc.id(), &msg)?;
     repo.set_head(&name)?;
     repo.checkout_head(Some(
-        git2::build::CheckoutBuilder::default()
+        CheckoutBuilder::default()
             // For some reason the force is required to make the working directory actually get updated
             // I suspect we should be adding some logic to handle dirty working directory states
             // but this is just an example so maybe not.
@@ -1146,10 +1157,10 @@ fn fast_forward(
 fn do_merge<'a>(
     repo: &'a Repository,
     remote_branch: &str,
-    fetch_commit: git2::AnnotatedCommit<'a>,
+    fetch_commit: &AnnotatedCommit<'a>,
 ) -> Result<bool, git2::Error> {
     // 1. do a merge analysis
-    let (analysis, _) = repo.merge_analysis(&[&fetch_commit])?;
+    let (analysis, _) = repo.merge_analysis(&[fetch_commit])?;
 
     // 2. Do the appropriate merge
     if !analysis.is_fast_forward() {
@@ -1162,12 +1173,12 @@ fn do_merge<'a>(
 
     log::trace!("Doing a fast forward");
     // do a fast forward
-    let refname = format!("refs/heads/{}", remote_branch);
+    let refname = format!("refs/heads/{remote_branch}");
     match repo.find_reference(&refname) {
         Ok(mut r) => {
-            fast_forward(repo, &mut r, &fetch_commit)?;
+            fast_forward(repo, &mut r, fetch_commit)?;
         }
-        Err(_) => {
+        Err(_e) => {
             // The branch doesn't exist so just set the reference to the
             // commit directly. Usually this is because you are pulling
             // into an empty repository.
@@ -1179,7 +1190,7 @@ fn do_merge<'a>(
             )?;
             repo.set_head(&refname)?;
             repo.checkout_head(Some(
-                git2::build::CheckoutBuilder::default()
+                CheckoutBuilder::default()
                     .allow_conflicts(true)
                     .conflict_style_merge(true)
                     .force(),

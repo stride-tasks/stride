@@ -138,6 +138,7 @@ impl Task {
             .expect("uuid is v7 so this should not fail");
         let (secs, nsecs) = timestamp.to_unix();
 
+        #[allow(clippy::cast_possible_wrap)]
         DateTime::from_timestamp(secs as i64, nsecs).expect("uuidv7 has a valid timestamp")
     }
 
@@ -197,6 +198,7 @@ impl Task {
         result
     }
 
+    #[allow(clippy::too_many_lines)]
     pub(crate) fn from_data(input: &str) -> Option<Task> {
         let mut uuid_bytes = input.get(0..22)?;
         let uuid = Uuid::from_base64_array(uuid_bytes.as_bytes().try_into().ok()?)?;
@@ -323,12 +325,12 @@ impl Task {
             due,
             project,
             tags,
-            annotations: Default::default(),
+            annotations: Vec::default(),
             priority,
             wait,
             end,
             depends,
-            uda: Default::default(),
+            uda: HashMap::default(),
         })
     }
 }

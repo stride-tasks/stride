@@ -25,8 +25,11 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `init_logger`
 // These types are ignored because they are not used by any `pub` functions: `LogOutput`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `flush`, `write`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `flush`, `fmt`, `write`
 
+/// # Panics
+///
+/// If the logger file cannot be read.
 Future<String> getLogs() => RustLib.instance.api.crateApiLoggingGetLogs();
 
 class Logger {
