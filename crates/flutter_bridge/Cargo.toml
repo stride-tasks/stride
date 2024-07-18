@@ -3,6 +3,7 @@ name = "stride_flutter_bridge"
 description = "The bridge code between flutter and stride."
 keywords = ["stride", "flutter", "bridge"]
 categories = ["api-bindings"]
+version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/flutter_bridge",
+    "crates/encryption",
 ]
 
 exclude = [
@@ -20,6 +21,7 @@ description = "An extensible task menagment application that uses git as it's da
 [workspace.dependencies]
 # Repository Crates
 stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
+stride_encryption = { version = "~0.1.0", path = "crates/encryption" }
 
 # Shared Dependencies
 serde = { version = "1.0", features = ["derive"] }
@@ -35,6 +37,8 @@ openssl = { version = "0.10", features = ["vendored"] }
 pem = "3.0"
 log = "0.4"
 env_logger = "0.11"
+getrandom = "0.2"
+zeroize = { version = "1.0", features = ["zeroize_derive"] }
 
 [profile.release]
 # Strips debug information and symbols from the binary
