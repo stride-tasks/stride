@@ -1,6 +1,6 @@
 use base64::Engine;
 
-use crate::Crypter;
+use crate::crypter::Crypter;
 
 #[test]
 fn simple() {
@@ -42,11 +42,13 @@ fn simple2() {
     let key = [1u8; 16];
     let crypter = Crypter::<5>::new(key);
 
-    let ciphertext = crypter.encrypt(
-        11,
-        "Hello".as_bytes(),
-        "world".as_bytes().try_into().unwrap(),
-    );
+    let ciphertext = crypter
+        .encrypt(
+            11,
+            "Hello".as_bytes(),
+            "world".as_bytes().try_into().unwrap(),
+        )
+        .unwrap();
 
     let base = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&ciphertext);
     assert_eq!(base, "d29ybGRwNRw_5f3KIVL0EEyMDaDLdA5jQjI");

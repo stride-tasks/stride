@@ -1,14 +1,11 @@
 use std::sync::Mutex;
 
-use base64::Engine;
 use flutter_rust_bridge::frb;
 use lazy_static::lazy_static;
-use openssl::{pkey::PKey, rsa::Rsa};
-use pem::{encode, Pem};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::git::known_hosts::{Host, KnownHosts};
+use crate::git::known_hosts::KnownHosts;
 
 use super::{
     filter::{Filter, FilterSelection},
@@ -28,34 +25,15 @@ pub struct SshKey {
 }
 
 impl SshKey {
-    const SSH_ED25519: &'static str = "ssh-ed25519";
-
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub fn generate() -> SshKey {
-        let rsa = PKey::generate_ed25519().unwrap();
-
-        let public_key = rsa.raw_public_key().unwrap();
-        let private_key = rsa.private_key_to_der().unwrap();
-
-        let private_pem = Pem::new("PRIVATE KEY", private_key);
-        let private = encode(&private_pem);
-
-        let mut data = Vec::new();
-        data.extend((Self::SSH_ED25519.len() as u32).to_be_bytes());
-        data.extend(Self::SSH_ED25519.as_bytes());
-
-        data.extend((public_key.len() as u32).to_be_bytes());
-        data.extend(public_key);
-
-        // https://coolaj86.com/articles/the-openssh-private-key-format/
-
-        let public = base64::engine::general_purpose::STANDARD.encode(data);
+        let keys = stride_crypto::ed25519::Ed25519::generate();
 
         SshKey {
             uuid: Uuid::now_v7(),
-            private,
-            public: format!("{} {public}", Self::SSH_ED25519),
+            private: keys.private,
+            public: keys.public,
         }
     }
 }

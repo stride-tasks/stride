@@ -917,6 +917,7 @@ dependencies = [
  "base64",
  "getrandom",
  "openssl",
+ "pem",
  "zeroize",
 ]
 
@@ -932,10 +933,9 @@ dependencies = [
  "git2",
  "lazy_static",
  "log",
- "openssl",
- "pem",
  "serde",
  "serde_json",
+ "stride_crypto",
  "thiserror",
  "uuid",
 ]
