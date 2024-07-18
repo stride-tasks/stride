@@ -15,6 +15,9 @@ class Environment {
   static bool get isDebug => configuration == 'debug';
   static bool get isRelease => configuration == 'release';
 
+  /// Library name
+  static String get libName => _getEnv("CARGOKIT_LIB_NAME");
+
   /// Temporary directory where Rust build artifacts are placed.
   static String get targetTempDir => _getEnv("CARGOKIT_TARGET_TEMP_DIR");
 

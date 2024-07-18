@@ -9,7 +9,7 @@ set(PROJECT_NAME "stride_flutter_bridge")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 include("../cargokit/cmake/cargokit.cmake")
-apply_cargokit(${PROJECT_NAME} ../../../../../../../crates/flutter_bridge stride_flutter_bridge "")
+apply_cargokit(${PROJECT_NAME} ../../../../../../.. stride_flutter_bridge "")
 
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an

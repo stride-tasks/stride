@@ -89,7 +89,9 @@ class BuildEnvironment {
     final crateOptions = CargokitCrateOptions.load(
       manifestDir: manifestDir,
     );
-    final crateInfo = CrateInfo.load(manifestDir);
+    final libName = Environment.libName;
+    // print('LIBNAME: $libName');
+    final crateInfo = CrateInfo.load(manifestDir, libName: libName);
     return BuildEnvironment(
       configuration: buildConfiguration,
       crateOptions: crateOptions,

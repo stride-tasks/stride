@@ -13,6 +13,9 @@ export PATH=${NEW_PATH%?} # remove trailing :
 
 env
 
+# Name of the rust library
+export CARGOKIT_LIB_NAME=$2
+
 # Platform name (macosx, iphoneos, iphonesimulator)
 export CARGOKIT_DARWIN_PLATFORM_NAME=$PLATFORM_NAME
 

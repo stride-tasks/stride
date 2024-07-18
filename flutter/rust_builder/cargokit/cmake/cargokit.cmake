@@ -34,6 +34,7 @@ function(apply_cargokit target manifest_dir lib_name any_symbol_name)
     endif()
 
     set(CARGOKIT_ENV
+        "CARGOKIT_LIB_NAME=${CARGOKIT_LIB_NAME}"
         "CARGOKIT_CMAKE=${CMAKE_COMMAND}"
         "CARGOKIT_CONFIGURATION=$<CONFIG>"
         "CARGOKIT_MANIFEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/${manifest_dir}"

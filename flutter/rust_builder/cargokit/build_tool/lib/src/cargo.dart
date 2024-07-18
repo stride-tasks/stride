@@ -27,8 +27,15 @@ class CrateInfo {
 
   final String packageName;
 
-  static CrateInfo parseManifest(String manifest, {final String? fileName}) {
+  static CrateInfo parseManifest(String manifest,
+      {final String? fileName, final String? libName}) {
+    if (libName != null) {
+      return CrateInfo(packageName: libName);
+    }
+
     final toml = TomlDocument.parse(manifest);
+
+    // ignore: dead_code
     final package = toml.toMap()['package'];
     if (package == null) {
       throw ManifestException('Missing package section', fileName: fileName);
@@ -40,9 +47,13 @@ class CrateInfo {
     return CrateInfo(packageName: name);
   }
 
-  static CrateInfo load(String manifestDir) {
+  static CrateInfo load(String manifestDir, {String? libName}) {
     final manifestFile = File(path.join(manifestDir, 'Cargo.toml'));
     final manifest = manifestFile.readAsStringSync();
-    return parseManifest(manifest, fileName: manifestFile.path);
+    return parseManifest(
+      manifest,
+      fileName: manifestFile.path,
+      libName: libName,
+    );
   }
 }
