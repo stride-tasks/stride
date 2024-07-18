@@ -19,7 +19,7 @@ use crate::{
     api::{paths::application_support_path, settings::Settings},
     git::known_hosts::{self, HostKeyType, KnownHosts, KnownHostsError},
     repository,
-    task::{Date, Task, TaskBuilder, TaskStatus},
+    task::{Date, Task, TaskStatus},
     ToBase64,
 };
 
@@ -42,16 +42,18 @@ pub fn init_app() {
 impl Task {
     #[frb(sync)]
     pub fn new(description: String) -> Self {
-        TaskBuilder::with_description(description)
-            .build()
-            .expect("All other fields are default initialized")
+        Task {
+            description,
+            ..Default::default()
+        }
     }
 
     pub(crate) fn with_uuid(uuid: Uuid, description: String) -> Self {
-        TaskBuilder::with_description(description)
-            .uuid(uuid)
-            .build()
-            .expect("All other fields are default initialized")
+        Task {
+            uuid,
+            description,
+            ..Default::default()
+        }
     }
 }
 

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use crate::task::Task;
 
-use super::{TaskBuilder, TaskStatus};
+use super::TaskStatus;
 
 #[test]
 fn conversion_task_status() -> anyhow::Result<()> {
@@ -21,12 +21,10 @@ fn conversion_task_status() -> anyhow::Result<()> {
 }
 
 #[test]
-fn create_task() -> anyhow::Result<()> {
-    let task = TaskBuilder::with_description("work on ...").build()?;
+fn create_task() {
+    let task = Task::new("work on ...".to_owned());
 
     assert_eq!(task.description, "work on ...");
-
-    Ok(())
 }
 
 const CONSTANT_UUID: uuid::Uuid = uuid::uuid!("01906b2f-ad90-7930-b4d7-24db034bc3c5");

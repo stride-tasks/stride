@@ -7,7 +7,6 @@ pub mod annotation;
 pub type Date = DateTime<Utc>;
 
 pub use annotation::Annotation;
-use derive_builder::Builder;
 use serde::{de, Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -38,75 +37,73 @@ pub enum TaskStatus {
     Complete,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Builder)]
-#[builder(setter(into))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
-    #[builder(default = "Uuid::now_v7()")]
     pub uuid: Uuid,
 
-    #[builder(default = "TaskStatus::Pending")]
     #[serde(skip)]
     pub status: TaskStatus,
 
     pub description: String,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub modified: Option<Date>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub due: Option<Date>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub project: Option<ProjectIndex>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<TagIndex>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub annotations: Vec<Annotation>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub priority: Option<PriorityIndex>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wait: Option<Date>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub end: Option<Date>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub depends: Vec<Uuid>,
 
-    #[builder(default)]
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub uda: HashMap<String, String>,
 }
 
-impl TaskBuilder {
-    #[allow(dead_code)]
-    pub fn with_description<T: Into<String>>(description: T) -> Self {
-        let mut this = Self::default();
-        this.description(description);
-        this
+impl Default for Task {
+    fn default() -> Self {
+        Self {
+            uuid: Uuid::now_v7(),
+            status: TaskStatus::Pending,
+            description: String::new(),
+            modified: None,
+            due: None,
+            project: None,
+            tags: Vec::new(),
+            annotations: Vec::new(),
+            priority: None,
+            wait: None,
+            end: None,
+            depends: Vec::new(),
+            uda: HashMap::new(),
+        }
     }
 }
 

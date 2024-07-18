@@ -31,7 +31,6 @@ serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-derive_builder.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 lazy_static.workspace = true
