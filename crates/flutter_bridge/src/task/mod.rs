@@ -1,18 +1,18 @@
-use std::{collections::HashMap, default};
+use std::collections::HashMap;
 
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 
 pub mod annotation;
 
 pub type Date = DateTime<Utc>;
 
 pub use annotation::Annotation;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
     escape::{escape, unescape},
-    ToBase64, ToBase64Array,
+    ToBase64Array,
 };
 pub type TagIndex = u32;
 pub type ProjectIndex = u32;
@@ -128,7 +128,8 @@ fn to_string_with_radix(mut input: u32, radix: u32, out: &mut String) {
 }
 
 impl Task {
-    fn entry(&self) -> Date {
+    #[must_use]
+    pub fn entry(&self) -> Date {
         let timestamp = self
             .uuid
             .get_timestamp()
@@ -143,7 +144,6 @@ impl Task {
         let mut result = String::new();
         result.extend(self.uuid.to_base64_array().into_iter().map(char::from));
         escape(&self.description, &mut result);
-        let mut single_quote_push = false;
         if let Some(modified) = self.modified {
             result.push_str("\tm");
             result.extend(modified.to_base64_array().into_iter().map(char::from));
@@ -197,11 +197,11 @@ impl Task {
 
     #[allow(clippy::too_many_lines)]
     pub(crate) fn from_data(input: &str) -> Option<Task> {
-        let mut uuid_bytes = input.get(0..22)?;
+        let uuid_bytes = input.get(0..22)?;
         let uuid = Uuid::from_base64_array(uuid_bytes.as_bytes().try_into().ok()?)?;
         let timestamp = uuid.get_timestamp()?;
         let (secs, nsecs) = timestamp.to_unix();
-        let entry = DateTime::from_timestamp(secs.try_into().ok()?, nsecs)?;
+        let _entry = DateTime::from_timestamp(secs.try_into().ok()?, nsecs)?;
 
         let input = input.get(22..)?;
         let mut description_len = 0;

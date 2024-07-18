@@ -1,37 +1,30 @@
-use core::task;
 use std::{
     cell::RefCell,
     collections::HashSet,
     fs::File,
-    io::{BufRead, BufReader, ErrorKind, Write},
+    io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
-    process::abort,
     rc::Rc,
 };
 
 use anyhow::{Context, Result};
 use base64::Engine;
-use chrono::NaiveDateTime;
 use flutter_rust_bridge::frb;
 use uuid::Uuid;
 
 use crate::{
-    api::{paths::application_support_path, settings::Settings},
-    git::known_hosts::{self, HostKeyType, KnownHosts, KnownHostsError},
-    repository,
-    task::{Date, Task, TaskStatus},
+    api::settings::Settings,
+    git::known_hosts::{HostKeyType, KnownHosts},
+    task::{Task, TaskStatus},
     ToBase64,
 };
 
 use git2::{
     build::CheckoutBuilder, AnnotatedCommit, CertificateCheckStatus, Cred, ErrorClass, ErrorCode,
-    FetchOptions, Mempack, RebaseOptions, RemoteCallbacks, Repository, Signature,
+    FetchOptions, RebaseOptions, RemoteCallbacks, Repository, Signature,
 };
 
-use super::{
-    filter::{Filter, FilterSelection},
-    settings::SshKey,
-};
+use super::{filter::Filter, settings::SshKey};
 
 #[frb(init)]
 pub fn init_app() {
@@ -48,24 +41,14 @@ impl Task {
         }
     }
 
-    pub(crate) fn with_uuid(uuid: Uuid, description: String) -> Self {
+    #[must_use]
+    pub fn with_uuid(uuid: Uuid, description: String) -> Self {
         Task {
             uuid,
             description,
             ..Default::default()
         }
     }
-}
-
-#[cfg(unix)]
-pub(crate) fn bytes2path(b: &[u8]) -> &Path {
-    use std::os::unix::prelude::*;
-    Path::new(std::ffi::OsStr::from_bytes(b))
-}
-#[cfg(windows)]
-pub(crate) fn bytes2path(b: &[u8]) -> &Path {
-    use std::str;
-    Path::new(str::from_utf8(b).unwrap())
 }
 
 pub(crate) struct TaskDiff {
@@ -147,6 +130,7 @@ impl Storage {
         Ok(self.tasks.iter().find(|task| &task.uuid == uuid))
     }
 
+    #[allow(unused)]
     fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>> {
         self.load()?;
         Ok(self.tasks.iter().position(|task| &task.uuid == uuid))
@@ -312,6 +296,7 @@ impl TaskStorage {
         Ok(tasks)
     }
 
+    #[allow(unused)]
     pub(crate) fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
         for storage in self.storage_mut() {
             if let Some(task) = storage.remove(uuid)? {
@@ -335,7 +320,7 @@ impl TaskStorage {
     pub fn update(&mut self, task: &Task) -> Result<bool> {
         let updated = self.update2(task)?;
         if updated {
-            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()));
+            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
         }
         Ok(updated)
     }
@@ -411,7 +396,7 @@ impl TaskStorage {
     pub fn remove_task(&mut self, task: &Task) -> Result<bool> {
         let found_task = self.remove_task2(task)?;
 
-        let mut found_task =
+        let found_task =
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
         let message = format!("$PURGE {}", found_task.uuid.to_base64());
@@ -525,7 +510,7 @@ impl TaskStorage {
         self.sync()?;
         self.unload();
 
-        let mut repository = Repository::open(&self.repository_path)?;
+        let repository = Repository::open(&self.repository_path)?;
         let branch =
             repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
         let reference = branch.into_reference();
@@ -619,7 +604,6 @@ impl TaskStorage {
     }
 
     fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<()> {
-        let mut tasks = Vec::<Task>::new();
         for TaskDiff {
             path,
             adding,
@@ -630,7 +614,7 @@ impl TaskStorage {
                 continue;
             }
 
-            let mut status = if path == Path::new("pending") {
+            let status = if path == Path::new("pending") {
                 TaskStatus::Pending
             } else if path == Path::new("complete") {
                 TaskStatus::Complete
@@ -645,27 +629,23 @@ impl TaskStorage {
             current.status = status;
 
             let Some(previous) = self.task_by_uuid(&current.uuid)? else {
-                self.storage_mut()[status as usize].append(current);
+                self.storage_mut()[status as usize].append(current)?;
                 continue;
             };
 
-            let mut first = true;
-            match (previous.modified, current.modified) {
+            #[allow(clippy::match_same_arms)]
+            let first = match (previous.modified, current.modified) {
                 (Some(previous_modified), Some(current_modified)) => {
-                    first = previous_modified >= current_modified;
+                    previous_modified >= current_modified
                 }
-                (None, Some(current)) => {
-                    first = false;
-                }
-                (Some(previous), None) => {
-                    first = true;
-                }
+                (None, Some(_)) => false,
+                (Some(_), None) => true,
                 (None, None) => {
                     // TODO: This should not be possible in normal circumstances.
                     //       For now choose the current.
-                    first = true;
+                    true
                 }
-            }
+            };
 
             // First is already set to the working dir and tasks are loaded.
             if first {
@@ -673,7 +653,7 @@ impl TaskStorage {
             }
 
             if previous.status == current.status {
-                self.update2(&current);
+                self.update2(&current)?;
                 continue;
             }
 
@@ -692,15 +672,9 @@ impl TaskStorage {
         let mut opts = RebaseOptions::new();
 
         let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
-        let mut patch = rebase.orig_head_id().unwrap();
-        let merge_base = repository.merge_base(patch, remote.id())?;
-        let mut patch = merge_base;
 
         let remote_commit = repository.find_commit(remote.id())?;
-        // let base_commit = repository.find_commit(patch)?;
-        let base_commit = remote_commit;
-
-        patch = base_commit.id();
+        let mut patch = remote_commit.id();
 
         while let Some(step) = rebase.next() {
             let step = step?;
@@ -732,10 +706,10 @@ impl TaskStorage {
                     return true;
                 }
                 let path = delta.new_file().path().unwrap();
-                let mut content = std::str::from_utf8(line.content())
+                let content = std::str::from_utf8(line.content())
                     .unwrap()
                     .trim_end_matches('\n');
-                println!("AT:{} {} {content}", path.display(), line.origin());
+                // println!("AT:{} {} {content}", path.display(), line.origin());
 
                 diffs.push(TaskDiff {
                     path: path.to_owned(),
@@ -746,7 +720,7 @@ impl TaskStorage {
                 true
             })?;
 
-            println!("\n--------------------------\n");
+            // println!("\n--------------------------\n");
 
             self.resolve_conflicts(&diffs)?;
 
@@ -841,7 +815,7 @@ impl TaskStorage {
 
         let branch =
             repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
-        let mut branch_ref = branch.into_reference();
+        let branch_ref = branch.into_reference();
         let branch_ref_name = branch_ref.name().unwrap();
         let mut fetch_options = FetchOptions::new();
         fetch_options.prune(git2::FetchPrune::On);
@@ -900,9 +874,7 @@ impl TaskStorage {
         let fetch_head = repository.find_reference("FETCH_HEAD")?;
         let fetch_commit = repository.reference_to_annotated_commit(&fetch_head)?;
 
-        let remote_name = "origin";
         let remote_branch = &settings.repository.branch;
-        let mut remote = repository.find_remote(remote_name)?;
         do_merge(&repository, remote_branch, &fetch_commit)?;
 
         Result::Ok(true)
@@ -971,7 +943,7 @@ impl TaskStorage {
 
         let branch =
             repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
-        let mut branch_ref = branch.into_reference();
+        let branch_ref = branch.into_reference();
         let branch_ref_name = branch_ref.name().unwrap();
         let connection = connection?.remote().push(&[branch_ref_name], None);
 
@@ -1044,10 +1016,10 @@ fn with_authentication(
 ) -> Rc<RefCell<Option<ConnectionError>>> {
     let mut tried_ssh = false;
 
-    let mut error = Rc::<RefCell<Option<ConnectionError>>>::default();
+    let error = Rc::<RefCell<Option<ConnectionError>>>::default();
 
     // See: https://github.com/rust-lang/git2-rs/issues/347
-    callbacks.credentials(move |_url, username_from_url, allowed_types| {
+    callbacks.credentials(move |_url, username_from_url, _allowed_types| {
         if tried_ssh {
             log::error!("Failed to authenticate with credentials");
             return Err(git2::Error::new(
@@ -1056,7 +1028,7 @@ fn with_authentication(
                 "Failed to authenticate with credentials",
             ));
         }
-        let Some(username) = username_from_url else {
+        let Some(_username) = username_from_url else {
             return Err(git2::Error::new(
                 ErrorCode::Auth,
                 ErrorClass::Ssh,

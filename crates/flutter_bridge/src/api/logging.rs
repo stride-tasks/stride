@@ -1,8 +1,4 @@
-use std::{
-    fs::File,
-    io::{Stdout, Write},
-    path::Path,
-};
+use std::{fs::File, io::Write, path::Path};
 
 use chrono::Local;
 
@@ -38,7 +34,7 @@ pub(crate) fn init_logger(path: &Path) {
 
     let target = Box::new(LogOutput { file });
 
-    env_logger::builder()
+    let _ = env_logger::builder()
         .format(|buf, record| {
             writeln!(
                 buf,

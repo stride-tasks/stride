@@ -104,9 +104,9 @@ pub struct Host {
 
 #[derive(Debug, Clone, Copy)]
 pub struct HostRef<'a> {
-    hostname: &'a str,
-    key_type: HostKeyType,
-    remote_host_key: &'a str,
+    pub hostname: &'a str,
+    pub key_type: HostKeyType,
+    pub remote_host_key: &'a str,
 }
 
 impl Host {

@@ -1,13 +1,11 @@
-// TODO: Remove
-#![allow(dead_code)]
-#![allow(unused)]
+// TODO: Remove lint allows
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::similar_names)]
 #![allow(clippy::module_name_repetitions)]
 
 use base64::Engine;
-use chrono::{DateTime, Datelike, Timelike};
+use chrono::DateTime;
 use task::Date;
 use uuid::Uuid;
 

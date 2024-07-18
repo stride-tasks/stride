@@ -31,7 +31,7 @@ impl ApplicationPaths {
 
         let ssh_path = Path::new(&paths.support_path).join(".ssh");
 
-        std::fs::create_dir_all(&ssh_path);
+        std::fs::create_dir_all(&ssh_path).unwrap();
         std::fs::write(ssh_path.join("known_hosts"), "\n").unwrap();
 
         init_logger(Path::new(&paths.log_path));

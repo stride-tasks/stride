@@ -127,7 +127,7 @@ fn serialize_task_with_dates() {
 
 #[test]
 fn deserialize_task_with_dates() {
-    let mut task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}")).unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.modified = Some(CONSTANT_DATETIME);
@@ -150,7 +150,7 @@ fn serialize_task_with_tags() {
 
 #[test]
 fn deserialize_task_with_tags() {
-    let mut task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tt0,1,2")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tt0,1,2")).unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.tags = vec![0, 1, 2];
@@ -170,7 +170,7 @@ fn serialize_task_with_project() {
 
 #[test]
 fn deserialize_task_with_project() {
-    let mut task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tp2")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tp2")).unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.project = Some(2);
@@ -190,7 +190,7 @@ fn serialize_task_with_priority() {
 
 #[test]
 fn deserialize_task_with_priority() {
-    let mut task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tr2")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tr2")).unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.priority = Some(2);
@@ -213,7 +213,7 @@ fn serialize_task_with_depends() {
 
 #[test]
 fn deserialize_task_with_depends() {
-    let mut task = Task::from_data(&format!(
+    let task = Task::from_data(&format!(
         "{CONSTANT_UUID_BASE64}Hello there!\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}"
     ))
     .unwrap();
