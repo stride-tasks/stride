@@ -1235,6 +1235,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaskPriority dco_decode_box_autoadd_task_priority(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_task_priority(raw);
+  }
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -1460,6 +1466,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaskPriority? dco_decode_opt_box_autoadd_task_priority(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_task_priority(raw);
+  }
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
@@ -1538,12 +1550,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       project: dco_decode_opt_box_autoadd_u_32(arr[5]),
       tags: dco_decode_list_prim_u_32_strict(arr[6]),
       annotations: dco_decode_list_annotation(arr[7]),
-      priority: dco_decode_opt_box_autoadd_u_32(arr[8]),
+      priority: dco_decode_opt_box_autoadd_task_priority(arr[8]),
       wait: dco_decode_opt_box_autoadd_Chrono_Utc(arr[9]),
       end: dco_decode_opt_box_autoadd_Chrono_Utc(arr[10]),
       depends: dco_decode_list_Uuid(arr[11]),
       uda: dco_decode_Map_String_String(arr[12]),
     );
+  }
+
+  @protected
+  TaskPriority dco_decode_task_priority(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TaskPriority.values[raw as int];
   }
 
   @protected
@@ -1719,6 +1737,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task sse_decode_box_autoadd_task(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_task(deserializer));
+  }
+
+  @protected
+  TaskPriority sse_decode_box_autoadd_task_priority(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_task_priority(deserializer));
   }
 
   @protected
@@ -2001,6 +2026,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaskPriority? sse_decode_opt_box_autoadd_task_priority(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_task_priority(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2077,7 +2114,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_project = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_tags = sse_decode_list_prim_u_32_strict(deserializer);
     var var_annotations = sse_decode_list_annotation(deserializer);
-    var var_priority = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_priority = sse_decode_opt_box_autoadd_task_priority(deserializer);
     var var_wait = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     var var_end = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     var var_depends = sse_decode_list_Uuid(deserializer);
@@ -2096,6 +2133,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         end: var_end,
         depends: var_depends,
         uda: var_uda);
+  }
+
+  @protected
+  TaskPriority sse_decode_task_priority(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TaskPriority.values[inner];
   }
 
   @protected
@@ -2268,6 +2312,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_box_autoadd_task(Task self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_task(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_task_priority(
+      TaskPriority self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_task_priority(self, serializer);
   }
 
   @protected
@@ -2520,6 +2571,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_task_priority(
+      TaskPriority? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_task_priority(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2579,11 +2641,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_u_32(self.project, serializer);
     sse_encode_list_prim_u_32_strict(self.tags, serializer);
     sse_encode_list_annotation(self.annotations, serializer);
-    sse_encode_opt_box_autoadd_u_32(self.priority, serializer);
+    sse_encode_opt_box_autoadd_task_priority(self.priority, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.wait, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.end, serializer);
     sse_encode_list_Uuid(self.depends, serializer);
     sse_encode_Map_String_String(self.uda, serializer);
+  }
+
+  @protected
+  void sse_encode_task_priority(TaskPriority self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

@@ -1961,6 +1961,17 @@ impl SseDecode for Option<crate::task::Task> {
     }
 }
 
+impl SseDecode for Option<crate::task::TaskPriority> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::task::TaskPriority>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2048,7 +2059,7 @@ impl SseDecode for crate::task::Task {
         let mut var_tags = <Vec<u32>>::sse_decode(deserializer);
         let mut var_annotations =
             <Vec<crate::task::annotation::Annotation>>::sse_decode(deserializer);
-        let mut var_priority = <Option<u32>>::sse_decode(deserializer);
+        let mut var_priority = <Option<crate::task::TaskPriority>>::sse_decode(deserializer);
         let mut var_wait = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_end = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_depends = <Vec<uuid::Uuid>>::sse_decode(deserializer);
@@ -2067,6 +2078,19 @@ impl SseDecode for crate::task::Task {
             end: var_end,
             depends: var_depends,
             uda: var_uda,
+        };
+    }
+}
+
+impl SseDecode for crate::task::TaskPriority {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::task::TaskPriority::H,
+            1 => crate::task::TaskPriority::M,
+            2 => crate::task::TaskPriority::L,
+            _ => unreachable!("Invalid variant for TaskPriority: {}", inner),
         };
     }
 }
@@ -2565,6 +2589,23 @@ impl flutter_rust_bridge::IntoIntoDart<crate::task::Task> for crate::task::Task 
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::task::TaskPriority {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::H => 0.into_dart(),
+            Self::M => 1.into_dart(),
+            Self::L => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::task::TaskPriority {}
+impl flutter_rust_bridge::IntoIntoDart<crate::task::TaskPriority> for crate::task::TaskPriority {
+    fn into_into_dart(self) -> crate::task::TaskPriority {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::task::TaskStatus {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
@@ -2948,6 +2989,16 @@ impl SseEncode for Option<crate::task::Task> {
     }
 }
 
+impl SseEncode for Option<crate::task::TaskPriority> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::task::TaskPriority>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3010,11 +3061,28 @@ impl SseEncode for crate::task::Task {
         <Option<u32>>::sse_encode(self.project, serializer);
         <Vec<u32>>::sse_encode(self.tags, serializer);
         <Vec<crate::task::annotation::Annotation>>::sse_encode(self.annotations, serializer);
-        <Option<u32>>::sse_encode(self.priority, serializer);
+        <Option<crate::task::TaskPriority>>::sse_encode(self.priority, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.wait, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.end, serializer);
         <Vec<uuid::Uuid>>::sse_encode(self.depends, serializer);
         <std::collections::HashMap<String, String>>::sse_encode(self.uda, serializer);
+    }
+}
+
+impl SseEncode for crate::task::TaskPriority {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::task::TaskPriority::H => 0,
+                crate::task::TaskPriority::M => 1,
+                crate::task::TaskPriority::L => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

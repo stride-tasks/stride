@@ -34,7 +34,7 @@ class Task {
   final int? project;
   final Uint32List tags;
   final List<Annotation> annotations;
-  final int? priority;
+  final TaskPriority? priority;
   final DateTime? wait;
   final DateTime? end;
   final List<UuidValue> depends;
@@ -102,6 +102,13 @@ class Task {
           end == other.end &&
           depends == other.depends &&
           uda == other.uda;
+}
+
+enum TaskPriority {
+  h,
+  m,
+  l,
+  ;
 }
 
 enum TaskStatus {

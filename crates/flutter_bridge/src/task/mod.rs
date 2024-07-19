@@ -37,6 +37,28 @@ pub enum TaskStatus {
     Complete,
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[repr(u8)]
+pub enum TaskPriority {
+    #[default]
+    #[serde(rename = "H")]
+    H,
+    #[serde(rename = "M")]
+    M,
+    #[serde(rename = "L")]
+    L,
+}
+
+impl TaskPriority {
+    fn as_str(self) -> &'static str {
+        match self {
+            TaskPriority::H => "H",
+            TaskPriority::M => "M",
+            TaskPriority::L => "L",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
@@ -68,7 +90,7 @@ pub struct Task {
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub priority: Option<PriorityIndex>,
+    pub priority: Option<TaskPriority>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -166,7 +188,7 @@ impl Task {
         }
         if let Some(priority) = self.priority {
             result.push_str("\tr");
-            to_string_with_radix(priority, 36, &mut result);
+            result.push_str(priority.as_str());
         }
         if !self.tags.is_empty() {
             result.push_str("\tt");
@@ -286,7 +308,7 @@ impl Task {
                         break;
                     }
                 }
-                'p' | 'r' => {
+                'p' => {
                     let mut value = 0;
                     let mut next = iter.next();
                     let mut position = 0;
@@ -300,12 +322,18 @@ impl Task {
 
                     input = input.get(position + 1..)?;
                     iter = input.char_indices();
-
-                    match type_ {
-                        'p' => project = Some(value),
-                        'r' => priority = Some(value),
-                        _ => unreachable!(),
-                    }
+                    project = Some(value);
+                }
+                'r' => {
+                    let value = match iter.next()?.1 {
+                        'H' => TaskPriority::H,
+                        'M' => TaskPriority::M,
+                        'L' => TaskPriority::L,
+                        _ => {
+                            return None;
+                        }
+                    };
+                    priority = Some(value);
                 }
                 _ => return None,
             }

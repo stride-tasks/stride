@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::task::Task;
+use crate::task::{Task, TaskPriority};
 
 use super::TaskStatus;
 
@@ -181,19 +181,19 @@ fn deserialize_task_with_project() {
 fn serialize_task_with_priority() {
     let mut task = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
 
-    task.priority = Some(2);
+    task.priority = Some(TaskPriority::M);
     assert_eq!(
         task.to_data(),
-        format!("{CONSTANT_UUID_BASE64}Hello there!\tr2")
+        format!("{CONSTANT_UUID_BASE64}Hello there!\trM")
     );
 }
 
 #[test]
 fn deserialize_task_with_priority() {
-    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tr2")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\trL")).unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
-    expected.priority = Some(2);
+    expected.priority = Some(TaskPriority::L);
     assert_eq!(task, expected);
 }
 
@@ -236,14 +236,14 @@ fn serialize_task_with_all_attributes() {
     task.end = Some(CONSTANT_DATETIME);
     task.tags = vec![0, 1, 2];
     task.project = Some(30);
-    task.priority = Some(2);
-    assert_eq!(task.to_data(), format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}\tpu\tr2\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}"));
+    task.priority = Some(TaskPriority::L);
+    assert_eq!(task.to_data(), format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}\tpu\trL\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}"));
 }
 
 // TODO: Add the rest of the attributes
 #[test]
 fn deserialize_task_with_all_attributes() {
-    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}\tpu\tr2\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}\tpu\trH\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}")).unwrap();
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
@@ -253,6 +253,6 @@ fn deserialize_task_with_all_attributes() {
     expected.end = Some(CONSTANT_DATETIME);
     expected.tags = vec![0, 1, 2];
     expected.project = Some(30);
-    expected.priority = Some(2);
+    expected.priority = Some(TaskPriority::H);
     assert_eq!(task, expected);
 }
