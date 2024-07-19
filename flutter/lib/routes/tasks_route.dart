@@ -28,12 +28,12 @@ class _TasksRouteState extends State<TasksRoute> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: _drawer(),
-      appBar: const CustomAppBar(title: 'Task List'),
-      body: BlocBuilder<TaskBloc, TaskState>(
-        builder: (context, state) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 5.0),
+    return BlocBuilder<TaskBloc, TaskState>(
+      builder: (context, state) => Scaffold(
+        drawer: _drawer(),
+        appBar: CustomAppBar(title: 'Tasks ( ${state.tasks.length} )'),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5.0),
           child: Column(
             children: [
               Expanded(
@@ -67,15 +67,15 @@ class _TasksRouteState extends State<TasksRoute> {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () async {
-          await Navigator.of(context).push<void>(
-            MaterialPageRoute(builder: (context) => const TaskRoute()),
-          );
-        },
-        child: const Icon(Icons.add_circle, size: 50),
+        floatingActionButton: FloatingActionButton(
+          shape: const CircleBorder(),
+          onPressed: () async {
+            await Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (context) => const TaskRoute()),
+            );
+          },
+          child: const Icon(Icons.add_circle, size: 50),
+        ),
       ),
     );
   }
