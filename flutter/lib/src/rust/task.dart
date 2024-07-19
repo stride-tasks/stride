@@ -59,6 +59,11 @@ class Task {
   factory Task({required String description}) =>
       RustLib.instance.api.crateTaskTaskNew(description: description);
 
+  static Future<Task> withUuid(
+          {required UuidValue uuid, required String description}) =>
+      RustLib.instance.api
+          .crateTaskTaskWithUuid(uuid: uuid, description: description);
+
   @override
   int get hashCode =>
       uuid.hashCode ^

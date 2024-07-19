@@ -83,7 +83,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.1.0';
 
   @override
-  int get rustContentHash => -140873729;
+  int get rustContentHash => -152771966;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -173,6 +173,9 @@ abstract class RustLibApi extends BaseApi {
   Future<SshKey> crateApiSettingsSshKeyGenerate();
 
   Task crateTaskTaskNew({required String description});
+
+  Future<Task> crateTaskTaskWithUuid(
+      {required UuidValue uuid, required String description});
 
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_TaskStorage;
@@ -1033,6 +1036,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateTaskTaskNewConstMeta => const TaskConstMeta(
         debugName: "task_new",
         argNames: ["description"],
+      );
+
+  @override
+  Future<Task> crateTaskTaskWithUuid(
+      {required UuidValue uuid, required String description}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(uuid, serializer);
+        sse_encode_String(description, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 34, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_task,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateTaskTaskWithUuidConstMeta,
+      argValues: [uuid, description],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateTaskTaskWithUuidConstMeta => const TaskConstMeta(
+        debugName: "task_with_uuid",
+        argNames: ["uuid", "description"],
       );
 
   RustArcIncrementStrongCountFnType
