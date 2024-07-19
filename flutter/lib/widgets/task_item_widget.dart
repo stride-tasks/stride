@@ -87,6 +87,42 @@ class TaskItem extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
     );
 
+    if (task.priority != null) {
+      const borderWidth = 4.0;
+      const borderRadius = BorderRadius.all(Radius.circular(5));
+      final decoration = switch (task.priority!) {
+        TaskPriority.h => const BoxDecoration(
+            borderRadius: borderRadius,
+            border: Border(
+              left: BorderSide(
+                color: Colors.red,
+                width: borderWidth,
+              ),
+            ),
+          ),
+        TaskPriority.m => const BoxDecoration(
+            borderRadius: borderRadius,
+            border: Border(
+              left: BorderSide(
+                color: Color(0xAAfd8c00),
+                width: borderWidth,
+              ),
+            ),
+          ),
+        TaskPriority.l => const BoxDecoration(
+            borderRadius: borderRadius,
+            border: Border(
+              left: BorderSide(
+                color: Colors.green,
+                width: borderWidth,
+              ),
+            ),
+          ),
+      };
+
+      widget = DecoratedBox(decoration: decoration, child: widget);
+    }
+
     if (onSwipeLeft != null || onSwipeRight != null) {
       widget = Dismissible(
         key: Key('${task.uuid}'),
@@ -109,7 +145,10 @@ class TaskItem extends StatelessWidget {
       );
     }
 
-    return widget;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 2.0),
+      child: widget,
+    );
   }
 
   Widget _slideRightBackground() {

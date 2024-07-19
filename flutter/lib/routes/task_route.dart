@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class _TaskRouteState extends State<TaskRoute> {
   List<int> tags = [];
   List<Annotation> annotations = [];
   List<UuidValue> depends = [];
+  TaskPriority? priority;
   // Map<String, String> uda = {};
 
   final _formKey = GlobalKey<FormState>();
@@ -40,6 +42,7 @@ class _TaskRouteState extends State<TaskRoute> {
     tags = widget.task?.tags.toList() ?? tags;
     annotations = widget.task?.annotations.toList() ?? annotations;
     depends = widget.task?.depends.toList() ?? depends;
+    priority = widget.task?.priority;
     // uda = widget.task?.uda ?? uda;
   }
 
@@ -94,6 +97,37 @@ class _TaskRouteState extends State<TaskRoute> {
                     },
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SegmentedButton<TaskPriority>(
+                    segments: const <ButtonSegment<TaskPriority>>[
+                      ButtonSegment<TaskPriority>(
+                        value: TaskPriority.h,
+                        icon: Icon(Icons.priority_high),
+                        label: Text('High'),
+                      ),
+                      ButtonSegment<TaskPriority>(
+                        value: TaskPriority.m,
+                        icon: Icon(Icons.density_medium),
+                        label: Text('Medium'),
+                      ),
+                      ButtonSegment<TaskPriority>(
+                        value: TaskPriority.l,
+                        icon: Icon(Icons.low_priority),
+                        label: Text('Low'),
+                      ),
+                    ],
+                    selected: priority == null ? {} : {priority!},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        priority =
+                            newSelection.isEmpty ? null : newSelection.first;
+                      });
+                    },
+                    emptySelectionAllowed: true,
+                    selectedIcon: const Icon(Icons.check),
+                  ),
+                ),
                 // TagsWidget(
                 //   tags: const [],
                 //   onSubmit: (tags) {
@@ -125,6 +159,7 @@ class _TaskRouteState extends State<TaskRoute> {
               status: TaskStatus.pending,
               annotations: annotations,
               depends: depends,
+              priority: priority,
               uda: {},
             );
 

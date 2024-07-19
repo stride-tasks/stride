@@ -1,3 +1,5 @@
+//! Cryptography used in the `stride`.
+
 #![allow(clippy::missing_errors_doc)]
 
 pub mod crypter;

@@ -55,11 +55,7 @@ class _TasksRouteState extends State<TasksRoute> {
                           return const SizedBox(height: 50);
                         }
 
-                        final task = state.tasks[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 2.0),
-                          child: _taskItem(task, context),
-                        );
+                        return _taskItem(state.tasks[index], context);
                       },
                     ),
                   ),

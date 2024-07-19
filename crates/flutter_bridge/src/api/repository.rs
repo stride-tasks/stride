@@ -16,7 +16,7 @@ use uuid::Uuid;
 use crate::{
     api::settings::Settings,
     git::known_hosts::{HostKeyType, KnownHosts},
-    task::{Task, TaskStatus},
+    task::{Task, TaskPriority, TaskStatus},
     ToBase64,
 };
 
@@ -69,6 +69,13 @@ impl Task {
                 urgency += 11.0;
             } else if seconds >= THREE_DAYS {
                 urgency += (seconds as f32 / THREE_DAYS as f32) * 11.0;
+            }
+        }
+        if let Some(priority) = self.priority {
+            match priority {
+                TaskPriority::H => urgency += 6.0,
+                TaskPriority::M => urgency += 3.0,
+                TaskPriority::L => urgency += -3.0,
             }
         }
         urgency
