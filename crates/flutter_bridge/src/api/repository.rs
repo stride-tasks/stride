@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use base64::Engine;
+use chrono::Utc;
 use flutter_rust_bridge::frb;
 use uuid::Uuid;
 
@@ -48,6 +49,29 @@ impl Task {
             description,
             ..Default::default()
         }
+    }
+
+    #[allow(clippy::cast_precision_loss)]
+    #[must_use]
+    #[frb(sync)]
+    pub fn urgency(&self) -> f32 {
+        const THREE_DAYS: i64 = 3 * 24 * 60 * 60;
+
+        let mut urgency = 0.0;
+        if let Some(due) = self.due {
+            let today = Utc::now();
+            let delta = today - due;
+
+            urgency += 1.0;
+
+            let seconds = delta.num_seconds();
+            if seconds < 0 {
+                urgency += 11.0;
+            } else if seconds >= THREE_DAYS {
+                urgency += (seconds as f32 / THREE_DAYS as f32) * 11.0;
+            }
+        }
+        urgency
     }
 }
 
@@ -167,7 +191,7 @@ impl Storage {
             return Ok(false);
         };
         *current = task.clone();
-        current.modified = Some(chrono::Utc::now());
+        current.modified = Some(Utc::now());
 
         self.save()?;
         Ok(true)
@@ -293,6 +317,12 @@ impl TaskStorage {
             storage.filter(filter, &mut tasks)?;
         }
 
+        tasks.sort_unstable_by(|a, b| {
+            b.urgency()
+                .partial_cmp(&a.urgency())
+                .expect("should never be NaN")
+        });
+
         Ok(tasks)
     }
 
@@ -354,7 +384,7 @@ impl TaskStorage {
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
         found_task.status = status;
-        found_task.modified = Some(chrono::Utc::now());
+        found_task.modified = Some(Utc::now());
 
         let transition = match status {
             TaskStatus::Pending => "PEND",

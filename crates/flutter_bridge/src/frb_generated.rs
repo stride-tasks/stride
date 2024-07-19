@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.1.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -152771966;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1574805554;
 
 // Section: executor
 
@@ -1444,6 +1444,36 @@ fn wire__crate__task__task_new_impl(
         },
     )
 }
+fn wire__crate__task__task_urgency_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "task_urgency",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <crate::task::Task>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok(crate::task::Task::urgency(&api_that))?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__task__task_with_uuid_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1656,6 +1686,13 @@ impl SseDecode for crate::api::repository::ConnectionError {
                 unimplemented!("");
             }
         }
+    }
+}
+
+impl SseDecode for f32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_f32::<NativeEndian>().unwrap()
     }
 }
 
@@ -2175,7 +2212,7 @@ fn pde_ffi_dispatcher_primary_impl(
         29 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
         31 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
         32 => wire__crate__api__settings__ssh_key_generate_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2191,6 +2228,7 @@ fn pde_ffi_dispatcher_sync_impl(
         17 => wire__crate__api__repository__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
         30 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
         33 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
+        34 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2676,6 +2714,13 @@ impl SseEncode for crate::api::repository::ConnectionError {
                 unimplemented!("");
             }
         }
+    }
+}
+
+impl SseEncode for f32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_f32::<NativeEndian>(self).unwrap();
     }
 }
 

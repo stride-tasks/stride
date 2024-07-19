@@ -83,6 +83,7 @@ class TaskItem extends StatelessWidget {
       title: Text(task.description),
       onLongPress: onLongPress,
       subtitle: subtitle,
+      trailing: Text(task.urgency().toStringAsFixed(2)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
     );
 

@@ -59,6 +59,10 @@ class Task {
   factory Task({required String description}) =>
       RustLib.instance.api.crateTaskTaskNew(description: description);
 
+  double urgency() => RustLib.instance.api.crateTaskTaskUrgency(
+        that: this,
+      );
+
   static Future<Task> withUuid(
           {required UuidValue uuid, required String description}) =>
       RustLib.instance.api
