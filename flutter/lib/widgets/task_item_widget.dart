@@ -64,15 +64,18 @@ class TaskItem extends StatelessWidget {
 
     Widget? subtitle;
     if (task.tags.isNotEmpty || task.due != null) {
-      subtitle = Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          tags,
-          Text(
-            task.due?.toUtc().toHumanString() ?? '',
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
+      subtitle = Padding(
+        padding: const EdgeInsets.only(top: 2.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              task.due?.toUtc().toHumanString() ?? '',
+              style: const TextStyle(fontSize: 12),
+            ),
+            tags,
+          ],
+        ),
       );
     }
 
@@ -80,6 +83,7 @@ class TaskItem extends StatelessWidget {
       title: Text(task.description),
       onLongPress: onLongPress,
       subtitle: subtitle,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
     );
 
     if (onSwipeLeft != null || onSwipeRight != null) {

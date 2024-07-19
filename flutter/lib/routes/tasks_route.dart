@@ -57,6 +57,7 @@ class _TasksRouteState extends State<TasksRoute> {
 
                         final task = state.tasks[index];
                         return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 2.0),
                           child: _taskItem(task, context),
                         );
                       },
