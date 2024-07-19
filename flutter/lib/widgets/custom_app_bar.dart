@@ -9,7 +9,7 @@ import 'package:stride/src/rust/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/infinite_rotation_animation.dart';
 
-class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final Widget? leading;
 
@@ -20,23 +20,14 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   });
 
   @override
-  State<CustomAppBar> createState() => _CustomAppBarState();
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-}
-
-class _CustomAppBarState extends State<CustomAppBar> {
-  Future<void>? sync;
-
-  @override
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
         final hasFilter = state.settings.selectedFilter != null;
         return AppBar(
-          title: Text(widget.title),
-          leading: widget.leading,
+          title: Text(title),
+          leading: leading,
+          titleSpacing: NavigationToolbar.kMiddleSpacing / 2.0,
           actions: [
             BlocListener<TaskBloc, TaskState>(
               listenWhen: (previous, current) =>
@@ -143,4 +134,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       },
     );
   }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
