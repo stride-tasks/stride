@@ -64,12 +64,11 @@ impl TaskPriority {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
-
-    #[serde(skip)]
     pub status: TaskStatus,
-
     pub description: String,
 
+    #[serde(default)]
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub active: bool,
 
     #[serde(default)]
