@@ -61,14 +61,14 @@ impl Task {
         urgency += f32::from(self.active) * 15.0;
         if let Some(due) = self.due {
             let today = Utc::now();
-            let delta = today - due;
+            let delta = due - today;
 
             urgency += 1.0;
 
             let seconds = delta.num_seconds();
             if seconds < 0 {
                 urgency += 11.0;
-            } else if seconds >= THREE_DAYS {
+            } else if seconds <= THREE_DAYS {
                 urgency += (seconds as f32 / THREE_DAYS as f32) * 11.0;
             }
         }
