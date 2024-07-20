@@ -22,38 +22,29 @@
 
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:uuid/uuid.dart';
 import 'task/annotation.dart';
+part 'task.freezed.dart';
 
-class Task {
-  final UuidValue uuid;
-  final TaskStatus status;
-  final String description;
-  final DateTime? modified;
-  final DateTime? due;
-  final int? project;
-  final Uint32List tags;
-  final List<Annotation> annotations;
-  final TaskPriority? priority;
-  final DateTime? wait;
-  final List<UuidValue> depends;
-  final Map<String, String> uda;
-
-  const Task.raw({
-    required this.uuid,
-    required this.status,
-    required this.description,
-    this.modified,
-    this.due,
-    this.project,
-    required this.tags,
-    required this.annotations,
-    this.priority,
-    this.wait,
-    required this.depends,
-    required this.uda,
-  });
-
+@freezed
+class Task with _$Task {
+  const Task._();
+  const factory Task.raw({
+    required UuidValue uuid,
+    required TaskStatus status,
+    required String description,
+    required bool active,
+    DateTime? modified,
+    DateTime? due,
+    int? project,
+    required Uint32List tags,
+    required List<Annotation> annotations,
+    TaskPriority? priority,
+    DateTime? wait,
+    required List<UuidValue> depends,
+    required Map<String, String> uda,
+  }) = _Task;
   factory Task({required String description}) =>
       RustLib.instance.api.crateTaskTaskNew(description: description);
 
@@ -65,39 +56,6 @@ class Task {
           {required UuidValue uuid, required String description}) =>
       RustLib.instance.api
           .crateTaskTaskWithUuid(uuid: uuid, description: description);
-
-  @override
-  int get hashCode =>
-      uuid.hashCode ^
-      status.hashCode ^
-      description.hashCode ^
-      modified.hashCode ^
-      due.hashCode ^
-      project.hashCode ^
-      tags.hashCode ^
-      annotations.hashCode ^
-      priority.hashCode ^
-      wait.hashCode ^
-      depends.hashCode ^
-      uda.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Task &&
-          runtimeType == other.runtimeType &&
-          uuid == other.uuid &&
-          status == other.status &&
-          description == other.description &&
-          modified == other.modified &&
-          due == other.due &&
-          project == other.project &&
-          tags == other.tags &&
-          annotations == other.annotations &&
-          priority == other.priority &&
-          wait == other.wait &&
-          depends == other.depends &&
-          uda == other.uda;
 }
 
 enum TaskPriority {

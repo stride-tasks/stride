@@ -58,6 +58,7 @@ impl Task {
         const THREE_DAYS: i64 = 3 * 24 * 60 * 60;
 
         let mut urgency = 0.0;
+        urgency += f32::from(self.active) * 15.0;
         if let Some(due) = self.due {
             let today = Utc::now();
             let delta = today - due;
@@ -390,6 +391,7 @@ impl TaskStorage {
         let mut found_task =
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
+        found_task.active = false;
         found_task.status = status;
         found_task.modified = Some(Utc::now());
 

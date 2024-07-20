@@ -28,6 +28,7 @@ class _TaskRouteState extends State<TaskRoute> {
   List<Annotation> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
+  bool active = false;
   // Map<String, String> uda = {};
 
   final _formKey = GlobalKey<FormState>();
@@ -42,6 +43,7 @@ class _TaskRouteState extends State<TaskRoute> {
     annotations = widget.task?.annotations.toList() ?? annotations;
     depends = widget.task?.depends.toList() ?? depends;
     priority = widget.task?.priority;
+    active = widget.task?.active ?? false;
     // uda = widget.task?.uda ?? uda;
   }
 
@@ -153,6 +155,7 @@ class _TaskRouteState extends State<TaskRoute> {
               uuid:
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
               description: description,
+              active: active,
               tags: Uint32List.fromList(tags),
               due: due,
               status: TaskStatus.pending,

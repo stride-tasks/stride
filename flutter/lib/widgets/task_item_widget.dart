@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/src/rust/task.dart';
 import 'package:stride/utils/extensions.dart';
 
@@ -81,7 +83,13 @@ class TaskItem extends StatelessWidget {
 
     Widget widget = ListTile(
       title: Text(task.description),
+      selected: task.active,
       onLongPress: onLongPress,
+      onTap: () {
+        context
+            .read<TaskBloc>()
+            .add(TaskUpdateEvent(task: task.copyWith(active: !task.active)));
+      },
       subtitle: subtitle,
       trailing: Text(task.urgency().toStringAsFixed(2)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),

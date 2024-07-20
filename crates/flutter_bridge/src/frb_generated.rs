@@ -2053,6 +2053,7 @@ impl SseDecode for crate::task::Task {
         let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
         let mut var_status = <crate::task::TaskStatus>::sse_decode(deserializer);
         let mut var_description = <String>::sse_decode(deserializer);
+        let mut var_active = <bool>::sse_decode(deserializer);
         let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_due = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_project = <Option<u32>>::sse_decode(deserializer);
@@ -2067,6 +2068,7 @@ impl SseDecode for crate::task::Task {
             uuid: var_uuid,
             status: var_status,
             description: var_description,
+            active: var_active,
             modified: var_modified,
             due: var_due,
             project: var_project,
@@ -2566,6 +2568,7 @@ impl flutter_rust_bridge::IntoDart for crate::task::Task {
             self.uuid.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),
             self.description.into_into_dart().into_dart(),
+            self.active.into_into_dart().into_dart(),
             self.modified.into_into_dart().into_dart(),
             self.due.into_into_dart().into_dart(),
             self.project.into_into_dart().into_dart(),
@@ -3053,6 +3056,7 @@ impl SseEncode for crate::task::Task {
         <uuid::Uuid>::sse_encode(self.uuid, serializer);
         <crate::task::TaskStatus>::sse_encode(self.status, serializer);
         <String>::sse_encode(self.description, serializer);
+        <bool>::sse_encode(self.active, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.due, serializer);
         <Option<u32>>::sse_encode(self.project, serializer);

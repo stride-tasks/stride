@@ -7,6 +7,7 @@ pub mod annotation;
 pub type Date = DateTime<Utc>;
 
 pub use annotation::Annotation;
+use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -59,6 +60,7 @@ impl TaskPriority {
     }
 }
 
+#[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
@@ -67,6 +69,8 @@ pub struct Task {
     pub status: TaskStatus,
 
     pub description: String,
+
+    pub active: bool,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -111,6 +115,7 @@ impl Default for Task {
             uuid: Uuid::now_v7(),
             status: TaskStatus::Pending,
             description: String::new(),
+            active: false,
             modified: None,
             due: None,
             project: None,
@@ -161,6 +166,9 @@ impl Task {
         let mut result = String::new();
         result.extend(self.uuid.to_base64_array().into_iter().map(char::from));
         escape(&self.description, &mut result);
+        if self.active {
+            result.push_str("\tA");
+        }
         if let Some(modified) = self.modified {
             result.push_str("\tm");
             result.extend(modified.to_base64_array().into_iter().map(char::from));
@@ -229,6 +237,7 @@ impl Task {
         let mut input = input.get(description_len..)?;
 
         let mut iter = input.char_indices();
+        let mut active = false;
         let mut modified = None;
         let mut due = None;
         let mut project = None;
@@ -324,6 +333,9 @@ impl Task {
                     };
                     priority = Some(value);
                 }
+                'A' => {
+                    active = true;
+                }
                 _ => return None,
             }
         }
@@ -335,6 +347,7 @@ impl Task {
             uuid,
             description,
             status: TaskStatus::Pending,
+            active,
             modified,
             due,
             project,
