@@ -122,8 +122,8 @@ class SettingsRoute extends StatelessWidget {
                     title: const Text('SSH Key'),
                     builder: (context) => SshKeysRoute(
                       hasDelete: false,
+                      selected: settings.repository.sshKeyUuid,
                       onTap: (key) {
-                        // print(key);
                         context.read<SettingsBloc>().add(
                               SettingsUpdateEvent(
                                 settings: settings.copyWith(

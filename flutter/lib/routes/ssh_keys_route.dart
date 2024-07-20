@@ -5,15 +5,18 @@ import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/src/rust/api/logging.dart';
 import 'package:stride/src/rust/api/settings.dart';
 import 'package:stride/utils/functions.dart';
+import 'package:uuid/uuid.dart';
 
 class SshKeysRoute extends StatelessWidget {
   final void Function(SshKey key)? onTap;
   final bool hasDelete;
+  final UuidValue? selected;
 
   const SshKeysRoute({
     super.key,
     this.onTap,
     this.hasDelete = true,
+    this.selected,
   });
 
   @override
@@ -68,6 +71,12 @@ class SshKeysRoute extends StatelessWidget {
   ListTile _listItem(BuildContext context, SshKey key) {
     return ListTile(
       title: Text(key.public),
+      selected: key.uuid == selected,
+      leading: selected == null
+          ? null
+          : key.uuid != selected
+              ? const Icon(Icons.circle_outlined)
+              : const Icon(Icons.check_circle_outline_rounded),
       trailing: !hasDelete
           ? null
           : IconButton(
