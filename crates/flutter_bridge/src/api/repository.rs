@@ -206,11 +206,7 @@ impl Storage {
     }
 
     fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
-        self.load()?;
-        let index = self
-            .tasks
-            .iter_mut()
-            .position(|element| &element.uuid == uuid);
+        let index = self.get_index(uuid)?;
         let Some(index) = index else {
             return Ok(None);
         };
@@ -374,11 +370,7 @@ impl TaskStorage {
                 continue;
             }
 
-            storage.load()?;
-            let index = storage
-                .tasks
-                .iter()
-                .position(|element| element.uuid == task.uuid);
+            let index = storage.get_index(&task.uuid)?;
             let Some(index) = index else {
                 break;
             };
@@ -416,11 +408,7 @@ impl TaskStorage {
                 continue;
             }
 
-            storage.load()?;
-            let index = storage
-                .tasks
-                .iter()
-                .position(|element| element.uuid == task.uuid);
+            let index = storage.get_index(&task.uuid)?;
             let Some(index) = index else {
                 break;
             };
