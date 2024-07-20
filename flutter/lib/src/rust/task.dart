@@ -36,7 +36,6 @@ class Task {
   final List<Annotation> annotations;
   final TaskPriority? priority;
   final DateTime? wait;
-  final DateTime? end;
   final List<UuidValue> depends;
   final Map<String, String> uda;
 
@@ -51,7 +50,6 @@ class Task {
     required this.annotations,
     this.priority,
     this.wait,
-    this.end,
     required this.depends,
     required this.uda,
   });
@@ -80,7 +78,6 @@ class Task {
       annotations.hashCode ^
       priority.hashCode ^
       wait.hashCode ^
-      end.hashCode ^
       depends.hashCode ^
       uda.hashCode;
 
@@ -99,7 +96,6 @@ class Task {
           annotations == other.annotations &&
           priority == other.priority &&
           wait == other.wait &&
-          end == other.end &&
           depends == other.depends &&
           uda == other.uda;
 }

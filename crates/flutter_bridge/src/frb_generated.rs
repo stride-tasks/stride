@@ -2061,7 +2061,6 @@ impl SseDecode for crate::task::Task {
             <Vec<crate::task::annotation::Annotation>>::sse_decode(deserializer);
         let mut var_priority = <Option<crate::task::TaskPriority>>::sse_decode(deserializer);
         let mut var_wait = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
-        let mut var_end = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_depends = <Vec<uuid::Uuid>>::sse_decode(deserializer);
         let mut var_uda = <std::collections::HashMap<String, String>>::sse_decode(deserializer);
         return crate::task::Task {
@@ -2075,7 +2074,6 @@ impl SseDecode for crate::task::Task {
             annotations: var_annotations,
             priority: var_priority,
             wait: var_wait,
-            end: var_end,
             depends: var_depends,
             uda: var_uda,
         };
@@ -2575,7 +2573,6 @@ impl flutter_rust_bridge::IntoDart for crate::task::Task {
             self.annotations.into_into_dart().into_dart(),
             self.priority.into_into_dart().into_dart(),
             self.wait.into_into_dart().into_dart(),
-            self.end.into_into_dart().into_dart(),
             self.depends.into_into_dart().into_dart(),
             self.uda.into_into_dart().into_dart(),
         ]
@@ -3063,7 +3060,6 @@ impl SseEncode for crate::task::Task {
         <Vec<crate::task::annotation::Annotation>>::sse_encode(self.annotations, serializer);
         <Option<crate::task::TaskPriority>>::sse_encode(self.priority, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.wait, serializer);
-        <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.end, serializer);
         <Vec<uuid::Uuid>>::sse_encode(self.depends, serializer);
         <std::collections::HashMap<String, String>>::sse_encode(self.uda, serializer);
     }

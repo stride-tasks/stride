@@ -97,10 +97,6 @@ pub struct Task {
     pub wait: Option<Date>,
 
     #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub end: Option<Date>,
-
-    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub depends: Vec<Uuid>,
 
@@ -122,7 +118,6 @@ impl Default for Task {
             annotations: Vec::new(),
             priority: None,
             wait: None,
-            end: None,
             depends: Vec::new(),
             uda: HashMap::new(),
         }
@@ -177,10 +172,6 @@ impl Task {
         if let Some(wait) = self.wait {
             result.push_str("\tw");
             result.extend(wait.to_base64_array().into_iter().map(char::from));
-        }
-        if let Some(end) = self.end {
-            result.push_str("\te");
-            result.extend(end.to_base64_array().into_iter().map(char::from));
         }
         if let Some(project) = self.project {
             result.push_str("\tp");
@@ -243,21 +234,19 @@ impl Task {
         let mut project = None;
         let mut priority = None;
         let mut wait = None;
-        let mut end = None;
         let mut depends = Vec::new();
         let mut tags = Vec::new();
         while let Some((_, '\t')) = iter.next() {
             let (position, type_) = iter.next()?;
             let start = position + 1;
             match type_ {
-                'm' | 'd' | 'w' | 'e' => {
+                'm' | 'd' | 'w' => {
                     let data = input.get(start..start + 11)?.as_bytes();
                     let date = Date::from_base64_array(data.try_into().ok()?)?;
                     match type_ {
                         'm' => modified = Some(date),
                         'd' => due = Some(date),
                         'w' => wait = Some(date),
-                        'e' => end = Some(date),
                         _ => unreachable!(),
                     }
                     input = input.get(start + 11..)?;
@@ -353,7 +342,6 @@ impl Task {
             annotations: Vec::default(),
             priority,
             wait,
-            end,
             depends,
             uda: HashMap::default(),
         })

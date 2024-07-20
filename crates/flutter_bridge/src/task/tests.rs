@@ -117,23 +117,16 @@ fn serialize_task_with_dates() {
         task.to_data(),
         format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}")
     );
-
-    task.end = Some(CONSTANT_DATETIME);
-    assert_eq!(
-        task.to_data(),
-        format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}")
-    );
 }
 
 #[test]
 fn deserialize_task_with_dates() {
-    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}")).unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.modified = Some(CONSTANT_DATETIME);
     expected.due = Some(CONSTANT_DATETIME);
     expected.wait = Some(CONSTANT_DATETIME);
-    expected.end = Some(CONSTANT_DATETIME);
     assert_eq!(task, expected);
 }
 
@@ -233,24 +226,22 @@ fn serialize_task_with_all_attributes() {
     task.modified = Some(CONSTANT_DATETIME);
     task.due = Some(CONSTANT_DATETIME);
     task.wait = Some(CONSTANT_DATETIME);
-    task.end = Some(CONSTANT_DATETIME);
     task.tags = vec![0, 1, 2];
     task.project = Some(30);
     task.priority = Some(TaskPriority::L);
-    assert_eq!(task.to_data(), format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}\tpu\trL\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}"));
+    assert_eq!(task.to_data(), format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\tpu\trL\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}"));
 }
 
 // TODO: Add the rest of the attributes
 #[test]
 fn deserialize_task_with_all_attributes() {
-    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\te{CONSTANT_DATETIME_BASE64}\tpu\trH\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}")).unwrap();
+    let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}Hello there!\tm{CONSTANT_DATETIME_BASE64}\td{CONSTANT_DATETIME_BASE64}\tw{CONSTANT_DATETIME_BASE64}\tpu\trH\tt0,1,2\tn{CONSTANT_UUID_BASE64},{CONSTANT_UUID_BASE64}")).unwrap();
     let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
     expected.modified = Some(CONSTANT_DATETIME);
     expected.due = Some(CONSTANT_DATETIME);
     expected.wait = Some(CONSTANT_DATETIME);
-    expected.end = Some(CONSTANT_DATETIME);
     expected.tags = vec![0, 1, 2];
     expected.project = Some(30);
     expected.priority = Some(TaskPriority::H);

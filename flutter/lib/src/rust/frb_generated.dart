@@ -1539,8 +1539,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task dco_decode_task(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 13)
-      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return Task.raw(
       uuid: dco_decode_Uuid(arr[0]),
       status: dco_decode_task_status(arr[1]),
@@ -1552,9 +1552,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       annotations: dco_decode_list_annotation(arr[7]),
       priority: dco_decode_opt_box_autoadd_task_priority(arr[8]),
       wait: dco_decode_opt_box_autoadd_Chrono_Utc(arr[9]),
-      end: dco_decode_opt_box_autoadd_Chrono_Utc(arr[10]),
-      depends: dco_decode_list_Uuid(arr[11]),
-      uda: dco_decode_Map_String_String(arr[12]),
+      depends: dco_decode_list_Uuid(arr[10]),
+      uda: dco_decode_Map_String_String(arr[11]),
     );
   }
 
@@ -2116,7 +2115,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_annotations = sse_decode_list_annotation(deserializer);
     var var_priority = sse_decode_opt_box_autoadd_task_priority(deserializer);
     var var_wait = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
-    var var_end = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     var var_depends = sse_decode_list_Uuid(deserializer);
     var var_uda = sse_decode_Map_String_String(deserializer);
     return Task.raw(
@@ -2130,7 +2128,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         annotations: var_annotations,
         priority: var_priority,
         wait: var_wait,
-        end: var_end,
         depends: var_depends,
         uda: var_uda);
   }
@@ -2643,7 +2640,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_annotation(self.annotations, serializer);
     sse_encode_opt_box_autoadd_task_priority(self.priority, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.wait, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Utc(self.end, serializer);
     sse_encode_list_Uuid(self.depends, serializer);
     sse_encode_Map_String_String(self.uda, serializer);
   }
