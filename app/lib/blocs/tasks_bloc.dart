@@ -177,6 +177,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<List<Task>> _tasks() async {
+    // TODO: Handle possible thrown error.
+    // try {
     if (filter == null) {
       final tasks = await repository.tasks();
       return tasks;
@@ -184,6 +186,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final tasks = await repository.tasksWithFilter(filter: filter!);
       return tasks;
     }
+    // } on RustError catch (error) {
+    //   Logger.error(message: 'repository load error: ${error.toErrorString()}');
+    // } on Exception catch (error) {
+    //   Logger.error(message: 'repository load error: $error');
+    // }
+    // return [];
   }
 
   @override
