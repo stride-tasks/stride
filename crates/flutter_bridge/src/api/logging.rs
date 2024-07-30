@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::Path};
+use std::{borrow::Cow, fs::File, io::Write, panic::Location, path::Path};
 
 use chrono::Local;
 
@@ -47,6 +47,39 @@ pub(crate) fn init_logger(path: &Path) {
         .filter_level(log::LevelFilter::Trace)
         .target(env_logger::Target::Pipe(target))
         .try_init();
+
+    std::panic::set_hook(Box::new(|p| {
+        let location = p.location().unwrap_or_else(|| Location::caller());
+        let mut message = p
+            .payload()
+            .downcast_ref::<&str>()
+            .copied()
+            .map(Cow::Borrowed);
+        if message.is_none() {
+            message = p
+                .payload()
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .map(Cow::Borrowed);
+        }
+        if message.is_none() {
+            message = p
+                .payload()
+                .downcast_ref::<Box<dyn std::fmt::Display>>()
+                .map(ToString::to_string)
+                .map(Cow::Owned);
+        }
+
+        log::error!(
+            "PANIC at {}:{}:{}: {}",
+            location.file(),
+            location.line(),
+            location.column(),
+            message.map_or(Cow::Borrowed("<non-formattable>"), |m| Cow::Owned(
+                m.replace('\n', "\\n")
+            )),
+        );
+    }));
 }
 
 /// # Panics

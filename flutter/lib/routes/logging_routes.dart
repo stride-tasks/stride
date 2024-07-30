@@ -46,10 +46,10 @@ class _LoggingRouteState extends State<LoggingRoute> {
                     final parts = lines[length - 1 - index].split(': ');
                     final time = parts[0].split(' ')[0].replaceFirst('T', ' ');
                     final level = parts[0].split(' ')[1];
-                    final title = parts.sublist(1).join(': ');
-                    var levelIcon = const Icon(Icons.question_mark);
+                    final message = parts.sublist(1).join(': ');
 
                     // Log Levels: "OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"
+                    var levelIcon = const Icon(Icons.question_mark);
                     switch (level) {
                       case 'DEBUG':
                         levelIcon = const Icon(Icons.bug_report);
@@ -65,17 +65,42 @@ class _LoggingRouteState extends State<LoggingRoute> {
                           color: Colors.redAccent,
                         );
                     }
+
+                    final bodyMessageIndex = message.indexOf(r'\n');
+                    var title = message;
+                    var body = '';
+                    if (bodyMessageIndex != -1) {
+                      title = message.substring(0, bodyMessageIndex);
+                      // NOTE: +2 skip over '\\n'.
+                      body = message
+                          .substring(bodyMessageIndex + 2)
+                          .replaceAll(r'\n', '\n')
+                          .trim();
+                    }
+
+                    final subtitle = Text(
+                      time,
+                      style: const TextStyle(fontSize: kDefaultFontSize / 1.05),
+                    );
+
+                    final isFirstTile = index == 0;
+
                     return Card(
-                      child: ListTile(
-                        leading: levelIcon,
-                        title: Text(title),
-                        subtitle: Text(
-                          time,
-                          style: const TextStyle(
-                            fontSize: kDefaultFontSize / 1.05,
-                          ),
-                        ),
-                      ),
+                      child: body.isEmpty
+                          ? ListTile(
+                              leading: levelIcon,
+                              title: Text(title),
+                              subtitle: subtitle,
+                            )
+                          : ExpansionTile(
+                              leading: levelIcon,
+                              title: Text(title),
+                              subtitle: subtitle,
+                              initiallyExpanded: isFirstTile,
+                              expandedAlignment: Alignment.topLeft,
+                              childrenPadding: const EdgeInsets.all(8.0),
+                              children: [Text(body)],
+                            ),
                     );
                   },
                 ),
