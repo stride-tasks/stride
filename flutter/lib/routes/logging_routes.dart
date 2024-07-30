@@ -28,9 +28,13 @@ class _LoggingRouteState extends State<LoggingRoute> {
           if (state.connectionState != ConnectionState.done) {
             return const CircularProgressIndicator();
           }
-          final data = state.data!;
+          final data = state.data!.trim();
 
-          final lines = data.trim().split('\n');
+          if (data.isEmpty) {
+            return const Column();
+          }
+
+          final lines = data.split('\n');
           final length = lines.length;
 
           return Column(
