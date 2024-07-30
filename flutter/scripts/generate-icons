@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Get location of the script
+BASEDIR="$( cd "$( dirname "$0" )" && pwd )"
+
+# Stop script at first fail
+set -e
+
+# Go to icons directory
+cd "$BASEDIR/../assets/icon"
+
+# Some icons are 1024 like on iOS.
+ICON_SIZE=1024
+
+# Padding which is used for adaptive launcher foreground icon.
+PADDING=0.30
+BACKGROUND="#282828" # Color name or 0xRRGGBB or #RRGGBB
+
+# https://stackoverflow.com/questions/52804749/replace-transparent-pixels-alpha-with-black-in-ffmpeg
+# Generate a white canvas and resizes it to the image size. Then the image is overlaid on top. 
+ffmpeg \
+    -y \
+    -width $ICON_SIZE \
+    -height $ICON_SIZE \
+    -i logo.svg \
+    -vf "color=$BACKGROUND,format=rgb24[c];[c][0]scale2ref[c][i];[c][i]overlay=format=auto:shortest=1,setsar=1" \
+    logo.png
+
+# "pad=iw*(1+2*$PADDING):ih*(1+2*$PADDING)": Scales the width and height by
+#     adding the padding on both sides. Since the padding is a percentage,
+#     1+2*$PADDING accounts for the padding on both sides (left and right,
+#     or top and bottom).
+# "(ow-iw)/2:(oh-ih)/2": Centers the original image within the new, larger image.
+# "color=0x00000000": Sets the padding color to transparent.
+ffmpeg \
+    -y \
+    -i \
+    logo.png \
+    -vf "pad=iw*(1+2*$PADDING):ih*(1+2*$PADDING):(ow-iw)/2:(oh-ih)/2:color=0x00000000" \
+    logo_foreground.png
+
+# Go to pubspec.yaml directory
+cd "$BASEDIR/.."
+
+# Get dependencies if not already available and call flutter_launcher_icons
+flutter pub get
+flutter pub run flutter_launcher_icons
+
+# Delete temp icons
+rm -v "$BASEDIR/../assets/icon/logo.png"
+rm -v "$BASEDIR/../assets/icon/logo_foreground.png"

@@ -35,8 +35,25 @@ dev_dependencies:
   freezed: ^2.5.2
   build_runner: ^2.4.11
 
+  flutter_launcher_icons: ^0.13.1
+
 flutter:
   uses-material-design: true
+
+# https://pub.dev/packages/flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/logo.png"
+  android: true
+  adaptive_icon_background: "#282828"
+  adaptive_icon_foreground: "assets/icon/logo_foreground.png"
+  min_sdk_android: 16 # android min sdk min:16, default 21
+  ios: true
+  remove_alpha_ios: true
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true
 
 flutter_rust_bridge:
   rust_input: crate::api

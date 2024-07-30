@@ -48,4 +48,5 @@ app.*.map.json
 # (my) Notes
 notes.md
 architecture.drawio
-
+docs
+temp
