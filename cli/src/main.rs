@@ -71,7 +71,7 @@ fn main() -> anyhow::Result<()> {
     let support_dir =
         choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
 
-    Settings::load(ApplicationPaths {
+    let settings = Settings::load(ApplicationPaths {
         support_path: support_dir.to_string_lossy().to_string(),
         document_path: document_dir.to_string_lossy().to_string(),
         cache_path: cache_dir.to_string_lossy().to_string(),
@@ -82,7 +82,8 @@ fn main() -> anyhow::Result<()> {
             .to_string(),
     })?;
 
-    let mut repository = TaskStorage::new(&support_dir.join("repository").to_string_lossy());
+    let mut repository =
+        TaskStorage::new(&support_dir.join("repository").to_string_lossy(), &settings);
 
     let mut args = std::env::args();
     let _program = args.next().expect("first argument should be program");

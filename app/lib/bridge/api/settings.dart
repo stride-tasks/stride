@@ -30,9 +30,10 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:uuid/uuid.dart';
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `get`, `ssh_key_path`, `ssh_key`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_theme_mode`, `encryption_key`, `ssh_key_path`, `ssh_key`
 // These types are ignored because they are not used by any `pub` functions: `APPLICATION_STATE_INSTANCE`, `State`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `deref`, `fmt`, `fmt`, `fmt`, `fmt`, `initialize`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `deref`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `initialize`
+// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `get`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
 Future<List<SshKey>> sshKeys() =>
@@ -98,6 +99,17 @@ class ApplicationPaths {
 }
 
 @freezed
+class EncryptionKey with _$EncryptionKey {
+  const EncryptionKey._();
+  const factory EncryptionKey({
+    required UuidValue uuid,
+    required String key,
+  }) = _EncryptionKey;
+  static Future<EncryptionKey> generate() =>
+      RustLib.instance.api.crateApiSettingsEncryptionKeyGenerate();
+}
+
+@freezed
 class Repository with _$Repository {
   const Repository._();
   const factory Repository({
@@ -106,6 +118,7 @@ class Repository with _$Repository {
     required String email,
     required String branch,
     UuidValue? sshKeyUuid,
+    UuidValue? encryptionKeyUuid,
   }) = _Repository;
   static Future<Repository> default_() =>
       RustLib.instance.api.crateApiSettingsRepositoryDefault();
@@ -118,6 +131,7 @@ class Settings with _$Settings {
     required bool darkMode,
     required KnownHosts knownHosts,
     required Repository repository,
+    required List<EncryptionKey> encryptionKeys,
     required bool periodicSync,
     required List<Filter> filters,
     FilterSelection? selectedFilter,

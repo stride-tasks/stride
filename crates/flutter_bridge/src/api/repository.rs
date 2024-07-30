@@ -5,12 +5,14 @@ use std::{
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     rc::Rc,
+    sync::Arc,
 };
 
 use anyhow::{Context, Result};
 use base64::Engine;
 use chrono::Utc;
 use flutter_rust_bridge::frb;
+use stride_crypto::crypter::Crypter;
 use uuid::Uuid;
 
 use crate::{
@@ -19,6 +21,7 @@ use crate::{
         settings::Settings,
     },
     git::known_hosts::{Host, HostKeyType, KnownHosts},
+    key_store::KeyStore,
     task::{Task, TaskPriority, TaskStatus},
     ErrorKind, RustError, ToBase64,
 };
@@ -31,7 +34,7 @@ use git2::{
 use super::{
     filter::Filter,
     logging::Logger,
-    settings::{ssh_key, SshKey},
+    settings::{ssh_key, EncryptionKey, SshKey},
 };
 
 #[frb(init)]
@@ -90,26 +93,45 @@ impl Task {
     }
 }
 
+const IV_LEN: usize = 12;
+
+pub(crate) fn generate_iv() -> [u8; IV_LEN] {
+    let mut iv = [0u8; IV_LEN];
+    getrandom::getrandom(&mut iv).unwrap();
+    iv
+}
+
 pub(crate) struct TaskDiff {
     path: PathBuf,
     adding: bool,
+    // TODO: content no longer has to be a String, it can be a &[u8]
     content: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(transparent)]
+struct DecryptedTask {
+    task: Task,
+    #[serde(skip, default = "generate_iv")]
+    iv: [u8; IV_LEN],
 }
 
 struct Storage {
     loaded: bool,
-    tasks: Vec<Task>,
+    tasks: Vec<DecryptedTask>,
     path: PathBuf,
     kind: TaskStatus,
+    key_store: Arc<KeyStore>,
 }
 
 impl Storage {
-    fn new(path: PathBuf, kind: TaskStatus) -> Self {
+    fn new(path: PathBuf, kind: TaskStatus, key_store: Arc<KeyStore>) -> Self {
         Self {
             loaded: false,
             tasks: Vec::new(),
             path,
             kind,
+            key_store,
         }
     }
 
@@ -130,10 +152,10 @@ impl Storage {
             if line.is_empty() {
                 continue;
             }
-            let mut task = Task::from_data(&line).ok_or(ErrorKind::CorruptTask)?;
+            let (iv, mut task) = self.key_store.decrypt(self.kind, &line)?;
             task.status = self.kind;
 
-            tasks.push(task);
+            tasks.push(DecryptedTask { task, iv });
         }
 
         self.tasks = tasks;
@@ -146,17 +168,32 @@ impl Storage {
 
         let mut file = File::options().append(true).create(true).open(&self.path)?;
 
-        let mut content = task.to_data();
-        content.push('\n');
-        file.write_all(content.as_bytes())?;
-        self.tasks.push(task);
+        if self.key_store.has_key_for(self.kind) {
+            let (iv, mut content) = self.key_store.encrypt(&task, None)?;
+            content.push('\n');
+            file.write_all(content.as_bytes())?;
+            self.tasks.push(DecryptedTask { task, iv });
+        } else {
+            let mut content = task.to_data();
+            content.push(b'\n');
+            file.write_all(&content)?;
+
+            drop(file);
+
+            let iv = generate_iv();
+            self.tasks.push(DecryptedTask { task, iv });
+            self.key_store.save()?;
+            self.save()?;
+        }
+
         Ok(())
     }
 
     fn save(&mut self) -> Result<(), RustError> {
         let mut content = String::new();
-        for task in &self.tasks {
-            content += &task.to_data();
+        for DecryptedTask { task, iv } in &self.tasks {
+            let (_, data) = self.key_store.encrypt(task, Some(*iv))?;
+            content += &data;
             content.push('\n');
         }
 
@@ -166,13 +203,17 @@ impl Storage {
 
     fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>, RustError> {
         self.load()?;
-        Ok(self.tasks.iter().find(|task| &task.uuid == uuid))
+        Ok(self
+            .tasks
+            .iter()
+            .find(|task| &task.task.uuid == uuid)
+            .map(|et| &et.task))
     }
 
     #[allow(unused)]
     fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>, RustError> {
         self.load()?;
-        Ok(self.tasks.iter().position(|task| &task.uuid == uuid))
+        Ok(self.tasks.iter().position(|task| &task.task.uuid == uuid))
     }
 
     fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<()> {
@@ -181,10 +222,10 @@ impl Storage {
         }
 
         self.load()?;
-        for task in self
+        for DecryptedTask { task, .. } in self
             .tasks
             .iter()
-            .filter(|task| task.title.contains(&filter.search))
+            .filter(|DecryptedTask { task, .. }| task.title.contains(&filter.search))
         {
             result.push(task.clone());
         }
@@ -201,12 +242,13 @@ impl Storage {
         let current = self
             .tasks
             .iter_mut()
-            .find(|element| element.uuid == task.uuid);
+            .find(|DecryptedTask { task: element, .. }| element.uuid == task.uuid);
         let Some(current) = current else {
             return Ok(false);
         };
-        *current = task.clone();
-        current.modified = Some(Utc::now());
+        current.task = task.clone();
+        current.task.modified = Some(Utc::now());
+        current.iv = generate_iv();
 
         self.save()?;
         Ok(true)
@@ -218,7 +260,7 @@ impl Storage {
             return Ok(None);
         };
 
-        let task = self.tasks.remove(index);
+        let DecryptedTask { task, .. } = self.tasks.remove(index);
         self.save()?;
         Ok(Some(task))
     }
@@ -239,6 +281,8 @@ impl Storage {
 pub struct TaskStorage {
     pub(crate) repository_path: PathBuf,
     tasks_path: PathBuf,
+    keys_filepath: PathBuf,
+    key_store: Arc<KeyStore>,
 
     pending: Storage,
     complete: Storage,
@@ -255,32 +299,68 @@ impl TaskStorage {
     const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
     #[frb(sync)]
-    pub fn new(path: &str) -> Self {
+    pub fn new(path: &str, settings: &Settings) -> Self {
         let repository_path = Path::new(path);
         let tasks_path = repository_path.join("tasks");
+        let keys_filepath = tasks_path.join("keys");
+
+        let mut settings = settings.clone();
+
+        let encryption_key_uuid =
+            if let Some(encryption_key_uuid) = settings.repository.encryption_key_uuid {
+                encryption_key_uuid
+            } else {
+                let key = EncryptionKey::generate();
+                settings.encryption_keys.push(key.clone());
+                settings.repository.encryption_key_uuid = Some(key.uuid);
+
+                Settings::save(settings.clone()).unwrap();
+
+                key.uuid
+            };
+
+        let encryptin_key = settings
+            .encryption_key(&encryption_key_uuid)
+            .expect("there should be a key with the specified uuid");
+
+        let key = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(&encryptin_key.key)
+            .unwrap();
+
+        let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
+
+        let key_store = KeyStore::load(&keys_filepath, crypter).unwrap();
+
         Self {
             repository_path: repository_path.to_path_buf(),
             pending: Storage::new(
                 tasks_path.join(Self::PENDING_DATA_FILENAME),
                 TaskStatus::Pending,
+                key_store.clone(),
             ),
             complete: Storage::new(
                 tasks_path.join(Self::COMPLETE_DATA_FILENAME),
                 TaskStatus::Complete,
+                key_store.clone(),
             ),
             deleted: Storage::new(
                 tasks_path.join(Self::DELETED_DATA_FILENAME),
                 TaskStatus::Deleted,
+                key_store.clone(),
             ),
             waiting: Storage::new(
                 tasks_path.join(Self::WAITING_DATA_FILENAME),
                 TaskStatus::Waiting,
+                key_store.clone(),
             ),
             recurring: Storage::new(
                 tasks_path.join(Self::RECURRING_DATA_FILENAME),
                 TaskStatus::Recurring,
+                key_store.clone(),
             ),
             tasks_path,
+            key_store,
+            keys_filepath,
         }
     }
 
@@ -390,9 +470,9 @@ impl TaskStorage {
         let mut found_task =
             found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
 
-        found_task.active = false;
-        found_task.status = status;
-        found_task.modified = Some(Utc::now());
+        found_task.task.active = false;
+        found_task.task.status = status;
+        found_task.task.modified = Some(Utc::now());
 
         let transition = match status {
             TaskStatus::Pending => "PEND",
@@ -402,8 +482,8 @@ impl TaskStorage {
             TaskStatus::Complete => "DONE",
         };
 
-        let message = format!("${transition} {}", found_task.uuid.to_base64());
-        self.storage_mut()[status as usize].append(found_task)?;
+        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
+        self.storage_mut()[status as usize].append(found_task.task)?;
         self.add_and_commit(&message)?;
         Ok(false)
     }
@@ -424,7 +504,7 @@ impl TaskStorage {
 
             storage.save()?;
         }
-        Ok(found_task)
+        Ok(found_task.map(|DecryptedTask { task, .. }| task))
     }
 
     pub fn remove_task(&mut self, task: &Task) -> Result<bool> {
@@ -672,8 +752,7 @@ impl TaskStorage {
                 continue;
             };
 
-            let mut current = Task::from_data(content).ok_or(ErrorKind::CorruptTask)?;
-            current.status = status;
+            let (_, current) = self.key_store.decrypt(status, content)?;
 
             let Some(previous) = self.task_by_uuid(&current.uuid)? else {
                 self.storage_mut()[status as usize].append(current)?;
@@ -1010,15 +1089,15 @@ impl TaskStorage {
         #[derive(serde::Serialize)]
         struct ExportTask<'a> {
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            pending: &'a [Task],
+            pending: &'a [DecryptedTask],
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            complete: &'a [Task],
+            complete: &'a [DecryptedTask],
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            deleted: &'a [Task],
+            deleted: &'a [DecryptedTask],
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            waiting: &'a [Task],
+            waiting: &'a [DecryptedTask],
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            recurring: &'a [Task],
+            recurring: &'a [DecryptedTask],
         }
 
         for storage in self.storage_mut() {
@@ -1040,15 +1119,15 @@ impl TaskStorage {
         #[derive(serde::Deserialize)]
         struct ImportRecord {
             #[serde(default)]
-            pending: Vec<Task>,
+            pending: Vec<DecryptedTask>,
             #[serde(default)]
-            complete: Vec<Task>,
+            complete: Vec<DecryptedTask>,
             #[serde(default)]
-            deleted: Vec<Task>,
+            deleted: Vec<DecryptedTask>,
             #[serde(default)]
-            waiting: Vec<Task>,
+            waiting: Vec<DecryptedTask>,
             #[serde(default)]
-            recurring: Vec<Task>,
+            recurring: Vec<DecryptedTask>,
         }
 
         let record: ImportRecord =
