@@ -21,15 +21,17 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../git/known_hosts.dart';
 import '../task.dart';
 import '../task/annotation.dart';
 import 'error.dart';
 import 'filter.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:uuid/uuid.dart';
+import 'settings.dart';
 
-// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `get_by_id`, `get_index`, `load`, `new`, `rebase`, `remove_task2`, `remove`, `remove`, `resolve_conflicts`, `save`, `ssh_key`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
-// These types are ignored because they are not used by any `pub` functions: `LogIter`, `Storage`, `TaskDiff`
+// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `generate_iv`, `get_by_id`, `get_index`, `load`, `new`, `rebase`, `remove_task2`, `remove`, `remove`, `resolve_conflicts`, `save`, `ssh_key`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
+// These types are ignored because they are not used by any `pub` functions: `DecryptedTask`, `LogIter`, `Storage`, `TaskDiff`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `pull`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `next`
@@ -64,8 +66,9 @@ abstract class TaskStorage implements RustOpaqueInterface {
 
   Future<List<CommitItem>?> log({Oid? oid, int? n});
 
-  factory TaskStorage({required String path}) =>
-      RustLib.instance.api.crateApiRepositoryTaskStorageNew(path: path);
+  factory TaskStorage({required String path, required Settings settings}) =>
+      RustLib.instance.api
+          .crateApiRepositoryTaskStorageNew(path: path, settings: settings);
 
   Future<void> push({required bool force});
 

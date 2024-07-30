@@ -188,6 +188,26 @@ impl SshKey {
     }
 }
 
+#[frb(dart_metadata=("freezed"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncryptionKey {
+    pub uuid: Uuid,
+    pub key: String,
+}
+
+impl EncryptionKey {
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn generate() -> Self {
+        let key = stride_crypto::crypter::Crypter::generate();
+
+        Self {
+            uuid: Uuid::now_v7(),
+            key: key.to_base64(),
+        }
+    }
+}
+
 fn default_theme_mode() -> bool {
     true
 }
@@ -220,6 +240,8 @@ pub struct Repository {
     pub branch: String,
 
     pub ssh_key_uuid: Option<Uuid>,
+    #[serde(default)]
+    pub encryption_key_uuid: Option<Uuid>,
 }
 
 impl Default for Repository {
@@ -230,6 +252,7 @@ impl Default for Repository {
             email: default_email(),
             branch: default_branch_name(),
             ssh_key_uuid: None,
+            encryption_key_uuid: None,
         }
     }
 }
@@ -241,6 +264,9 @@ pub struct Settings {
     pub dark_mode: bool,
     pub known_hosts: KnownHosts,
     pub repository: Repository,
+
+    #[serde(default)]
+    pub encryption_keys: Vec<EncryptionKey>,
 
     #[serde(default)]
     pub periodic_sync: bool,
@@ -261,7 +287,8 @@ impl Settings {
 }
 
 impl Settings {
-    pub(crate) fn get() -> Self {
+    #[frb(ignore)]
+    pub fn get() -> Self {
         APPLICATION_STATE_INSTANCE.lock().unwrap().settings.clone()
     }
     pub fn load(paths: ApplicationPaths) -> anyhow::Result<Settings> {
@@ -303,6 +330,10 @@ impl Settings {
             APPLICATION_STATE_INSTANCE.lock().unwrap().settings = settings;
         }
         Ok(())
+    }
+
+    pub(crate) fn encryption_key(&self, uuid: &Uuid) -> Option<&EncryptionKey> {
+        self.encryption_keys.iter().find(|key| &key.uuid == uuid)
     }
 }
 

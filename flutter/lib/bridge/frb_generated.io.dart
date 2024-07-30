@@ -180,6 +180,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommitItem dco_decode_commit_item(dynamic raw);
 
   @protected
+  EncryptionKey dco_decode_encryption_key(dynamic raw);
+
+  @protected
   double dco_decode_f_32(dynamic raw);
 
   @protected
@@ -216,6 +219,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<CommitItem> dco_decode_list_commit_item(dynamic raw);
+
+  @protected
+  List<EncryptionKey> dco_decode_list_encryption_key(dynamic raw);
 
   @protected
   List<Filter> dco_decode_list_filter(dynamic raw);
@@ -428,6 +434,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommitItem sse_decode_commit_item(SseDeserializer deserializer);
 
   @protected
+  EncryptionKey sse_decode_encryption_key(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_f_32(SseDeserializer deserializer);
 
   @protected
@@ -464,6 +473,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<CommitItem> sse_decode_list_commit_item(SseDeserializer deserializer);
+
+  @protected
+  List<EncryptionKey> sse_decode_list_encryption_key(
+      SseDeserializer deserializer);
 
   @protected
   List<Filter> sse_decode_list_filter(SseDeserializer deserializer);
@@ -689,6 +702,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_commit_item(CommitItem self, SseSerializer serializer);
 
   @protected
+  void sse_encode_encryption_key(EncryptionKey self, SseSerializer serializer);
+
+  @protected
   void sse_encode_f_32(double self, SseSerializer serializer);
 
   @protected
@@ -728,6 +744,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_commit_item(
       List<CommitItem> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_encryption_key(
+      List<EncryptionKey> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_filter(List<Filter> self, SseSerializer serializer);

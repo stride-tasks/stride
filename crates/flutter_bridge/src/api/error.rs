@@ -1,9 +1,30 @@
 use flutter_rust_bridge::frb;
 use thiserror::Error;
 
-use crate::git::known_hosts::Host;
+use crate::{git::known_hosts::Host, task::TaskStatus};
+
+use stride_crypto::crypter::Error as EncryptionError;
 
 // pub type Result<T> = std::result::Result<T, Error>;
+
+#[frb(ignore)]
+#[derive(Debug, Error)]
+pub enum KeyStoreError {
+    #[error("invalid task status in key store: {identifier}")]
+    InvalidTaskStatus { identifier: u8 },
+
+    #[error("incorrect cipher length, expected {expected_length}, actual: {actual_length}")]
+    InvalidCipherLength {
+        expected_length: usize,
+        actual_length: usize,
+    },
+
+    #[error("already defined key of type {status:?}")]
+    DuplicateEntry { status: TaskStatus },
+
+    #[error("cannot lock key store")]
+    LockError,
+}
 
 #[frb(ignore)]
 #[derive(Debug, Error)]
@@ -63,6 +84,15 @@ pub enum ErrorKind {
 
     #[error("libgit2 error: {0}")]
     Git(git2::Error),
+
+    #[error("key store error: {0}")]
+    KeyStore(#[from] KeyStoreError),
+
+    #[error("encryption error: {0}")]
+    Encryption(#[from] EncryptionError),
+
+    #[error("base64 decode error: {0}")]
+    Base64Decode(#[from] base64::DecodeError),
 }
 
 #[frb(opaque)]
@@ -136,6 +166,29 @@ impl From<ExportError> for RustError {
     fn from(error: ExportError) -> Self {
         Self {
             repr: Box::new(error.into()),
+        }
+    }
+}
+impl From<EncryptionError> for RustError {
+    fn from(error: EncryptionError) -> Self {
+        Self {
+            repr: Box::from(ErrorKind::Encryption(error)),
+        }
+    }
+}
+
+impl From<KeyStoreError> for RustError {
+    fn from(error: KeyStoreError) -> Self {
+        Self {
+            repr: Box::from(ErrorKind::KeyStore(error)),
+        }
+    }
+}
+
+impl From<base64::DecodeError> for RustError {
+    fn from(error: base64::DecodeError) -> Self {
+        Self {
+            repr: Box::from(ErrorKind::Base64Decode(error)),
         }
     }
 }

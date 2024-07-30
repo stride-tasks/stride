@@ -1,3 +1,4 @@
+use base64::Engine;
 use std::{fmt::Display, io::Read};
 use zeroize::Zeroize;
 
@@ -12,10 +13,10 @@ pub trait AesMode: Sized {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Aes128Ocb;
+pub struct Aes256Ocb;
 
-impl AesMode for Aes128Ocb {
-    const KEY_LEN: usize = 16;
+impl AesMode for Aes256Ocb {
+    const KEY_LEN: usize = 32;
     const IV_LEN: usize = 12;
     const TAG_LEN: usize = 16;
 }
@@ -39,26 +40,26 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Clone)]
 #[allow(missing_debug_implementations)]
-pub struct Crypter<const AAD: usize = 0> {
-    encryption_key: [u8; Aes128Ocb::KEY_LEN],
+pub struct Crypter {
+    encryption_key: [u8; Aes256Ocb::KEY_LEN],
 }
 
-impl<const AAD: usize> Zeroize for Crypter<AAD> {
+impl Zeroize for Crypter {
     fn zeroize(&mut self) {
         self.encryption_key.zeroize();
     }
 }
 
 /// Automatically zero out the contents of the memory when the struct is dropped.
-impl<const AAD: usize> Drop for Crypter<AAD> {
+impl Drop for Crypter {
     fn drop(&mut self) {
         self.zeroize();
     }
 }
 
-impl<const AAD: usize> Crypter<AAD> {
+impl Crypter {
     #[must_use]
-    pub fn new(key: [u8; Aes128Ocb::KEY_LEN]) -> Self {
+    pub fn new(key: [u8; Aes256Ocb::KEY_LEN]) -> Self {
         Self {
             encryption_key: key,
         }
@@ -71,29 +72,52 @@ impl<const AAD: usize> Crypter<AAD> {
     /// If `getrandom` fails.
     #[must_use]
     pub fn generate() -> Self {
-        let mut key = [0u8; Aes128Ocb::KEY_LEN];
+        let mut key = [0u8; Aes256Ocb::KEY_LEN];
         getrandom::getrandom(&mut key).expect("could not get random");
         Self {
             encryption_key: key,
         }
     }
 
-    pub fn encrypt(&self, nounce: u64, data: &[u8], aad: &[u8; AAD]) -> Result<Vec<u8>> {
+    pub fn encrypt(&self, data: &[u8], aad: &[u8]) -> Result<Vec<u8>> {
+        let mut iv = [0u8; Aes256Ocb::IV_LEN];
+        getrandom::getrandom(&mut iv).expect("cannot get random");
+
+        let mut tag = [0u8; Aes256Ocb::TAG_LEN];
+        let ciphertext = openssl::symm::encrypt_aead(
+            openssl::symm::Cipher::aes_256_ocb(),
+            &self.encryption_key,
+            Some(&iv),
+            aad,
+            data,
+            &mut tag,
+        )
+        .map_err(|_| Error::Encryption)?;
+
+        let mut result = Vec::new();
+        result.extend_from_slice(aad);
+        result.extend_from_slice(&iv);
+        result.extend_from_slice(&tag);
+        result.extend_from_slice(&ciphertext);
+        Ok(result)
+    }
+
+    pub fn encrypt_with_nonce(&self, nounce: u64, data: &[u8], aad: &[u8]) -> Result<Vec<u8>> {
         let bytes = nounce.to_be_bytes();
-        let mut iv = [0u8; Aes128Ocb::IV_LEN];
+        let mut iv = [0u8; Aes256Ocb::IV_LEN];
         iv[..bytes.len()].copy_from_slice(&bytes);
         self.encrypt_with_iv(&iv, data, aad)
     }
 
     pub fn encrypt_with_iv(
         &self,
-        iv: &[u8; Aes128Ocb::IV_LEN],
+        iv: &[u8; Aes256Ocb::IV_LEN],
         data: &[u8],
-        aad: &[u8; AAD],
+        aad: &[u8],
     ) -> Result<Vec<u8>> {
-        let mut tag = [0u8; Aes128Ocb::TAG_LEN];
+        let mut tag = [0u8; Aes256Ocb::TAG_LEN];
         let ciphertext = openssl::symm::encrypt_aead(
-            openssl::symm::Cipher::aes_128_ocb(),
+            openssl::symm::Cipher::aes_256_ocb(),
             &self.encryption_key,
             Some(iv),
             aad,
@@ -104,44 +128,92 @@ impl<const AAD: usize> Crypter<AAD> {
 
         let mut result = Vec::new();
         result.extend_from_slice(aad);
-        // result.extend_from_slice(iv);
+        result.extend_from_slice(iv);
         result.extend_from_slice(&tag);
         result.extend_from_slice(&ciphertext);
         Ok(result)
     }
 
-    pub fn decrypt(&self, nounce: u64, data: &[u8]) -> Result<([u8; AAD], Vec<u8>)> {
+    pub fn decrypt_with_nonce<'a>(
+        &self,
+        nounce: u64,
+        data: &'a [u8],
+        aad_len: usize,
+    ) -> Result<(&'a [u8], Vec<u8>)> {
         let bytes = nounce.to_be_bytes();
-        let mut iv = [0u8; Aes128Ocb::IV_LEN];
+        let mut iv = [0u8; Aes256Ocb::IV_LEN];
         iv[..bytes.len()].copy_from_slice(&bytes);
-        self.decrypt_with_iv(&iv, data)
+        self.decrypt_with_iv(&iv, data, aad_len)
     }
 
-    pub fn decrypt_with_iv(
+    pub fn decrypt_with_iv<'a>(
         &self,
-        iv: &[u8; Aes128Ocb::IV_LEN],
-        mut data: &[u8],
-    ) -> Result<([u8; AAD], Vec<u8>)> {
-        let mut aad = [0u8; AAD];
-        let mut tag = [0u8; Aes128Ocb::TAG_LEN];
+        iv: &[u8; Aes256Ocb::IV_LEN],
+        data: &'a [u8],
+        aad_len: usize,
+    ) -> Result<(&'a [u8], Vec<u8>)> {
+        let mut tag = [0u8; Aes256Ocb::TAG_LEN];
 
-        if data.len() < AAD + Aes128Ocb::TAG_LEN {
+        if data.len() < aad_len + Aes256Ocb::TAG_LEN {
             return Err(Error::Decryption);
         }
 
-        data.read_exact(&mut aad).map_err(|_| Error::Decryption)?;
+        let aad = &data[..aad_len];
+
+        let mut data = &data[aad_len..];
         data.read_exact(&mut tag).map_err(|_| Error::Decryption)?;
 
         let plaintext = openssl::symm::decrypt_aead(
-            openssl::symm::Cipher::aes_128_ocb(),
+            openssl::symm::Cipher::aes_256_ocb(),
             &self.encryption_key,
             Some(iv),
-            &aad,
+            aad,
             data,
             &tag,
         )
         .map_err(|_| Error::Decryption)?;
 
         Ok((aad, plaintext))
+    }
+
+    pub fn decrypt<'a>(
+        &self,
+        data: &'a [u8],
+        aad_len: usize,
+    ) -> Result<(&'a [u8], [u8; Aes256Ocb::IV_LEN], Vec<u8>)> {
+        let mut iv = [0u8; Aes256Ocb::IV_LEN];
+        let mut tag = [0u8; Aes256Ocb::TAG_LEN];
+
+        if data.len() < aad_len + Aes256Ocb::TAG_LEN {
+            return Err(Error::Decryption);
+        }
+
+        let aad = &data[..aad_len];
+
+        let mut data = &data[aad_len..];
+        data.read_exact(&mut iv).map_err(|_| Error::Decryption)?;
+        data.read_exact(&mut tag).map_err(|_| Error::Decryption)?;
+
+        let plaintext = openssl::symm::decrypt_aead(
+            openssl::symm::Cipher::aes_256_ocb(),
+            &self.encryption_key,
+            Some(&iv),
+            aad,
+            data,
+            &tag,
+        )
+        .map_err(|_| Error::Decryption)?;
+
+        Ok((aad, iv, plaintext))
+    }
+
+    #[must_use]
+    pub fn to_base64(self) -> String {
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(self.encryption_key)
+    }
+
+    #[must_use]
+    pub fn encryption_key(&self) -> &[u8] {
+        &self.encryption_key
     }
 }
