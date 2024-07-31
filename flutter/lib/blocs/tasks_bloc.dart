@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/src/rust/api/filter.dart';
-import 'package:stride/src/rust/api/repository.dart';
-import 'package:stride/src/rust/task.dart';
+import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/task.dart';
 
 @immutable
 abstract class TaskEvent {}

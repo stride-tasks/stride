@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/src/rust/api/settings.dart';
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
 

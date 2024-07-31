@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:stride/src/rust/api/settings.dart';
-import 'package:stride/src/rust/git/known_hosts.dart';
+import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:uuid/uuid.dart';
 
 @immutable

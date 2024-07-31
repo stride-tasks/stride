@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/src/rust/api/logging.dart';
-import 'package:stride/src/rust/git/known_hosts.dart';
+import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
 
 class KnownHostsRoute extends StatelessWidget {

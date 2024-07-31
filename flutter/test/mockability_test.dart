@@ -1,5 +1,5 @@
 import 'package:mocktail/mocktail.dart';
-import 'package:stride/src/rust/frb_generated.dart';
+import 'package:stride/bridge/frb_generated.dart';
 import 'package:test/test.dart';
 
 // Surely, you can use Mockito or whatever other mocking packages

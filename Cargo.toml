@@ -41,7 +41,7 @@ getrandom = "0.2"
 zeroize = { version = "1.0", features = ["zeroize_derive"] }
 
 [profile.release]
-strip = "debug"
+# strip = "debug"
 opt-level = "z"
 lto = true
 codegen-units = 1

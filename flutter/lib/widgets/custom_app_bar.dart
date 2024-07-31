@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
-import 'package:stride/src/rust/api/repository.dart';
-import 'package:stride/src/rust/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/infinite_rotation_animation.dart';
 

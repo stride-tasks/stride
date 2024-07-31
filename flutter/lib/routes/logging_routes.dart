@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stride/src/rust/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart';
 
 class LoggingRoute extends StatefulWidget {
   const LoggingRoute({super.key});

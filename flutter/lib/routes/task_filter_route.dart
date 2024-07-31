@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/src/rust/api/filter.dart';
-import 'package:stride/src/rust/task.dart';
+import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/task.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:uuid/uuid.dart';
 

@@ -58,7 +58,7 @@ flutter_launcher_icons:
 flutter_rust_bridge:
   rust_input: crate::api
   rust_root: ../crates/flutter_bridge/
-  dart_output: lib/src/rust
+  dart_output: lib/bridge
   web: false
   # TODO: Maybe remove some of the lint ignores, and run `dart fix --apply` or wait for
   # https://github.com/fzyzcjy/flutter_rust_bridge/pull/2182

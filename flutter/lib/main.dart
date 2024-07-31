@@ -4,11 +4,11 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/api/paths.dart';
+import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/routes/tasks_route.dart';
-import 'package:stride/src/rust/api/paths.dart';
-import 'package:stride/src/rust/api/repository.dart';
-import 'package:stride/src/rust/api/settings.dart';
-import 'package:stride/src/rust/frb_generated.dart';
 import 'package:stride/theme.dart';
 
 Future<void> main() async {
