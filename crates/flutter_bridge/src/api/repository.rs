@@ -641,11 +641,11 @@ impl TaskStorage {
                 continue;
             }
 
-            let status = if path == Path::new("pending") {
+            let status = if path == Path::new("tasks/pending") {
                 TaskStatus::Pending
-            } else if path == Path::new("complete") {
+            } else if path == Path::new("tasks/complete") {
                 TaskStatus::Complete
-            } else if path == Path::new("deleted") {
+            } else if path == Path::new("tasks/deleted") {
                 TaskStatus::Deleted
             } else {
                 log::warn!("skipping unknown path: {}", path.display());
