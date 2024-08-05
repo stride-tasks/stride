@@ -12,7 +12,7 @@ rust-version.workspace = true
 publish = false
 
 [lib]
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies.flutter_rust_bridge]
 version = "=2.1.0"
