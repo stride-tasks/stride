@@ -1,4 +1,7 @@
-use std::sync::Mutex;
+use std::{
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 
 use flutter_rust_bridge::frb;
 use lazy_static::lazy_static;
@@ -7,13 +10,75 @@ use uuid::Uuid;
 
 use crate::git::known_hosts::KnownHosts;
 
-use super::{
-    filter::{Filter, FilterSelection},
-    paths::application_support_path,
-};
+use super::filter::{Filter, FilterSelection};
+
+use super::logging::init_logger;
 
 lazy_static! {
-    pub(crate) static ref SETTINGS_INSTANCE: Mutex<Settings> = Settings::default().into();
+    pub(crate) static ref APPLICATION_STATE_INSTANCE: Mutex<State> = State::default().into();
+}
+
+#[frb(ignore)]
+#[derive(Default)]
+pub(crate) struct State {
+    paths: ApplicationPaths,
+    settings: Settings,
+}
+
+#[derive(Debug, Default)]
+pub struct ApplicationPaths {
+    pub support_path: String,
+    pub document_path: String,
+    pub cache_path: String,
+
+    pub log_path: String,
+}
+
+#[allow(dead_code)]
+pub(crate) fn application_support_path() -> PathBuf {
+    PathBuf::from(
+        APPLICATION_STATE_INSTANCE
+            .lock()
+            .unwrap()
+            .paths
+            .support_path
+            .clone(),
+    )
+}
+
+#[allow(dead_code)]
+pub(crate) fn application_document_path() -> PathBuf {
+    PathBuf::from(
+        APPLICATION_STATE_INSTANCE
+            .lock()
+            .unwrap()
+            .paths
+            .document_path
+            .clone(),
+    )
+}
+
+#[allow(dead_code)]
+pub(crate) fn application_cache_path() -> PathBuf {
+    PathBuf::from(
+        APPLICATION_STATE_INSTANCE
+            .lock()
+            .unwrap()
+            .paths
+            .cache_path
+            .clone(),
+    )
+}
+
+pub(crate) fn application_log_path() -> PathBuf {
+    PathBuf::from(
+        APPLICATION_STATE_INSTANCE
+            .lock()
+            .unwrap()
+            .paths
+            .log_path
+            .clone(),
+    )
 }
 
 #[frb(dart_metadata=("freezed"))]
@@ -96,10 +161,19 @@ impl Settings {
 
 impl Settings {
     pub(crate) fn get() -> Self {
-        SETTINGS_INSTANCE.lock().unwrap().clone()
+        APPLICATION_STATE_INSTANCE.lock().unwrap().settings.clone()
     }
-    pub fn load() -> anyhow::Result<Settings> {
-        let filepath = application_support_path().join("settings.json");
+    pub fn load(paths: ApplicationPaths) -> anyhow::Result<Settings> {
+        std::env::set_var("HOME", &paths.support_path);
+
+        let ssh_path = Path::new(&paths.support_path).join(".ssh");
+
+        std::fs::create_dir_all(&ssh_path).unwrap();
+        std::fs::write(ssh_path.join("known_hosts"), "\n").unwrap();
+
+        init_logger(Path::new(&paths.log_path));
+
+        let filepath = Path::new(&paths.support_path).join("settings.json");
 
         if !filepath.exists() {
             return anyhow::Ok(Settings::default());
@@ -109,7 +183,10 @@ impl Settings {
         let settings: Self = serde_json::from_str(&contents)?;
 
         {
-            *SETTINGS_INSTANCE.lock().unwrap() = settings.clone();
+            *APPLICATION_STATE_INSTANCE.lock().unwrap() = State {
+                paths,
+                settings: settings.clone(),
+            };
         }
         anyhow::Ok(settings)
     }
@@ -120,7 +197,7 @@ impl Settings {
         std::fs::write(filepath, contents)?;
 
         {
-            *SETTINGS_INSTANCE.lock().unwrap() = settings;
+            APPLICATION_STATE_INSTANCE.lock().unwrap().settings = settings;
         }
         Ok(())
     }

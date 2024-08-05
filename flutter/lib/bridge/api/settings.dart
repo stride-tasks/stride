@@ -29,9 +29,44 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:uuid/uuid.dart';
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `default_branch_name`, `get`, `ssh_key`
-// These types are ignored because they are not used by any `pub` functions: `SETTINGS_INSTANCE`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `deref`, `fmt`, `fmt`, `fmt`, `initialize`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_branch_name`, `get`, `ssh_key`
+// These types are ignored because they are not used by any `pub` functions: `APPLICATION_STATE_INSTANCE`, `State`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `deref`, `fmt`, `fmt`, `fmt`, `fmt`, `initialize`
+// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
+
+class ApplicationPaths {
+  final String supportPath;
+  final String documentPath;
+  final String cachePath;
+  final String logPath;
+
+  const ApplicationPaths({
+    required this.supportPath,
+    required this.documentPath,
+    required this.cachePath,
+    required this.logPath,
+  });
+
+  static Future<ApplicationPaths> default_() =>
+      RustLib.instance.api.crateApiSettingsApplicationPathsDefault();
+
+  @override
+  int get hashCode =>
+      supportPath.hashCode ^
+      documentPath.hashCode ^
+      cachePath.hashCode ^
+      logPath.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ApplicationPaths &&
+          runtimeType == other.runtimeType &&
+          supportPath == other.supportPath &&
+          documentPath == other.documentPath &&
+          cachePath == other.cachePath &&
+          logPath == other.logPath;
+}
 
 @freezed
 class Repository with _$Repository {
@@ -62,8 +97,8 @@ class Settings with _$Settings {
   static Future<Settings> default_() =>
       RustLib.instance.api.crateApiSettingsSettingsDefault();
 
-  static Future<Settings> load() =>
-      RustLib.instance.api.crateApiSettingsSettingsLoad();
+  static Future<Settings> load({required ApplicationPaths paths}) =>
+      RustLib.instance.api.crateApiSettingsSettingsLoad(paths: paths);
 
   factory Settings() => RustLib.instance.api.crateApiSettingsSettingsNew();
 

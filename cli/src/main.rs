@@ -2,7 +2,11 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use stride_flutter_bridge::{
-    api::{filter::Filter, paths::ApplicationPaths, repository::TaskStorage, settings::Settings},
+    api::{
+        filter::Filter,
+        repository::TaskStorage,
+        settings::{ApplicationPaths, Settings},
+    },
     task::{Task, TaskStatus},
 };
 
@@ -50,7 +54,7 @@ fn main() -> anyhow::Result<()> {
     let support_dir =
         choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
 
-    ApplicationPaths::init(ApplicationPaths {
+    Settings::load(ApplicationPaths {
         support_path: support_dir.to_string_lossy().to_string(),
         document_path: document_dir.to_string_lossy().to_string(),
         cache_path: cache_dir.to_string_lossy().to_string(),
@@ -59,8 +63,7 @@ fn main() -> anyhow::Result<()> {
             .join("log.txt")
             .to_string_lossy()
             .to_string(),
-    });
-    Settings::load()?;
+    })?;
 
     let mut repository = TaskStorage::new(&support_dir.to_string_lossy());
 

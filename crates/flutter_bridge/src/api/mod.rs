@@ -4,6 +4,5 @@
 
 pub mod filter;
 pub mod logging;
-pub mod paths;
 pub mod repository;
 pub mod settings;

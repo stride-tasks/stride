@@ -2,7 +2,7 @@ use std::{borrow::Cow, fs::File, io::Write, panic::Location, path::Path};
 
 use chrono::Local;
 
-use super::paths::application_log_path;
+use super::settings::application_log_path;
 
 struct LogOutput {
     file: File,

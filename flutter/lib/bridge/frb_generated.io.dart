@@ -22,7 +22,6 @@
 
 import 'api/filter.dart';
 import 'api/logging.dart';
-import 'api/paths.dart';
 import 'api/repository.dart';
 import 'api/settings.dart';
 import 'dart:async';

@@ -4,7 +4,6 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/paths.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
@@ -19,7 +18,7 @@ Future<void> main() async {
   final cachePath = await getApplicationCacheDirectory();
 
   await RustLib.init();
-  await ApplicationPaths.init(
+  final settings = await Settings.load(
     paths: ApplicationPaths(
       supportPath: supportPath.path,
       documentPath: documentPath.path,
@@ -27,8 +26,6 @@ Future<void> main() async {
       logPath: path.joinAll([cachePath.path, 'logs', 'log.txt']),
     ),
   );
-  // TODO: Better initialize settings.
-  final settings = await Settings.load();
 
   final repository = TaskStorage(path: supportPath.path);
 

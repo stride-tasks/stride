@@ -7,8 +7,6 @@ import 'package:uuid/uuid.dart';
 @immutable
 abstract class SettingsEvent {}
 
-final class SettingsFetchEvent extends SettingsEvent {}
-
 final class SettingsUpdateEvent extends SettingsEvent {
   final Settings settings;
   SettingsUpdateEvent({required this.settings});
@@ -49,11 +47,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc({
     required this.settings,
   }) : super(SettingsState(settings: settings)) {
-    on<SettingsFetchEvent>((event, emit) async {
-      settings = await Settings.load();
-      emit(SettingsState(settings: settings));
-    });
-
     on<SettingsUpdateEvent>((event, emit) async {
       settings = event.settings;
       await Settings.save(settings: settings);
