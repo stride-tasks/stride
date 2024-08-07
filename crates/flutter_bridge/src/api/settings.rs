@@ -104,6 +104,14 @@ impl SshKey {
     }
 }
 
+fn default_email() -> String {
+    String::from("noreply.stride.tasks@gmail.com")
+}
+
+fn default_author() -> String {
+    String::from("stride")
+}
+
 fn default_branch_name() -> String {
     String::from("main")
 }
@@ -113,8 +121,13 @@ fn default_branch_name() -> String {
 pub struct Repository {
     // pub name: String,
     pub origin: String,
+
+    #[serde(default = "default_author")]
     pub author: String,
+
+    #[serde(default = "default_email")]
     pub email: String,
+
     #[serde(default = "default_branch_name")]
     pub branch: String,
 
@@ -125,8 +138,8 @@ impl Default for Repository {
     fn default() -> Self {
         Self {
             origin: String::new(),
-            author: String::new(),
-            email: String::new(),
+            author: default_author(),
+            email: default_email(),
             branch: default_branch_name(),
             ssh_key_uuid: None,
         }
