@@ -3,6 +3,7 @@ use std::{
     sync::Mutex,
 };
 
+use anyhow::Context;
 use flutter_rust_bridge::frb;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -25,7 +26,7 @@ pub(crate) struct State {
     settings: Settings,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ApplicationPaths {
     pub support_path: String,
     pub document_path: String,
@@ -175,19 +176,21 @@ impl Settings {
 
         let filepath = Path::new(&paths.support_path).join("settings.json");
 
-        if !filepath.exists() {
-            return anyhow::Ok(Settings::default());
-        }
-
-        let contents = std::fs::read_to_string(filepath)?;
-        let settings: Self = serde_json::from_str(&contents)?;
-
         {
             *APPLICATION_STATE_INSTANCE.lock().unwrap() = State {
                 paths,
-                settings: settings.clone(),
+                settings: Settings::default(),
             };
         }
+
+        let settings = if filepath.exists() {
+            let contents = std::fs::read_to_string(filepath)?;
+            serde_json::from_str(&contents).context("cannot parse settings file")?
+        } else {
+            Settings::default()
+        };
+
+        APPLICATION_STATE_INSTANCE.lock().unwrap().settings = settings.clone();
         anyhow::Ok(settings)
     }
     pub fn save(settings: Settings) -> anyhow::Result<()> {
