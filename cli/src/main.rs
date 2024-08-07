@@ -65,7 +65,7 @@ fn main() -> anyhow::Result<()> {
             .to_string(),
     })?;
 
-    let mut repository = TaskStorage::new(&support_dir.to_string_lossy());
+    let mut repository = TaskStorage::new(&support_dir.join("repository").to_string_lossy());
 
     let mut args = std::env::args();
     let _program = args.next().expect("first argument should be program");

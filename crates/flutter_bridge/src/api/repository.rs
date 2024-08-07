@@ -249,10 +249,10 @@ impl TaskStorage {
 
     #[frb(sync)]
     pub fn new(path: &str) -> Self {
-        let repository_path = Path::new(path).join("repository");
+        let repository_path = Path::new(path);
         let tasks_path = repository_path.join("tasks");
         Self {
-            repository_path,
+            repository_path: repository_path.to_path_buf(),
             pending: Storage::new(
                 tasks_path.join(Self::PENDING_DATA_FILENAME),
                 TaskStatus::Pending,

@@ -27,7 +27,9 @@ Future<void> main() async {
     ),
   );
 
-  final repository = TaskStorage(path: supportPath.path);
+  final repository = TaskStorage(
+    path: path.join(supportPath.path, 'repository'),
+  );
 
   runApp(
     MyApp(
