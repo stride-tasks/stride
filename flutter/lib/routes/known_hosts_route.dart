@@ -36,8 +36,8 @@ class KnownHostsRoute extends StatelessWidget {
 
   ListTile _listItem(Host host, BuildContext context) {
     return ListTile(
-      title: Text('${host.hostname} - ${host.remoteKeyType.name}'),
-      subtitle: Text(host.remoteHostKey),
+      title: Text('${host.hostname} - ${host.keyType.name}'),
+      subtitle: Text(host.key),
       trailing: !hasDelete
           ? null
           : IconButton(
@@ -55,7 +55,7 @@ class KnownHostsRoute extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        '${host.hostname} - ${host.remoteKeyType.name} - ${host.remoteHostKey}',
+                        '${host.hostname} - ${host.keyType.name} - ${host.key}',
                       ),
                     ],
                   ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/blocs/settings_bloc.dart';
+import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/task.dart';
@@ -53,7 +54,7 @@ final class TaskCheckoutBranchEvent extends TaskEvent {
 class TaskState {
   final List<Task> tasks;
   final bool syncing;
-  final ConnectionError? error;
+  final RustError? error;
   const TaskState({required this.tasks, this.syncing = false, this.error});
 }
 
@@ -140,7 +141,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       try {
         await repository.sync_();
-      } on ConnectionError catch (error) {
+      } on RustError catch (error) {
         emit(TaskState(tasks: tasksOld, error: error));
         return;
       }

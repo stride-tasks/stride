@@ -95,27 +95,35 @@ impl FromStr for HostKeyType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Host {
-    pub hostname: String,
-    pub remote_key_type: HostKeyType,
-    pub remote_host_key: String,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct HostRef<'a> {
     pub hostname: &'a str,
     pub key_type: HostKeyType,
-    pub remote_host_key: &'a str,
+
+    /// The a reference to public key of the remote server/host.
+    ///
+    /// The key is base64 encoded.
+    pub key: &'a str,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Host {
+    pub hostname: String,
+    pub key_type: HostKeyType,
+
+    /// The public key of the remote server/host.
+    ///
+    /// The key is base64 encoded.
+    pub key: String,
 }
 
 impl Host {
     #[must_use]
-    pub fn new(hostname: String, key_type: HostKeyType, remote_host_key: String) -> Self {
+    pub fn new(hostname: String, key_type: HostKeyType, key: String) -> Self {
         Self {
             hostname,
-            remote_key_type: key_type,
-            remote_host_key,
+            key_type,
+            key,
         }
     }
 
@@ -123,21 +131,15 @@ impl Host {
     pub fn as_ref(&self) -> HostRef<'_> {
         HostRef {
             hostname: &self.hostname,
-            key_type: self.remote_key_type,
-            remote_host_key: &self.remote_host_key,
+            key_type: self.key_type,
+            key: &self.key,
         }
     }
 }
 
 impl Display for Host {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} {} {}",
-            self.hostname,
-            self.remote_key_type.name(),
-            self.remote_host_key
-        )
+        write!(f, "{} {} {}", self.hostname, self.key_type.name(), self.key)
     }
 }
 
@@ -166,12 +168,12 @@ impl FromStr for Host {
             .parse()?;
 
         // TODO: Check if it's valid base64 encoded
-        let remote_host_key = input.next().ok_or(HostParseError::MissingRemoteHostKey)?;
+        let key = input.next().ok_or(HostParseError::MissingRemoteHostKey)?;
 
         Ok(Self {
             hostname: hostname.to_owned(),
-            remote_key_type: key_type,
-            remote_host_key: remote_host_key.to_owned(),
+            key_type,
+            key: key.to_owned(),
         })
     }
 }
@@ -255,7 +257,7 @@ impl KnownHosts {
     pub fn host(&self, hostname: &str, host_key_type: HostKeyType) -> Option<&Host> {
         self.hosts
             .iter()
-            .find(|host| host.hostname == hostname && host.remote_key_type == host_key_type)
+            .find(|host| host.hostname == hostname && host.key_type == host_key_type)
     }
 }
 
@@ -289,16 +291,16 @@ mod tests {
         assert_eq!(hosts.len(), 2);
 
         assert_eq!(hosts[0].hostname, "github.com");
-        assert_eq!(hosts[0].remote_key_type, HostKeyType::Ed255219);
+        assert_eq!(hosts[0].key_type, HostKeyType::Ed255219);
         assert_eq!(
-            hosts[0].remote_host_key,
+            hosts[0].key,
             "AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
         );
 
         assert_eq!(hosts[1].hostname, "gitlab.com");
-        assert_eq!(hosts[1].remote_key_type, HostKeyType::Ed255219);
+        assert_eq!(hosts[1].key_type, HostKeyType::Ed255219);
         assert_eq!(
-            hosts[1].remote_host_key,
+            hosts[1].key,
             "AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf"
         );
         Ok(())
@@ -314,8 +316,8 @@ mod tests {
             format!("{hostname} {} {remote_host_key}", key_type.name()).parse()?;
 
         assert_eq!(known_host.hostname, hostname);
-        assert_eq!(known_host.remote_key_type, key_type);
-        assert_eq!(known_host.remote_host_key, remote_host_key);
+        assert_eq!(known_host.key_type, key_type);
+        assert_eq!(known_host.key, remote_host_key);
         Ok(())
     }
 

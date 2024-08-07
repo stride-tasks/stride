@@ -69,7 +69,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
             ..removeWhere(
               (element) =>
                   element.hostname == event.host.hostname &&
-                  element.remoteKeyType == event.host.remoteKeyType,
+                  element.keyType == event.host.keyType,
             ),
         ),
       );

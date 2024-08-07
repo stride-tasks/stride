@@ -25,6 +25,7 @@
 
 // Section: imports
 
+use crate::api::error::*;
 use crate::api::repository::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
@@ -38,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.1.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 474677819;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2066790389;
 
 // Section: executor
 
@@ -46,6 +47,54 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__error__RustError_as_unknown_host_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "RustError_as_unknown_host",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let mut api_that_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_that, 0, false,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                        _ => unreachable!(),
+                    }
+                }
+                let api_that_guard = api_that_guard.unwrap();
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::api::error::RustError::as_unknown_host(&*api_that_guard),
+                )?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__filter__filter_default_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -583,7 +632,7 @@ fn wire__crate__api__repository__TaskStorage_clone_repository_impl(
             >>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, crate::api::repository::ConnectionError>((move || {
+                transform_result_sse::<_, RustError>((move || {
                     let mut api_that_guard = None;
                     let decode_indices_ =
                         flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
@@ -602,8 +651,7 @@ fn wire__crate__api__repository__TaskStorage_clone_repository_impl(
                         &mut *api_that_guard,
                     )?;
                     Ok(output_ok)
-                })(
-                ))
+                })())
             }
         },
     )
@@ -635,27 +683,25 @@ fn wire__crate__api__repository__TaskStorage_init_repotitory_impl(
             >>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let mut api_that_guard = None;
-                        let decode_indices_ =
-                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
-                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                    &api_that, 0, false,
-                                )],
-                            );
-                        for i in decode_indices_ {
-                            match i {
-                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
-                                _ => unreachable!(),
-                            }
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, false,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                            _ => unreachable!(),
                         }
-                        let api_that_guard = api_that_guard.unwrap();
-                        let output_ok =
-                            crate::api::repository::TaskStorage::init_repotitory(&*api_that_guard)?;
-                        Ok(output_ok)
-                    })(),
-                )
+                    }
+                    let api_that_guard = api_that_guard.unwrap();
+                    let output_ok =
+                        crate::api::repository::TaskStorage::init_repotitory(&*api_that_guard)?;
+                    Ok(output_ok)
+                })())
             }
         },
     )
@@ -718,27 +764,24 @@ fn wire__crate__api__repository__TaskStorage_push_impl(
             >>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let mut api_that_guard = None;
-                        let decode_indices_ =
-                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
-                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                    &api_that, 0, false,
-                                )],
-                            );
-                        for i in decode_indices_ {
-                            match i {
-                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
-                                _ => unreachable!(),
-                            }
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, false,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                            _ => unreachable!(),
                         }
-                        let api_that_guard = api_that_guard.unwrap();
-                        let output_ok =
-                            crate::api::repository::TaskStorage::push(&*api_that_guard)?;
-                        Ok(output_ok)
-                    })(),
-                )
+                    }
+                    let api_that_guard = api_that_guard.unwrap();
+                    let output_ok = crate::api::repository::TaskStorage::push(&*api_that_guard)?;
+                    Ok(output_ok)
+                })())
             }
         },
     )
@@ -825,7 +868,7 @@ fn wire__crate__api__repository__TaskStorage_sync_impl(
             >>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, crate::api::repository::ConnectionError>((move || {
+                transform_result_sse::<_, RustError>((move || {
                     let mut api_that_guard = None;
                     let decode_indices_ =
                         flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
@@ -843,8 +886,7 @@ fn wire__crate__api__repository__TaskStorage_sync_impl(
                     let output_ok =
                         crate::api::repository::TaskStorage::sync(&mut *api_that_guard)?;
                     Ok(output_ok)
-                })(
-                ))
+                })())
             }
         },
     )
@@ -877,29 +919,27 @@ fn wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
             let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let mut api_that_guard = None;
-                        let decode_indices_ =
-                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
-                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                    &api_that, 0, true,
-                                )],
-                            );
-                        for i in decode_indices_ {
-                            match i {
-                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
-                                _ => unreachable!(),
-                            }
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
                         }
-                        let mut api_that_guard = api_that_guard.unwrap();
-                        let output_ok = crate::api::repository::TaskStorage::task_by_uuid(
-                            &mut *api_that_guard,
-                            &api_uuid,
-                        )?;
-                        Ok(output_ok)
-                    })(),
-                )
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok = crate::api::repository::TaskStorage::task_by_uuid(
+                        &mut *api_that_guard,
+                        &api_uuid,
+                    )?;
+                    Ok(output_ok)
+                })())
             }
         },
     )
@@ -1481,6 +1521,9 @@ fn wire__crate__task__task_with_uuid_impl(
 // Section: related_funcs
 
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(
+    flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>
+);
+flutter_rust_bridge::frb_generated_moi_arc_impl_value!(
     flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>
 );
 
@@ -1491,6 +1534,16 @@ impl SseDecode for flutter_rust_bridge::for_generated::anyhow::Error {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <String>::sse_decode(deserializer);
         return flutter_rust_bridge::for_generated::anyhow::anyhow!("{}", inner);
+    }
+}
+
+impl SseDecode for RustError {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <RustOpaqueMoi<
+            flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>,
+        >>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::rust_auto_opaque_decode_owned(inner);
     }
 }
 
@@ -1522,6 +1575,16 @@ impl SseDecode for std::collections::HashMap<String, String> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <Vec<(String, String)>>::sse_decode(deserializer);
         return inner.into_iter().collect();
+    }
+}
+
+impl SseDecode
+    for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <usize>::sse_decode(deserializer);
+        return decode_rust_opaque_moi(inner);
     }
 }
 
@@ -1594,67 +1657,6 @@ impl SseDecode for bool {
     }
 }
 
-impl SseDecode for crate::api::repository::ConnectionError {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut tag_ = <i32>::sse_decode(deserializer);
-        match tag_ {
-            0 => {
-                let mut var_message = <String>::sse_decode(deserializer);
-                return crate::api::repository::ConnectionError::Network {
-                    message: var_message,
-                };
-            }
-            1 => {
-                return crate::api::repository::ConnectionError::NoSshKeysProvided;
-            }
-            2 => {
-                let mut var_message = <String>::sse_decode(deserializer);
-                return crate::api::repository::ConnectionError::Authentication {
-                    message: var_message,
-                };
-            }
-            3 => {
-                let mut var_hostname = <String>::sse_decode(deserializer);
-                let mut var_keyType =
-                    <crate::git::known_hosts::HostKeyType>::sse_decode(deserializer);
-                let mut var_hostKey = <String>::sse_decode(deserializer);
-                return crate::api::repository::ConnectionError::UnknownHost {
-                    hostname: var_hostname,
-                    key_type: var_keyType,
-                    host_key: var_hostKey,
-                };
-            }
-            4 => {
-                let mut var_hostname = <String>::sse_decode(deserializer);
-                return crate::api::repository::ConnectionError::MissingHostKey {
-                    hostname: var_hostname,
-                };
-            }
-            5 => {
-                return crate::api::repository::ConnectionError::UnknownKeyType;
-            }
-            6 => {
-                let mut var_expected = <String>::sse_decode(deserializer);
-                let mut var_actual = <String>::sse_decode(deserializer);
-                return crate::api::repository::ConnectionError::MissmatchRemoteKey {
-                    expected: var_expected,
-                    actual: var_actual,
-                };
-            }
-            7 => {
-                let mut var_message = <String>::sse_decode(deserializer);
-                return crate::api::repository::ConnectionError::Other {
-                    message: var_message,
-                };
-            }
-            _ => {
-                unimplemented!("");
-            }
-        }
-    }
-}
-
 impl SseDecode for f32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1703,13 +1705,12 @@ impl SseDecode for crate::git::known_hosts::Host {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_hostname = <String>::sse_decode(deserializer);
-        let mut var_remoteKeyType =
-            <crate::git::known_hosts::HostKeyType>::sse_decode(deserializer);
-        let mut var_remoteHostKey = <String>::sse_decode(deserializer);
+        let mut var_keyType = <crate::git::known_hosts::HostKeyType>::sse_decode(deserializer);
+        let mut var_key = <String>::sse_decode(deserializer);
         return crate::git::known_hosts::Host {
             hostname: var_hostname,
-            remote_key_type: var_remoteKeyType,
-            remote_host_key: var_remoteHostKey,
+            key_type: var_keyType,
+            key: var_key,
         };
     }
 }
@@ -1916,6 +1917,17 @@ impl SseDecode for Option<crate::api::filter::FilterSelection> {
     }
 }
 
+impl SseDecode for Option<crate::git::known_hosts::Host> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::git::known_hosts::Host>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<crate::task::Task> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2111,95 +2123,95 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
-        2 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__repository__TaskStorage_add_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__repository__TaskStorage_add_and_commit_impl(
+        2 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__repository__TaskStorage_add_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__repository__TaskStorage_add_and_commit_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        10 => wire__crate__api__repository__TaskStorage_change_category_impl(
+        11 => wire__crate__api__repository__TaskStorage_change_category_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        11 => wire__crate__api__repository__TaskStorage_checkout_impl(
+        12 => wire__crate__api__repository__TaskStorage_checkout_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        12 => {
+        13 => {
             wire__crate__api__repository__TaskStorage_clear_impl(port, ptr, rust_vec_len, data_len)
         }
-        13 => wire__crate__api__repository__TaskStorage_clone_repository_impl(
+        14 => wire__crate__api__repository__TaskStorage_clone_repository_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        14 => wire__crate__api__repository__TaskStorage_init_repotitory_impl(
+        15 => wire__crate__api__repository__TaskStorage_init_repotitory_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        16 => {
+        17 => {
             wire__crate__api__repository__TaskStorage_push_impl(port, ptr, rust_vec_len, data_len)
         }
-        17 => wire__crate__api__repository__TaskStorage_remove_task_impl(
+        18 => wire__crate__api__repository__TaskStorage_remove_task_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        18 => {
+        19 => {
             wire__crate__api__repository__TaskStorage_sync_impl(port, ptr, rust_vec_len, data_len)
         }
-        19 => wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
+        20 => wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        20 => {
+        21 => {
             wire__crate__api__repository__TaskStorage_tasks_impl(port, ptr, rust_vec_len, data_len)
         }
-        21 => wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
+        22 => wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        22 => {
+        23 => {
             wire__crate__api__repository__TaskStorage_unload_impl(port, ptr, rust_vec_len, data_len)
         }
-        23 => {
+        24 => {
             wire__crate__api__repository__TaskStorage_update_impl(port, ptr, rust_vec_len, data_len)
         }
-        24 => wire__crate__api__repository__init_app_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__settings__application_paths_default_impl(
+        25 => wire__crate__api__repository__init_app_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__settings__application_paths_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        26 => {
+        27 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        27 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__settings__ssh_key_generate_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__settings__ssh_key_generate_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2212,15 +2224,31 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        15 => wire__crate__api__repository__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        32 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
-        33 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        1 => wire__crate__api__error__RustError_as_unknown_host_impl(ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__repository__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        33 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
+        34 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
 
 // Section: rust2dart
+
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<RustError> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self.0)
+            .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<RustError> {}
+
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<RustError>> for RustError {
+    fn into_into_dart(self) -> FrbWrapper<RustError> {
+        self.into()
+    }
+}
 
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<TaskStorage> {
@@ -2282,60 +2310,6 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::settings::ApplicationPaths>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::repository::ConnectionError {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        match self {
-            crate::api::repository::ConnectionError::Network { message } => {
-                [0.into_dart(), message.into_into_dart().into_dart()].into_dart()
-            }
-            crate::api::repository::ConnectionError::NoSshKeysProvided => {
-                [1.into_dart()].into_dart()
-            }
-            crate::api::repository::ConnectionError::Authentication { message } => {
-                [2.into_dart(), message.into_into_dart().into_dart()].into_dart()
-            }
-            crate::api::repository::ConnectionError::UnknownHost {
-                hostname,
-                key_type,
-                host_key,
-            } => [
-                3.into_dart(),
-                hostname.into_into_dart().into_dart(),
-                key_type.into_into_dart().into_dart(),
-                host_key.into_into_dart().into_dart(),
-            ]
-            .into_dart(),
-            crate::api::repository::ConnectionError::MissingHostKey { hostname } => {
-                [4.into_dart(), hostname.into_into_dart().into_dart()].into_dart()
-            }
-            crate::api::repository::ConnectionError::UnknownKeyType => [5.into_dart()].into_dart(),
-            crate::api::repository::ConnectionError::MissmatchRemoteKey { expected, actual } => [
-                6.into_dart(),
-                expected.into_into_dart().into_dart(),
-                actual.into_into_dart().into_dart(),
-            ]
-            .into_dart(),
-            crate::api::repository::ConnectionError::Other { message } => {
-                [7.into_dart(), message.into_into_dart().into_dart()].into_dart()
-            }
-            _ => {
-                unimplemented!("");
-            }
-        }
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::api::repository::ConnectionError
-{
-}
-impl flutter_rust_bridge::IntoIntoDart<crate::api::repository::ConnectionError>
-    for crate::api::repository::ConnectionError
-{
-    fn into_into_dart(self) -> crate::api::repository::ConnectionError {
-        self
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::filter::Filter {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -2385,8 +2359,8 @@ impl flutter_rust_bridge::IntoDart for crate::git::known_hosts::Host {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.hostname.into_into_dart().into_dart(),
-            self.remote_key_type.into_into_dart().into_dart(),
-            self.remote_host_key.into_into_dart().into_dart(),
+            self.key_type.into_into_dart().into_dart(),
+            self.key.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -2595,6 +2569,13 @@ impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
     }
 }
 
+impl SseEncode for RustError {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);
+    }
+}
+
 impl SseEncode for TaskStorage {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2613,6 +2594,17 @@ impl SseEncode for std::collections::HashMap<String, String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Vec<(String, String)>>::sse_encode(self.into_iter().collect(), serializer);
+    }
+}
+
+impl SseEncode
+    for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        let (ptr, size) = self.sse_encode_raw();
+        <usize>::sse_encode(ptr, serializer);
+        <i32>::sse_encode(size, serializer);
     }
 }
 
@@ -2673,54 +2665,6 @@ impl SseEncode for bool {
     }
 }
 
-impl SseEncode for crate::api::repository::ConnectionError {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        match self {
-            crate::api::repository::ConnectionError::Network { message } => {
-                <i32>::sse_encode(0, serializer);
-                <String>::sse_encode(message, serializer);
-            }
-            crate::api::repository::ConnectionError::NoSshKeysProvided => {
-                <i32>::sse_encode(1, serializer);
-            }
-            crate::api::repository::ConnectionError::Authentication { message } => {
-                <i32>::sse_encode(2, serializer);
-                <String>::sse_encode(message, serializer);
-            }
-            crate::api::repository::ConnectionError::UnknownHost {
-                hostname,
-                key_type,
-                host_key,
-            } => {
-                <i32>::sse_encode(3, serializer);
-                <String>::sse_encode(hostname, serializer);
-                <crate::git::known_hosts::HostKeyType>::sse_encode(key_type, serializer);
-                <String>::sse_encode(host_key, serializer);
-            }
-            crate::api::repository::ConnectionError::MissingHostKey { hostname } => {
-                <i32>::sse_encode(4, serializer);
-                <String>::sse_encode(hostname, serializer);
-            }
-            crate::api::repository::ConnectionError::UnknownKeyType => {
-                <i32>::sse_encode(5, serializer);
-            }
-            crate::api::repository::ConnectionError::MissmatchRemoteKey { expected, actual } => {
-                <i32>::sse_encode(6, serializer);
-                <String>::sse_encode(expected, serializer);
-                <String>::sse_encode(actual, serializer);
-            }
-            crate::api::repository::ConnectionError::Other { message } => {
-                <i32>::sse_encode(7, serializer);
-                <String>::sse_encode(message, serializer);
-            }
-            _ => {
-                unimplemented!("");
-            }
-        }
-    }
-}
-
 impl SseEncode for f32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2761,8 +2705,8 @@ impl SseEncode for crate::git::known_hosts::Host {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.hostname, serializer);
-        <crate::git::known_hosts::HostKeyType>::sse_encode(self.remote_key_type, serializer);
-        <String>::sse_encode(self.remote_host_key, serializer);
+        <crate::git::known_hosts::HostKeyType>::sse_encode(self.key_type, serializer);
+        <String>::sse_encode(self.key, serializer);
     }
 }
 
@@ -2942,6 +2886,16 @@ impl SseEncode for Option<crate::api::filter::FilterSelection> {
     }
 }
 
+impl SseEncode for Option<crate::git::known_hosts::Host> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::git::known_hosts::Host>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<crate::task::Task> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3105,6 +3059,7 @@ mod io {
     // Section: imports
 
     use super::*;
+    use crate::api::error::*;
     use crate::api::repository::*;
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
@@ -3115,6 +3070,20 @@ mod io {
     // Section: boilerplate
 
     flutter_rust_bridge::frb_generated_boilerplate_io!();
+
+    #[no_mangle]
+    pub extern "C" fn frbgen_stride_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>::increment_strong_count(ptr as _);
+    }
+
+    #[no_mangle]
+    pub extern "C" fn frbgen_stride_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>::decrement_strong_count(ptr as _);
+    }
 
     #[no_mangle]
     pub extern "C" fn frbgen_stride_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(

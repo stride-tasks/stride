@@ -21,51 +21,13 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../git/known_hosts.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
-part 'known_hosts.freezed.dart';
 
-class Host {
-  final String hostname;
-  final HostKeyType keyType;
+// These types are ignored because they are not used by any `pub` functions: `ErrorKind`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`, `source`, `source`
 
-  /// The public key of the remote server/host.
-  ///
-  /// The key is base64 encoded.
-  final String key;
-
-  const Host({
-    required this.hostname,
-    required this.keyType,
-    required this.key,
-  });
-
-  @override
-  int get hashCode => hostname.hashCode ^ keyType.hashCode ^ key.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Host &&
-          runtimeType == other.runtimeType &&
-          hostname == other.hostname &&
-          keyType == other.keyType &&
-          key == other.key;
-}
-
-enum HostKeyType {
-  rsa,
-  dss,
-  ecdsa256,
-  ecdsa384,
-  ecdsa521,
-  ed255219,
-  ;
-}
-
-@freezed
-class KnownHosts with _$KnownHosts {
-  const factory KnownHosts({
-    required List<Host> hosts,
-  }) = _KnownHosts;
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>
+abstract class RustError implements RustOpaqueInterface {
+  Host? asUnknownHost();
 }

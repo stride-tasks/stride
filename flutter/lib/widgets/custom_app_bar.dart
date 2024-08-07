@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/repository.dart';
-import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -30,25 +28,24 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           titleSpacing: NavigationToolbar.kMiddleSpacing / 2.0,
           actions: [
             BlocListener<TaskBloc, TaskState>(
-              listenWhen: (previous, current) =>
-                  current.error is ConnectionError_UnknownHost,
+              listenWhen: (previous, current) => current.error != null,
               listener: (context, taskState) async {
-                final ConnectionError_UnknownHost(
-                  :hostname,
-                  :keyType,
-                  :hostKey
-                ) = taskState.error! as ConnectionError_UnknownHost;
+                final host = taskState.error?.asUnknownHost();
+                if (host == null) {
+                  return;
+                }
+
                 await showAlertDialog(
                   context: context,
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Accept Unknown Host: $hostname',
+                        'Accept Unknown Host: ${host.hostname}',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        'Host Key: ${keyType.name} $hostKey',
+                        'Host Key: ${host.keyType.name} ${host.key}',
                         softWrap: true,
                       ),
                     ],
@@ -59,13 +56,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                             settings: state.settings.copyWith(
                               knownHosts: state.settings.knownHosts.copyWith(
                                 hosts: state.settings.knownHosts.hosts.toList()
-                                  ..add(
-                                    Host(
-                                      hostname: hostname,
-                                      remoteKeyType: keyType,
-                                      remoteHostKey: hostKey,
-                                    ),
-                                  ),
+                                  ..add(host),
                               ),
                             ),
                           ),

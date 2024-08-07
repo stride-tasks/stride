@@ -15,9 +15,9 @@ use uuid::Uuid;
 
 use crate::{
     api::settings::Settings,
-    git::known_hosts::{HostKeyType, KnownHosts},
+    git::known_hosts::{Host, HostKeyType, KnownHosts},
     task::{Task, TaskPriority, TaskStatus},
-    ToBase64,
+    ErrorKind, RustError, ToBase64,
 };
 
 use git2::{
@@ -106,7 +106,7 @@ impl Storage {
         }
     }
 
-    fn load(&mut self) -> Result<()> {
+    fn load(&mut self) -> Result<(), RustError> {
         if self.loaded {
             return Ok(());
         }
@@ -123,7 +123,7 @@ impl Storage {
             if line.is_empty() {
                 continue;
             }
-            let mut task = Task::from_data(&line).context("invalid task")?;
+            let mut task = Task::from_data(&line).ok_or(ErrorKind::CorruptTask)?;
             task.status = self.kind;
 
             tasks.push(task);
@@ -134,7 +134,7 @@ impl Storage {
         Ok(())
     }
 
-    fn append(&mut self, mut task: Task) -> Result<()> {
+    fn append(&mut self, mut task: Task) -> Result<(), RustError> {
         task.status = self.kind;
 
         let mut file = File::options().append(true).create(true).open(&self.path)?;
@@ -146,7 +146,7 @@ impl Storage {
         Ok(())
     }
 
-    fn save(&mut self) -> Result<()> {
+    fn save(&mut self) -> Result<(), RustError> {
         let mut content = String::new();
         for task in &self.tasks {
             content += &task.to_data();
@@ -157,13 +157,13 @@ impl Storage {
         Ok(())
     }
 
-    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>> {
+    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>, RustError> {
         self.load()?;
         Ok(self.tasks.iter().find(|task| &task.uuid == uuid))
     }
 
     #[allow(unused)]
-    fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>> {
+    fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>, RustError> {
         self.load()?;
         Ok(self.tasks.iter().position(|task| &task.uuid == uuid))
     }
@@ -185,7 +185,7 @@ impl Storage {
         Ok(())
     }
 
-    fn update(&mut self, task: &Task) -> Result<bool> {
+    fn update(&mut self, task: &Task) -> Result<bool, RustError> {
         if task.status != self.kind {
             return Ok(false);
         }
@@ -304,7 +304,7 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+    pub fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
         for storage in self.storage_mut() {
             let task = storage.get_by_id(uuid)?;
 
@@ -340,7 +340,7 @@ impl TaskStorage {
         Ok(None)
     }
 
-    pub(crate) fn update2(&mut self, task: &Task) -> Result<bool> {
+    pub(crate) fn update2(&mut self, task: &Task) -> Result<bool, RustError> {
         let mut updated = false;
         for storage in self.storage_mut() {
             if storage.update(task)? {
@@ -401,7 +401,7 @@ impl TaskStorage {
         Ok(false)
     }
 
-    pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>> {
+    pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>, RustError> {
         let mut found_task = None;
         for storage in self.storage_mut() {
             if task.status != storage.kind {
@@ -441,11 +441,11 @@ impl TaskStorage {
         })
     }
 
-    pub fn sync(&mut self) -> Result<(), ConnectionError> {
+    pub fn sync(&mut self) -> Result<(), RustError> {
         if self.repository_path.exists() {
             // TODO: Make sure that nothing is left behind!
 
-            if self.pull().unwrap() {
+            if self.pull()? {
                 log::info!("Pulled tasks");
                 self.unload();
             }
@@ -467,11 +467,11 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn clone_repository(&mut self) -> Result<(), ConnectionError> {
+    pub fn clone_repository(&mut self) -> Result<(), RustError> {
         let settings = Settings::get();
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-            return Err(ConnectionError::NoSshKeysProvided);
+            return Err(ErrorKind::NoSshKeysProvided.into());
         };
         let ssh_key = settings
             .ssh_key(ssh_key_uuid)
@@ -493,26 +493,24 @@ impl TaskStorage {
 
         let connection = builder.clone(&settings.repository.origin, &self.repository_path);
 
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
         if let Err(error) = &connection {
             return match error.class() {
-                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                ErrorClass::Ssh => Err(ErrorKind::Authentication {
                     message: error.message().to_owned(),
-                }),
-                ErrorClass::Net => Err(ConnectionError::Network {
-                    message: error.message().to_owned(),
-                }),
-                ErrorClass::Callback => {
-                    let mut callback_error = callback_error.borrow_mut();
-                    if let Some(callback_error) = callback_error.take() {
-                        return Err(callback_error.clone());
-                    }
-                    Err(ConnectionError::Other {
-                        message: error.message().to_owned(),
-                    })
                 }
-                _ => Err(ConnectionError::Other {
+                .into()),
+                ErrorClass::Net => Err(ErrorKind::Network {
                     message: error.message().to_owned(),
-                }),
+                }
+                .into()),
+                _ => Err(ErrorKind::Other {
+                    message: error.message().to_owned(),
+                }
+                .into()),
             };
         }
 
@@ -557,7 +555,7 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn init_repotitory(&self) -> Result<()> {
+    pub fn init_repotitory(&self) -> Result<(), RustError> {
         let settings = Settings::get();
 
         let repository = Repository::init(&self.repository_path)?;
@@ -582,7 +580,7 @@ impl TaskStorage {
         repository.set_head(branch_ref_name)?;
 
         if !self.tasks_path.exists() {
-            std::fs::create_dir_all(&self.tasks_path)?;
+            std::fs::create_dir_all(&self.tasks_path).unwrap();
         }
 
         Result::Ok(())
@@ -630,7 +628,7 @@ impl TaskStorage {
         Result::Ok(true)
     }
 
-    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<()> {
+    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<(), RustError> {
         for TaskDiff {
             path,
             adding,
@@ -652,7 +650,7 @@ impl TaskStorage {
                 continue;
             };
 
-            let mut current = Task::from_data(content).context("invalid task")?;
+            let mut current = Task::from_data(content).ok_or(ErrorKind::CorruptTask)?;
             current.status = status;
 
             let Some(previous) = self.task_by_uuid(&current.uuid)? else {
@@ -695,7 +693,7 @@ impl TaskStorage {
         settings: &Settings,
         repository: &Repository,
         remote: &AnnotatedCommit<'_>,
-    ) -> Result<()> {
+    ) -> Result<(), RustError> {
         let mut opts = RebaseOptions::new();
 
         let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
@@ -779,13 +777,13 @@ impl TaskStorage {
     }
 
     #[frb(ignore)]
-    pub fn pull(&mut self) -> Result<bool> {
+    pub fn pull(&mut self) -> Result<bool, RustError> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-            return Err(ConnectionError::NoSshKeysProvided.into());
+            return Err(ErrorKind::NoSshKeysProvided.into());
         };
         let ssh_key = settings
             .ssh_key(ssh_key_uuid)
@@ -813,27 +811,21 @@ impl TaskStorage {
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
 
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
         if let Err(error) = &connection {
             return match error.class() {
-                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                ErrorClass::Ssh => Err(ErrorKind::Authentication {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Net => Err(ConnectionError::Network {
+                ErrorClass::Net => Err(ErrorKind::Network {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Callback => {
-                    let mut callback_error = callback_error.borrow_mut();
-                    if let Some(callback_error) = callback_error.take() {
-                        return Err(callback_error.clone().into());
-                    }
-                    Err(ConnectionError::Other {
-                        message: error.message().to_owned(),
-                    }
-                    .into())
-                }
-                _ => Err(ConnectionError::Other {
+                _ => Err(ErrorKind::Other {
                     message: error.message().to_owned(),
                 }
                 .into()),
@@ -852,27 +844,21 @@ impl TaskStorage {
                 .remote()
                 .fetch(&[branch_ref_name], Some(&mut fetch_options), None);
 
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
         if let Err(error) = &connection {
             return match error.class() {
-                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                ErrorClass::Ssh => Err(ErrorKind::Authentication {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Net => Err(ConnectionError::Network {
+                ErrorClass::Net => Err(ErrorKind::Network {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Callback => {
-                    let mut callback_error = callback_error.borrow_mut();
-                    if let Some(callback_error) = callback_error.take() {
-                        return Err(callback_error.clone().into());
-                    }
-                    Err(ConnectionError::Other {
-                        message: error.message().to_owned(),
-                    }
-                    .into())
-                }
-                _ => Err(ConnectionError::Other {
+                _ => Err(ErrorKind::Other {
                     message: error.message().to_owned(),
                 }
                 .into()),
@@ -907,13 +893,13 @@ impl TaskStorage {
         Result::Ok(true)
     }
 
-    pub fn push(&self) -> Result<()> {
+    pub fn push(&self) -> Result<(), RustError> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
 
         let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-            return Err(ConnectionError::NoSshKeysProvided.into());
+            return Err(ErrorKind::NoSshKeysProvided.into());
         };
         let ssh_key = settings
             .ssh_key(ssh_key_uuid)
@@ -941,27 +927,21 @@ impl TaskStorage {
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Push, Some(callbacks), None);
 
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
         if let Err(error) = &connection {
             return match error.class() {
-                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                ErrorClass::Ssh => Err(ErrorKind::Authentication {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Net => Err(ConnectionError::Network {
+                ErrorClass::Net => Err(ErrorKind::Network {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Callback => {
-                    let mut callback_error = callback_error.borrow_mut();
-                    if let Some(callback_error) = callback_error.take() {
-                        return Err(callback_error.clone().into());
-                    }
-                    Err(ConnectionError::Other {
-                        message: error.message().to_owned(),
-                    }
-                    .into())
-                }
-                _ => Err(ConnectionError::Other {
+                _ => Err(ErrorKind::Other {
                     message: error.message().to_owned(),
                 }
                 .into()),
@@ -974,27 +954,21 @@ impl TaskStorage {
         let branch_ref_name = branch_ref.name().unwrap();
         let connection = connection?.remote().push(&[branch_ref_name], None);
 
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
         if let Err(error) = &connection {
             return match error.class() {
-                ErrorClass::Ssh => Err(ConnectionError::Authentication {
+                ErrorClass::Ssh => Err(ErrorKind::Authentication {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Net => Err(ConnectionError::Network {
+                ErrorClass::Net => Err(ErrorKind::Network {
                     message: error.message().to_owned(),
                 }
                 .into()),
-                ErrorClass::Callback => {
-                    let mut callback_error = callback_error.borrow_mut();
-                    if let Some(callback_error) = callback_error.take() {
-                        return Err(callback_error.clone().into());
-                    }
-                    Err(ConnectionError::Other {
-                        message: error.message().to_owned(),
-                    }
-                    .into())
-                }
-                _ => Err(ConnectionError::Other {
+                _ => Err(ErrorKind::Other {
                     message: error.message().to_owned(),
                 }
                 .into()),
@@ -1005,45 +979,14 @@ impl TaskStorage {
     }
 }
 
-#[derive(thiserror::Error, Debug, Clone)]
-pub enum ConnectionError {
-    #[error("network error: {message}")]
-    Network { message: String },
-
-    #[error("no ssh keys are provided")]
-    NoSshKeysProvided,
-
-    #[error("ssh authentication error: {message}")]
-    Authentication { message: String },
-
-    #[error("unknown host error: {hostname} with {key_type} {host_key}")]
-    UnknownHost {
-        hostname: String,
-        key_type: HostKeyType,
-        host_key: String,
-    },
-
-    #[error("{hostname} remote host key is not available")]
-    MissingHostKey { hostname: String },
-
-    #[error("unknown remote key type")]
-    UnknownKeyType,
-
-    #[error("mismatched host key")]
-    MissmatchRemoteKey { expected: String, actual: String },
-
-    #[error("{message}")]
-    Other { message: String },
-}
-
 fn with_authentication(
     ssh_key: SshKey,
     known_hosts: KnownHosts,
     callbacks: &mut RemoteCallbacks<'_>,
-) -> Rc<RefCell<Option<ConnectionError>>> {
+) -> Rc<RefCell<Option<RustError>>> {
     let mut tried_ssh = false;
 
-    let error = Rc::<RefCell<Option<ConnectionError>>>::default();
+    let error = Rc::<RefCell<Option<RustError>>>::default();
 
     // See: https://github.com/rust-lang/git2-rs/issues/347
     callbacks.credentials(move |_url, username_from_url, _allowed_types| {
@@ -1079,9 +1022,12 @@ fn with_authentication(
             return Result::Ok(CertificateCheckStatus::CertificatePassthrough);
         };
         let Some(host_key_type) = cert_host_key.hostkey_type() else {
-            *certificate_error.borrow_mut() = Some(ConnectionError::MissingHostKey {
-                hostname: hostname.to_owned(),
-            });
+            *certificate_error.borrow_mut() = Some(
+                ErrorKind::MissingHostKey {
+                    hostname: hostname.to_owned(),
+                }
+                .into(),
+            );
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1092,7 +1038,7 @@ fn with_authentication(
         let host_key = base64::engine::general_purpose::STANDARD.encode(host_key);
 
         let Result::Ok(host_key_type) = HostKeyType::try_from(host_key_type) else {
-            *certificate_error.borrow_mut() = Some(ConnectionError::UnknownKeyType);
+            *certificate_error.borrow_mut() = Some(ErrorKind::UnknownKeyType.into());
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1101,11 +1047,12 @@ fn with_authentication(
         };
 
         let Some(host) = known_hosts.host(hostname, host_key_type) else {
-            *certificate_error.borrow_mut() = Some(ConnectionError::UnknownHost {
-                hostname: hostname.to_owned(),
-                key_type: host_key_type,
-                host_key,
-            });
+            *certificate_error.borrow_mut() = Some(
+                ErrorKind::UnknownHost {
+                    host: Host::new(hostname.to_owned(), host_key_type, host_key),
+                }
+                .into(),
+            );
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1113,11 +1060,14 @@ fn with_authentication(
             ));
         };
 
-        if host.remote_host_key != host_key {
-            *certificate_error.borrow_mut() = Some(ConnectionError::MissmatchRemoteKey {
-                expected: host.remote_host_key.clone(),
-                actual: host_key,
-            });
+        if host.key != host_key {
+            *certificate_error.borrow_mut() = Some(
+                ErrorKind::MissmatchRemoteKey {
+                    expected: host.key.clone(),
+                    actual: host_key,
+                }
+                .into(),
+            );
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,

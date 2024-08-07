@@ -16,6 +16,8 @@ pub mod task;
 
 pub(crate) mod escape;
 
+pub use api::error::{ErrorKind, RustError};
+
 #[allow(clippy::unreadable_literal)]
 #[allow(unused_qualifications)]
 #[allow(clippy::redundant_else)]
