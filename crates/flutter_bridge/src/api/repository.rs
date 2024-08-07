@@ -500,15 +500,15 @@ impl TaskStorage {
         if let Err(error) = &connection {
             return match error.class() {
                 ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 _ => Err(ErrorKind::Other {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
             };
@@ -818,15 +818,15 @@ impl TaskStorage {
         if let Err(error) = &connection {
             return match error.class() {
                 ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 _ => Err(ErrorKind::Other {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
             };
@@ -851,15 +851,15 @@ impl TaskStorage {
         if let Err(error) = &connection {
             return match error.class() {
                 ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 _ => Err(ErrorKind::Other {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
             };
@@ -934,15 +934,15 @@ impl TaskStorage {
         if let Err(error) = &connection {
             return match error.class() {
                 ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 _ => Err(ErrorKind::Other {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
             };
@@ -961,15 +961,15 @@ impl TaskStorage {
         if let Err(error) = &connection {
             return match error.class() {
                 ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
                 _ => Err(ErrorKind::Other {
-                    message: error.message().to_owned(),
+                    message: error.message().into(),
                 }
                 .into()),
             };
@@ -1024,7 +1024,7 @@ fn with_authentication(
         let Some(host_key_type) = cert_host_key.hostkey_type() else {
             *certificate_error.borrow_mut() = Some(
                 ErrorKind::MissingHostKey {
-                    hostname: hostname.to_owned(),
+                    hostname: hostname.into(),
                 }
                 .into(),
             );
@@ -1060,11 +1060,11 @@ fn with_authentication(
             ));
         };
 
-        if host.key != host_key {
+        if host.key.as_ref() != host_key {
             *certificate_error.borrow_mut() = Some(
                 ErrorKind::MissmatchRemoteKey {
-                    expected: host.key.clone(),
-                    actual: host_key,
+                    expected: host.key.clone().into_boxed_str(),
+                    actual: host_key.into(),
                 }
                 .into(),
             );

@@ -15,28 +15,31 @@ pub enum ErrorKind {
     Io(#[from] std::io::Error),
 
     #[error("network error: {message}")]
-    Network { message: String },
+    Network { message: Box<str> },
 
     #[error("ssh authentication error: {message}")]
-    Authentication { message: String },
+    Authentication { message: Box<str> },
 
     #[error("unknown host error: {host}")]
     UnknownHost { host: Host },
 
     #[error("{hostname} remote host key is not available")]
-    MissingHostKey { hostname: String },
+    MissingHostKey { hostname: Box<str> },
 
     #[error("unknown remote key type")]
     UnknownKeyType,
 
     #[error("mismatched host key: expected {expected}, actual {actual}")]
-    MissmatchRemoteKey { expected: String, actual: String },
+    MissmatchRemoteKey {
+        expected: Box<str>,
+        actual: Box<str>,
+    },
 
     #[error("task encoding is corrupted.")]
     CorruptTask,
 
     #[error("other error: {message}")]
-    Other { message: String },
+    Other { message: Box<str> },
 
     #[error("libgit2 error: {0}")]
     Git(git2::Error),
@@ -68,7 +71,7 @@ impl From<git2::Error> for RustError {
     fn from(error: git2::Error) -> Self {
         let kind = match error.class() {
             git2::ErrorClass::Net => ErrorKind::Network {
-                message: error.message().to_string(),
+                message: error.message().into(),
             },
             _ => ErrorKind::Git(error),
         };
