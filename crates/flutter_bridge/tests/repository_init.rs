@@ -19,6 +19,7 @@ fn init_repository() -> anyhow::Result<()> {
     let commits = storage.log(None, None)?;
     let commits = commits.unwrap();
 
+    assert_eq!(commits.len(), 1);
     assert_eq!(commits[0].message.as_ref(), "Initial Commit");
 
     fixture.cleanup();
