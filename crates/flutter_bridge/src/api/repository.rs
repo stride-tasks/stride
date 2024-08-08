@@ -562,9 +562,6 @@ impl TaskStorage {
 
         let mut index = repository.index()?;
 
-        index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
-        index.write()?;
-
         let tree = index.write_tree()?;
         let tree = repository.find_tree(tree)?;
 
