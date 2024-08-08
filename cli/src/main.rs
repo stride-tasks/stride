@@ -1,6 +1,5 @@
-use std::path::{Path, PathBuf};
-
 use anyhow::Context;
+use std::path::{Path, PathBuf};
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
@@ -11,9 +10,17 @@ use stride_flutter_bridge::{
 };
 
 enum Mode {
-    FilterList { filter: Filter },
-    Add { content: String },
+    FilterList {
+        filter: Filter,
+    },
+    Add {
+        content: String,
+    },
     Sync,
+    Log {
+        limit: Option<usize>,
+        skip: Option<usize>,
+    },
 }
 
 const APPLICATION_ID: &str = "com.example.stride";
@@ -46,6 +53,7 @@ fn print_tasks(tasks: &[Task]) {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<()> {
     let cache_dir =
         choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
@@ -90,6 +98,26 @@ fn main() -> anyhow::Result<()> {
             }
         }
         "sync" => Mode::Sync,
+        "log" => {
+            let limit = args
+                .next()
+                .map(|value| {
+                    if value == "-" {
+                        usize::MAX.to_string()
+                    } else {
+                        value
+                    }
+                })
+                .map(|s| s.parse::<usize>())
+                .transpose()
+                .context("invalid limit value")?;
+            let skip = args
+                .next()
+                .map(|s| s.parse::<usize>())
+                .transpose()
+                .context("invalid limit value")?;
+            Mode::Log { limit, skip }
+        }
         _ => Mode::FilterList {
             filter: Filter {
                 search: std::iter::once(action)
@@ -113,6 +141,58 @@ fn main() -> anyhow::Result<()> {
         }
         Mode::Sync => {
             repository.sync()?;
+        }
+        Mode::Log { limit, skip } => {
+            /// This is to prevent going though the git history in one go which allocates uses a of memory.
+            // TODO: Maybe figure out what is the best value.
+            const CHUNK_COUNT: usize = 10000;
+
+            let mut last_oid = None;
+            let mut count: usize = 0;
+            if let Some(skip) = skip {
+                let Some(commits) = repository.log(last_oid, Some(skip))? else {
+                    return Ok(());
+                };
+                for commit in commits {
+                    last_oid = commit.parent;
+                    count += 1;
+                }
+
+                // If we skipped though all the commits, when we can just stop here.
+                if last_oid.is_none() {
+                    return Ok(());
+                }
+            }
+
+            let limit = count.saturating_add(limit.unwrap_or(usize::MAX));
+
+            'outer: loop {
+                let Some(commits) = repository.log(last_oid, Some(CHUNK_COUNT))? else {
+                    return Ok(());
+                };
+                for commit in commits {
+                    if count >= limit {
+                        break 'outer;
+                    }
+
+                    // TODO: Make history formating configurable.
+                    println!(
+                        "{:4}. {} {} {} {}",
+                        count + 1,
+                        commit.oid,
+                        commit.author,
+                        commit.email,
+                        commit.message.trim()
+                    );
+
+                    last_oid = commit.parent;
+                    count += 1;
+                }
+
+                if last_oid.is_none() {
+                    break;
+                }
+            }
         }
     }
 

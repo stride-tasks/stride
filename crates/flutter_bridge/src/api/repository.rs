@@ -230,7 +230,7 @@ impl Storage {
 
 #[frb(opaque)]
 pub struct TaskStorage {
-    repository_path: PathBuf,
+    pub(crate) repository_path: PathBuf,
     tasks_path: PathBuf,
 
     pending: Storage,
