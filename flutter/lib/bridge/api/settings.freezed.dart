@@ -22,7 +22,9 @@ mixin _$Repository {
   String get branch => throw _privateConstructorUsedError;
   UuidValue? get sshKeyUuid => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Repository
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $RepositoryCopyWith<Repository> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -51,6 +53,8 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Repository
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -109,6 +113,8 @@ class __$$RepositoryImplCopyWithImpl<$Res>
       _$RepositoryImpl _value, $Res Function(_$RepositoryImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Repository
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -187,7 +193,9 @@ class _$RepositoryImpl extends _Repository {
   int get hashCode =>
       Object.hash(runtimeType, origin, author, email, branch, sshKeyUuid);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Repository
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$RepositoryImplCopyWith<_$RepositoryImpl> get copyWith =>
@@ -213,8 +221,11 @@ abstract class _Repository extends Repository {
   String get branch;
   @override
   UuidValue? get sshKeyUuid;
+
+  /// Create a copy of Repository
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$RepositoryImplCopyWith<_$RepositoryImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -285,7 +296,9 @@ mixin _$Settings {
   }) =>
       throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $SettingsCopyWith<Settings> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -319,6 +332,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -362,6 +377,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     ) as $Val);
   }
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $KnownHostsCopyWith<$Res> get knownHosts {
@@ -370,6 +387,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     });
   }
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $RepositoryCopyWith<$Res> get repository {
@@ -378,6 +397,8 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     });
   }
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $FilterSelectionCopyWith<$Res>? get selectedFilter {
@@ -424,6 +445,8 @@ class __$$SettingsImplCopyWithImpl<$Res>
       _$SettingsImpl _value, $Res Function(_$SettingsImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -545,7 +568,9 @@ class _$SettingsImpl extends _Settings {
       const DeepCollectionEquality().hash(_filters),
       selectedFilter);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>
@@ -660,8 +685,11 @@ abstract class _Settings extends Settings {
   List<Filter> get filters;
   @override
   FilterSelection? get selectedFilter;
+
+  /// Create a copy of Settings
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -672,7 +700,9 @@ mixin _$SshKey {
   String get public => throw _privateConstructorUsedError;
   String get private => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of SshKey
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $SshKeyCopyWith<SshKey> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -694,6 +724,8 @@ class _$SshKeyCopyWithImpl<$Res, $Val extends SshKey>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of SshKey
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -736,6 +768,8 @@ class __$$SshKeyImplCopyWithImpl<$Res>
       _$SshKeyImpl _value, $Res Function(_$SshKeyImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of SshKey
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -792,7 +826,9 @@ class _$SshKeyImpl extends _SshKey {
   @override
   int get hashCode => Object.hash(runtimeType, uuid, public, private);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of SshKey
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$SshKeyImplCopyWith<_$SshKeyImpl> get copyWith =>
@@ -812,8 +848,11 @@ abstract class _SshKey extends SshKey {
   String get public;
   @override
   String get private;
+
+  /// Create a copy of SshKey
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SshKeyImplCopyWith<_$SshKeyImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

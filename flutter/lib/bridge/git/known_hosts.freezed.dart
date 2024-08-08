@@ -18,7 +18,9 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$KnownHosts {
   List<Host> get hosts => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of KnownHosts
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $KnownHostsCopyWith<KnownHosts> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -42,6 +44,8 @@ class _$KnownHostsCopyWithImpl<$Res, $Val extends KnownHosts>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of KnownHosts
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -75,6 +79,8 @@ class __$$KnownHostsImplCopyWithImpl<$Res>
       _$KnownHostsImpl _value, $Res Function(_$KnownHostsImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of KnownHosts
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -119,7 +125,9 @@ class _$KnownHostsImpl implements _KnownHosts {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(_hosts));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of KnownHosts
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$KnownHostsImplCopyWith<_$KnownHostsImpl> get copyWith =>
@@ -132,8 +140,11 @@ abstract class _KnownHosts implements KnownHosts {
 
   @override
   List<Host> get hosts;
+
+  /// Create a copy of KnownHosts
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$KnownHostsImplCopyWith<_$KnownHostsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

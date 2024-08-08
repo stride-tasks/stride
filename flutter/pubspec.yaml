@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   stride_flutter_bridge:
     path: rust_builder
-  flutter_rust_bridge: 2.1.0
+  flutter_rust_bridge: ^2.2.0
   uuid: ^4.4.2
   path: ^1.9.0
   path_provider: ^2.1.3

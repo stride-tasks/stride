@@ -21,7 +21,9 @@ mixin _$Filter {
   Set<TaskStatus> get status => throw _privateConstructorUsedError;
   String get search => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Filter
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $FilterCopyWith<Filter> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -44,6 +46,8 @@ class _$FilterCopyWithImpl<$Res, $Val extends Filter>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Filter
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -92,6 +96,8 @@ class __$$FilterImplCopyWithImpl<$Res>
       _$FilterImpl _value, $Res Function(_$FilterImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Filter
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -167,7 +173,9 @@ class _$FilterImpl extends _Filter {
   int get hashCode => Object.hash(runtimeType, uuid, name,
       const DeepCollectionEquality().hash(_status), search);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Filter
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$FilterImplCopyWith<_$FilterImpl> get copyWith =>
@@ -190,8 +198,11 @@ abstract class _Filter extends Filter {
   Set<TaskStatus> get status;
   @override
   String get search;
+
+  /// Create a copy of Filter
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$FilterImplCopyWith<_$FilterImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -254,6 +265,9 @@ class _$FilterSelectionCopyWithImpl<$Res, $Val extends FilterSelection>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
+
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -276,6 +290,8 @@ class __$$FilterSelection_PredefinedImplCopyWithImpl<$Res>
       $Res Function(_$FilterSelection_PredefinedImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -314,7 +330,9 @@ class _$FilterSelection_PredefinedImpl extends FilterSelection_Predefined {
   @override
   int get hashCode => Object.hash(runtimeType, uuid);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$FilterSelection_PredefinedImplCopyWith<_$FilterSelection_PredefinedImpl>
@@ -390,7 +408,10 @@ abstract class FilterSelection_Predefined extends FilterSelection {
   const FilterSelection_Predefined._() : super._();
 
   UuidValue get uuid;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$FilterSelection_PredefinedImplCopyWith<_$FilterSelection_PredefinedImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -416,6 +437,8 @@ class __$$FilterSelection_TemporaryImplCopyWithImpl<$Res>
       $Res Function(_$FilterSelection_TemporaryImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -429,6 +452,8 @@ class __$$FilterSelection_TemporaryImplCopyWithImpl<$Res>
     ));
   }
 
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $FilterCopyWith<$Res> get filter {
@@ -462,7 +487,9 @@ class _$FilterSelection_TemporaryImpl extends FilterSelection_Temporary {
   @override
   int get hashCode => Object.hash(runtimeType, filter);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$FilterSelection_TemporaryImplCopyWith<_$FilterSelection_TemporaryImpl>
@@ -538,7 +565,10 @@ abstract class FilterSelection_Temporary extends FilterSelection {
   const FilterSelection_Temporary._() : super._();
 
   Filter get filter;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of FilterSelection
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$FilterSelection_TemporaryImplCopyWith<_$FilterSelection_TemporaryImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
