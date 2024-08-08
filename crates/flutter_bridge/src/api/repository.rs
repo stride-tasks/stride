@@ -450,7 +450,7 @@ impl TaskStorage {
                 self.unload();
             }
 
-            self.push().unwrap();
+            self.push()?;
 
             log::info!("Task sync finished!");
             Ok(())
@@ -577,13 +577,13 @@ impl TaskStorage {
         repository.set_head(branch_ref_name)?;
 
         if !self.tasks_path.exists() {
-            std::fs::create_dir_all(&self.tasks_path).unwrap();
+            std::fs::create_dir_all(&self.tasks_path)?;
         }
 
         Result::Ok(())
     }
 
-    pub fn add_and_commit(&self, message: &str) -> Result<bool> {
+    pub fn add_and_commit(&self, message: &str) -> Result<bool, RustError> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
@@ -622,7 +622,7 @@ impl TaskStorage {
         let branch_ref_name = branch_ref.name().unwrap();
         repository.set_head(branch_ref_name)?;
 
-        Result::Ok(true)
+        Ok(true)
     }
 
     fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<(), RustError> {
@@ -741,8 +741,6 @@ impl TaskStorage {
 
                 true
             })?;
-
-            // println!("\n--------------------------\n");
 
             self.resolve_conflicts(&diffs)?;
 
