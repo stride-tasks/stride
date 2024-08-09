@@ -23,7 +23,7 @@ enum Mode {
     },
 }
 
-const APPLICATION_ID: &str = "com.example.stride";
+const APPLICATION_ID: &str = "org.stridetasks.stride";
 const APPLICATION_NAME: &str = "stride";
 
 /// Choose correct path prefix based on availability.
