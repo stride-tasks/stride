@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/routes/commits_route.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
@@ -134,6 +135,13 @@ class SettingsRoute extends StatelessWidget {
                             );
                         Navigator.of(context).pop();
                       },
+                    ),
+                  ),
+                  SettingsTileNavigation(
+                    leading: const Icon(Icons.commit),
+                    title: const Text('Commits'),
+                    builder: (context) => CommitsRoute(
+                      repository: context.read<TaskBloc>().repository,
                     ),
                   ),
                   SettingsTile(
