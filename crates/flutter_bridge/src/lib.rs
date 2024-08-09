@@ -11,7 +11,6 @@ use uuid::Uuid;
 
 pub mod api;
 pub mod git;
-pub mod repository;
 pub mod task;
 
 pub(crate) mod escape;

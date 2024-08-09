@@ -1146,3 +1146,78 @@ fn do_merge<'a>(
 
     Ok(true)
 }
+
+pub use git2::Oid;
+
+#[frb(opaque, mirror(Oid))]
+#[derive(Debug, Clone, Copy)]
+pub struct _MyOid([u8; 20]);
+
+#[frb(opaque)]
+pub struct CommitItem {
+    pub oid: Oid,
+    pub parent: Option<Oid>,
+    pub message: String,
+    pub author: String,
+    pub email: String,
+}
+
+#[frb(ignore)]
+pub struct LogIter<'repo> {
+    repository: &'repo Repository,
+    revwalk: git2::Revwalk<'repo>,
+}
+
+#[frb(ignore)]
+impl Iterator for LogIter<'_> {
+    type Item = Result<CommitItem, RustError>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self
+            .revwalk
+            .next()?
+            .and_then(|oid| self.repository.find_commit(oid))
+            .map_err(RustError::from)
+            .map(|commit| CommitItem {
+                oid: commit.id(),
+                parent: commit.parent_ids().next(),
+                message: commit.message().unwrap_or("<non-utf8>").into(),
+                author: commit.author().name().unwrap_or("<non-utf8>").into(),
+                email: commit.author().email().unwrap_or("<non-utf8>").into(),
+            });
+
+        Some(item)
+    }
+}
+
+impl TaskStorage {
+    pub fn log(
+        &mut self,
+        oid: Option<Oid>,
+        n: Option<u32>,
+    ) -> Result<Option<Vec<CommitItem>>, RustError> {
+        let repository = match Repository::open(&self.repository_path) {
+            Ok(repository) => repository,
+            Err(error) if error.code() == ErrorCode::NotFound => return Ok(None),
+            Err(error) => return Err(error.into()),
+        };
+        let mut revwalk = repository.revwalk()?;
+
+        if let Some(oid) = oid {
+            revwalk.push(oid)?;
+        } else {
+            revwalk.push_head()?;
+        }
+
+        let mut commits = Vec::new();
+        for commit in (LogIter {
+            repository: &repository,
+            revwalk,
+        })
+        .take(n.unwrap_or(u32::MAX) as usize)
+        {
+            commits.push(commit?);
+        }
+
+        Ok(Some(commits))
+    }
+}

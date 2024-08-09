@@ -20,7 +20,7 @@ fn init_repository() -> anyhow::Result<()> {
     let commits = commits.unwrap();
 
     assert_eq!(commits.len(), 1);
-    assert_eq!(commits[0].message.as_ref(), "Initial Commit");
+    assert_eq!(commits[0].message, "Initial Commit");
 
     fixture.cleanup();
     Ok(())

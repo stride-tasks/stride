@@ -18,8 +18,8 @@ enum Mode {
     },
     Sync,
     Log {
-        limit: Option<usize>,
-        skip: Option<usize>,
+        limit: Option<u32>,
+        skip: Option<u32>,
     },
 }
 
@@ -103,17 +103,17 @@ fn main() -> anyhow::Result<()> {
                 .next()
                 .map(|value| {
                     if value == "-" {
-                        usize::MAX.to_string()
+                        u32::MAX.to_string()
                     } else {
                         value
                     }
                 })
-                .map(|s| s.parse::<usize>())
+                .map(|s| s.parse::<u32>())
                 .transpose()
                 .context("invalid limit value")?;
             let skip = args
                 .next()
-                .map(|s| s.parse::<usize>())
+                .map(|s| s.parse::<u32>())
                 .transpose()
                 .context("invalid limit value")?;
             Mode::Log { limit, skip }
@@ -145,10 +145,10 @@ fn main() -> anyhow::Result<()> {
         Mode::Log { limit, skip } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
             // TODO: Maybe figure out what is the best value.
-            const CHUNK_COUNT: usize = 10000;
+            const CHUNK_COUNT: u32 = 10000;
 
             let mut last_oid = None;
-            let mut count: usize = 0;
+            let mut count: u32 = 0;
             if let Some(skip) = skip {
                 let Some(commits) = repository.log(last_oid, Some(skip))? else {
                     return Ok(());
@@ -164,7 +164,7 @@ fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let limit = count.saturating_add(limit.unwrap_or(usize::MAX));
+            let limit = count.saturating_add(limit.unwrap_or(u32::MAX));
 
             'outer: loop {
                 let Some(commits) = repository.log(last_oid, Some(CHUNK_COUNT))? else {

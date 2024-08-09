@@ -29,8 +29,36 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:uuid/uuid.dart';
 
 // These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `get_by_id`, `get_index`, `load`, `new`, `rebase`, `remove_task2`, `remove`, `remove`, `resolve_conflicts`, `save`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
-// These types are ignored because they are not used by any `pub` functions: `Storage`, `TaskDiff`
+// These types are ignored because they are not used by any `pub` functions: `LogIter`, `Storage`, `TaskDiff`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `pull`
+// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `next`
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CommitItem>>
+abstract class CommitItem implements RustOpaqueInterface {
+  String get author;
+
+  String get email;
+
+  String get message;
+
+  Oid get oid;
+
+  Oid? get parent;
+
+  set author(String author);
+
+  set email(String email);
+
+  set message(String message);
+
+  set oid(Oid oid);
+
+  set parent(Oid? parent);
+}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Oid>>
+abstract class Oid implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>>
 abstract class TaskStorage implements RustOpaqueInterface {
@@ -47,6 +75,8 @@ abstract class TaskStorage implements RustOpaqueInterface {
   Future<void> cloneRepository();
 
   Future<void> initRepotitory();
+
+  Future<List<CommitItem>?> log({Oid? oid, int? n});
 
   factory TaskStorage({required String path}) =>
       RustLib.instance.api.crateApiRepositoryTaskStorageNew(path: path);
