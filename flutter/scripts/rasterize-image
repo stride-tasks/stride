@@ -1,0 +1,42 @@
+#!/bin/sh
+
+DEFAULT_ICON_SIZE=512
+DEFAULT_BACKGROUND="#282828" # Color name or 0xRRGGBB or #RRGGBB
+
+usage() {
+    EXECUTABLE_NAME=$(basename "$0")
+    echo "Usage: ${EXECUTABLE_NAME} input.svg [output.png]"
+    echo ""
+    echo "These environment variables can be customized:"
+    echo "    ICON_SIZE=\"${DEFAULT_ICON_SIZE}\""
+    echo "    BACKGROUND=\"${DEFAULT_BACKGROUND}\""
+}
+
+if [ "$#" -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+ICON_SIZE=${ICON_SIZE:-$DEFAULT_ICON_SIZE}
+BACKGROUND=${BACKGROUND:-$DEFAULT_BACKGROUND}
+
+INPUT_FILE="$1"
+if [ "$#" -lt 1 ]; then
+    echo "Must pass the SVG image to be rasterized"
+    exit 1
+fi
+
+OUTPUT_FILE="$2"
+if [ "$#" -lt 2 ]; then
+    OUTPUT_FILE=$(dirname "$INPUT_FILE")/output.png
+fi
+
+# https://stackoverflow.com/questions/52804749/replace-transparent-pixels-alpha-with-black-in-ffmpeg
+# Generate a white canvas and resizes it to the image size. Then the image is overlaid on top. 
+ffmpeg \
+    -y \
+    -width "$ICON_SIZE" \
+    -height "$ICON_SIZE" \
+    -i "$INPUT_FILE" \
+    -vf "color=$BACKGROUND,format=rgb24[c];[c][0]scale2ref[c][i];[c][i]overlay=format=auto:shortest=1,setsar=1" \
+    "$OUTPUT_FILE"
