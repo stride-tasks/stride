@@ -34,6 +34,9 @@ import 'package:uuid/uuid.dart';
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `pull`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `next`
 
+String oidToString({required Oid oid}) =>
+    RustLib.instance.api.crateApiRepositoryOidToString(oid: oid);
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CommitItem>>
 abstract class CommitItem implements RustOpaqueInterface {
   String get author;
@@ -73,6 +76,8 @@ abstract class TaskStorage implements RustOpaqueInterface {
   Future<void> clear();
 
   Future<void> cloneRepository();
+
+  Future<void> forceHardReset({required Oid commit});
 
   Future<void> initRepotitory();
 

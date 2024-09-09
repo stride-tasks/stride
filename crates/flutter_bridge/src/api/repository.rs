@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::HashSet,
+    fmt::Display,
     fs::File,
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
@@ -525,6 +526,33 @@ impl TaskStorage {
             std::fs::create_dir(&self.tasks_path)
                 .expect("creating the tasks directory should not fail");
         }
+
+        Ok(())
+    }
+
+    pub fn force_hard_reset(&mut self, commit: Oid) -> Result<(), RustError> {
+        let settings = Settings::get();
+
+        let repository = Repository::open(&self.repository_path)?;
+        let commit = repository.find_commit(commit)?;
+
+        let branch =
+            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+
+        let mut reference = branch.into_reference();
+
+        reference.set_target(
+            commit.id(),
+            &format!("Force hard reset to commit: {}", commit.id()),
+        )?;
+
+        let mut checkout = CheckoutBuilder::new();
+        checkout.force();
+        repository.reset(
+            commit.as_object(),
+            git2::ResetType::Hard,
+            Some(&mut checkout),
+        )?;
 
         Ok(())
     }
@@ -1152,6 +1180,12 @@ pub use git2::Oid;
 #[frb(opaque, mirror(Oid))]
 #[derive(Debug, Clone, Copy)]
 pub struct _MyOid([u8; 20]);
+
+#[frb(sync)]
+#[must_use]
+pub fn oid_to_string(oid: Oid) -> String {
+    oid.to_string()
+}
 
 #[frb(opaque)]
 pub struct CommitItem {

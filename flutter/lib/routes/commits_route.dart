@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/utils/functions.dart';
 
 class CommitsRoute extends StatefulWidget {
   final TaskStorage repository;
@@ -26,7 +27,7 @@ class _CommitsRouteState extends State<CommitsRoute> {
   void initState() {
     super.initState();
 
-    _future = _getCommits();
+    _reloadCommits();
     _scrollController.addListener(_loadMoreCommits);
   }
 
@@ -50,46 +51,86 @@ class _CommitsRouteState extends State<CommitsRoute> {
             return const Column();
           }
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount:
-                      _endOfCommits ? _commits.length : _commits.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index >= _commits.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Center(
-                          child: CircularProgressIndicator(),
+          final listWidget = ListView.builder(
+            controller: _scrollController,
+            itemCount: _endOfCommits ? _commits.length : _commits.length + 1,
+            itemBuilder: (context, index) {
+              if (index >= _commits.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              final item = _commits[index];
+
+              final subtitle = Text(
+                '${oidToString(oid: item.oid)} - ${item.author} ${item.email}',
+                style: const TextStyle(fontSize: kDefaultFontSize / 1.05),
+              );
+
+              return Card(
+                child: ListTile(
+                  leading: CircleAvatar(
+                    child: Text('${index + 1}'),
+                  ),
+                  title: Text(item.message),
+                  subtitle: subtitle,
+                  trailing: index == 0
+                      ? null
+                      : Tooltip(
+                          message: 'Force Reset',
+                          child: IconButton(
+                            onPressed: () async => _forceHardReset(item.oid),
+                            icon: const Icon(
+                              Icons.code,
+                              color: Colors.red,
+                            ),
+                          ),
                         ),
-                      );
-                    }
-
-                    final item = _commits[index];
-
-                    final subtitle = Text(
-                      '${item.author} ${item.email}',
-                      style: const TextStyle(fontSize: kDefaultFontSize / 1.05),
-                    );
-
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          child: Text('${index + 1}'),
-                        ),
-                        title: Text(item.message),
-                        subtitle: subtitle,
-                      ),
-                    );
-                  },
                 ),
-              ),
-            ],
+              );
+            },
           );
+
+          return Column(children: [Expanded(child: listWidget)]);
         },
       ),
+    );
+  }
+
+  void _reloadCommits() {
+    _commits = [];
+    _nextCommit = null;
+    _endOfCommits = false;
+    _future = _getCommits();
+  }
+
+  Future<void> _forceHardReset(Oid commit) async {
+    await showAlertDialog(
+      context: context,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Are you sure you want to force hard reset to ${oidToString(oid: commit)} commit?',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 5),
+          const Text('Action is irreversible!'),
+        ],
+      ),
+      onConfirm: (context) async {
+        await widget.repository.forceHardReset(
+          commit: commit,
+        );
+        Navigator.pop(context);
+        setState(_reloadCommits);
+        return true;
+      },
     );
   }
 
