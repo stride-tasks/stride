@@ -63,7 +63,7 @@ abstract class TaskStorage implements RustOpaqueInterface {
   factory TaskStorage({required String path}) =>
       RustLib.instance.api.crateApiRepositoryTaskStorageNew(path: path);
 
-  Future<void> push();
+  Future<void> push({required bool force});
 
   Future<bool> removeTask({required Task task});
 

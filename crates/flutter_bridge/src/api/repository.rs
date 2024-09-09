@@ -1,7 +1,6 @@
 use std::{
     cell::RefCell,
     collections::HashSet,
-    fmt::Display,
     fs::File,
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
@@ -26,7 +25,7 @@ use git2::{
     FetchOptions, RebaseOptions, RemoteCallbacks, Repository, Signature,
 };
 
-use super::{filter::Filter, settings::SshKey};
+use super::{filter::Filter, logging::Logger, settings::SshKey};
 
 #[frb(init)]
 pub fn init_app() {
@@ -451,7 +450,7 @@ impl TaskStorage {
                 self.unload();
             }
 
-            self.push()?;
+            self.push(false)?;
 
             log::info!("Task sync finished!");
             Ok(())
@@ -916,7 +915,7 @@ impl TaskStorage {
         Result::Ok(true)
     }
 
-    pub fn push(&self) -> Result<(), RustError> {
+    pub fn push(&self, force: bool) -> Result<(), RustError> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
@@ -954,34 +953,42 @@ impl TaskStorage {
             return Err(callback_error);
         }
 
-        if let Err(error) = &connection {
-            return match error.class() {
-                ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().into(),
+        let mut connection = match connection {
+            Ok(connection) => connection,
+            Err(error) => {
+                return match error.class() {
+                    ErrorClass::Ssh => Err(ErrorKind::Authentication {
+                        message: error.message().into(),
+                    }
+                    .into()),
+                    ErrorClass::Net => Err(ErrorKind::Network {
+                        message: error.message().into(),
+                    }
+                    .into()),
+                    _ => Err(error.into()),
                 }
-                .into()),
-                ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().into(),
-                }
-                .into()),
-                _ => Err(ErrorKind::Other {
-                    message: error.message().into(),
-                }
-                .into()),
-            };
+            }
+        };
+
+        let local_branch =
+            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let branch_ref = local_branch.into_reference();
+        let mut branch_ref_name = branch_ref.name().unwrap().to_owned();
+
+        // https://github.com/libgit2/libgit2/issues/4286
+        // The '+' means force push.
+        if force {
+            Logger::info(&format!("Force pushing: {branch_ref_name}"));
+            branch_ref_name = format!("+{branch_ref_name}");
         }
 
-        let branch =
-            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
-        let branch_ref = branch.into_reference();
-        let branch_ref_name = branch_ref.name().unwrap();
-        let connection = connection?.remote().push(&[branch_ref_name], None);
+        let connection = connection.remote().push(&[&branch_ref_name], None);
 
         if let Some(callback_error) = callback_error.borrow_mut().take() {
             return Err(callback_error);
         }
 
-        if let Err(error) = &connection {
+        if let Err(error) = connection {
             return match error.class() {
                 ErrorClass::Ssh => Err(ErrorKind::Authentication {
                     message: error.message().into(),
@@ -991,10 +998,7 @@ impl TaskStorage {
                     message: error.message().into(),
                 }
                 .into()),
-                _ => Err(ErrorKind::Other {
-                    message: error.message().into(),
-                }
-                .into()),
+                _ => Err(error.into()),
             };
         }
 

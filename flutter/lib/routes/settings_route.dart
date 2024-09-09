@@ -145,7 +145,7 @@ class SettingsRoute extends StatelessWidget {
                     ),
                   ),
                   SettingsTile(
-                    leading: const Icon(Icons.delete),
+                    leading: const Icon(Icons.delete, color: Colors.red),
                     title: const Text('Remove Repository'),
                     onTap: (context) async {
                       await showAlertDialog(
@@ -157,6 +157,25 @@ class SettingsRoute extends StatelessWidget {
                         ),
                         onConfirm: (context) async {
                           context.read<TaskBloc>().add(TaskRemoveAllEvent());
+                          Navigator.of(context).pop();
+                          return true;
+                        },
+                      );
+                    },
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.push_pin, color: Colors.red),
+                    title: const Text('Force Push to Remote'),
+                    onTap: (context) async {
+                      await showAlertDialog(
+                        context: context,
+                        content: const Text(
+                          'Are you sure you want to force push local branch to remote repository?',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        onConfirm: (context) async {
+                          context.read<TaskBloc>().add(TaskForcePushEvent());
                           Navigator.of(context).pop();
                           return true;
                         },

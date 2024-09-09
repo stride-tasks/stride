@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/task.dart';
 
@@ -25,6 +26,10 @@ final class TaskRemoveEvent extends TaskEvent {
 
 final class TaskRemoveAllEvent extends TaskEvent {
   TaskRemoveAllEvent();
+}
+
+final class TaskForcePushEvent extends TaskEvent {
+  TaskForcePushEvent();
 }
 
 final class TaskChangeStatusEvent extends TaskEvent {
@@ -122,6 +127,16 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskState(tasks: await _tasks()));
     });
 
+    on<TaskForcePushEvent>((event, emit) async {
+      try {
+        await repository.push(force: true);
+      } on RustError catch (error) {
+        Logger.error(message: error.toErrorString());
+        return;
+      }
+      emit(TaskState(tasks: await _tasks()));
+    });
+
     on<TaskChangeStatusEvent>((event, emit) async {
       await repository.changeCategory(
         task: event.task,
@@ -142,6 +157,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       try {
         await repository.sync_();
       } on RustError catch (error) {
+        Logger.error(message: error.toErrorString());
         emit(TaskState(tasks: tasksOld, error: error));
         return;
       }

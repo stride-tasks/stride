@@ -65,6 +65,12 @@ impl RustError {
 
         Some(host.clone())
     }
+
+    #[frb(sync)]
+    #[must_use]
+    pub fn to_error_string(&self) -> String {
+        self.to_string()
+    }
 }
 
 impl From<git2::Error> for RustError {
