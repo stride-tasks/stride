@@ -37,29 +37,6 @@ import 'package:uuid/uuid.dart';
 String oidToString({required Oid oid}) =>
     RustLib.instance.api.crateApiRepositoryOidToString(oid: oid);
 
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CommitItem>>
-abstract class CommitItem implements RustOpaqueInterface {
-  String get author;
-
-  String get email;
-
-  String get message;
-
-  Oid get oid;
-
-  Oid? get parent;
-
-  set author(String author);
-
-  set email(String email);
-
-  set message(String message);
-
-  set oid(Oid oid);
-
-  set parent(Oid? parent);
-}
-
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Oid>>
 abstract class Oid implements RustOpaqueInterface {}
 
@@ -101,4 +78,39 @@ abstract class TaskStorage implements RustOpaqueInterface {
   Future<void> unload();
 
   Future<bool> update({required Task task});
+}
+
+class CommitItem {
+  final Oid oid;
+  final Oid? parent;
+  final String message;
+  final String author;
+  final String email;
+
+  const CommitItem({
+    required this.oid,
+    this.parent,
+    required this.message,
+    required this.author,
+    required this.email,
+  });
+
+  @override
+  int get hashCode =>
+      oid.hashCode ^
+      parent.hashCode ^
+      message.hashCode ^
+      author.hashCode ^
+      email.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CommitItem &&
+          runtimeType == other.runtimeType &&
+          oid == other.oid &&
+          parent == other.parent &&
+          message == other.message &&
+          author == other.author &&
+          email == other.email;
 }

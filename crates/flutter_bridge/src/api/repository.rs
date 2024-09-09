@@ -1183,11 +1183,12 @@ pub struct _MyOid([u8; 20]);
 
 #[frb(sync)]
 #[must_use]
-pub fn oid_to_string(oid: Oid) -> String {
+pub fn oid_to_string(oid: &Oid) -> String {
     oid.to_string()
 }
 
-#[frb(opaque)]
+// https://github.com/fzyzcjy/flutter_rust_bridge/issues/1937
+#[frb(non_opaque)]
 pub struct CommitItem {
     pub oid: Oid,
     pub parent: Option<Oid>,
