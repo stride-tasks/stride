@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{bail, Context};
 use std::path::{Path, PathBuf};
 use stride_flutter_bridge::{
     api::{
@@ -83,20 +83,9 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     };
     let mode = match action.as_str() {
-        "add" => {
-            let task = args.collect::<Vec<_>>().join(" ");
-            if task.is_empty() {
-                Mode::FilterList {
-                    filter: Filter {
-                        search: action,
-                        status: [TaskStatus::Pending].into(),
-                        ..Default::default()
-                    },
-                }
-            } else {
-                Mode::Add { content: task }
-            }
-        }
+        "add" => Mode::Add {
+            content: args.collect::<Vec<_>>().join(" "),
+        },
         "sync" => Mode::Sync,
         "log" => {
             let limit = args
@@ -135,8 +124,17 @@ fn main() -> anyhow::Result<()> {
             let tasks = repository.tasks_with_filter(&filter)?;
             print_tasks(&tasks);
         }
-        Mode::Add { content } => {
-            let task = Task::new(content);
+        Mode::Add { mut content } => {
+            if content == "-" {
+                content = String::new();
+                std::io::stdin().read_line(&mut content)?;
+            }
+
+            if content.trim().is_empty() {
+                bail!("Missing arguments");
+            }
+
+            let task = Task::new(content.trim().to_string());
             repository.add(task)?;
         }
         Mode::Sync => {
