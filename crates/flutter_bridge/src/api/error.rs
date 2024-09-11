@@ -7,6 +7,20 @@ use crate::git::known_hosts::Host;
 
 #[frb(ignore)]
 #[derive(Debug, Error)]
+pub enum ImportError {
+    #[error("deserialization error: {0}")]
+    Deserialize(serde_json::Error),
+}
+
+#[frb(ignore)]
+#[derive(Debug, Error)]
+pub enum ExportError {
+    #[error("serialization error: {0}")]
+    Serialize(serde_json::Error),
+}
+
+#[frb(ignore)]
+#[derive(Debug, Error)]
 pub enum ErrorKind {
     #[error("no ssh keys are provided")]
     NoSshKeysProvided,
@@ -37,6 +51,12 @@ pub enum ErrorKind {
 
     #[error("task encoding is corrupted.")]
     CorruptTask,
+
+    #[error("import error: {0}")]
+    Import(#[from] ImportError),
+
+    #[error("export error: {0}")]
+    Export(#[from] ExportError),
 
     #[error("other error: {message}")]
     Other { message: Box<str> },
@@ -100,6 +120,22 @@ impl From<ErrorKind> for RustError {
     fn from(error: ErrorKind) -> Self {
         Self {
             repr: Box::from(error),
+        }
+    }
+}
+
+impl From<ImportError> for RustError {
+    fn from(error: ImportError) -> Self {
+        Self {
+            repr: Box::new(error.into()),
+        }
+    }
+}
+
+impl From<ExportError> for RustError {
+    fn from(error: ExportError) -> Self {
+        Self {
+            repr: Box::new(error.into()),
         }
     }
 }

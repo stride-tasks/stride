@@ -1,5 +1,8 @@
 use anyhow::{bail, Context};
-use std::path::{Path, PathBuf};
+use std::{
+    io::Read,
+    path::{Path, PathBuf},
+};
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
@@ -22,6 +25,9 @@ enum Mode {
         skip: Option<u32>,
     },
     Export {
+        filepath: Option<PathBuf>,
+    },
+    Import {
         filepath: Option<PathBuf>,
     },
 }
@@ -120,6 +126,16 @@ fn main() -> anyhow::Result<()> {
                 filepath: filepath.map(PathBuf::from),
             }
         }
+        "import" => {
+            let filepath = match args.len() {
+                0 => None,
+                1 => args.next(),
+                _ => bail!("too many arguments provided"),
+            };
+            Mode::Import {
+                filepath: filepath.map(PathBuf::from),
+            }
+        }
         _ => Mode::FilterList {
             filter: Filter {
                 search: std::iter::once(action)
@@ -212,6 +228,16 @@ fn main() -> anyhow::Result<()> {
             } else {
                 println!("{contents}");
             }
+        }
+        Mode::Import { filepath } => {
+            let contents = if let Some(filepath) = filepath {
+                std::fs::read_to_string(filepath)?
+            } else {
+                let mut contents = String::new();
+                std::io::stdin().read_to_string(&mut contents)?;
+                contents
+            };
+            repository.import(&contents)?;
         }
     }
 

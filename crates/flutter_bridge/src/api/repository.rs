@@ -14,7 +14,10 @@ use flutter_rust_bridge::frb;
 use uuid::Uuid;
 
 use crate::{
-    api::settings::Settings,
+    api::{
+        error::{ExportError, ImportError},
+        settings::Settings,
+    },
     git::known_hosts::{Host, HostKeyType, KnownHosts},
     task::{Task, TaskPriority, TaskStatus},
     ErrorKind, RustError, ToBase64,
@@ -1033,7 +1036,43 @@ impl TaskStorage {
             recurring: &self.recurring.tasks,
         };
 
-        Ok(serde_json::to_string(&record).unwrap())
+        Ok(serde_json::to_string(&record).map_err(ExportError::Serialize)?)
+    }
+
+    pub fn import(&mut self, content: &str) -> Result<(), RustError> {
+        #[derive(serde::Deserialize)]
+        struct ImportRecord {
+            #[serde(default)]
+            pending: Vec<Task>,
+            #[serde(default)]
+            complete: Vec<Task>,
+            #[serde(default)]
+            deleted: Vec<Task>,
+            #[serde(default)]
+            waiting: Vec<Task>,
+            #[serde(default)]
+            recurring: Vec<Task>,
+        }
+
+        let record: ImportRecord =
+            serde_json::from_str(content).map_err(ImportError::Deserialize)?;
+
+        self.pending.tasks = record.pending;
+        self.pending.loaded = true;
+        self.complete.tasks = record.complete;
+        self.complete.loaded = true;
+        self.deleted.tasks = record.deleted;
+        self.deleted.loaded = true;
+        self.waiting.tasks = record.waiting;
+        self.waiting.loaded = true;
+        self.recurring.tasks = record.recurring;
+        self.recurring.loaded = true;
+
+        for storage in self.storage_mut() {
+            storage.save()?;
+        }
+
+        Ok(())
     }
 }
 
