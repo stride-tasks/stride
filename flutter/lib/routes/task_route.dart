@@ -22,7 +22,7 @@ class TaskRoute extends StatefulWidget {
 }
 
 class _TaskRouteState extends State<TaskRoute> {
-  String description = '';
+  String title = '';
   DateTime? due;
   List<int> tags = [];
   List<Annotation> annotations = [];
@@ -37,7 +37,7 @@ class _TaskRouteState extends State<TaskRoute> {
   void initState() {
     super.initState();
 
-    description = widget.task?.description ?? description;
+    title = widget.task?.title ?? title;
     due = widget.task?.due;
     tags = widget.task?.tags.toList() ?? tags;
     annotations = widget.task?.annotations.toList() ?? annotations;
@@ -70,7 +70,7 @@ class _TaskRouteState extends State<TaskRoute> {
             child: Column(
               children: [
                 TextFormField(
-                  initialValue: description,
+                  initialValue: title,
                   autofocus: true,
                   decoration: const InputDecoration(hintText: 'Description'),
                   validator: (value) {
@@ -80,7 +80,7 @@ class _TaskRouteState extends State<TaskRoute> {
                     return null;
                   },
                   onSaved: (newValue) {
-                    description = newValue!;
+                    title = newValue!;
                   },
                   textCapitalization: TextCapitalization.sentences,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -154,7 +154,7 @@ class _TaskRouteState extends State<TaskRoute> {
             final task = Task.raw(
               uuid:
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
-              description: description,
+              title: title,
               active: active,
               tags: Uint32List.fromList(tags),
               due: due,

@@ -21,6 +21,7 @@ enum Mode {
         limit: Option<u32>,
         skip: Option<u32>,
     },
+    Export,
 }
 
 const APPLICATION_ID: &str = "org.stridetasks.stride";
@@ -49,7 +50,7 @@ fn print_tasks(tasks: &[Task]) {
         if task.active {
             active_char = '>';
         }
-        println!("{active_char}{i:4}: {}", task.description);
+        println!("{active_char}{i:4}: {}", task.title);
     }
 }
 
@@ -107,6 +108,7 @@ fn main() -> anyhow::Result<()> {
                 .context("invalid limit value")?;
             Mode::Log { limit, skip }
         }
+        "export" => Mode::Export,
         _ => Mode::FilterList {
             filter: Filter {
                 search: std::iter::once(action)
@@ -191,6 +193,9 @@ fn main() -> anyhow::Result<()> {
                     break;
                 }
             }
+        }
+        Mode::Export => {
+            println!("{}", repository.export()?);
         }
     }
 

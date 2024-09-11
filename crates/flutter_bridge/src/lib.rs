@@ -27,6 +27,7 @@ pub use api::error::{ErrorKind, RustError};
 #[allow(clippy::uninlined_format_args)]
 #[allow(clippy::cast_possible_wrap)]
 #[allow(clippy::cast_lossless)]
+#[allow(clippy::too_many_lines)]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 
 pub(crate) trait ToBase64 {

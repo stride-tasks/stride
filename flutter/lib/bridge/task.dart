@@ -33,7 +33,7 @@ class Task with _$Task {
   const factory Task.raw({
     required UuidValue uuid,
     required TaskStatus status,
-    required String description,
+    required String title,
     required bool active,
     DateTime? modified,
     DateTime? due,
@@ -45,17 +45,16 @@ class Task with _$Task {
     required List<UuidValue> depends,
     required Map<String, String> uda,
   }) = _Task;
-  factory Task({required String description}) =>
-      RustLib.instance.api.crateTaskTaskNew(description: description);
+  factory Task({required String title}) =>
+      RustLib.instance.api.crateTaskTaskNew(title: title);
 
   double urgency() => RustLib.instance.api.crateTaskTaskUrgency(
         that: this,
       );
 
   static Future<Task> withUuid(
-          {required UuidValue uuid, required String description}) =>
-      RustLib.instance.api
-          .crateTaskTaskWithUuid(uuid: uuid, description: description);
+          {required UuidValue uuid, required String title}) =>
+      RustLib.instance.api.crateTaskTaskWithUuid(uuid: uuid, title: title);
 }
 
 enum TaskPriority {

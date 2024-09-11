@@ -82,7 +82,7 @@ class TaskItem extends StatelessWidget {
     }
 
     Widget widget = ListTile(
-      title: Text(task.description),
+      title: Text(task.title),
       selected: task.active,
       onLongPress: onLongPress,
       onTap: () {

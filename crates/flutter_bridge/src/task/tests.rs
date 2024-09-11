@@ -24,7 +24,7 @@ fn conversion_task_status() -> anyhow::Result<()> {
 fn create_task() {
     let task = Task::new("work on ...".to_owned());
 
-    assert_eq!(task.description, "work on ...");
+    assert_eq!(task.title, "work on ...");
 }
 
 const CONSTANT_UUID: uuid::Uuid = uuid::uuid!("01906b2f-ad90-7930-b4d7-24db034bc3c5");
@@ -58,7 +58,7 @@ fn deserialize_simple_task() {
 }
 
 #[test]
-fn serialize_description_with_emoji() {
+fn serialize_title_with_emoji() {
     let task = Task::with_uuid(CONSTANT_UUID, "do something... maybe 🤔".to_owned());
 
     let data = task.to_data();
@@ -69,7 +69,7 @@ fn serialize_description_with_emoji() {
 }
 
 #[test]
-fn deserialize_description_with_emoji() {
+fn deserialize_title_with_emoji() {
     let task = Task::from_data(&format!("{CONSTANT_UUID_BASE64}do something... maybe 🤔")).unwrap();
 
     assert_eq!(
@@ -79,7 +79,7 @@ fn deserialize_description_with_emoji() {
 }
 
 #[test]
-fn serialize_description_with_escape_sequence() {
+fn serialize_title_with_escape_sequence() {
     let task = Task::with_uuid(CONSTANT_UUID, "descri\tion wit\t\"\0\n".to_owned());
 
     let data = task.to_data();
@@ -90,7 +90,7 @@ fn serialize_description_with_escape_sequence() {
 }
 
 #[test]
-fn deserialize_description_with_escape_sequence() {
+fn deserialize_title_with_escape_sequence() {
     let task = Task::from_data(&format!(
         "{CONSTANT_UUID_BASE64}descri\\tion wit\\t\"\\0\\n"
     ))

@@ -65,7 +65,7 @@ impl TaskPriority {
 pub struct Task {
     pub uuid: Uuid,
     pub status: TaskStatus,
-    pub description: String,
+    pub title: String,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
@@ -113,7 +113,7 @@ impl Default for Task {
         Self {
             uuid: Uuid::now_v7(),
             status: TaskStatus::Pending,
-            description: String::new(),
+            title: String::new(),
             active: false,
             modified: None,
             due: None,
@@ -164,7 +164,7 @@ impl Task {
     pub(crate) fn to_data(&self) -> String {
         let mut result = String::new();
         result.extend(self.uuid.to_base64_array().into_iter().map(char::from));
-        escape(&self.description, &mut result);
+        escape(&self.title, &mut result);
         if self.active {
             result.push_str("\tA");
         }
@@ -224,16 +224,16 @@ impl Task {
         let _entry = DateTime::from_timestamp(secs.try_into().ok()?, nsecs)?;
 
         let input = input.get(22..)?;
-        let mut description_len = 0;
+        let mut title_len = 0;
         for c in input.chars() {
             if c == '\t' {
                 break;
             }
 
-            description_len += c.len_utf8();
+            title_len += c.len_utf8();
         }
-        let description_non_escaped = input.get(..description_len)?;
-        let mut input = input.get(description_len..)?;
+        let title_non_escaped = input.get(..title_len)?;
+        let mut input = input.get(title_len..)?;
 
         let mut iter = input.char_indices();
         let mut active = false;
@@ -339,12 +339,12 @@ impl Task {
             }
         }
 
-        let mut description = String::new();
-        unescape(description_non_escaped, &mut description);
+        let mut title = String::new();
+        unescape(title_non_escaped, &mut title);
 
         Some(Task {
             uuid,
-            description,
+            title,
             status: TaskStatus::Pending,
             active,
             modified,

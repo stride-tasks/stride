@@ -54,6 +54,8 @@ abstract class TaskStorage implements RustOpaqueInterface {
 
   Future<void> cloneRepository();
 
+  Future<String> export_();
+
   Future<void> forceHardReset({required Oid commit});
 
   Future<void> initRepotitory();

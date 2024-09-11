@@ -35,18 +35,18 @@ pub fn init_app() {
 
 impl Task {
     #[frb(sync)]
-    pub fn new(description: String) -> Self {
+    pub fn new(title: String) -> Self {
         Task {
-            description,
+            title,
             ..Default::default()
         }
     }
 
     #[must_use]
-    pub fn with_uuid(uuid: Uuid, description: String) -> Self {
+    pub fn with_uuid(uuid: Uuid, title: String) -> Self {
         Task {
             uuid,
-            description,
+            title,
             ..Default::default()
         }
     }
@@ -177,7 +177,7 @@ impl Storage {
         for task in self
             .tasks
             .iter()
-            .filter(|task| task.description.contains(&filter.search))
+            .filter(|task| task.title.contains(&filter.search))
         {
             result.push(task.clone());
         }
@@ -234,7 +234,7 @@ pub struct TaskStorage {
     tasks_path: PathBuf,
 
     pending: Storage,
-    completed: Storage,
+    complete: Storage,
     deleted: Storage,
     waiting: Storage,
     recurring: Storage,
@@ -257,7 +257,7 @@ impl TaskStorage {
                 tasks_path.join(Self::PENDING_DATA_FILENAME),
                 TaskStatus::Pending,
             ),
-            completed: Storage::new(
+            complete: Storage::new(
                 tasks_path.join(Self::COMPLETE_DATA_FILENAME),
                 TaskStatus::Complete,
             ),
@@ -283,7 +283,7 @@ impl TaskStorage {
             &mut self.waiting,
             &mut self.recurring,
             &mut self.deleted,
-            &mut self.completed,
+            &mut self.complete,
         ]
     }
 
@@ -1003,6 +1003,37 @@ impl TaskStorage {
         }
 
         Result::Ok(())
+    }
+
+    pub fn export(&mut self) -> Result<String, RustError> {
+        #[derive(serde::Serialize)]
+        struct ExportTask<'a> {
+            #[serde(skip_serializing_if = "<[_]>::is_empty")]
+            pending: &'a [Task],
+            #[serde(skip_serializing_if = "<[_]>::is_empty")]
+            complete: &'a [Task],
+            #[serde(skip_serializing_if = "<[_]>::is_empty")]
+            deleted: &'a [Task],
+            #[serde(skip_serializing_if = "<[_]>::is_empty")]
+            waiting: &'a [Task],
+            #[serde(skip_serializing_if = "<[_]>::is_empty")]
+            recurring: &'a [Task],
+        }
+
+        for storage in self.storage_mut() {
+            storage.load()?;
+        }
+
+        // self.storage_mut()
+        let record = ExportTask {
+            pending: &self.pending.tasks,
+            complete: &self.complete.tasks,
+            deleted: &self.deleted.tasks,
+            waiting: &self.waiting.tasks,
+            recurring: &self.recurring.tasks,
+        };
+
+        Ok(serde_json::to_string(&record).unwrap())
     }
 }
 

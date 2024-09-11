@@ -18,7 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$Task {
   UuidValue get uuid => throw _privateConstructorUsedError;
   TaskStatus get status => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
+  String get title => throw _privateConstructorUsedError;
   bool get active => throw _privateConstructorUsedError;
   DateTime? get modified => throw _privateConstructorUsedError;
   DateTime? get due => throw _privateConstructorUsedError;
@@ -34,7 +34,7 @@ mixin _$Task {
     required TResult Function(
             UuidValue uuid,
             TaskStatus status,
-            String description,
+            String title,
             bool active,
             DateTime? modified,
             DateTime? due,
@@ -53,7 +53,7 @@ mixin _$Task {
     TResult? Function(
             UuidValue uuid,
             TaskStatus status,
-            String description,
+            String title,
             bool active,
             DateTime? modified,
             DateTime? due,
@@ -72,7 +72,7 @@ mixin _$Task {
     TResult Function(
             UuidValue uuid,
             TaskStatus status,
-            String description,
+            String title,
             bool active,
             DateTime? modified,
             DateTime? due,
@@ -118,7 +118,7 @@ abstract class $TaskCopyWith<$Res> {
   $Res call(
       {UuidValue uuid,
       TaskStatus status,
-      String description,
+      String title,
       bool active,
       DateTime? modified,
       DateTime? due,
@@ -148,7 +148,7 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
   $Res call({
     Object? uuid = null,
     Object? status = null,
-    Object? description = null,
+    Object? title = null,
     Object? active = null,
     Object? modified = freezed,
     Object? due = freezed,
@@ -169,9 +169,9 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as TaskStatus,
-      description: null == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
               as String,
       active: null == active
           ? _value.active
@@ -227,7 +227,7 @@ abstract class _$$TaskImplCopyWith<$Res> implements $TaskCopyWith<$Res> {
   $Res call(
       {UuidValue uuid,
       TaskStatus status,
-      String description,
+      String title,
       bool active,
       DateTime? modified,
       DateTime? due,
@@ -254,7 +254,7 @@ class __$$TaskImplCopyWithImpl<$Res>
   $Res call({
     Object? uuid = null,
     Object? status = null,
-    Object? description = null,
+    Object? title = null,
     Object? active = null,
     Object? modified = freezed,
     Object? due = freezed,
@@ -275,9 +275,9 @@ class __$$TaskImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as TaskStatus,
-      description: null == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
               as String,
       active: null == active
           ? _value.active
@@ -329,7 +329,7 @@ class _$TaskImpl extends _Task {
   const _$TaskImpl(
       {required this.uuid,
       required this.status,
-      required this.description,
+      required this.title,
       required this.active,
       this.modified,
       this.due,
@@ -350,7 +350,7 @@ class _$TaskImpl extends _Task {
   @override
   final TaskStatus status;
   @override
-  final String description;
+  final String title;
   @override
   final bool active;
   @override
@@ -391,7 +391,7 @@ class _$TaskImpl extends _Task {
 
   @override
   String toString() {
-    return 'Task.raw(uuid: $uuid, status: $status, description: $description, active: $active, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, uda: $uda)';
+    return 'Task.raw(uuid: $uuid, status: $status, title: $title, active: $active, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, uda: $uda)';
   }
 
   @override
@@ -401,8 +401,7 @@ class _$TaskImpl extends _Task {
             other is _$TaskImpl &&
             (identical(other.uuid, uuid) || other.uuid == uuid) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
+            (identical(other.title, title) || other.title == title) &&
             (identical(other.active, active) || other.active == active) &&
             (identical(other.modified, modified) ||
                 other.modified == modified) &&
@@ -423,7 +422,7 @@ class _$TaskImpl extends _Task {
       runtimeType,
       uuid,
       status,
-      description,
+      title,
       active,
       modified,
       due,
@@ -449,7 +448,7 @@ class _$TaskImpl extends _Task {
     required TResult Function(
             UuidValue uuid,
             TaskStatus status,
-            String description,
+            String title,
             bool active,
             DateTime? modified,
             DateTime? due,
@@ -462,7 +461,7 @@ class _$TaskImpl extends _Task {
             Map<String, String> uda)
         raw,
   }) {
-    return raw(uuid, status, description, active, modified, due, project, tags,
+    return raw(uuid, status, title, active, modified, due, project, tags,
         annotations, priority, wait, depends, uda);
   }
 
@@ -472,7 +471,7 @@ class _$TaskImpl extends _Task {
     TResult? Function(
             UuidValue uuid,
             TaskStatus status,
-            String description,
+            String title,
             bool active,
             DateTime? modified,
             DateTime? due,
@@ -485,8 +484,8 @@ class _$TaskImpl extends _Task {
             Map<String, String> uda)?
         raw,
   }) {
-    return raw?.call(uuid, status, description, active, modified, due, project,
-        tags, annotations, priority, wait, depends, uda);
+    return raw?.call(uuid, status, title, active, modified, due, project, tags,
+        annotations, priority, wait, depends, uda);
   }
 
   @override
@@ -495,7 +494,7 @@ class _$TaskImpl extends _Task {
     TResult Function(
             UuidValue uuid,
             TaskStatus status,
-            String description,
+            String title,
             bool active,
             DateTime? modified,
             DateTime? due,
@@ -510,8 +509,8 @@ class _$TaskImpl extends _Task {
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(uuid, status, description, active, modified, due, project,
-          tags, annotations, priority, wait, depends, uda);
+      return raw(uuid, status, title, active, modified, due, project, tags,
+          annotations, priority, wait, depends, uda);
     }
     return orElse();
   }
@@ -549,7 +548,7 @@ abstract class _Task extends Task {
   const factory _Task(
       {required final UuidValue uuid,
       required final TaskStatus status,
-      required final String description,
+      required final String title,
       required final bool active,
       final DateTime? modified,
       final DateTime? due,
@@ -567,7 +566,7 @@ abstract class _Task extends Task {
   @override
   TaskStatus get status;
   @override
-  String get description;
+  String get title;
   @override
   bool get active;
   @override
