@@ -619,7 +619,6 @@ impl TaskStorage {
         let repository = Repository::open(&self.repository_path)?;
 
         if repository.statuses(None)?.is_empty() {
-            log::trace!("Skipping sync, no changes done");
             return Ok(false);
         }
 
@@ -1027,7 +1026,6 @@ impl TaskStorage {
             storage.load()?;
         }
 
-        // self.storage_mut()
         let record = ExportTask {
             pending: &self.pending.tasks,
             complete: &self.complete.tasks,

@@ -1,5 +1,5 @@
+import 'dart:convert';
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -151,8 +151,13 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTile(
                     leading: const Icon(Icons.save_alt),
-                    title: const Text('Export'),
+                    title: const Text('Export Tasks'),
                     onTap: _exportTasks,
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.file_open),
+                    title: const Text('Import Tasks'),
+                    onTap: _importTasks,
                   ),
                   SettingsTile(
                     leading: const Icon(Icons.delete, color: Colors.red),
@@ -268,10 +273,41 @@ class SettingsRoute extends StatelessWidget {
       );
     } on RustError catch (error) {
       Logger.error(
-        message: 'Export error: ${error.toErrorString()}',
+        message: 'export error: ${error.toErrorString()}',
       );
     } on Exception catch (error) {
-      Logger.error(message: 'Export error: $error');
+      Logger.error(message: 'export error: $error');
+    }
+  }
+
+  Future<void> _importTasks(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Import tasks',
+        allowedExtensions: const ['json'],
+        withData: true,
+      );
+
+      if (result == null) {
+        return;
+      }
+
+      if (result.files.isEmpty) {
+        Logger.error(message: 'import file not selected.');
+        return;
+      }
+
+      final file = result.files.first;
+      // The withData flag has been passed so bytes should be available.
+      final bytes = file.bytes!;
+      final content = const Utf8Decoder().convert(bytes);
+
+      context.read<TaskBloc>().repository.import_(content: content);
+      context.read<TaskBloc>().repository.addAndCommit(message: r'$IMPORT');
+    } on RustError catch (error) {
+      Logger.error(message: 'import error: ${error.toErrorString()}');
+    } on Exception catch (error) {
+      Logger.error(message: 'import error: $error');
     }
   }
 }
