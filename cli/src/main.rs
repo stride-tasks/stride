@@ -21,7 +21,9 @@ enum Mode {
         limit: Option<u32>,
         skip: Option<u32>,
     },
-    Export,
+    Export {
+        filepath: Option<PathBuf>,
+    },
 }
 
 const APPLICATION_ID: &str = "org.stridetasks.stride";
@@ -108,7 +110,16 @@ fn main() -> anyhow::Result<()> {
                 .context("invalid limit value")?;
             Mode::Log { limit, skip }
         }
-        "export" => Mode::Export,
+        "export" => {
+            let filepath = match args.len() {
+                0 => None,
+                1 => args.next(),
+                _ => bail!("too many arguments provided"),
+            };
+            Mode::Export {
+                filepath: filepath.map(PathBuf::from),
+            }
+        }
         _ => Mode::FilterList {
             filter: Filter {
                 search: std::iter::once(action)
@@ -194,8 +205,13 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
-        Mode::Export => {
-            println!("{}", repository.export()?);
+        Mode::Export { filepath } => {
+            let contents = repository.export()?;
+            if let Some(filepath) = filepath {
+                std::fs::write(filepath, contents)?;
+            } else {
+                println!("{contents}");
+            }
         }
     }
 
