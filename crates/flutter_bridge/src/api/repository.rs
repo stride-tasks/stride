@@ -28,7 +28,11 @@ use git2::{
     FetchOptions, RebaseOptions, RemoteCallbacks, Repository, Signature,
 };
 
-use super::{filter::Filter, logging::Logger, settings::SshKey};
+use super::{
+    filter::Filter,
+    logging::Logger,
+    settings::{ssh_key, SshKey},
+};
 
 #[frb(init)]
 pub fn init_app() {
@@ -473,19 +477,11 @@ impl TaskStorage {
     pub fn clone_repository(&mut self) -> Result<(), RustError> {
         let settings = Settings::get();
 
-        let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-            return Err(ErrorKind::NoSshKeysProvided.into());
-        };
-        let ssh_key = settings
-            .ssh_key(ssh_key_uuid)
-            .expect("there should be a key with the specified uuid");
+        let ssh_key = Self::ssh_key(&settings)?;
 
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(
-            ssh_key.clone(),
-            settings.known_hosts.clone(),
-            &mut callbacks,
-        );
+        let callback_error =
+            with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
 
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(callbacks);
@@ -800,24 +796,35 @@ impl TaskStorage {
         Ok(())
     }
 
+    fn ssh_key(settings: &Settings) -> Result<SshKey, RustError> {
+        let Some(uuid) = settings.repository.ssh_key_uuid else {
+            return Err(ErrorKind::NoSshKeysProvided.into());
+        };
+        let Some((public_path, private_path)) = ssh_key(&uuid) else {
+            // TODO: Report a different error, missing key.
+            return Err(ErrorKind::NoSshKeysProvided.into());
+        };
+
+        let public_key = std::fs::read_to_string(&public_path)?;
+
+        Ok(SshKey {
+            uuid,
+            public_key,
+            public_path,
+            private_path,
+        })
+    }
+
     #[frb(ignore)]
     pub fn pull(&mut self) -> Result<bool, RustError> {
         let settings = Settings::get();
 
         let repository = Repository::open(&self.repository_path)?;
 
-        let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-            return Err(ErrorKind::NoSshKeysProvided.into());
-        };
-        let ssh_key = settings
-            .ssh_key(ssh_key_uuid)
-            .expect("there should be a key with the specified uuid");
+        let ssh_key = Self::ssh_key(&settings)?;
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(
-            ssh_key.clone(),
-            settings.known_hosts.clone(),
-            &mut callbacks,
-        );
+        let callback_error =
+            with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Result::Ok(())
@@ -922,18 +929,10 @@ impl TaskStorage {
 
         let repository = Repository::open(&self.repository_path)?;
 
-        let Some(ssh_key_uuid) = &settings.repository.ssh_key_uuid else {
-            return Err(ErrorKind::NoSshKeysProvided.into());
-        };
-        let ssh_key = settings
-            .ssh_key(ssh_key_uuid)
-            .expect("there should be a key with the specified uuid");
+        let ssh_key = Self::ssh_key(&settings)?;
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(
-            ssh_key.clone(),
-            settings.known_hosts.clone(),
-            &mut callbacks,
-        );
+        let callback_error =
+            with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Result::Ok(())
@@ -1103,10 +1102,10 @@ fn with_authentication(
 
         tried_ssh = true;
 
-        Cred::ssh_key_from_memory(
+        Cred::ssh_key(
             username_from_url.unwrap(),
-            Some(&ssh_key.public),
-            &ssh_key.private,
+            Some(&ssh_key.public_path),
+            &ssh_key.private_path,
             None,
         )
     });

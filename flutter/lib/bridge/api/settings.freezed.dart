@@ -233,7 +233,6 @@ abstract class _Repository extends Repository {
 /// @nodoc
 mixin _$Settings {
   bool get darkMode => throw _privateConstructorUsedError;
-  List<SshKey> get keys => throw _privateConstructorUsedError;
   KnownHosts get knownHosts => throw _privateConstructorUsedError;
   Repository get repository => throw _privateConstructorUsedError;
   bool get periodicSync => throw _privateConstructorUsedError;
@@ -243,7 +242,6 @@ mixin _$Settings {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool darkMode,
-            List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
@@ -256,7 +254,6 @@ mixin _$Settings {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool darkMode,
-            List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
@@ -269,7 +266,6 @@ mixin _$Settings {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool darkMode,
-            List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
@@ -310,7 +306,6 @@ abstract class $SettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool darkMode,
-      List<SshKey> keys,
       KnownHosts knownHosts,
       Repository repository,
       bool periodicSync,
@@ -338,7 +333,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   @override
   $Res call({
     Object? darkMode = null,
-    Object? keys = null,
     Object? knownHosts = null,
     Object? repository = null,
     Object? periodicSync = null,
@@ -350,10 +344,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.darkMode
           : darkMode // ignore: cast_nullable_to_non_nullable
               as bool,
-      keys: null == keys
-          ? _value.keys
-          : keys // ignore: cast_nullable_to_non_nullable
-              as List<SshKey>,
       knownHosts: null == knownHosts
           ? _value.knownHosts
           : knownHosts // ignore: cast_nullable_to_non_nullable
@@ -422,7 +412,6 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool darkMode,
-      List<SshKey> keys,
       KnownHosts knownHosts,
       Repository repository,
       bool periodicSync,
@@ -451,7 +440,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? darkMode = null,
-    Object? keys = null,
     Object? knownHosts = null,
     Object? repository = null,
     Object? periodicSync = null,
@@ -463,10 +451,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.darkMode
           : darkMode // ignore: cast_nullable_to_non_nullable
               as bool,
-      keys: null == keys
-          ? _value._keys
-          : keys // ignore: cast_nullable_to_non_nullable
-              as List<SshKey>,
       knownHosts: null == knownHosts
           ? _value.knownHosts
           : knownHosts // ignore: cast_nullable_to_non_nullable
@@ -496,26 +480,16 @@ class __$$SettingsImplCopyWithImpl<$Res>
 class _$SettingsImpl extends _Settings {
   const _$SettingsImpl(
       {required this.darkMode,
-      required final List<SshKey> keys,
       required this.knownHosts,
       required this.repository,
       required this.periodicSync,
       required final List<Filter> filters,
       this.selectedFilter})
-      : _keys = keys,
-        _filters = filters,
+      : _filters = filters,
         super._();
 
   @override
   final bool darkMode;
-  final List<SshKey> _keys;
-  @override
-  List<SshKey> get keys {
-    if (_keys is EqualUnmodifiableListView) return _keys;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_keys);
-  }
-
   @override
   final KnownHosts knownHosts;
   @override
@@ -535,7 +509,7 @@ class _$SettingsImpl extends _Settings {
 
   @override
   String toString() {
-    return 'Settings.raw(darkMode: $darkMode, keys: $keys, knownHosts: $knownHosts, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
+    return 'Settings.raw(darkMode: $darkMode, knownHosts: $knownHosts, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
   }
 
   @override
@@ -545,7 +519,6 @@ class _$SettingsImpl extends _Settings {
             other is _$SettingsImpl &&
             (identical(other.darkMode, darkMode) ||
                 other.darkMode == darkMode) &&
-            const DeepCollectionEquality().equals(other._keys, _keys) &&
             (identical(other.knownHosts, knownHosts) ||
                 other.knownHosts == knownHosts) &&
             (identical(other.repository, repository) ||
@@ -561,7 +534,6 @@ class _$SettingsImpl extends _Settings {
   int get hashCode => Object.hash(
       runtimeType,
       darkMode,
-      const DeepCollectionEquality().hash(_keys),
       knownHosts,
       repository,
       periodicSync,
@@ -581,7 +553,6 @@ class _$SettingsImpl extends _Settings {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool darkMode,
-            List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
@@ -589,7 +560,7 @@ class _$SettingsImpl extends _Settings {
             FilterSelection? selectedFilter)
         raw,
   }) {
-    return raw(darkMode, keys, knownHosts, repository, periodicSync, filters,
+    return raw(darkMode, knownHosts, repository, periodicSync, filters,
         selectedFilter);
   }
 
@@ -598,7 +569,6 @@ class _$SettingsImpl extends _Settings {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool darkMode,
-            List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
@@ -606,8 +576,8 @@ class _$SettingsImpl extends _Settings {
             FilterSelection? selectedFilter)?
         raw,
   }) {
-    return raw?.call(darkMode, keys, knownHosts, repository, periodicSync,
-        filters, selectedFilter);
+    return raw?.call(darkMode, knownHosts, repository, periodicSync, filters,
+        selectedFilter);
   }
 
   @override
@@ -615,7 +585,6 @@ class _$SettingsImpl extends _Settings {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool darkMode,
-            List<SshKey> keys,
             KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
@@ -625,7 +594,7 @@ class _$SettingsImpl extends _Settings {
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(darkMode, keys, knownHosts, repository, periodicSync, filters,
+      return raw(darkMode, knownHosts, repository, periodicSync, filters,
           selectedFilter);
     }
     return orElse();
@@ -663,7 +632,6 @@ class _$SettingsImpl extends _Settings {
 abstract class _Settings extends Settings {
   const factory _Settings(
       {required final bool darkMode,
-      required final List<SshKey> keys,
       required final KnownHosts knownHosts,
       required final Repository repository,
       required final bool periodicSync,
@@ -673,8 +641,6 @@ abstract class _Settings extends Settings {
 
   @override
   bool get darkMode;
-  @override
-  List<SshKey> get keys;
   @override
   KnownHosts get knownHosts;
   @override
@@ -691,168 +657,5 @@ abstract class _Settings extends Settings {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SettingsImplCopyWith<_$SettingsImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$SshKey {
-  UuidValue get uuid => throw _privateConstructorUsedError;
-  String get public => throw _privateConstructorUsedError;
-  String get private => throw _privateConstructorUsedError;
-
-  /// Create a copy of SshKey
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $SshKeyCopyWith<SshKey> get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $SshKeyCopyWith<$Res> {
-  factory $SshKeyCopyWith(SshKey value, $Res Function(SshKey) then) =
-      _$SshKeyCopyWithImpl<$Res, SshKey>;
-  @useResult
-  $Res call({UuidValue uuid, String public, String private});
-}
-
-/// @nodoc
-class _$SshKeyCopyWithImpl<$Res, $Val extends SshKey>
-    implements $SshKeyCopyWith<$Res> {
-  _$SshKeyCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of SshKey
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? uuid = null,
-    Object? public = null,
-    Object? private = null,
-  }) {
-    return _then(_value.copyWith(
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue,
-      public: null == public
-          ? _value.public
-          : public // ignore: cast_nullable_to_non_nullable
-              as String,
-      private: null == private
-          ? _value.private
-          : private // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$SshKeyImplCopyWith<$Res> implements $SshKeyCopyWith<$Res> {
-  factory _$$SshKeyImplCopyWith(
-          _$SshKeyImpl value, $Res Function(_$SshKeyImpl) then) =
-      __$$SshKeyImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({UuidValue uuid, String public, String private});
-}
-
-/// @nodoc
-class __$$SshKeyImplCopyWithImpl<$Res>
-    extends _$SshKeyCopyWithImpl<$Res, _$SshKeyImpl>
-    implements _$$SshKeyImplCopyWith<$Res> {
-  __$$SshKeyImplCopyWithImpl(
-      _$SshKeyImpl _value, $Res Function(_$SshKeyImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of SshKey
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? uuid = null,
-    Object? public = null,
-    Object? private = null,
-  }) {
-    return _then(_$SshKeyImpl(
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue,
-      public: null == public
-          ? _value.public
-          : public // ignore: cast_nullable_to_non_nullable
-              as String,
-      private: null == private
-          ? _value.private
-          : private // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$SshKeyImpl extends _SshKey {
-  const _$SshKeyImpl(
-      {required this.uuid, required this.public, required this.private})
-      : super._();
-
-  @override
-  final UuidValue uuid;
-  @override
-  final String public;
-  @override
-  final String private;
-
-  @override
-  String toString() {
-    return 'SshKey(uuid: $uuid, public: $public, private: $private)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$SshKeyImpl &&
-            (identical(other.uuid, uuid) || other.uuid == uuid) &&
-            (identical(other.public, public) || other.public == public) &&
-            (identical(other.private, private) || other.private == private));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, uuid, public, private);
-
-  /// Create a copy of SshKey
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$SshKeyImplCopyWith<_$SshKeyImpl> get copyWith =>
-      __$$SshKeyImplCopyWithImpl<_$SshKeyImpl>(this, _$identity);
-}
-
-abstract class _SshKey extends SshKey {
-  const factory _SshKey(
-      {required final UuidValue uuid,
-      required final String public,
-      required final String private}) = _$SshKeyImpl;
-  const _SshKey._() : super._();
-
-  @override
-  UuidValue get uuid;
-  @override
-  String get public;
-  @override
-  String get private;
-
-  /// Create a copy of SshKey
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$SshKeyImplCopyWith<_$SshKeyImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

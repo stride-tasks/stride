@@ -93,7 +93,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.3.0';
 
   @override
-  int get rustContentHash => 1141891580;
+  int get rustContentHash => 790861901;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -184,6 +184,22 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiRepositoryOidToString({required Oid oid});
 
+  Future<SshKey> crateApiSettingsSshKeyGenerate();
+
+  String crateApiSettingsSshKeyPublicKey({required SshKey that});
+
+  Future<void> crateApiSettingsSshKeyRemoveKey({required UuidValue uuid});
+
+  Future<SshKey> crateApiSettingsSshKeySave(
+      {required String publicKey, required String privateKey});
+
+  Future<SshKey> crateApiSettingsSshKeyUpdate(
+      {required UuidValue uuid,
+      required String publicKey,
+      required String privateKey});
+
+  UuidValue crateApiSettingsSshKeyUuid({required SshKey that});
+
   Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault();
 
   Future<Repository> crateApiSettingsRepositoryDefault();
@@ -197,7 +213,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiSettingsSettingsSave({required Settings settings});
 
-  Future<SshKey> crateApiSettingsSshKeyGenerate();
+  Future<List<SshKey>> crateApiSettingsSshKeys();
 
   Task crateTaskTaskNew({required String title});
 
@@ -219,6 +235,12 @@ abstract class RustLibApi extends BaseApi {
       get rust_arc_decrement_strong_count_RustError;
 
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RustErrorPtr;
+
+  RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_SshKey;
+
+  RustArcDecrementStrongCountFnType get rust_arc_decrement_strong_count_SshKey;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_SshKeyPtr;
 
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_TaskStorage;
@@ -1066,12 +1088,173 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault() {
+  Future<SshKey> crateApiSettingsSshKeyGenerate() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 32, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiSettingsSshKeyGenerateConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSshKeyGenerateConstMeta =>
+      const TaskConstMeta(
+        debugName: "SshKey_generate",
+        argNames: [],
+      );
+
+  @override
+  String crateApiSettingsSshKeyPublicKey({required SshKey that}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+            that, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiSettingsSshKeyPublicKeyConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSshKeyPublicKeyConstMeta =>
+      const TaskConstMeta(
+        debugName: "SshKey_public_key",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<void> crateApiSettingsSshKeyRemoveKey({required UuidValue uuid}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(uuid, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 34, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiSettingsSshKeyRemoveKeyConstMeta,
+      argValues: [uuid],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSshKeyRemoveKeyConstMeta =>
+      const TaskConstMeta(
+        debugName: "SshKey_remove_key",
+        argNames: ["uuid"],
+      );
+
+  @override
+  Future<SshKey> crateApiSettingsSshKeySave(
+      {required String publicKey, required String privateKey}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(publicKey, serializer);
+        sse_encode_String(privateKey, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 35, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiSettingsSshKeySaveConstMeta,
+      argValues: [publicKey, privateKey],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSshKeySaveConstMeta => const TaskConstMeta(
+        debugName: "SshKey_save",
+        argNames: ["publicKey", "privateKey"],
+      );
+
+  @override
+  Future<SshKey> crateApiSettingsSshKeyUpdate(
+      {required UuidValue uuid,
+      required String publicKey,
+      required String privateKey}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(uuid, serializer);
+        sse_encode_String(publicKey, serializer);
+        sse_encode_String(privateKey, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 36, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiSettingsSshKeyUpdateConstMeta,
+      argValues: [uuid, publicKey, privateKey],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSshKeyUpdateConstMeta =>
+      const TaskConstMeta(
+        debugName: "SshKey_update",
+        argNames: ["uuid", "publicKey", "privateKey"],
+      );
+
+  @override
+  UuidValue crateApiSettingsSshKeyUuid({required SshKey that}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+            that, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_Uuid,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiSettingsSshKeyUuidConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSshKeyUuidConstMeta => const TaskConstMeta(
+        debugName: "SshKey_uuid",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 38, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_application_paths,
@@ -1095,7 +1278,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 33, port: port_);
+            funcId: 39, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_repository,
@@ -1119,7 +1302,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 34, port: port_);
+            funcId: 40, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -1145,7 +1328,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_application_paths(paths, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 35, port: port_);
+            funcId: 41, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -1168,7 +1351,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -1193,7 +1376,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_settings(settings, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 37, port: port_);
+            funcId: 43, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1212,26 +1395,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<SshKey> crateApiSettingsSshKeyGenerate() {
+  Future<List<SshKey>> crateApiSettingsSshKeys() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 38, port: port_);
+            funcId: 44, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_ssh_key,
-        decodeErrorData: null,
+        decodeSuccessData:
+            sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiSettingsSshKeyGenerateConstMeta,
+      constMeta: kCrateApiSettingsSshKeysConstMeta,
       argValues: [],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSettingsSshKeyGenerateConstMeta =>
-      const TaskConstMeta(
-        debugName: "ssh_key_generate",
+  TaskConstMeta get kCrateApiSettingsSshKeysConstMeta => const TaskConstMeta(
+        debugName: "ssh_keys",
         argNames: [],
       );
 
@@ -1241,7 +1425,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(title, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -1264,7 +1448,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_f_32,
@@ -1290,7 +1474,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Uuid(uuid, serializer);
         sse_encode_String(title, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 41, port: port_);
+            funcId: 47, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -1322,6 +1506,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError;
 
   RustArcIncrementStrongCountFnType
+      get rust_arc_increment_strong_count_SshKey => wire
+          .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey;
+
+  RustArcDecrementStrongCountFnType
+      get rust_arc_decrement_strong_count_SshKey => wire
+          .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey;
+
+  RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_TaskStorage => wire
           .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage;
 
@@ -1348,6 +1540,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return RustErrorImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  SshKey
+      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SshKeyImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1379,6 +1579,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return RustErrorImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  SshKey
+      dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SshKeyImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1415,6 +1623,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return RustErrorImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  SshKey
+      dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SshKeyImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1636,6 +1852,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SshKey>
+      dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(
+            dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey)
+        .toList();
+  }
+
+  @protected
   List<UuidValue> dco_decode_list_Uuid(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     const kUuidSizeInBytes = 16;
@@ -1688,12 +1915,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_record_string_string).toList();
-  }
-
-  @protected
-  List<SshKey> dco_decode_list_ssh_key(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_ssh_key).toList();
   }
 
   @protected
@@ -1808,29 +2029,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
-      keys: dco_decode_list_ssh_key(arr[1]),
-      knownHosts: dco_decode_known_hosts(arr[2]),
-      repository: dco_decode_repository(arr[3]),
-      periodicSync: dco_decode_bool(arr[4]),
-      filters: dco_decode_list_filter(arr[5]),
-      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[6]),
-    );
-  }
-
-  @protected
-  SshKey dco_decode_ssh_key(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return SshKey(
-      uuid: dco_decode_Uuid(arr[0]),
-      public: dco_decode_String(arr[1]),
-      private: dco_decode_String(arr[2]),
+      knownHosts: dco_decode_known_hosts(arr[1]),
+      repository: dco_decode_repository(arr[2]),
+      periodicSync: dco_decode_bool(arr[3]),
+      filters: dco_decode_list_filter(arr[4]),
+      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[5]),
     );
   }
 
@@ -1918,6 +2125,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SshKey
+      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SshKeyImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
   TaskStorage
       sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           SseDeserializer deserializer) {
@@ -1949,6 +2165,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return RustErrorImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
+  SshKey
+      sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SshKeyImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
@@ -1990,6 +2215,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return RustErrorImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
+  SshKey
+      sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return SshKeyImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
@@ -2206,6 +2440,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SshKey>
+      sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SshKey>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(
+          sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+              deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<UuidValue> sse_decode_list_Uuid(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2288,18 +2538,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <(String, String)>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_record_string_string(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<SshKey> sse_decode_list_ssh_key(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <SshKey>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_ssh_key(deserializer));
     }
     return ans_;
   }
@@ -2469,7 +2707,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings sse_decode_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_darkMode = sse_decode_bool(deserializer);
-    var var_keys = sse_decode_list_ssh_key(deserializer);
     var var_knownHosts = sse_decode_known_hosts(deserializer);
     var var_repository = sse_decode_repository(deserializer);
     var var_periodicSync = sse_decode_bool(deserializer);
@@ -2478,21 +2715,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_decode_opt_box_autoadd_filter_selection(deserializer);
     return Settings.raw(
         darkMode: var_darkMode,
-        keys: var_keys,
         knownHosts: var_knownHosts,
         repository: var_repository,
         periodicSync: var_periodicSync,
         filters: var_filters,
         selectedFilter: var_selectedFilter);
-  }
-
-  @protected
-  SshKey sse_decode_ssh_key(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_uuid = sse_decode_Uuid(deserializer);
-    var var_public = sse_decode_String(deserializer);
-    var var_private = sse_decode_String(deserializer);
-    return SshKey(uuid: var_uuid, public: var_public, private: var_private);
   }
 
   @protected
@@ -2591,6 +2818,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SshKey self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+        (self as SshKeyImpl).frbInternalSseEncode(move: true), serializer);
+  }
+
+  @protected
+  void
       sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           TaskStorage self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -2624,6 +2860,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
         (self as RustErrorImpl).frbInternalSseEncode(move: false), serializer);
+  }
+
+  @protected
+  void
+      sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SshKey self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+        (self as SshKeyImpl).frbInternalSseEncode(move: false), serializer);
   }
 
   @protected
@@ -2667,6 +2912,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
         (self as RustErrorImpl).frbInternalSseEncode(move: null), serializer);
+  }
+
+  @protected
+  void
+      sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SshKey self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+        (self as SshKeyImpl).frbInternalSseEncode(move: null), serializer);
   }
 
   @protected
@@ -2864,6 +3118,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void
+      sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          List<SshKey> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_Uuid(List<UuidValue> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -2933,15 +3199,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_record_string_string(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_ssh_key(List<SshKey> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_ssh_key(item, serializer);
     }
   }
 
@@ -3088,21 +3345,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_settings(Settings self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.darkMode, serializer);
-    sse_encode_list_ssh_key(self.keys, serializer);
     sse_encode_known_hosts(self.knownHosts, serializer);
     sse_encode_repository(self.repository, serializer);
     sse_encode_bool(self.periodicSync, serializer);
     sse_encode_list_filter(self.filters, serializer);
     sse_encode_opt_box_autoadd_filter_selection(
         self.selectedFilter, serializer);
-  }
-
-  @protected
-  void sse_encode_ssh_key(SshKey self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Uuid(self.uuid, serializer);
-    sse_encode_String(self.public, serializer);
-    sse_encode_String(self.private, serializer);
   }
 
   @protected
@@ -3205,6 +3453,34 @@ class RustErrorImpl extends RustOpaque implements RustError {
 
   String toErrorString() =>
       RustLib.instance.api.crateApiErrorRustErrorToErrorString(
+        that: this,
+      );
+}
+
+@sealed
+class SshKeyImpl extends RustOpaque implements SshKey {
+  // Not to be used by end users
+  SshKeyImpl.frbInternalDcoDecode(List<dynamic> wire)
+      : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  SshKeyImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+      : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_SshKey,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_SshKey,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_SshKeyPtr,
+  );
+
+  String get publicKey => RustLib.instance.api.crateApiSettingsSshKeyPublicKey(
+        that: this,
+      );
+
+  UuidValue get uuid => RustLib.instance.api.crateApiSettingsSshKeyUuid(
         that: this,
       );
 }

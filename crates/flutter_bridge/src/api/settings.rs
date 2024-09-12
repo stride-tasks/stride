@@ -9,9 +9,12 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::git::known_hosts::KnownHosts;
+use crate::{git::known_hosts::KnownHosts, RustError};
 
-use super::filter::{Filter, FilterSelection};
+use super::{
+    filter::{Filter, FilterSelection},
+    logging::Logger,
+};
 
 use super::logging::init_logger;
 
@@ -82,25 +85,106 @@ pub(crate) fn application_log_path() -> PathBuf {
     )
 }
 
-#[frb(dart_metadata=("freezed"))]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) fn ssh_key_path() -> PathBuf {
+    application_support_path().join(".ssh").join("keys")
+}
+
+pub fn ssh_keys() -> Result<Vec<SshKey>, RustError> {
+    let ssh_key_path = ssh_key_path();
+    let Ok(entries) = ssh_key_path.read_dir() else {
+        return Ok(Vec::new());
+    };
+
+    let mut result = Vec::new();
+    for entry in entries {
+        let Ok(entry) = entry else {
+            continue;
+        };
+
+        let Ok(name) = entry.file_name().into_string() else {
+            continue;
+        };
+
+        let Ok(uuid) = Uuid::try_parse(&name) else {
+            continue;
+        };
+
+        let key_path = ssh_key_path.join(uuid.to_string());
+        let public_path = key_path.join("key.pub");
+
+        let public_key = std::fs::read_to_string(&public_path)
+            .unwrap_or_else(|_| panic!("missing public key in {uuid} SSH key"));
+
+        result.push(SshKey {
+            uuid,
+            public_key,
+            public_path: key_path.join("key.pub"),
+            private_path: key_path.join("key"),
+        });
+    }
+
+    Ok(result)
+}
+
+#[frb(opaque)]
+#[derive(Debug)]
 pub struct SshKey {
-    pub uuid: Uuid,
-    pub public: String,
-    pub private: String,
+    pub(crate) uuid: Uuid,
+    pub(crate) public_key: String,
+    pub(crate) public_path: PathBuf,
+    pub(crate) private_path: PathBuf,
 }
 
 impl SshKey {
-    #[must_use]
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn generate() -> SshKey {
+    pub fn generate() -> Result<Self, RustError> {
         let keys = stride_crypto::ed25519::Ed25519::generate();
 
-        SshKey {
-            uuid: Uuid::now_v7(),
-            private: keys.private,
-            public: keys.public,
+        Self::save(&keys.public, &keys.private)
+    }
+
+    pub fn save(public_key: &str, private_key: &str) -> Result<Self, RustError> {
+        Self::update(Uuid::now_v7(), public_key, private_key)
+    }
+
+    pub fn update(uuid: Uuid, public_key: &str, private_key: &str) -> Result<Self, RustError> {
+        let key_path = ssh_key_path().join(uuid.to_string());
+        if !key_path.exists() {
+            std::fs::create_dir_all(&key_path)?;
         }
+
+        let public_path = key_path.join("key.pub");
+        let private_path = key_path.join("key");
+
+        std::fs::write(&public_path, public_key)?;
+        std::fs::write(&private_path, private_key)?;
+
+        Ok(Self {
+            uuid,
+            public_key: public_key.to_string(),
+            public_path,
+            private_path,
+        })
+    }
+
+    pub fn remove_key(uuid: &Uuid) -> Result<(), RustError> {
+        let key_path = ssh_key_path().join(uuid.to_string());
+        if !key_path.exists() {
+            Logger::error("Trying to delete key that does not exit.");
+            return Ok(());
+        }
+
+        std::fs::remove_dir_all(key_path)?;
+        Ok(())
+    }
+
+    #[frb(sync, getter)]
+    pub fn uuid(&self) -> Uuid {
+        self.uuid
+    }
+
+    #[frb(sync, getter)]
+    pub fn public_key(&self) -> String {
+        self.public_key.to_string()
     }
 }
 
@@ -151,7 +235,6 @@ impl Default for Repository {
 pub struct Settings {
     #[serde(default)]
     pub dark_mode: bool,
-    pub keys: Vec<SshKey>,
     pub known_hosts: KnownHosts,
     pub repository: Repository,
 
@@ -217,8 +300,13 @@ impl Settings {
         }
         Ok(())
     }
+}
 
-    pub(crate) fn ssh_key(&self, uuid: &Uuid) -> Option<&SshKey> {
-        self.keys.iter().find(|key| &key.uuid == uuid)
+pub(crate) fn ssh_key(uuid: &Uuid) -> Option<(PathBuf, PathBuf)> {
+    let key_path = ssh_key_path().join(uuid.to_string());
+    if !key_path.exists() {
+        return None;
     }
+
+    Some((key_path.join("key.pub"), key_path.join("key")))
 }

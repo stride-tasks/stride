@@ -23,16 +23,45 @@
 import '../frb_generated.dart';
 import '../git/known_hosts.dart';
 import '../task.dart';
+import 'error.dart';
 import 'filter.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:uuid/uuid.dart';
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `get`, `ssh_key`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `get`, `ssh_key_path`, `ssh_key`
 // These types are ignored because they are not used by any `pub` functions: `APPLICATION_STATE_INSTANCE`, `State`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `deref`, `fmt`, `fmt`, `fmt`, `fmt`, `initialize`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `deref`, `fmt`, `fmt`, `fmt`, `fmt`, `initialize`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
+
+Future<List<SshKey>> sshKeys() =>
+    RustLib.instance.api.crateApiSettingsSshKeys();
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshKey>>
+abstract class SshKey implements RustOpaqueInterface {
+  static Future<SshKey> generate() =>
+      RustLib.instance.api.crateApiSettingsSshKeyGenerate();
+
+  String get publicKey;
+
+  static Future<void> removeKey({required UuidValue uuid}) =>
+      RustLib.instance.api.crateApiSettingsSshKeyRemoveKey(uuid: uuid);
+
+  static Future<SshKey> save(
+          {required String publicKey, required String privateKey}) =>
+      RustLib.instance.api.crateApiSettingsSshKeySave(
+          publicKey: publicKey, privateKey: privateKey);
+
+  static Future<SshKey> update(
+          {required UuidValue uuid,
+          required String publicKey,
+          required String privateKey}) =>
+      RustLib.instance.api.crateApiSettingsSshKeyUpdate(
+          uuid: uuid, publicKey: publicKey, privateKey: privateKey);
+
+  UuidValue get uuid;
+}
 
 class ApplicationPaths {
   final String supportPath;
@@ -87,7 +116,6 @@ class Settings with _$Settings {
   const Settings._();
   const factory Settings.raw({
     required bool darkMode,
-    required List<SshKey> keys,
     required KnownHosts knownHosts,
     required Repository repository,
     required bool periodicSync,
@@ -104,16 +132,4 @@ class Settings with _$Settings {
 
   static Future<void> save({required Settings settings}) =>
       RustLib.instance.api.crateApiSettingsSettingsSave(settings: settings);
-}
-
-@freezed
-class SshKey with _$SshKey {
-  const SshKey._();
-  const factory SshKey({
-    required UuidValue uuid,
-    required String public,
-    required String private,
-  }) = _SshKey;
-  static Future<SshKey> generate() =>
-      RustLib.instance.api.crateApiSettingsSshKeyGenerate();
 }

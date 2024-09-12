@@ -209,7 +209,7 @@ class SettingsRoute extends StatelessWidget {
                       onTap: (key) async {
                         await Clipboard.setData(
                           ClipboardData(
-                            text: key.public,
+                            text: key.publicKey,
                           ),
                         );
                         if (context.mounted) {

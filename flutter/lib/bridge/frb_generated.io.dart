@@ -49,6 +49,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RustErrorPtr =>
       wire._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustErrorPtr;
 
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_SshKeyPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKeyPtr;
+
   CrossPlatformFinalizerArg
       get rust_arc_decrement_strong_count_TaskStoragePtr => wire
           ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStoragePtr;
@@ -63,6 +66,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   RustError
       dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+          dynamic raw);
+
+  @protected
+  SshKey
+      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
           dynamic raw);
 
   @protected
@@ -85,6 +93,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           dynamic raw);
 
   @protected
+  SshKey
+      dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          dynamic raw);
+
+  @protected
   TaskStorage
       dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           dynamic raw);
@@ -102,6 +115,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   RustError
       dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+          dynamic raw);
+
+  @protected
+  SshKey
+      dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
           dynamic raw);
 
   @protected
@@ -186,6 +204,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnownHosts dco_decode_known_hosts(dynamic raw);
 
   @protected
+  List<SshKey>
+      dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          dynamic raw);
+
+  @protected
   List<UuidValue> dco_decode_list_Uuid(dynamic raw);
 
   @protected
@@ -208,9 +231,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
-
-  @protected
-  List<SshKey> dco_decode_list_ssh_key(dynamic raw);
 
   @protected
   List<Task> dco_decode_list_task(dynamic raw);
@@ -260,9 +280,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Settings dco_decode_settings(dynamic raw);
 
   @protected
-  SshKey dco_decode_ssh_key(dynamic raw);
-
-  @protected
   Task dco_decode_task(dynamic raw);
 
   @protected
@@ -296,6 +313,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           SseDeserializer deserializer);
 
   @protected
+  SshKey
+      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SseDeserializer deserializer);
+
+  @protected
   TaskStorage
       sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           SseDeserializer deserializer);
@@ -312,6 +334,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   RustError
       sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+          SseDeserializer deserializer);
+
+  @protected
+  SshKey
+      sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
           SseDeserializer deserializer);
 
   @protected
@@ -333,6 +360,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   RustError
       sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+          SseDeserializer deserializer);
+
+  @protected
+  SshKey
+      sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
           SseDeserializer deserializer);
 
   @protected
@@ -420,6 +452,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnownHosts sse_decode_known_hosts(SseDeserializer deserializer);
 
   @protected
+  List<SshKey>
+      sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SseDeserializer deserializer);
+
+  @protected
   List<UuidValue> sse_decode_list_Uuid(SseDeserializer deserializer);
 
   @protected
@@ -443,9 +480,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   List<(String, String)> sse_decode_list_record_string_string(
       SseDeserializer deserializer);
-
-  @protected
-  List<SshKey> sse_decode_list_ssh_key(SseDeserializer deserializer);
 
   @protected
   List<Task> sse_decode_list_task(SseDeserializer deserializer);
@@ -499,9 +533,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Settings sse_decode_settings(SseDeserializer deserializer);
 
   @protected
-  SshKey sse_decode_ssh_key(SseDeserializer deserializer);
-
-  @protected
   Task sse_decode_task(SseDeserializer deserializer);
 
   @protected
@@ -538,6 +569,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SshKey self, SseSerializer serializer);
+
+  @protected
+  void
       sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           TaskStorage self, SseSerializer serializer);
 
@@ -555,6 +591,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
       sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
           RustError self, SseSerializer serializer);
+
+  @protected
+  void
+      sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SshKey self, SseSerializer serializer);
 
   @protected
   void
@@ -577,6 +618,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
       sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
           RustError self, SseSerializer serializer);
+
+  @protected
+  void
+      sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          SshKey self, SseSerializer serializer);
 
   @protected
   void
@@ -668,6 +714,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_known_hosts(KnownHosts self, SseSerializer serializer);
 
   @protected
+  void
+      sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+          List<SshKey> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_Uuid(List<UuidValue> self, SseSerializer serializer);
 
   @protected
@@ -695,9 +746,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_record_string_string(
       List<(String, String)> self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_list_ssh_key(List<SshKey> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_task(List<Task> self, SseSerializer serializer);
@@ -751,9 +799,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_settings(Settings self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_ssh_key(SshKey self, SseSerializer serializer);
 
   @protected
   void sse_encode_task(Task self, SseSerializer serializer);
@@ -853,6 +898,38 @@ class RustLibWire implements BaseWire {
           'frbgen_stride_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError');
   late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError =
       _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustErrorPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+      rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKeyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+          'frbgen_stride_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey');
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKeyPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+      rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKeyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+          'frbgen_stride_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey');
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKeyPtr
           .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   void

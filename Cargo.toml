@@ -32,7 +32,7 @@ chrono = { version = "0.4", default-features = false, features = ["serde"] }
 anyhow = "1.0"
 thiserror = "1.0"
 lazy_static = "1.4"
-git2 = { version = "0.19", default-features = false, features = ["ssh", "ssh_key_from_memory", "vendored-libgit2", "vendored-openssl"] }
+git2 = { version = "0.19", default-features = false, features = ["ssh", "vendored-libgit2", "vendored-openssl"] }
 base64 = "0.22"
 openssl = { version = "0.10", features = ["vendored"] }
 pem = { version = "3.0", default-features = false }
