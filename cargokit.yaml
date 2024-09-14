@@ -1,0 +1,3 @@
+cargo:
+  release:
+    toolchain: 1.80.0

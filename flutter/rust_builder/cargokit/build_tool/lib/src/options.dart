@@ -47,11 +47,14 @@ class SourceSpanException implements Exception {
   }
 }
 
-enum Toolchain {
-  stable,
-  beta,
-  nightly,
-}
+// TODO: Cleanup this code
+// enum Toolchain {
+//   stable,
+//   beta,
+//   nightly,
+// }
+
+typedef Toolchain = String;
 
 class CargoBuildOptions {
   final Toolchain toolchain;
@@ -64,14 +67,18 @@ class CargoBuildOptions {
 
   static Toolchain _toolchainFromNode(YamlNode node) {
     if (node case YamlScalar(value: String name)) {
-      final toolchain =
-          Toolchain.values.firstWhereOrNull((element) => element.name == name);
-      if (toolchain != null) {
-        return toolchain;
-      }
+      // final toolchain =
+      //     Toolchain.values.firstWhereOrNull((element) => element.name == name);
+      // if (toolchain != null) {
+      //   return toolchain;
+      // }
+      return name;
     }
+    // throw SourceSpanException(
+    //     'Unknown toolchain. Must be one of ${Toolchain.values.map((e) => e.name)}.',
+    //     node.span);
     throw SourceSpanException(
-        'Unknown toolchain. Must be one of ${Toolchain.values.map((e) => e.name)}.',
+        'Unknown toolchain. Must be a scalar value, stable|beta|nightly|1.78.0',
         node.span);
   }
 
@@ -79,7 +86,7 @@ class CargoBuildOptions {
     if (node is! YamlMap) {
       throw SourceSpanException('Cargo options must be a map', node.span);
     }
-    Toolchain toolchain = Toolchain.stable;
+    Toolchain toolchain = "stable";
     List<String> flags = [];
     for (final MapEntry(:key, :value) in node.nodes.entries) {
       if (key case YamlScalar(value: 'toolchain')) {
@@ -219,6 +226,7 @@ class CargokitCrateOptions {
   static CargokitCrateOptions load({
     required String manifestDir,
   }) {
+    print("MANIFEST DIR: $manifestDir");
     final uri = Uri.file(path.join(manifestDir, "cargokit.yaml"));
     final file = File.fromUri(uri);
     if (file.existsSync()) {
