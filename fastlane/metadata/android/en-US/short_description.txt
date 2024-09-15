@@ -1,0 +1,1 @@
+Task management tool that synchronizes with in-built git integration (currently pre-alpha).
