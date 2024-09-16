@@ -188,6 +188,10 @@ impl SshKey {
     }
 }
 
+fn default_theme_mode() -> bool {
+    true
+}
+
 fn default_email() -> String {
     String::from("noreply.stride.tasks@gmail.com")
 }
@@ -233,7 +237,7 @@ impl Default for Repository {
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Settings {
-    #[serde(default)]
+    #[serde(default = "default_theme_mode")]
     pub dark_mode: bool,
     pub known_hosts: KnownHosts,
     pub repository: Repository,
