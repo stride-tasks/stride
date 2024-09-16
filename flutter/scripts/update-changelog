@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Get location of the script
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+FLUTTER_DIR="$SCRIPTS_DIR/.."
+PROJECT_DIR="$FLUTTER_DIR/.."
+
+ln -s "$FLUTTER_DIR"/fastlane "$PROJECT_DIR"/fastlane

@@ -12,7 +12,7 @@ env:
   CMDLINE_TOOLS_VERSION: 10406996 # 11.0
 
   # Pin build path for reproducible builds.
-  BUILD_PATH: /tmp/appbuild
+  BUILD_PATH: /tmp/build
   PUB_CACHE: /tmp/.pub-cache
 
 permissions:
