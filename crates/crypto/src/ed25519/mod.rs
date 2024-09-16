@@ -22,10 +22,10 @@ impl Ed25519 {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::missing_panics_doc)]
     pub fn generate() -> Self {
-        let rsa = PKey::generate_ed25519().unwrap();
+        let key = PKey::generate_ed25519().unwrap();
 
-        let public_key = rsa.raw_public_key().unwrap();
-        let private_key = rsa.private_key_to_der().unwrap();
+        let public_key = key.raw_public_key().unwrap();
+        let private_key = key.private_key_to_der().unwrap();
 
         let private_pem = Pem::new("PRIVATE KEY", private_key);
         let private = pem::encode(&private_pem);
