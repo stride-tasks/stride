@@ -33,7 +33,7 @@ ffmpeg \
     logo_foreground.png
 
 # Put icon in fastlane
-ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" logo.svg "$FLUTTER_DIR/fastlane/metadata/android/en-US/images/icon.png"
+ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" logo.svg "$PROJECT_DIR/fastlane/metadata/android/en-US/images/icon.png"
 
 # Go to pubspec.yaml directory
 cd "$FLUTTER_DIR"

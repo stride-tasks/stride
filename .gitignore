@@ -31,8 +31,6 @@ migrate_working_dir/
 .pub/
 /build/
 
-fastlane
-
 # Symbolication related
 app.*.symbols
 
