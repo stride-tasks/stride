@@ -14,8 +14,6 @@ pub mod git;
 pub mod key_store;
 pub mod task;
 
-pub(crate) mod escape;
-
 pub use api::error::{ErrorKind, RustError};
 
 #[allow(clippy::unreadable_literal)]
