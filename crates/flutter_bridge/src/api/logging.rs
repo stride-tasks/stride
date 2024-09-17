@@ -99,22 +99,27 @@ pub struct Logger {}
 
 impl Logger {
     pub fn debug(message: &str) {
+        let message = message.replace('\n', "\\n");
         log::debug!("{message}");
     }
 
     pub fn trace(message: &str) {
+        let message = message.replace('\n', "\\n");
         log::trace!("{message}");
     }
 
     pub fn info(message: &str) {
+        let message = message.replace('\n', "\\n");
         log::info!("{message}");
     }
 
     pub fn warn(message: &str) {
+        let message = message.replace('\n', "\\n");
         log::warn!("{message}");
     }
 
     pub fn error(message: &str) {
+        let message = message.replace('\n', "\\n");
         log::error!("{message}");
     }
 }

@@ -216,7 +216,7 @@ impl Storage {
         Ok(self.tasks.iter().position(|task| &task.task.uuid == uuid))
     }
 
-    fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<()> {
+    fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<(), RustError> {
         if !filter.status.contains(&self.kind) {
             return Ok(());
         }
@@ -400,7 +400,7 @@ impl TaskStorage {
         Ok(None)
     }
 
-    pub fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>> {
+    pub fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
         let mut tasks = Vec::new();
         for storage in self.storage_mut() {
             storage.filter(filter, &mut tasks)?;
@@ -517,7 +517,7 @@ impl TaskStorage {
         Ok(false)
     }
 
-    pub fn tasks(&mut self) -> Result<Vec<Task>> {
+    pub fn tasks(&mut self) -> Result<Vec<Task>, RustError> {
         self.tasks_with_filter(&Filter {
             name: "default".to_owned(),
             status: HashSet::from_iter([TaskStatus::Pending]),
