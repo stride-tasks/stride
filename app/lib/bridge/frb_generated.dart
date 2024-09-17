@@ -956,7 +956,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_task,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageTasksConstMeta,
       argValues: [that],
@@ -984,7 +985,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_task,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageTasksWithFilterConstMeta,
       argValues: [that, filter],
