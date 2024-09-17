@@ -168,7 +168,7 @@ impl Storage {
 
         let mut file = File::options().append(true).create(true).open(&self.path)?;
 
-        if self.key_store.has_key_for(self.kind) {
+        if self.key_store.has_key_for(self.kind)? {
             let (iv, mut content) = self.key_store.encrypt(&task, None)?;
             content.push('\n');
             file.write_all(content.as_bytes())?;
@@ -281,7 +281,6 @@ impl Storage {
 pub struct TaskStorage {
     pub(crate) repository_path: PathBuf,
     tasks_path: PathBuf,
-    keys_filepath: PathBuf,
     key_store: Arc<KeyStore>,
 
     pending: Storage,
@@ -329,7 +328,7 @@ impl TaskStorage {
 
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
 
-        let key_store = KeyStore::load(&keys_filepath, crypter).unwrap();
+        let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
 
         Self {
             repository_path: repository_path.to_path_buf(),
@@ -360,7 +359,6 @@ impl TaskStorage {
             ),
             tasks_path,
             key_store,
-            keys_filepath,
         }
     }
 

@@ -3,7 +3,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::{atomic::AtomicBool, Arc, Mutex},
 };
 
 use base64::Engine;
@@ -20,30 +20,37 @@ pub(crate) struct KeyStore {
     path: PathBuf,
     master_key: Arc<Crypter>,
     keys: Mutex<HashMap<TaskStatus, Arc<Crypter>>>,
+    loaded: AtomicBool,
 }
 
 // TODO: Clear poisoned mutex when panic happens.
 
 impl KeyStore {
-    pub(crate) fn load(path: &Path, crypther: Arc<Crypter>) -> Result<Arc<KeyStore>, RustError> {
-        if !path.exists() {
-            return Ok(Self {
-                path: path.to_path_buf(),
-                master_key: crypther,
-                keys: Mutex::default(),
-            }
-            .into());
+    pub fn new(path: &Path, crypther: Arc<Crypter>) -> Self {
+        Self {
+            path: path.to_path_buf(),
+            keys: HashMap::new().into(),
+            loaded: false.into(),
+            master_key: crypther,
+        }
+    }
+    pub(crate) fn load(&self) -> Result<(), RustError> {
+        if self.loaded.load(std::sync::atomic::Ordering::SeqCst) {
+            return Ok(());
+        }
+        if !self.path.exists() {
+            return Ok(());
         }
 
         let mut keys = HashMap::new();
 
-        let file = BufReader::new(File::open(path)?);
+        let file = BufReader::new(File::open(&self.path)?);
         for line in file.lines() {
             let line = line?;
 
             let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(line)?;
 
-            let (aad, _iv, decrypted) = crypther.decrypt(&bytes, 1)?;
+            let (aad, _iv, decrypted) = self.master_key.decrypt(&bytes, 1)?;
 
             let status = match aad[0] {
                 b'p' => TaskStatus::Pending,
@@ -72,15 +79,14 @@ impl KeyStore {
             );
         }
 
-        Ok(Self {
-            path: path.to_path_buf(),
-            master_key: crypther,
-            keys: Mutex::new(keys),
-        }
-        .into())
+        *self.keys.lock().map_err(|_| KeyStoreError::LockError)? = keys;
+        self.loaded.store(true, std::sync::atomic::Ordering::SeqCst);
+
+        Ok(())
     }
 
     pub(crate) fn save(&self) -> Result<(), RustError> {
+        self.load()?;
         let mut contents = String::new();
         let keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
         for (status, key) in &*keys {
@@ -102,13 +108,14 @@ impl KeyStore {
         Ok(())
     }
 
-    pub(crate) fn has_key_for(&self, status: TaskStatus) -> bool {
+    pub(crate) fn has_key_for(&self, status: TaskStatus) -> Result<bool, RustError> {
+        self.load()?;
         let keys = self
             .keys
             .lock()
             .map_err(|_| anyhow::Error::msg("could not lock key store"))
             .unwrap();
-        keys.contains_key(&status)
+        Ok(keys.contains_key(&status))
     }
 
     pub(crate) fn encrypt(
@@ -116,6 +123,8 @@ impl KeyStore {
         task: &Task,
         iv: Option<[u8; 12]>,
     ) -> Result<([u8; 12], String), RustError> {
+        self.load()?;
+
         let mut keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
         let mut need_to_save = false;
         let key = if let Some(key) = keys.get(&task.status) {
@@ -146,6 +155,8 @@ impl KeyStore {
         status: TaskStatus,
         base64: &str,
     ) -> Result<([u8; 12], Task), RustError> {
+        self.load()?;
+
         let base64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(base64.trim())?;
 
         let keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;

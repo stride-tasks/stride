@@ -9,7 +9,6 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/routes/commits_route.dart';
 import 'package:stride/routes/encryption_key_add_route.dart';
 import 'package:stride/routes/encryption_keys_route.dart';
