@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
@@ -89,6 +91,11 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
                 key: _key,
               );
             }
+            context.read<SettingsBloc>().add(
+                  SettingsUpdateEvent(
+                    settings: context.read<SettingsBloc>().settings,
+                  ),
+                );
           } on RustError catch (error) {
             Logger.error(
               message: 'encryption key error: ${error.toErrorString()}',

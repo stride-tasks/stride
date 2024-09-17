@@ -104,6 +104,12 @@ class EncryptionKeysRoute extends StatelessWidget {
                       return Future.value(true);
                     }
 
+                    context.read<SettingsBloc>().add(
+                          SettingsUpdateEvent(
+                            settings: context.read<SettingsBloc>().settings,
+                          ),
+                        );
+
                     Navigator.of(context).pop();
 
                     Logger.trace(
