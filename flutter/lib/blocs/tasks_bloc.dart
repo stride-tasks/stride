@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
@@ -100,8 +101,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     _initializeSettingsStream();
 
     on<TaskFetchEvent>((event, emit) async {
-      final tasks = await repository.tasks();
-      emit(TaskState(tasks: tasks));
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskAddEvent>((event, emit) async {
@@ -177,21 +177,23 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<List<Task>> _tasks() async {
-    // TODO: Handle possible thrown error.
-    // try {
-    if (filter == null) {
-      final tasks = await repository.tasks();
-      return tasks;
-    } else {
-      final tasks = await repository.tasksWithFilter(filter: filter!);
-      return tasks;
+    try {
+      if (filter == null) {
+        final tasks = await repository.tasks();
+        return tasks;
+      } else {
+        final tasks = await repository.tasksWithFilter(filter: filter!);
+        return tasks;
+      }
+    } on RustError catch (error) {
+      Logger.error(message: 'repository load error: ${error.toErrorString()}');
+    } on AnyhowException catch (error) {
+      Logger.error(message: 'repository load error: ${error.message}');
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      Logger.error(message: 'repository load error: $error');
     }
-    // } on RustError catch (error) {
-    //   Logger.error(message: 'repository load error: ${error.toErrorString()}');
-    // } on Exception catch (error) {
-    //   Logger.error(message: 'repository load error: $error');
-    // }
-    // return [];
+    return [];
   }
 
   @override

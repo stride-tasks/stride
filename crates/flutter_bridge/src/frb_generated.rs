@@ -1234,27 +1234,25 @@ fn wire__crate__api__repository__TaskStorage_tasks_impl(
             >>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let mut api_that_guard = None;
-                        let decode_indices_ =
-                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
-                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                    &api_that, 0, true,
-                                )],
-                            );
-                        for i in decode_indices_ {
-                            match i {
-                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
-                                _ => unreachable!(),
-                            }
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
                         }
-                        let mut api_that_guard = api_that_guard.unwrap();
-                        let output_ok =
-                            crate::api::repository::TaskStorage::tasks(&mut *api_that_guard)?;
-                        Ok(output_ok)
-                    })(),
-                )
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok =
+                        crate::api::repository::TaskStorage::tasks(&mut *api_that_guard)?;
+                    Ok(output_ok)
+                })())
             }
         },
     )
@@ -1287,29 +1285,27 @@ fn wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
             let api_filter = <crate::api::filter::Filter>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
-                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let mut api_that_guard = None;
-                        let decode_indices_ =
-                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
-                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                    &api_that, 0, true,
-                                )],
-                            );
-                        for i in decode_indices_ {
-                            match i {
-                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
-                                _ => unreachable!(),
-                            }
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
                         }
-                        let mut api_that_guard = api_that_guard.unwrap();
-                        let output_ok = crate::api::repository::TaskStorage::tasks_with_filter(
-                            &mut *api_that_guard,
-                            &api_filter,
-                        )?;
-                        Ok(output_ok)
-                    })(),
-                )
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok = crate::api::repository::TaskStorage::tasks_with_filter(
+                        &mut *api_that_guard,
+                        &api_filter,
+                    )?;
+                    Ok(output_ok)
+                })())
             }
         },
     )
