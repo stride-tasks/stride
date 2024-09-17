@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.3.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1141158502;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1064230649;
 
 // Section: executor
 
@@ -1801,6 +1801,113 @@ fn wire__crate__api__settings__encryption_key_generate_impl(
         },
     )
 }
+fn wire__crate__api__settings__encryption_key_remove_key_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "encryption_key_remove_key",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::settings::EncryptionKey::remove_key(&api_uuid)?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__settings__encryption_key_save_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "encryption_key_save",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_key = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::settings::EncryptionKey::save(&api_key)?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__settings__encryption_key_update_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "encryption_key_update",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
+            let api_key = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok =
+                            crate::api::settings::EncryptionKey::update(api_uuid, &api_key)?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__settings__repository_default_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -2913,14 +3020,29 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        40 => {
+        40 => wire__crate__api__settings__encryption_key_remove_key_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        41 => {
+            wire__crate__api__settings__encryption_key_save_impl(port, ptr, rust_vec_len, data_len)
+        }
+        42 => wire__crate__api__settings__encryption_key_update_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        43 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        41 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2939,9 +3061,9 @@ fn pde_ffi_dispatcher_sync_impl(
         31 => wire__crate__api__repository__oid_to_string_impl(ptr, rust_vec_len, data_len),
         33 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
         37 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
-        43 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        46 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
-        47 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        49 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
+        50 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

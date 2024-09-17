@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/routes/encryption_key_add_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:uuid/uuid.dart';
 
@@ -56,14 +57,16 @@ class EncryptionKeysRoute extends StatelessWidget {
           );
         },
       ),
-      // floatingActionButton: IconButton(
-      //   icon: const Icon(Icons.add_circle_outline, size: 50),
-      //   onPressed: () {
-      //     Navigator.of(context).push<void>(
-      //       MaterialPageRoute(builder: (context) => const SshKeyAddRoute()),
-      //     );
-      //   },
-      // ),
+      floatingActionButton: IconButton(
+        icon: const Icon(Icons.add_circle_outline, size: 50),
+        onPressed: () {
+          Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (context) => const EncryptionKeyAddRoute(),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -95,14 +98,17 @@ class EncryptionKeysRoute extends StatelessWidget {
                       Text(key.key),
                     ],
                   ),
-                  onConfirm: (context) {
-                    // context
-                    //     .read<SettingsBloc>()
-                    //     .add(SettingsRemoveSshKeyEvent(uuid: key.uuid));
-                    assert(false, 'TODO');
+                  onConfirm: (context) async {
+                    if (!await EncryptionKey.removeKey(uuid: key.uuid)) {
+                      Navigator.of(context).pop();
+                      return Future.value(true);
+                    }
+
                     Navigator.of(context).pop();
 
-                    Logger.trace(message: 'Encryption Key deleted');
+                    Logger.trace(
+                        message:
+                            'Encryption Key deleted with UUID: ${key.uuid}');
                     return Future.value(true);
                   },
                 );
