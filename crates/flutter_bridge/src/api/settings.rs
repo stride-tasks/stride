@@ -3,7 +3,8 @@ use std::{
     sync::Mutex,
 };
 
-use anyhow::Context;
+use anyhow::{bail, Context};
+use base64::Engine;
 use flutter_rust_bridge::frb;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -166,15 +167,22 @@ impl SshKey {
         })
     }
 
-    pub fn remove_key(uuid: &Uuid) -> Result<(), RustError> {
+    pub fn remove_key(uuid: &Uuid) -> Result<bool, RustError> {
+        let settings = Settings::get();
+        if settings.repository.ssh_key_uuid == Some(*uuid) {
+            Logger::error(&format!(
+                "error: trying to delete ssh key that is in use: {uuid}"
+            ));
+            return Ok(false);
+        }
         let key_path = ssh_key_path().join(uuid.to_string());
         if !key_path.exists() {
             Logger::error("Trying to delete key that does not exit.");
-            return Ok(());
+            return Ok(false);
         }
 
         std::fs::remove_dir_all(key_path)?;
-        Ok(())
+        Ok(true)
     }
 
     #[frb(sync, getter)]
@@ -205,6 +213,55 @@ impl EncryptionKey {
             uuid: Uuid::now_v7(),
             key: key.to_base64(),
         }
+    }
+
+    pub fn save(key: &str) -> anyhow::Result<Self> {
+        Self::update(Uuid::now_v7(), key)
+    }
+
+    pub fn update(uuid: Uuid, key: &str) -> anyhow::Result<Self> {
+        let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(key)
+            .context("could not decode base64 encryption key")?;
+
+        if decoded.len() != 32 {
+            bail!("encryption key error: invalid encryption key must be 256-bits (32 bytes)");
+        }
+
+        let mut settings = Settings::get();
+        if let Some(encryption_key) = settings
+            .encryption_keys
+            .iter_mut()
+            .find(|key| key.uuid == uuid)
+        {
+            encryption_key.key = key.to_string();
+            let result = encryption_key.to_owned();
+            Settings::save(settings)?;
+            return Ok(result);
+        }
+
+        let this = Self {
+            uuid,
+            key: key.to_string(),
+        };
+
+        settings.encryption_keys.push(this.clone());
+        Settings::save(settings)?;
+        Ok(this)
+    }
+
+    // Store keys on disk instead of memory like ssh keys.
+    pub fn remove_key(uuid: &Uuid) -> anyhow::Result<bool> {
+        let mut settings = Settings::get();
+        if settings.repository.encryption_key_uuid == Some(*uuid) {
+            Logger::error(&format!(
+                "error: trying to delete encryption key that is in use: {uuid}"
+            ));
+            return Ok(false);
+        }
+        settings.encryption_keys.retain(|key| &key.uuid != uuid);
+        Settings::save(settings)?;
+        Ok(true)
     }
 }
 
