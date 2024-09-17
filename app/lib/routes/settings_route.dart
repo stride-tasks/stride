@@ -9,7 +9,9 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/routes/commits_route.dart';
+import 'package:stride/routes/encryption_key_add_route.dart';
 import 'package:stride/routes/encryption_keys_route.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
@@ -252,7 +254,17 @@ class SettingsRoute extends StatelessWidget {
                   SettingsTileNavigation(
                     leading: const Icon(Icons.lock),
                     title: const Text('Encryption Keys'),
-                    builder: (context) => const EncryptionKeysRoute(),
+                    builder: (context) => EncryptionKeysRoute(
+                      onTap: (key) {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (context) => EncryptionKeyAddRoute(
+                              encryptionKey: key,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

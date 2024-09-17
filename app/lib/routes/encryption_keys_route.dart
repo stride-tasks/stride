@@ -107,8 +107,8 @@ class EncryptionKeysRoute extends StatelessWidget {
                     Navigator.of(context).pop();
 
                     Logger.trace(
-                        message:
-                            'Encryption Key deleted with UUID: ${key.uuid}');
+                      message: 'Encryption Key deleted with UUID: ${key.uuid}',
+                    );
                     return Future.value(true);
                   },
                 );

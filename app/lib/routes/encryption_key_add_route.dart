@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class EncryptionKeyAddRoute extends StatefulWidget {
-  const EncryptionKeyAddRoute({super.key});
+  final EncryptionKey? encryptionKey;
+  const EncryptionKeyAddRoute({
+    super.key,
+    this.encryptionKey,
+  });
 
   @override
   State<EncryptionKeyAddRoute> createState() => EncryptionKeyAddRouteState();
@@ -14,6 +19,13 @@ class EncryptionKeyAddRoute extends StatefulWidget {
 
 class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
   String _key = '';
+
+  @override
+  void initState() {
+    super.initState();
+
+    _key = widget.encryptionKey?.key ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +49,21 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
                 });
               },
             ),
+            if (widget.encryptionKey != null)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: LimitedBox(
+                    maxWidth: 512,
+                    maxHeight: 512,
+                    child: QrImageView(
+                      data: _key,
+                      backgroundColor: Colors.white,
+                      padding: EdgeInsets.all(16.0),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -54,7 +81,14 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
           }
 
           try {
-            await EncryptionKey.save(key: _key);
+            if (widget.encryptionKey == null) {
+              await EncryptionKey.save(key: _key);
+            } else {
+              await EncryptionKey.update(
+                uuid: widget.encryptionKey!.uuid,
+                key: _key,
+              );
+            }
           } on RustError catch (error) {
             Logger.error(
               message: 'encryption key error: ${error.toErrorString()}',
