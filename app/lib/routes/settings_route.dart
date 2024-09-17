@@ -262,6 +262,7 @@ class SettingsRoute extends StatelessWidget {
                             ),
                           ),
                         );
+                        context.read<TaskBloc>().add(TaskFetchEvent());
                       },
                     ),
                   ),
