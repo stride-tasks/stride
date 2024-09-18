@@ -919,7 +919,6 @@ dependencies = [
  "serde",
  "serde_json",
  "stride_crypto",
- "thiserror",
  "uuid",
 ]
 

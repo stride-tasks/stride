@@ -7,7 +7,6 @@ use std::{fmt::Display, path::Path, str::FromStr};
 use flutter_rust_bridge::frb;
 use git2::cert::SshHostKeyType;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 // const BUNDELED_KEYS: &[KnownHostRef<'_>] = &[];
 
@@ -71,10 +70,18 @@ impl Display for HostKeyType {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum HostKeyTypeError {
-    #[error("unknown host key type \"{value}\"")]
     Unknown { value: String },
+}
+
+impl std::error::Error for HostKeyTypeError {}
+impl Display for HostKeyTypeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unknown { value } => write!(f, "unknown host key type \"{value}\""),
+        }
+    }
 }
 
 impl FromStr for HostKeyType {
@@ -143,16 +150,30 @@ impl Display for Host {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum HostParseError {
-    #[error("missing hostname")]
     MissingHostname,
-    #[error("missing key type")]
     MissingKeyType,
-    #[error("Invalid key type {0}")]
-    InvalidKeyType(#[from] HostKeyTypeError),
-    #[error("missing remote host key")]
+    InvalidKeyType(HostKeyTypeError),
     MissingRemoteHostKey,
+}
+
+impl std::error::Error for HostParseError {}
+impl Display for HostParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MissingHostname => f.write_str("missing hostname"),
+            Self::MissingKeyType => f.write_str("missing key type"),
+            Self::InvalidKeyType(error) => write!(f, "Invalid key type {error}"),
+            Self::MissingRemoteHostKey => f.write_str("missing remote host key"),
+        }
+    }
+}
+
+impl From<HostKeyTypeError> for HostParseError {
+    fn from(error: HostKeyTypeError) -> Self {
+        Self::InvalidKeyType(error)
+    }
 }
 
 impl FromStr for Host {
@@ -178,20 +199,64 @@ impl FromStr for Host {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum KnownHostsParseError {
-    #[error("Invalid host {0}")]
-    InvalidHost(#[from] HostParseError),
+    InvalidHost(HostParseError),
 }
 
-#[derive(Error, Debug)]
+impl std::error::Error for KnownHostsParseError {}
+impl Display for KnownHostsParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KnownHostsParseError::InvalidHost(error) => write!(f, "Invalid host {error}"),
+        }
+    }
+}
+
+impl From<HostParseError> for KnownHostsParseError {
+    fn from(error: HostParseError) -> Self {
+        Self::InvalidHost(error)
+    }
+}
+
+#[derive(Debug)]
 pub enum KnownHostsError {
-    #[error("Invalid known hosts {0}")]
-    InvalidKnownHosts(#[from] KnownHostsParseError),
-    #[error("Input/output error {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("environment variable error {0}")]
-    VarError(#[from] std::env::VarError),
+    InvalidKnownHosts(KnownHostsParseError),
+    IoError(std::io::Error),
+    VarError(std::env::VarError),
+}
+
+impl std::error::Error for KnownHostsError {}
+impl Display for KnownHostsError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidKnownHosts(error) => {
+                write!(f, "Invalid known hosts {error}")
+            }
+            Self::IoError(error) => {
+                write!(f, "Input/output error {error}")
+            }
+            Self::VarError(error) => {
+                write!(f, "environment variable error {error}")
+            }
+        }
+    }
+}
+
+impl From<KnownHostsParseError> for KnownHostsError {
+    fn from(error: KnownHostsParseError) -> Self {
+        Self::InvalidKnownHosts(error)
+    }
+}
+impl From<std::io::Error> for KnownHostsError {
+    fn from(error: std::io::Error) -> Self {
+        Self::IoError(error)
+    }
+}
+impl From<std::env::VarError> for KnownHostsError {
+    fn from(error: std::env::VarError) -> Self {
+        Self::VarError(error)
+    }
 }
 
 #[frb(dart_metadata=("freezed"))]
@@ -264,7 +329,7 @@ impl KnownHosts {
 impl Display for KnownHosts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for host in self.hosts() {
-            writeln!(f, "{host}")?;
+            write!(f, "{host}")?;
         }
         Ok(())
     }
