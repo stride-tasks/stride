@@ -1,12 +1,11 @@
 use std::{
     path::{Path, PathBuf},
-    sync::Mutex,
+    sync::{LazyLock, Mutex},
 };
 
 use anyhow::{bail, Context};
 use base64::Engine;
 use flutter_rust_bridge::frb;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -19,14 +18,11 @@ use super::{
 
 use super::logging::init_logger;
 
-lazy_static! {
-    pub(crate) static ref APPLICATION_STATE_INSTANCE: Mutex<State> = State::default().into();
-}
+pub(crate) static APPLICATION_STATE_INSTANCE: LazyLock<Mutex<State>> =
+    LazyLock::new(Mutex::default);
 
-lazy_static! {
-    pub(crate) static ref SETTINGS_STREAM_SINK: Mutex<Option<StreamSink<Settings>>> =
-        Mutex::default();
-}
+pub(crate) static SETTINGS_STREAM_SINK: LazyLock<Mutex<Option<StreamSink<Settings>>>> =
+    LazyLock::new(Mutex::default);
 
 #[frb(ignore)]
 #[derive(Default)]

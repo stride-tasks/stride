@@ -915,7 +915,6 @@ dependencies = [
  "flutter_rust_bridge",
  "getrandom",
  "git2",
- "lazy_static",
  "log",
  "serde",
  "serde_json",
