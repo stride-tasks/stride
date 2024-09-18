@@ -147,7 +147,7 @@ fn serialize_task_with_dates() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b'm'],
+            b"m",
             CONSTANT_TIMESTAMP.to_be_bytes().as_slice()
         ])
     );
@@ -159,9 +159,9 @@ fn serialize_task_with_dates() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b'm'],
+            b"m",
             CONSTANT_TIMESTAMP.to_be_bytes().as_slice(),
-            &[b'd'],
+            b"d",
             CONSTANT_TIMESTAMP.to_be_bytes().as_slice()
         ])
     );
@@ -174,11 +174,11 @@ fn deserialize_task_with_dates() {
         CONSTANT_UUID.as_bytes(),
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        &[b'm'],
+        b"m",
         CONSTANT_TIMESTAMP.to_be_bytes().as_slice(),
-        &[b'd'],
+        b"d",
         CONSTANT_TIMESTAMP.to_be_bytes().as_slice(),
-        &[b'w'],
+        b"w",
         CONSTANT_TIMESTAMP.to_be_bytes().as_slice(),
     ]))
     .unwrap();
@@ -202,11 +202,11 @@ fn serialize_task_with_tags() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b't'],
+            b"t",
             0u32.to_be_bytes().as_slice(),
-            &[b't'],
+            b"t",
             1u32.to_be_bytes().as_slice(),
-            &[b't'],
+            b"t",
             2u32.to_be_bytes().as_slice(),
         ])
     );
@@ -219,11 +219,11 @@ fn deserialize_task_with_tags() {
         CONSTANT_UUID.as_bytes(),
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        &[b't'],
+        b"t",
         0u32.to_be_bytes().as_slice(),
-        &[b't'],
+        b"t",
         1u32.to_be_bytes().as_slice(),
-        &[b't'],
+        b"t",
         2u32.to_be_bytes().as_slice(),
     ]))
     .unwrap();
@@ -245,7 +245,7 @@ fn serialize_task_with_project() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b'p'],
+            b"p",
             2u32.to_be_bytes().as_slice(),
         ])
     );
@@ -258,7 +258,7 @@ fn deserialize_task_with_project() {
         CONSTANT_UUID.as_bytes(),
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        &[b'p'],
+        b"p",
         2u32.to_be_bytes().as_slice(),
     ]))
     .unwrap();
@@ -281,7 +281,7 @@ fn serialize_task_with_priority() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b'r', b'M'],
+            b"rM",
         ])
     );
 }
@@ -293,7 +293,7 @@ fn deserialize_task_with_priority() {
         CONSTANT_UUID.as_bytes(),
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        &[b'r', b'L'],
+        b"rL",
     ]))
     .unwrap();
 
@@ -315,9 +315,9 @@ fn serialize_task_with_depends() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b'n'],
+            b"n",
             CONSTANT_UUID.as_bytes(),
-            &[b'n'],
+            b"n",
             CONSTANT_UUID.as_bytes(),
         ])
     );
@@ -330,9 +330,9 @@ fn deserialize_task_with_depends() {
         CONSTANT_UUID.as_bytes(),
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        &[b'n'],
+        b"n",
         CONSTANT_UUID.as_bytes(),
-        &[b'n'],
+        b"n",
         CONSTANT_UUID.as_bytes(),
     ]))
     .unwrap();
@@ -363,25 +363,25 @@ fn serialize_task_with_all_attributes() {
             CONSTANT_UUID.as_bytes(),
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            &[b'A'],
-            &[b'm'],
+            b"A",
+            b"m",
             &CONSTANT_TIMESTAMP.to_be_bytes(),
-            &[b'd'],
+            b"d",
             &CONSTANT_TIMESTAMP.to_be_bytes(),
-            &[b'w'],
+            b"w",
             &CONSTANT_TIMESTAMP.to_be_bytes(),
-            &[b'p'],
+            b"p",
             &30u32.to_be_bytes(),
-            &[b'r', b'L'],
-            &[b't'],
+            b"rL",
+            b"t",
             &0u32.to_be_bytes(),
-            &[b't'],
+            b"t",
             &1u32.to_be_bytes(),
-            &[b't'],
+            b"t",
             &2u32.to_be_bytes(),
-            &[b'n'],
+            b"n",
             CONSTANT_UUID.as_bytes(),
-            &[b'n'],
+            b"n",
             CONSTANT_UUID.as_bytes(),
         ])
     );
@@ -395,25 +395,25 @@ fn deserialize_task_with_all_attributes() {
         CONSTANT_UUID.as_bytes(),
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        &[b'A'],
-        &[b'm'],
+        b"A",
+        b"m",
         &CONSTANT_TIMESTAMP.to_be_bytes(),
-        &[b'd'],
+        b"d",
         &CONSTANT_TIMESTAMP.to_be_bytes(),
-        &[b'w'],
+        b"w",
         &CONSTANT_TIMESTAMP.to_be_bytes(),
-        &[b'p'],
+        b"p",
         &30u32.to_be_bytes(),
-        &[b'r', b'H'],
-        &[b't'],
+        b"rH",
+        b"t",
         &0u32.to_be_bytes(),
-        &[b't'],
+        b"t",
         &1u32.to_be_bytes(),
-        &[b't'],
+        b"t",
         &2u32.to_be_bytes(),
-        &[b'n'],
+        b"n",
         CONSTANT_UUID.as_bytes(),
-        &[b'n'],
+        b"n",
         CONSTANT_UUID.as_bytes(),
     ]))
     .unwrap();
