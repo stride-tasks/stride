@@ -110,11 +110,7 @@ impl KeyStore {
 
     pub(crate) fn has_key_for(&self, status: TaskStatus) -> Result<bool, RustError> {
         self.load()?;
-        let keys = self
-            .keys
-            .lock()
-            .map_err(|_| anyhow::Error::msg("could not lock key store"))
-            .unwrap();
+        let keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
         Ok(keys.contains_key(&status))
     }
 

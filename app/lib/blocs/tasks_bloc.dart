@@ -184,7 +184,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   @override
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
-    logBloc.add(LogErrorEvent(error: error, stackTrace: stackTrace));
+    logBloc.add(
+      LogErrorEvent(
+        error: error,
+        stackTrace: stackTrace,
+        message: 'task',
+      ),
+    );
   }
 
   @override

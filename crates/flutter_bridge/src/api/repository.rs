@@ -8,7 +8,6 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::{Context, Result};
 use base64::Engine;
 use chrono::Utc;
 use flutter_rust_bridge::frb;
@@ -254,7 +253,7 @@ impl Storage {
         Ok(true)
     }
 
-    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
         let index = self.get_index(uuid)?;
         let Some(index) = index else {
             return Ok(None);
@@ -265,7 +264,7 @@ impl Storage {
         Ok(Some(task))
     }
 
-    fn clear(&mut self) -> Result<()> {
+    fn clear(&mut self) -> Result<(), RustError> {
         self.loaded = true;
         self.tasks.clear();
         self.save()?;
@@ -378,7 +377,7 @@ impl TaskStorage {
         }
     }
 
-    pub fn add(&mut self, task: Task) -> Result<()> {
+    pub fn add(&mut self, task: Task) -> Result<(), RustError> {
         if !self.repository_path.exists() {
             self.init_repotitory()?;
         }
@@ -416,7 +415,7 @@ impl TaskStorage {
     }
 
     #[allow(unused)]
-    pub(crate) fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+    pub(crate) fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
         for storage in self.storage_mut() {
             if let Some(task) = storage.remove(uuid)? {
                 return Ok(Some(task));
@@ -436,7 +435,7 @@ impl TaskStorage {
         Ok(updated)
     }
 
-    pub fn update(&mut self, task: &Task) -> Result<bool> {
+    pub fn update(&mut self, task: &Task) -> Result<bool, RustError> {
         let updated = self.update2(task)?;
         if updated {
             self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
@@ -444,7 +443,7 @@ impl TaskStorage {
         Ok(updated)
     }
 
-    pub fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool> {
+    pub fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
         if task.status == status {
             return Ok(true);
         }
@@ -465,8 +464,9 @@ impl TaskStorage {
             storage.save()?;
         }
 
-        let mut found_task =
-            found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
+        let Some(mut found_task) = found_task else {
+            return Ok(false);
+        };
 
         found_task.task.active = false;
         found_task.task.status = status;
@@ -505,11 +505,12 @@ impl TaskStorage {
         Ok(found_task.map(|DecryptedTask { task, .. }| task))
     }
 
-    pub fn remove_task(&mut self, task: &Task) -> Result<bool> {
+    pub fn remove_task(&mut self, task: &Task) -> Result<bool, RustError> {
         let found_task = self.remove_task2(task)?;
 
-        let found_task =
-            found_task.with_context(|| format!("No task found with uuid: {}", task.uuid))?;
+        let Some(found_task) = found_task else {
+            return Ok(false);
+        };
 
         let message = format!("$PURGE {}", found_task.uuid.to_base64());
 
@@ -544,7 +545,7 @@ impl TaskStorage {
         }
     }
 
-    pub fn clear(&mut self) -> Result<()> {
+    pub fn clear(&mut self) -> Result<(), RustError> {
         for storage in self.storage_mut() {
             storage.clear()?;
         }
@@ -633,7 +634,7 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn checkout(&mut self) -> Result<()> {
+    pub fn checkout(&mut self) -> Result<(), RustError> {
         let settings = Settings::get();
 
         self.sync()?;
@@ -648,12 +649,11 @@ impl TaskStorage {
 
         let name = reference
             .name()
-            .context("invalid UTF-8 reference name of branch")?;
+            .expect("invalid UTF-8 reference name of branch");
         repository.set_head(name)?;
 
         if !self.tasks_path.exists() {
-            std::fs::create_dir(&self.tasks_path)
-                .expect("creating the tasks directory should not fail");
+            std::fs::create_dir(&self.tasks_path)?;
         }
 
         Ok(())
@@ -684,7 +684,7 @@ impl TaskStorage {
             std::fs::create_dir_all(&self.tasks_path)?;
         }
 
-        Result::Ok(())
+        Ok(())
     }
 
     pub fn add_and_commit(&self, message: &str) -> Result<bool, RustError> {
@@ -904,7 +904,7 @@ impl TaskStorage {
             with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
-            Result::Ok(())
+            Ok(())
         });
 
         let remote = repository.remote("origin", &settings.repository.origin);
@@ -998,7 +998,7 @@ impl TaskStorage {
         let remote_branch = &settings.repository.branch;
         do_merge(&repository, remote_branch, &fetch_commit)?;
 
-        Result::Ok(true)
+        Ok(true)
     }
 
     pub fn push(&self, force: bool) -> Result<(), RustError> {
@@ -1012,7 +1012,7 @@ impl TaskStorage {
             with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
-            Result::Ok(())
+            Ok(())
         });
 
         let remote = repository.remote("origin", &settings.repository.origin);
@@ -1080,7 +1080,7 @@ impl TaskStorage {
             };
         }
 
-        Result::Ok(())
+        Ok(())
     }
 
     pub fn export(&mut self) -> Result<String, RustError> {
@@ -1189,7 +1189,7 @@ fn with_authentication(
     let certificate_error = error.clone();
     callbacks.certificate_check(move |cert, hostname| {
         let Some(cert_host_key) = cert.as_hostkey() else {
-            return Result::Ok(CertificateCheckStatus::CertificatePassthrough);
+            return Ok(CertificateCheckStatus::CertificatePassthrough);
         };
         let Some(host_key_type) = cert_host_key.hostkey_type() else {
             *certificate_error.borrow_mut() = Some(
@@ -1207,7 +1207,7 @@ fn with_authentication(
         let host_key = cert_host_key.hostkey().unwrap();
         let host_key = base64::engine::general_purpose::STANDARD.encode(host_key);
 
-        let Result::Ok(host_key_type) = HostKeyType::try_from(host_key_type) else {
+        let Ok(host_key_type) = HostKeyType::try_from(host_key_type) else {
             *certificate_error.borrow_mut() = Some(ErrorKind::UnknownKeyType.into());
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
@@ -1245,7 +1245,7 @@ fn with_authentication(
             ));
         }
 
-        Result::Ok(CertificateCheckStatus::CertificateOk)
+        Ok(CertificateCheckStatus::CertificateOk)
     });
 
     error

@@ -9,6 +9,13 @@ use stride_crypto::crypter::Error as EncryptionError;
 
 #[frb(ignore)]
 #[derive(Debug, Error)]
+pub enum SettingsError {
+    #[error("invalid encoding: {0}")]
+    InvalidEncoding(serde_json::Error),
+}
+
+#[frb(ignore)]
+#[derive(Debug, Error)]
 pub enum KeyStoreError {
     #[error("invalid task status in key store: {identifier}")]
     InvalidTaskStatus { identifier: u8 },
@@ -90,6 +97,9 @@ pub enum ErrorKind {
 
     #[error("encryption error: {0}")]
     Encryption(#[from] EncryptionError),
+
+    #[error("settings error: {0}")]
+    Settings(#[from] SettingsError),
 
     #[error("base64 decode error: {0}")]
     Base64Decode(#[from] base64::DecodeError),
@@ -181,6 +191,14 @@ impl From<KeyStoreError> for RustError {
     fn from(error: KeyStoreError) -> Self {
         Self {
             repr: Box::from(ErrorKind::KeyStore(error)),
+        }
+    }
+}
+
+impl From<SettingsError> for RustError {
+    fn from(error: SettingsError) -> Self {
+        Self {
+            repr: Box::from(ErrorKind::Settings(error)),
         }
     }
 }

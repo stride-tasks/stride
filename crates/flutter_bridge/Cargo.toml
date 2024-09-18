@@ -18,13 +18,17 @@ crate-type = ["lib", "cdylib", "staticlib"]
 version = "=2.4.0"
 default-features = false
 features = [
-    "anyhow",
     "thread-pool",
     "rust-async",
     "user-utils",
     "dart-opaque",
     "chrono",
     "uuid",
+
+    # TODO: Remove this.
+    # It is not needed but the generate command creates conversion
+    # for it and it fails to compile.
+    "anyhow",
 ]
 
 [dependencies]
@@ -33,13 +37,15 @@ serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-anyhow.workspace = true
 thiserror.workspace = true
 git2.workspace = true
 base64.workspace = true
 log.workspace = true
 env_logger.workspace = true
 getrandom.workspace = true
+
+[dev-dependencies]
+anyhow.workspace = true
 
 [lints]
 workspace = true

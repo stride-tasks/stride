@@ -495,7 +495,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageAddConstMeta,
       argValues: [that, task],
@@ -555,7 +556,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageChangeCategoryConstMeta,
       argValues: [that, task, status],
@@ -582,7 +584,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageCheckoutConstMeta,
       argValues: [that],
@@ -608,7 +611,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageClearConstMeta,
       argValues: [that],
@@ -866,7 +870,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageRemoveTaskConstMeta,
       argValues: [that, task],
@@ -1034,7 +1039,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiRepositoryTaskStorageUpdateConstMeta,
       argValues: [that, task],
@@ -1317,7 +1323,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsEncryptionKeyRemoveKeyConstMeta,
       argValues: [uuid],
@@ -1343,7 +1350,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_encryption_key,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsEncryptionKeySaveConstMeta,
       argValues: [key],
@@ -1370,7 +1378,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_encryption_key,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsEncryptionKeyUpdateConstMeta,
       argValues: [uuid, key],
@@ -1471,7 +1480,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsSettingsLoadConstMeta,
       argValues: [paths],
@@ -1519,7 +1529,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsSettingsSaveConstMeta,
       argValues: [settings],

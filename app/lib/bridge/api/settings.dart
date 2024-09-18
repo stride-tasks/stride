@@ -22,8 +22,8 @@ import 'package:uuid/uuid.dart';
 part 'settings.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_theme_mode`, `encryption_key`, `ssh_key_path`, `ssh_key`
-// These types are ignored because they are not used by any `pub` functions: `APPLICATION_STATE_INSTANCE`, `SETTINGS_STREAM_SINK`, `State`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `deref`, `deref`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `initialize`, `initialize`
+// These types are ignored because they are not used by any `pub` functions: `State`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `get`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 

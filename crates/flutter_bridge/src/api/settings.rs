@@ -3,15 +3,17 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-use anyhow::{bail, Context};
 use base64::Engine;
 use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{frb_generated::StreamSink, git::known_hosts::KnownHosts, RustError};
+use crate::{
+    api::error::KeyStoreError, frb_generated::StreamSink, git::known_hosts::KnownHosts, RustError,
+};
 
 use super::{
+    error::SettingsError,
     filter::{Filter, FilterSelection},
     logging::Logger,
 };
@@ -215,17 +217,19 @@ impl EncryptionKey {
         }
     }
 
-    pub fn save(key: &str) -> anyhow::Result<Self> {
+    pub fn save(key: &str) -> Result<Self, RustError> {
         Self::update(Uuid::now_v7(), key)
     }
 
-    pub fn update(uuid: Uuid, key: &str) -> anyhow::Result<Self> {
-        let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(key)
-            .context("could not decode base64 encryption key")?;
+    pub fn update(uuid: Uuid, key: &str) -> Result<Self, RustError> {
+        let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(key)?;
 
         if decoded.len() != 32 {
-            bail!("encryption key error: invalid encryption key must be 256-bits (32 bytes)");
+            return Err(KeyStoreError::InvalidCipherLength {
+                expected_length: 32,
+                actual_length: decoded.len(),
+            }
+            .into());
         }
 
         let mut settings = Settings::get();
@@ -251,7 +255,7 @@ impl EncryptionKey {
     }
 
     // Store keys on disk instead of memory like ssh keys.
-    pub fn remove_key(uuid: &Uuid) -> anyhow::Result<bool> {
+    pub fn remove_key(uuid: &Uuid) -> Result<bool, RustError> {
         let mut settings = Settings::get();
         if settings.repository.encryption_key_uuid == Some(*uuid) {
             Logger::error(&format!(
@@ -348,13 +352,13 @@ impl Settings {
     pub fn get() -> Self {
         APPLICATION_STATE_INSTANCE.lock().unwrap().settings.clone()
     }
-    pub fn load(paths: ApplicationPaths) -> anyhow::Result<Settings> {
+    pub fn load(paths: ApplicationPaths) -> Result<Settings, RustError> {
         std::env::set_var("HOME", &paths.support_path);
 
         let ssh_path = Path::new(&paths.support_path).join(".ssh");
 
-        std::fs::create_dir_all(&ssh_path).unwrap();
-        std::fs::write(ssh_path.join("known_hosts"), "\n").unwrap();
+        std::fs::create_dir_all(&ssh_path)?;
+        std::fs::write(ssh_path.join("known_hosts"), "\n")?;
 
         init_logger(Path::new(&paths.log_path));
 
@@ -369,18 +373,19 @@ impl Settings {
 
         let settings = if filepath.exists() {
             let contents = std::fs::read_to_string(filepath)?;
-            serde_json::from_str(&contents).context("cannot parse settings file")?
+            serde_json::from_str(&contents).map_err(SettingsError::InvalidEncoding)?
         } else {
             Settings::default()
         };
 
         APPLICATION_STATE_INSTANCE.lock().unwrap().settings = settings.clone();
-        anyhow::Ok(settings)
+        Ok(settings)
     }
-    pub fn save(settings: Settings) -> anyhow::Result<()> {
+    pub fn save(settings: Settings) -> Result<(), RustError> {
         let filepath = application_support_path().join("settings.json");
 
-        let contents = serde_json::to_string_pretty(&settings)?;
+        let contents =
+            serde_json::to_string_pretty(&settings).map_err(SettingsError::InvalidEncoding)?;
         std::fs::write(filepath, contents)?;
 
         {
