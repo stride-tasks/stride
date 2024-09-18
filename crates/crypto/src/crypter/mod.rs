@@ -79,6 +79,11 @@ impl Crypter {
         }
     }
 
+    /// Encrypt given plaintext with additional authenticated data.
+    ///
+    /// # Panics
+    ///
+    /// Panics if we can't get random bytes from `getrandom`.
     pub fn encrypt(&self, data: &[u8], aad: &[u8]) -> Result<Vec<u8>> {
         let mut iv = [0u8; Aes256Ocb::IV_LEN];
         getrandom::getrandom(&mut iv).expect("cannot get random");

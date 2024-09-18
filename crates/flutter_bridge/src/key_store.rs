@@ -26,7 +26,7 @@ pub(crate) struct KeyStore {
 // TODO: Clear poisoned mutex when panic happens.
 
 impl KeyStore {
-    pub fn new(path: &Path, crypther: Arc<Crypter>) -> Self {
+    pub(crate) fn new(path: &Path, crypther: Arc<Crypter>) -> Self {
         Self {
             path: path.to_path_buf(),
             keys: HashMap::new().into(),
