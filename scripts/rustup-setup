@@ -1,0 +1,16 @@
+#!/bin/sh
+
+VERSION=1.27.1
+
+PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+RUSTUP_DIR="$APP_DIR/.rustup"
+
+RUSTUP="$(command -v rustup)"
+
+if [ ! -z "$RUSTUP" ]; then
+    exit 0
+fi
+
+git clone "--filter=tree:0" https://github.com/rust-lang/rustup "$RUSTUP_DIR" --branch "$VERSION"
+
+exec "$RUSTUP_DIR"/rustup-init.sh --no-update-default-toolchain -y
