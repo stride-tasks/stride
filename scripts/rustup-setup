@@ -2,8 +2,9 @@
 
 VERSION=1.27.1
 
-PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-RUSTUP_DIR="$APP_DIR/.rustup"
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+PROJECT_DIR="$SCRIPTS_DIR/.."
+RUSTUP_DIR="$PROJECT_DIR/.rustup"
 
 RUSTUP="$(command -v rustup)"
 
