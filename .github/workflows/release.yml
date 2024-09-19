@@ -69,12 +69,12 @@ jobs:
       - name: Cache directory
         uses: actions/cache@v3
         with:
-          path: ${{ env.BUILD_PATH }}/flutter/build
+          path: ${{ env.BUILD_PATH }}/app/build
           # Define a key for the cache, commonly includes the hash of dependencies
-          key: ${{ runner.os }}-flutter-build-${{ hashFiles('**/pubspec.yaml', '**/Cargo.toml') }}
+          key: ${{ runner.os }}-app-build-${{ hashFiles('**/pubspec.yaml') }}
           # Define a restore key if an exact match is not found
           restore-keys: |
-            ${{ runner.os }}-flutter-build-
+            ${{ runner.os }}-app-build-
 
       - name: Build APKs
         working-directory: ${{ env.BUILD_PATH }}
@@ -89,15 +89,15 @@ jobs:
           export SOURCE_DATE_EPOCH=1
           export ZERO_AR_DATE=1
 
-          cd flutter
+          cd app
           flutter build apk --release --split-per-abi
           flutter build apk --release
 
       - name: Archive mappings
         working-directory: ${{ env.BUILD_PATH }}
         run: |
-          mv flutter/build/app/outputs/mapping/{release,mapping}
-          tar -czvf mapping.tar.gz --directory=flutter/build/app/outputs/mapping mapping
+          mv app/build/app/outputs/mapping/{release,mapping}
+          tar -czvf mapping.tar.gz --directory=app/build/app/outputs/mapping mapping
 
       - name: Sign APKs
         working-directory: ${{ env.BUILD_PATH }}
@@ -118,7 +118,7 @@ jobs:
               --v2-signing-enabled true \
               --v3-signing-enabled true \
               --out "${name}.apk" \
-              "flutter/build/app/outputs/flutter-apk/app-${name}.apk"
+              "app/build/app/outputs/flutter-apk/app-${name}.apk"
           done
           rm keystore.p12
 
