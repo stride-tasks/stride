@@ -1,0 +1,15 @@
+#!/bin/sh
+
+VERSION=3.24.0
+
+APP_DIR="$( cd "$( dirname "$0" )" && pwd )"
+FLUTTER_DIR="$APP_DIR/.flutter"
+
+if [ -e "$FLUTTER_DIR" ]; then
+    exec "$FLUTTER_DIR"/bin/flutter $@
+fi
+
+git clone "--filter=tree:0" https://github.com/flutter/flutter "$FLUTTER_DIR" --branch "$VERSION"
+
+"$FLUTTER_DIR"/bin/flutter config --no-analytics
+exec "$FLUTTER_DIR"/bin/flutter $@

@@ -31,6 +31,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# flutter repository
+.flutter
+
 # Symbolication related
 app.*.symbols
 
