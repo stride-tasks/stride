@@ -64,21 +64,50 @@ class AndroidEnvironment {
     required String javaHome,
   }) {
     final sdkManagerExtension = Platform.isWindows ? '.bat' : '';
-    final sdkManager = path.join(
+    final executableName = 'sdkmanager$sdkManagerExtension';
+    var sdkManager = path.join(
       sdkPath,
       'cmdline-tools',
       'latest',
       'bin',
-      'sdkmanager$sdkManagerExtension',
+      executableName,
     );
 
+    // Use sdkmanager from PATH if it exists.
+    //
+    // This is needed if we have the sdkmanager package installed by F-droid.
+    // See: https://packages.debian.org/testing/devel/sdkmanager
+    if (!File(sdkManager).existsSync()) {
+      // Get the system's PATH environment variable
+      final pathEnv = Platform.environment['PATH'];
+
+      // Split the PATH based on the OS
+      final separator = Platform.isWindows ? ';' : ':';
+      final paths = pathEnv?.split(separator) ?? [];
+
+      for (final executablesPath in paths) {
+        final file = File(path.join(executablesPath, executableName));
+        if (file.existsSync()) {
+          log
+            ..warning('Command does not exist: $sdkManager')
+            ..info('Using ${file.path} from PATH environment variable');
+          sdkManager = file.path;
+          break;
+        }
+      }
+    }
+
     log.info('Installing NDK $ndkVersion');
-    runCommand(sdkManager, [
-      '--install',
-      'ndk;$ndkVersion',
-    ], environment: {
-      'JAVA_HOME': javaHome,
-    });
+    runCommand(
+      sdkManager,
+      [
+        '--install',
+        'ndk;$ndkVersion',
+      ],
+      environment: {
+        'JAVA_HOME': javaHome,
+      },
+    );
   }
 
   Future<Map<String, String>> buildEnvironment() async {
