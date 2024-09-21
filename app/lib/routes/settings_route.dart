@@ -38,9 +38,9 @@ class SettingsRoute extends StatelessWidget {
                 title: Text('General', style: headingStyle),
                 tiles: [
                   SettingsTileSwitch(
-                    title: const Text('Theme'),
+                    title: const Text('Dark Theme'),
                     leading: const Icon(Icons.color_lens),
-                    description: const Text('Choose the theme mode'),
+                    description: const Text('Enable dark theme mode'),
                     value: settings.darkMode,
                     onChanged: (val) =>
                         context.read<SettingsBloc>().add(SettingsToggleTheme()),
