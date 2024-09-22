@@ -150,7 +150,8 @@ class _TasksRouteState extends State<TasksRoute> {
     return Drawer(
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
-          final filters = state.settings.filters;
+          final settings = state.settings;
+          final filters = settings.filters;
           return Padding(
             padding: const EdgeInsets.all(10.0),
             child: Column(
@@ -167,9 +168,13 @@ class _TasksRouteState extends State<TasksRoute> {
                     itemCount: filters.length,
                     itemBuilder: (context, index) {
                       final filter = filters[index];
-                      final selected = state.settings.selectedFilter != null &&
-                          state.settings.selectedFilter ==
-                              FilterSelection.predefined(uuid: filter.uuid);
+                      var selected = false;
+                      if (settings.selectedFilter
+                          is FilterSelection_Predefined) {
+                        final predefined = settings.selectedFilter!
+                            as FilterSelection_Predefined;
+                        selected = filter.uuid == predefined.uuid;
+                      }
                       return Card(
                         child: ListTile(
                           title: Text(filter.name),
@@ -185,23 +190,26 @@ class _TasksRouteState extends State<TasksRoute> {
                           },
                           onTap: () {
                             if (selected) {
-                              final newSettings = state.settings.copyWith(
-                                selectedFilter: null,
-                              );
                               context.read<SettingsBloc>().add(
-                                    SettingsUpdateEvent(settings: newSettings),
+                                    SettingsUpdateEvent(
+                                      settings: settings.copyWith(
+                                        selectedFilter: null,
+                                      ),
+                                    ),
                                   );
                               context.read<TaskBloc>().add(TaskFilterEvent());
                               return;
                             }
 
-                            final newSettings = state.settings.copyWith(
-                              selectedFilter: FilterSelection.predefined(
-                                uuid: filter.uuid,
-                              ),
-                            );
                             context.read<SettingsBloc>().add(
-                                  SettingsUpdateEvent(settings: newSettings),
+                                  SettingsUpdateEvent(
+                                    settings: settings.copyWith(
+                                      selectedFilter:
+                                          FilterSelection.predefined(
+                                        uuid: filter.uuid,
+                                      ),
+                                    ),
+                                  ),
                                 );
                             context
                                 .read<TaskBloc>()
