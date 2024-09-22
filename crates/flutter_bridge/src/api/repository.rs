@@ -1101,12 +1101,10 @@ fn with_authentication(
         };
 
         tried_ssh = true;
-
-        // Figure of why Cred::ssh_key() does not work with the current private key format.
-        Cred::ssh_key_from_memory(
+        Cred::ssh_key(
             username_from_url.unwrap(),
-            Some(&std::fs::read_to_string(&ssh_key.public_path).unwrap()),
-            &std::fs::read_to_string(&ssh_key.private_path).unwrap(),
+            Some(&ssh_key.public_path),
+            &ssh_key.private_path,
             None,
         )
     });

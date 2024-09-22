@@ -1,8 +1,8 @@
-use std::fmt::Debug;
-
 use base64::Engine;
 use openssl::pkey::PKey;
-use pem::Pem;
+use std::fmt::Debug;
+
+use crate::openssh::PrivateKey;
 
 pub struct Ed25519 {
     pub public: String,
@@ -25,24 +25,25 @@ impl Ed25519 {
         let key = PKey::generate_ed25519().unwrap();
 
         let public_key = key.raw_public_key().unwrap();
-        let private_key = key.private_key_to_der().unwrap();
+        let private_key = key.raw_private_key().unwrap();
 
-        let private_pem = Pem::new("PRIVATE KEY", private_key);
-        let private = pem::encode(&private_pem);
+        assert_eq!(public_key.len(), 32);
+        assert_eq!(private_key.len(), 32);
 
         let mut data = Vec::new();
         data.extend((Self::SSH_ED25519.len() as u32).to_be_bytes());
         data.extend(Self::SSH_ED25519.as_bytes());
 
         data.extend((public_key.len() as u32).to_be_bytes());
-        data.extend(public_key);
-
-        // https://coolaj86.com/articles/the-openssh-private-key-format/
+        data.extend(&public_key);
 
         let public = base64::engine::general_purpose::STANDARD.encode(data);
 
+        let private_key =
+            PrivateKey::new_ed25519_unencrypted(public_key, private_key, String::new());
+
         Self {
-            private,
+            private: private_key.encode_pem(),
             public: format!("{} {public}", Self::SSH_ED25519),
         }
     }

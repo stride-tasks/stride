@@ -4,3 +4,4 @@
 
 pub mod crypter;
 pub mod ed25519;
+pub(crate) mod openssh;
