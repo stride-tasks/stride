@@ -1,10 +1,18 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
 
 @immutable
 abstract class SettingsEvent {}
+
+final class SettingsRefreshEvent extends SettingsEvent {
+  final Settings settings;
+  SettingsRefreshEvent({required this.settings});
+}
 
 final class SettingsUpdateEvent extends SettingsEvent {
   final Settings settings;
@@ -37,14 +45,26 @@ class SettingsState {
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   Settings settings;
+  late Stream<Settings> _stream;
+  late StreamSubscription<Settings> _streamSubscription;
 
   SettingsBloc({
     required this.settings,
   }) : super(SettingsState(settings: settings)) {
+    _stream = Settings.createStream();
+    _streamSubscription = _stream.listen(
+      (event) => this.add(SettingsRefreshEvent(settings: event)),
+      onError: (Object error) {
+        Logger.error(message: 'ERROR: settings stream error: $error');
+      },
+    );
+
+    on<SettingsRefreshEvent>((event, emit) async {
+      emit(SettingsState(settings: event.settings));
+    });
+
     on<SettingsUpdateEvent>((event, emit) async {
-      settings = event.settings;
-      await Settings.save(settings: settings);
-      emit(SettingsState(settings: settings));
+      await Settings.save(settings: event.settings);
     });
 
     on<SettingsRemoveKnownHostEvent>((event, emit) async {
@@ -59,7 +79,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         ),
       );
       await Settings.save(settings: settings);
-      emit(SettingsState(settings: settings));
     });
 
     on<SettingsAddKnownHostEvent>((event, emit) async {
@@ -69,7 +88,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         ),
       );
       await Settings.save(settings: settings);
-      emit(SettingsState(settings: settings));
     });
 
     on<SettingsAddEncryptionKeyEvent>((event, emit) async {
@@ -77,13 +95,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         encryptionKeys: settings.encryptionKeys.toList()..add(event.key),
       );
       await Settings.save(settings: settings);
-      emit(SettingsState(settings: settings));
     });
 
     on<SettingsToggleTheme>((event, emit) async {
       settings = settings.copyWith(darkMode: !settings.darkMode);
       await Settings.save(settings: settings);
-      emit(SettingsState(settings: settings));
     });
+  }
+
+  @override
+  Future<void> close() {
+    _streamSubscription.cancel();
+    return super.close();
   }
 }

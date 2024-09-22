@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
@@ -54,14 +52,14 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
             if (widget.encryptionKey != null)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: LimitedBox(
                     maxWidth: 512,
                     maxHeight: 512,
                     child: QrImageView(
                       data: _key,
                       backgroundColor: Colors.white,
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                     ),
                   ),
                 ),
@@ -91,11 +89,6 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
                 key: _key,
               );
             }
-            context.read<SettingsBloc>().add(
-                  SettingsUpdateEvent(
-                    settings: context.read<SettingsBloc>().settings,
-                  ),
-                );
           } on RustError catch (error) {
             Logger.error(
               message: 'encryption key error: ${error.toErrorString()}',
@@ -116,7 +109,7 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
             );
             // ignore: avoid_catches_without_on_clauses
           } catch (error) {
-            Logger.error(message: 'encryption key error: ${error}');
+            Logger.error(message: 'encryption key error: $error');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(error.toString()),

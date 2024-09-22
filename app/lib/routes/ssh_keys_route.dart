@@ -23,7 +23,7 @@ class SshKeysRoute extends StatefulWidget {
 }
 
 class _SshKeysRouteState extends State<SshKeysRoute> {
-  Future<List<SshKey>>? _keys = null;
+  Future<List<SshKey>>? _keys;
 
   @override
   void initState() {

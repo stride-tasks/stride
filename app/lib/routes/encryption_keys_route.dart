@@ -104,18 +104,12 @@ class EncryptionKeysRoute extends StatelessWidget {
                       return Future.value(true);
                     }
 
-                    context.read<SettingsBloc>().add(
-                          SettingsUpdateEvent(
-                            settings: context.read<SettingsBloc>().settings,
-                          ),
-                        );
-
                     Navigator.of(context).pop();
 
-                    Logger.trace(
+                    await Logger.trace(
                       message: 'Encryption Key deleted with UUID: ${key.uuid}',
                     );
-                    return Future.value(true);
+                    return true;
                   },
                 );
               },

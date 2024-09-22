@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{git::known_hosts::KnownHosts, RustError};
+use crate::{frb_generated::StreamSink, git::known_hosts::KnownHosts, RustError};
 
 use super::{
     filter::{Filter, FilterSelection},
@@ -21,6 +21,11 @@ use super::logging::init_logger;
 
 lazy_static! {
     pub(crate) static ref APPLICATION_STATE_INSTANCE: Mutex<State> = State::default().into();
+}
+
+lazy_static! {
+    pub(crate) static ref SETTINGS_STREAM_SINK: Mutex<Option<StreamSink<Settings>>> =
+        Mutex::default();
 }
 
 #[frb(ignore)]
@@ -384,9 +389,19 @@ impl Settings {
         std::fs::write(filepath, contents)?;
 
         {
-            APPLICATION_STATE_INSTANCE.lock().unwrap().settings = settings;
+            APPLICATION_STATE_INSTANCE.lock().unwrap().settings = settings.clone();
         }
+
+        let mut stream = SETTINGS_STREAM_SINK.lock().expect("should not fail");
+        let Some(stream) = stream.as_mut() else {
+            return Ok(());
+        };
+        stream.add(settings).unwrap();
         Ok(())
+    }
+    pub fn create_stream(stream_sink: StreamSink<Settings>) {
+        let mut stream = SETTINGS_STREAM_SINK.lock().unwrap();
+        *stream = Some(stream_sink);
     }
 
     pub(crate) fn encryption_key(&self, uuid: &Uuid) -> Option<&EncryptionKey> {
