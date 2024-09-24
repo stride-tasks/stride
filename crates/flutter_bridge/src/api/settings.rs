@@ -201,7 +201,6 @@ impl SshKey {
     }
 }
 
-#[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptionKey {
     pub uuid: Uuid,

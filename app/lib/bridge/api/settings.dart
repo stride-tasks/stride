@@ -98,13 +98,15 @@ class ApplicationPaths {
           logPath == other.logPath;
 }
 
-@freezed
-class EncryptionKey with _$EncryptionKey {
-  const EncryptionKey._();
-  const factory EncryptionKey({
-    required UuidValue uuid,
-    required String key,
-  }) = _EncryptionKey;
+class EncryptionKey {
+  final UuidValue uuid;
+  final String key;
+
+  const EncryptionKey({
+    required this.uuid,
+    required this.key,
+  });
+
   static Future<EncryptionKey> generate() =>
       RustLib.instance.api.crateApiSettingsEncryptionKeyGenerate();
 
@@ -118,6 +120,17 @@ class EncryptionKey with _$EncryptionKey {
           {required UuidValue uuid, required String key}) =>
       RustLib.instance.api
           .crateApiSettingsEncryptionKeyUpdate(uuid: uuid, key: key);
+
+  @override
+  int get hashCode => uuid.hashCode ^ key.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EncryptionKey &&
+          runtimeType == other.runtimeType &&
+          uuid == other.uuid &&
+          key == other.key;
 }
 
 @freezed
