@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/task.dart';
+import 'package:stride/utils/functions.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -128,12 +128,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskForcePushEvent>((event, emit) async {
-      try {
-        await repository.push(force: true);
-      } on RustError catch (error) {
-        Logger.error(message: error.toErrorString());
-        return;
-      }
+      await repository.push(force: true);
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -177,23 +172,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<List<Task>> _tasks() async {
-    try {
-      if (filter == null) {
-        final tasks = await repository.tasks();
-        return tasks;
-      } else {
-        final tasks = await repository.tasksWithFilter(filter: filter!);
-        return tasks;
-      }
-    } on RustError catch (error) {
-      Logger.error(message: 'repository load error: ${error.toErrorString()}');
-    } on AnyhowException catch (error) {
-      Logger.error(message: 'repository load error: ${error.message}');
-      // ignore: avoid_catches_without_on_clauses
-    } catch (error) {
-      Logger.error(message: 'repository load error: $error');
+    if (filter == null) {
+      final tasks = await repository.tasks();
+      return tasks;
+    } else {
+      final tasks = await repository.tasksWithFilter(filter: filter!);
+      return tasks;
     }
-    return [];
+  }
+
+  @override
+  void onError(Object error, StackTrace stackTrace) {
+    super.onError(error, stackTrace);
+    logException(error, stackTrace);
   }
 
   @override

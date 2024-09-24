@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
+import 'package:stride/utils/functions.dart';
 
 @immutable
 abstract class SettingsEvent {}
@@ -53,9 +54,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }) : super(SettingsState(settings: settings)) {
     _stream = Settings.createStream();
     _streamSubscription = _stream.listen(
-      (event) => this.add(SettingsRefreshEvent(settings: event)),
-      onError: (Object error) {
-        Logger.error(message: 'ERROR: settings stream error: $error');
+      (event) => add(SettingsRefreshEvent(settings: event)),
+      onError: (Object error, StackTrace stackTrace) {
+        Logger.error(
+          message:
+              'ERROR: settings stream error: $error\n\nDart Backtrace:\n$stackTrace',
+        );
       },
     );
 
@@ -101,6 +105,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       settings = settings.copyWith(darkMode: !settings.darkMode);
       await Settings.save(settings: settings);
     });
+  }
+
+  @override
+  void onError(Object error, StackTrace stackTrace) {
+    super.onError(error, stackTrace);
+    logException(error, stackTrace);
   }
 
   @override
