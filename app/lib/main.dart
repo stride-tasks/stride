@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/blocs/tost_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
@@ -49,13 +50,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<TostBloc>(
+          create: (context) => TostBloc(),
+        ),
         BlocProvider<SettingsBloc>(
-          create: (context) => SettingsBloc(settings: settings),
+          create: (context) => SettingsBloc(
+            settings: settings,
+            tostBloc: context.read<TostBloc>(),
+          ),
         ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
-            settingsBloc: context.read<SettingsBloc>(),
             repository: repository,
+            settingsBloc: context.read<SettingsBloc>(),
+            tostBloc: context.read<TostBloc>(),
           ),
         ),
       ],
@@ -73,7 +81,19 @@ class MyApp extends StatelessWidget {
               darkTheme: generateTheme(darkMode: true),
               themeMode:
                   state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
-              home: const TasksRoute(),
+              home: BlocListener<TostBloc, TostState>(
+                listener: (context, state) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message.split('\n')[0]),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 10),
+                      backgroundColor: state.isError ? Colors.red[300] : null,
+                    ),
+                  );
+                },
+                child: const TasksRoute(),
+              ),
             );
           },
         ),
