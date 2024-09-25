@@ -1,15 +1,14 @@
+use flutter_rust_bridge::frb;
+use serde::{Deserialize, Serialize};
 use std::{
     path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
 };
-
-use base64::Engine;
-use flutter_rust_bridge::frb;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    api::error::KeyStoreError, frb_generated::StreamSink, git::known_hosts::KnownHosts, RustError,
+    api::error::KeyStoreError, base64_decode, frb_generated::StreamSink,
+    git::known_hosts::KnownHosts, RustError,
 };
 
 use super::{
@@ -222,7 +221,7 @@ impl EncryptionKey {
     }
 
     pub fn update(uuid: Uuid, key: &str) -> Result<Self, RustError> {
-        let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(key)?;
+        let decoded = base64_decode(key)?;
 
         if decoded.len() != 32 {
             return Err(KeyStoreError::InvalidCipherLength {

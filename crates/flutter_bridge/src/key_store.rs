@@ -5,13 +5,12 @@ use std::{
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc, Mutex},
 };
-
-use base64::Engine;
 use stride_crypto::crypter::Crypter;
 use uuid::Uuid;
 
 use crate::{
     api::{error::KeyStoreError, repository::generate_iv},
+    base64_decode, base64_encode,
     task::{Task, TaskStatus},
     ErrorKind, RustError,
 };
@@ -48,7 +47,7 @@ impl KeyStore {
         for line in file.lines() {
             let line = line?;
 
-            let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(line)?;
+            let bytes = base64_decode(line)?;
 
             let (aad, _iv, decrypted) = self.master_key.decrypt(&bytes, 1)?;
 
@@ -99,7 +98,7 @@ impl KeyStore {
             };
 
             let encrypted = self.master_key.encrypt(key.encryption_key(), &[aad])?;
-            let base64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(encrypted);
+            let base64 = base64_encode(encrypted);
 
             contents.push_str(&base64);
             contents.push('\n');
@@ -136,7 +135,7 @@ impl KeyStore {
 
         let iv = iv.unwrap_or_else(generate_iv);
         let encrypted = key.encrypt_with_iv(&iv, &data[16..], task.uuid.as_bytes())?;
-        let base64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(encrypted);
+        let base64 = base64_encode(encrypted);
 
         drop(keys);
 
@@ -153,7 +152,7 @@ impl KeyStore {
     ) -> Result<([u8; 12], Task), RustError> {
         self.load()?;
 
-        let base64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(base64.trim())?;
+        let base64 = base64_decode(base64.trim())?;
 
         let keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
         let key = if let Some(key) = keys.get(&status) {

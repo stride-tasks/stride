@@ -19,6 +19,7 @@ use crate::{
         error::{ExportError, ImportError},
         settings::Settings,
     },
+    base64_decode,
     git::known_hosts::{Host, HostKeyType, KnownHosts},
     key_store::KeyStore,
     task::{Task, TaskPriority, TaskStatus},
@@ -321,9 +322,7 @@ impl TaskStorage {
             .encryption_key(&encryption_key_uuid)
             .expect("there should be a key with the specified uuid");
 
-        let key = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(&encryptin_key.key)
-            .unwrap();
+        let key = base64_decode(&encryptin_key.key).unwrap();
 
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
 
