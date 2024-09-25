@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/utils/classes.dart';
 
 @immutable
 abstract class TostEvent {}
@@ -64,13 +65,11 @@ class TostBloc extends Bloc<TostEvent, TostState> {
     return value;
   }
 
-  Future<(T?, Object?)> catch_<T>(Future<T> Function() f) async {
-    try {
-      return (await f(), null);
-      // ignore: avoid_catches_without_on_clauses
-    } catch (error, stackTrace) {
+  Future<Result<T, Object>> catch_<T>(Future<T> Function() f) async {
+    final result = await Result.catch_<T, Object>(f);
+    if (result case Err(error: (final error, final stackTrace))) {
       add(TostErrorEvent(error: error, stackTrace: stackTrace));
-      return (null, error);
     }
+    return result.mapErr((caughtError) => caughtError.$1);
   }
 }

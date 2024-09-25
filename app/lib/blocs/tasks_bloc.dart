@@ -8,6 +8,7 @@ import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/task.dart';
+import 'package:stride/utils/classes.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -150,8 +151,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final tasksOld = await _tasks();
       emit(TaskState(tasks: tasksOld, syncing: true));
 
-      final (_, error) = await tostBloc.catch_(repository.sync_);
-      if (error is RustError) {
+      final result = await tostBloc.catch_(repository.sync_);
+      if (result case Err(:final error) when error is RustError) {
         emit(TaskState(tasks: tasksOld, error: error));
         return;
       }
