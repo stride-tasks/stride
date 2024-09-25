@@ -6,38 +6,52 @@ import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/utils/classes.dart';
 
 @immutable
-abstract class TostEvent {}
+abstract class LogEvent {}
 
-final class TostMessageEvent extends TostEvent {
+final class LogMessageEvent extends LogEvent {
   final String message;
-  TostMessageEvent({required this.message});
+  final bool show;
+  LogMessageEvent({required this.message, this.show = true});
 }
 
-final class TostErrorEvent extends TostEvent {
+final class LogErrorEvent extends LogEvent {
   final Object error;
   final StackTrace? stackTrace;
-  TostErrorEvent({required this.error, this.stackTrace});
+  final bool show;
+  LogErrorEvent({
+    required this.error,
+    this.stackTrace,
+    this.show = true,
+  });
 }
 
-class TostState {
+class LogState {
   final String message;
   final bool isError;
-  const TostState({
+  final bool show;
+  const LogState({
     required this.message,
+    this.show = true,
     this.isError = false,
   });
 }
 
-class TostBloc extends Bloc<TostEvent, TostState> {
-  TostBloc() : super(TostState(message: '')) {
-    on<TostMessageEvent>((event, emit) async {
-      emit(TostState(message: event.message));
+class LogBloc extends Bloc<LogEvent, LogState> {
+  LogBloc() : super(const LogState(message: '')) {
+    on<LogMessageEvent>((event, emit) async {
+      emit(LogState(message: event.message, show: event.show));
     });
 
-    on<TostErrorEvent>((event, emit) async {
+    on<LogErrorEvent>((event, emit) async {
       final message = _errorToString(event.error, event.stackTrace);
       Logger.error(message: message);
-      emit(TostState(message: message, isError: true));
+      emit(
+        LogState(
+          message: message,
+          show: event.show,
+          isError: true,
+        ),
+      );
     });
   }
 
@@ -60,15 +74,13 @@ class TostBloc extends Bloc<TostEvent, TostState> {
       message += ' ';
     }
 
-    final value =
-        '${message}error: $errorString\n\nDart Backtrace:\n$stackTrace';
-    return value;
+    return '${message}error: $errorString\n\nDart Backtrace:\n$stackTrace';
   }
 
   Future<Result<T, Object>> catch_<T>(Future<T> Function() f) async {
     final result = await Result.catch_<T, Object>(f);
     if (result case Err(error: (final error, final stackTrace))) {
-      add(TostErrorEvent(error: error, stackTrace: stackTrace));
+      add(LogErrorEvent(error: error, stackTrace: stackTrace));
     }
     return result.mapErr((caughtError) => caughtError.$1);
   }

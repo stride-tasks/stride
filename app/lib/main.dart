@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/blocs/tost_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
@@ -50,20 +50,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<TostBloc>(
-          create: (context) => TostBloc(),
+        BlocProvider<LogBloc>(
+          create: (context) => LogBloc(),
         ),
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(
             settings: settings,
-            tostBloc: context.read<TostBloc>(),
+            logBloc: context.read<LogBloc>(),
           ),
         ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
             repository: repository,
             settingsBloc: context.read<SettingsBloc>(),
-            tostBloc: context.read<TostBloc>(),
+            logBloc: context.read<LogBloc>(),
           ),
         ),
       ],
@@ -81,13 +81,17 @@ class MyApp extends StatelessWidget {
               darkTheme: generateTheme(darkMode: true),
               themeMode:
                   state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
-              home: BlocListener<TostBloc, TostState>(
+              home: BlocListener<LogBloc, LogState>(
                 listener: (context, state) {
+                  if (!state.show) {
+                    return;
+                  }
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(state.message.split('\n')[0]),
                       behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 10),
+                      duration: const Duration(seconds: 10),
                       backgroundColor: state.isError ? Colors.red[300] : null,
                     ),
                   );

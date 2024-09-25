@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:stride/blocs/tost_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
@@ -45,14 +45,14 @@ class SettingsState {
 }
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  TostBloc tostBloc;
+  LogBloc logBloc;
   Settings settings;
   late Stream<Settings> _stream;
   late StreamSubscription<Settings> _streamSubscription;
 
   SettingsBloc({
     required this.settings,
-    required this.tostBloc,
+    required this.logBloc,
   }) : super(SettingsState(settings: settings)) {
     _stream = Settings.createStream();
     _streamSubscription = _stream.listen(
@@ -112,7 +112,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   @override
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
-    tostBloc.add(TostErrorEvent(error: error, stackTrace: stackTrace));
+    logBloc.add(LogErrorEvent(error: error, stackTrace: stackTrace));
   }
 
   @override

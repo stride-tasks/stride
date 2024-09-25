@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:stride/blocs/tost_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
@@ -79,7 +79,7 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
             return;
           }
 
-          await context.read<TostBloc>().catch_(() async {
+          await context.read<LogBloc>().catch_(() async {
             if (widget.encryptionKey == null) {
               await EncryptionKey.save(key: _key);
             } else {
