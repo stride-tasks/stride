@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart';
 
 Future<DateTime?> showPickDateTime({required BuildContext context}) async {
   final firstDate = DateTime.now().subtract(const Duration(days: 365 * 100));
@@ -67,36 +64,4 @@ Future<bool> showAlertDialog({
     ),
   );
   return result;
-}
-
-void logException<T>(T error, StackTrace? stackTrace) {
-  switch (error) {
-    case final RustError error:
-      Logger.error(
-        message:
-            'tasks error: ${error.toErrorString()}\n\nDart Backtrace:\n$stackTrace',
-      );
-    case final AnyhowException error:
-      Logger.error(
-        message: 'task error: ${error.message}\n\nDart Backtrace:\n$stackTrace',
-      );
-    case final Exception error:
-      Logger.error(
-        message: 'task error: $error\n\nDart Backtrace:\n$stackTrace',
-      );
-    default:
-      Logger.error(
-        message: 'task error: $error\n\nDart Backtrace:\n$stackTrace',
-      );
-  }
-}
-
-T? catchLogException<T>(T Function() f) {
-  try {
-    return f();
-    // ignore: avoid_catches_without_on_clauses
-  } catch (error, stackTrace) {
-    logException(error, stackTrace);
-  }
-  return null;
 }

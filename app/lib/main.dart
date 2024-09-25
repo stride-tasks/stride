@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
@@ -49,13 +50,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<LogBloc>(
+          create: (context) => LogBloc(),
+        ),
         BlocProvider<SettingsBloc>(
-          create: (context) => SettingsBloc(settings: settings),
+          create: (context) => SettingsBloc(
+            settings: settings,
+            logBloc: context.read<LogBloc>(),
+          ),
         ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
-            settingsBloc: context.read<SettingsBloc>(),
             repository: repository,
+            settingsBloc: context.read<SettingsBloc>(),
+            logBloc: context.read<LogBloc>(),
           ),
         ),
       ],
@@ -73,7 +81,23 @@ class MyApp extends StatelessWidget {
               darkTheme: generateTheme(darkMode: true),
               themeMode:
                   state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
-              home: const TasksRoute(),
+              home: BlocListener<LogBloc, LogState>(
+                listener: (context, state) {
+                  if (!state.show) {
+                    return;
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message.split('\n')[0]),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 10),
+                      backgroundColor: state.isError ? Colors.red[300] : null,
+                    ),
+                  );
+                },
+                child: const TasksRoute(),
+              ),
             );
           },
         ),

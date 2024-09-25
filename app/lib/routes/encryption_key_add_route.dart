@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
@@ -80,7 +79,7 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
             return;
           }
 
-          try {
+          await context.read<LogBloc>().catch_(() async {
             if (widget.encryptionKey == null) {
               await EncryptionKey.save(key: _key);
             } else {
@@ -89,34 +88,7 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
                 key: _key,
               );
             }
-          } on RustError catch (error) {
-            Logger.error(
-              message: 'encryption key error: ${error.toErrorString()}',
-            );
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error.toErrorString()),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } on AnyhowException catch (error) {
-            Logger.error(message: 'encryption key error: ${error.message}');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error.message),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-            // ignore: avoid_catches_without_on_clauses
-          } catch (error) {
-            Logger.error(message: 'encryption key error: $error');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error.toString()),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
+          });
           Navigator.pop(context);
         },
         child: const Icon(Icons.add_task_sharp, size: 50),

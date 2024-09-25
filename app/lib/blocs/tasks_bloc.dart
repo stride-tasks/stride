@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
-import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/task.dart';
-import 'package:stride/utils/functions.dart';
+import 'package:stride/utils/classes.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -66,6 +66,7 @@ class TaskState {
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final SettingsBloc settingsBloc;
+  final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
 
   final TaskStorage repository;
@@ -95,8 +96,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   TaskBloc({
-    required this.settingsBloc,
     required this.repository,
+    required this.settingsBloc,
+    required this.logBloc,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
@@ -149,10 +151,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final tasksOld = await _tasks();
       emit(TaskState(tasks: tasksOld, syncing: true));
 
-      try {
-        await repository.sync_();
-      } on RustError catch (error) {
-        Logger.error(message: error.toErrorString());
+      final result = await logBloc.catch_(repository.sync_);
+      if (result case Err(:final error) when error is RustError) {
         emit(TaskState(tasks: tasksOld, error: error));
         return;
       }
@@ -184,7 +184,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   @override
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
-    logException(error, stackTrace);
+    logBloc.add(LogErrorEvent(error: error, stackTrace: stackTrace));
   }
 
   @override
