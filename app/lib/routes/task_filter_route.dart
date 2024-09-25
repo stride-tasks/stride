@@ -249,9 +249,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
 
               context.read<SettingsBloc>().add(
                     SettingsUpdateEvent(
-                      settings: state.settings.copyWith(
-                        filters: filters,
-                      ),
+                      settings: state.settings.copyWith(filters: filters),
                     ),
                   );
 

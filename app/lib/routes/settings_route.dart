@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/routes/commits_route.dart';
 import 'package:stride/routes/encryption_key_add_route.dart';
@@ -291,34 +291,28 @@ class SettingsRoute extends StatelessWidget {
   }
 
   Future<void> _exportTasks(BuildContext context) async {
-    final filepath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Export Tasks',
-      fileName: 'tasks.json',
-      allowedExtensions: const ['json'],
-    );
+    await context.read<LogBloc>().catch_(message: 'export tasks', () async {
+      final filepath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export Tasks',
+        fileName: 'tasks.json',
+        allowedExtensions: const ['json'],
+      );
 
-    if (filepath == null) {
-      return;
-    }
+      if (filepath == null) {
+        return;
+      }
 
-    try {
       final contents = await context.read<TaskBloc>().repository.export_();
 
       await File(filepath).writeAsString(
         contents,
         flush: true,
       );
-    } on RustError catch (error) {
-      Logger.error(
-        message: 'export error: ${error.toErrorString()}',
-      );
-    } on Exception catch (error) {
-      Logger.error(message: 'export error: $error');
-    }
+    });
   }
 
   Future<void> _importTasks(BuildContext context) async {
-    try {
+    await context.read<LogBloc>().catch_(message: 'import tasks', () async {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import tasks',
         allowedExtensions: const ['json'],
@@ -341,10 +335,6 @@ class SettingsRoute extends StatelessWidget {
 
       context.read<TaskBloc>().repository.import_(content: content);
       context.read<TaskBloc>().repository.addAndCommit(message: r'$IMPORT');
-    } on RustError catch (error) {
-      Logger.error(message: 'import error: ${error.toErrorString()}');
-    } on Exception catch (error) {
-      Logger.error(message: 'import error: $error');
-    }
+    });
   }
 }

@@ -17,10 +17,12 @@ final class LogMessageEvent extends LogEvent {
 final class LogErrorEvent extends LogEvent {
   final Object error;
   final StackTrace? stackTrace;
+  final String message;
   final bool show;
   LogErrorEvent({
     required this.error,
     this.stackTrace,
+    this.message = '',
     this.show = true,
   });
 }
@@ -43,7 +45,11 @@ class LogBloc extends Bloc<LogEvent, LogState> {
     });
 
     on<LogErrorEvent>((event, emit) async {
-      final message = _errorToString(event.error, event.stackTrace);
+      final message = _errorToString(
+        event.error,
+        event.stackTrace,
+        message: event.message,
+      );
       Logger.error(message: message);
       emit(
         LogState(
@@ -77,10 +83,19 @@ class LogBloc extends Bloc<LogEvent, LogState> {
     return '${message}error: $errorString\n\nDart Backtrace:\n$stackTrace';
   }
 
-  Future<Result<T, Object>> catch_<T>(Future<T> Function() f) async {
+  Future<Result<T, Object>> catch_<T>(
+    Future<T> Function() f, {
+    String message = '',
+  }) async {
     final result = await Result.catch_<T, Object>(f);
     if (result case Err(error: (final error, final stackTrace))) {
-      add(LogErrorEvent(error: error, stackTrace: stackTrace));
+      add(
+        LogErrorEvent(
+          error: error,
+          stackTrace: stackTrace,
+          message: message,
+        ),
+      );
     }
     return result.mapErr((caughtError) => caughtError.$1);
   }

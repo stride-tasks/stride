@@ -79,16 +79,19 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
             return;
           }
 
-          await context.read<LogBloc>().catch_(() async {
-            if (widget.encryptionKey == null) {
-              await EncryptionKey.save(key: _key);
-            } else {
-              await EncryptionKey.update(
-                uuid: widget.encryptionKey!.uuid,
-                key: _key,
-              );
-            }
-          });
+          await context.read<LogBloc>().catch_(
+            message: 'encrypiton key',
+            () async {
+              if (widget.encryptionKey == null) {
+                await EncryptionKey.save(key: _key);
+              } else {
+                await EncryptionKey.update(
+                  uuid: widget.encryptionKey!.uuid,
+                  key: _key,
+                );
+              }
+            },
+          );
           Navigator.pop(context);
         },
         child: const Icon(Icons.add_task_sharp, size: 50),

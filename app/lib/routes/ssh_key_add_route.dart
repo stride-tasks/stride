@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
@@ -55,7 +55,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
       ),
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
-        onPressed: () {
+        onPressed: () async {
           if (publicKey.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -76,13 +76,9 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
             return;
           }
 
-          try {
-            SshKey.save(publicKey: publicKey, privateKey: privateKey);
-          } on RustError catch (error) {
-            Logger.error(message: 'ssh key error: ${error.toErrorString()}');
-          } on Exception catch (error) {
-            Logger.error(message: 'ssh key error: $error');
-          }
+          await context.read<LogBloc>().catch_(message: 'ssh key', () async {
+            return SshKey.save(publicKey: publicKey, privateKey: privateKey);
+          });
           Navigator.pop(context);
         },
         child: const Icon(Icons.add_task_sharp, size: 50),

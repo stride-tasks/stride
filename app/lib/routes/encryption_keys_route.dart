@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
@@ -99,7 +100,11 @@ class EncryptionKeysRoute extends StatelessWidget {
                     ],
                   ),
                   onConfirm: (context) async {
-                    if (!await EncryptionKey.removeKey(uuid: key.uuid)) {
+                    final result = await context.read<LogBloc>().catch_(
+                          message: 'encryption key removal',
+                          () async => EncryptionKey.removeKey(uuid: key.uuid),
+                        );
+                    if (result.isOk) {
                       Navigator.of(context).pop();
                       return Future.value(true);
                     }

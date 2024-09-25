@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/utils/functions.dart';
 
@@ -124,9 +126,10 @@ class _CommitsRouteState extends State<CommitsRoute> {
         ],
       ),
       onConfirm: (context) async {
-        await widget.repository.forceHardReset(
-          commit: commit,
-        );
+        context.read<LogBloc>().catch_(
+              message: 'force hard reset',
+              () async => widget.repository.forceHardReset(commit: commit),
+            );
         Navigator.pop(context);
         setState(_reloadCommits);
         return true;
