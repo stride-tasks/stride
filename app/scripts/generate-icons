@@ -5,6 +5,8 @@ SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 FLUTTER_DIR="$SCRIPTS_DIR/.."
 PROJECT_DIR="$FLUTTER_DIR/.."
 
+FLUTTER="$FLUTTER_DIR/flutter"
+
 # Display commands and stop script at first fail.
 set -xe
 
@@ -39,12 +41,12 @@ ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" logo.svg "$PROJECT_DIR/fastlane/met
 cd "$FLUTTER_DIR"
 
 # Get dependencies if not already available and call flutter_launcher_icons
-flutter pub get
-flutter pub run flutter_launcher_icons
+"$FLUTTER" pub get
+"$FLUTTER" pub run flutter_launcher_icons
 
 # Generate splash image (for Android and iOS).
 # See: https://github.com/jonbhanson/flutter_native_splash
-flutter pub run flutter_native_splash:create
+"$FLUTTER" pub run flutter_native_splash:create
 
 # Delete temp icons
 rm -v "$FLUTTER_DIR/assets/icon/logo.png"

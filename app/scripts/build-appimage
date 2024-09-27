@@ -1,13 +1,15 @@
 #!/bin/sh
 
 # Get location of the script
-BASEDIR="$( cd "$( dirname "$0" )" && pwd )"
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 APPNAME=stride-desktop
-PROJECTDIR="$BASEDIR/.."
-BUILDDIR="$PROJECTDIR/build/$APPNAME.AppDir"
+FLUTTER_DIR="$SCRIPTS_DIR/.."
+PROJECT_DIR="$FLUTTER_DIR/.."
+FLUTTER="$FLUTTER_DIR/flutter"
+BUILD_DIR="$FLUTTER_DIR/build/$APPNAME.AppDir"
 
 extract_field() {
-  grep -oP "^$1:\s*\K.*" "$PROJECTDIR/pubspec.yaml" | sed 's/\s\+$//'
+  grep -oP "^$1:\s*\K.*" "$FLUTTER_DIR/pubspec.yaml" | sed 's/\s\+$//'
 }
 
 VERSION=$(extract_field version | sed 's/+/-/g')
@@ -18,19 +20,19 @@ APPLICATION_ID=org.stridetasks.stride
 # Display commands and stop script at first fail.
 set -xe
 
-flutter build linux --release
+"$FLUTTER" build linux --release
 
-rm -rf "$BUILDDIR"
+rm -rf "$BUILD_DIR"
 
-mkdir -p "$BUILDDIR"
+mkdir -p "$BUILD_DIR"
 
-cp -r build/linux/x64/release/bundle/* "$BUILDDIR"
+cp -r build/linux/x64/release/bundle/* "$BUILD_DIR"
 
-mv "$BUILDDIR/stride" "$BUILDDIR/$APPNAME"
+mv "$BUILD_DIR/stride" "$BUILD_DIR/$APPNAME"
 
-ICON_SIZE=512 "$BASEDIR/rasterize-image" "$PROJECTDIR/assets/icon/logo.svg" "$BUILDDIR/logo.png"
+ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" "$FLUTTER_DIR/assets/icon/logo.svg" "$BUILD_DIR/logo.png"
 
-cat > $BUILDDIR/AppRun <<EOF
+cat > $BUILD_DIR/AppRun <<EOF
 #!/bin/sh
 
 SELF=\$(readlink -f "\$0")
@@ -45,10 +47,10 @@ export QT_PLUGIN_PATH="\${HERE}/usr/lib/qt4/plugins/:\${HERE}/usr/lib/i386-linux
 exec "\${HERE}/$APPNAME" "\$@"
 EOF
 
-chmod +x "$BUILDDIR/AppRun"
+chmod +x "$BUILD_DIR/AppRun"
 
 # Desktop Entry Specification: https://specifications.freedesktop.org/desktop-entry-spec/1.0/recognized-keys.html
-cat > "$BUILDDIR/$APPNAME.desktop" <<EOF
+cat > "$BUILD_DIR/$APPNAME.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Terminal=false
@@ -63,8 +65,8 @@ EOF
 #       <https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html>
 #       <https://www.freedesktop.org/software/appstream/metainfocreator>
 #
-# mkdir -p "$BUILDDIR/usr/share/metainfo"
-# cat > "$BUILDDIR/usr/share/metainfo/${APPNAME}.appdata.xml" <<EOF
+# mkdir -p "$BUILD_DIR/usr/share/metainfo"
+# cat > "$BUILD_DIR/usr/share/metainfo/${APPNAME}.appdata.xml" <<EOF
 # <?xml version="1.0" encoding="UTF-8"?>
 # <component type="desktop-application">
 #   <id>$APPNAME</id>
@@ -102,4 +104,4 @@ EOF
 # EOF
 
 export ARCH=x86_64
-appimagetool "$BUILDDIR" "build/${APPNAME}_${VERSION}_${ARCH}.AppImage"
+appimagetool "$BUILD_DIR" "build/${APPNAME}_${VERSION}_${ARCH}.AppImage"
