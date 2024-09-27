@@ -125,24 +125,28 @@ class SettingsTileSwitch extends SettingsTile {
 }
 
 class SettingsTileText extends SettingsTile {
-  final String text;
-  final bool hidden;
-  final bool multiline;
-  final void Function(String text) onChanged;
-
   SettingsTileText({
     super.key,
     required super.title,
-    super.description,
+    Widget? description,
     super.leading,
-    required this.text,
-    required this.onChanged,
-    this.hidden = false,
-    this.multiline = false,
+    required String text,
+    required void Function(String text) onChanged,
+    bool hidden = false,
+    bool multiline = false,
   }) : super(
-          trailing: (hidden || Platform.isAndroid || Platform.isIOS)
-              ? const Icon(Icons.arrow_forward)
-              : Text(text),
+          trailing: const Icon(Icons.arrow_forward),
+          description: hidden
+              ? description
+              : (description ??
+                  Text(
+                    text,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      color: Colors.grey,
+                    ),
+                  )),
           onTap: (context) async {
             final controller = TextEditingController(text: text);
             await showAlertDialog(
