@@ -42,6 +42,10 @@ cd "$FLUTTER_DIR"
 flutter pub get
 flutter pub run flutter_launcher_icons
 
+# Generate splash image (for Android and iOS).
+# See: https://github.com/jonbhanson/flutter_native_splash
+flutter pub run flutter_native_splash:create
+
 # Delete temp icons
 rm -v "$FLUTTER_DIR/assets/icon/logo.png"
 rm -v "$FLUTTER_DIR/assets/icon/logo_foreground.png"
