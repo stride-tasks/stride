@@ -81,18 +81,19 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                       label: isMobilePlatform ? null : const Text('Deleted'),
                       tooltip: 'Deleted',
                     ),
-                    ButtonSegment<TaskStatus>(
-                      value: TaskStatus.waiting,
-                      icon: const Icon(Icons.alarm),
-                      label: isMobilePlatform ? null : const Text('Waiting'),
-                      tooltip: 'Waiting',
-                    ),
-                    ButtonSegment<TaskStatus>(
-                      value: TaskStatus.recurring,
-                      icon: const Icon(Icons.repeat_on),
-                      label: isMobilePlatform ? null : const Text('Recurring'),
-                      tooltip: 'Recurring',
-                    ),
+                    // TODO: Uncomment when waiting and recurring tasks are implemented.
+                    // ButtonSegment<TaskStatus>(
+                    //   value: TaskStatus.waiting,
+                    //   icon: const Icon(Icons.alarm),
+                    //   label: isMobilePlatform ? null : const Text('Waiting'),
+                    //   tooltip: 'Waiting',
+                    // ),
+                    // ButtonSegment<TaskStatus>(
+                    //   value: TaskStatus.recurring,
+                    //   icon: const Icon(Icons.repeat_on),
+                    //   label: isMobilePlatform ? null : const Text('Recurring'),
+                    //   tooltip: 'Recurring',
+                    // ),
                   ],
                   selected: status,
                   onSelectionChanged: (newSelection) {
