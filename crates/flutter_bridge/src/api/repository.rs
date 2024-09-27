@@ -221,11 +221,13 @@ impl Storage {
             return Ok(());
         }
 
+        let search = filter.search.to_lowercase();
+
         self.load()?;
         for DecryptedTask { task, .. } in self
             .tasks
             .iter()
-            .filter(|DecryptedTask { task, .. }| task.title.contains(&filter.search))
+            .filter(|DecryptedTask { task, .. }| task.title.to_lowercase().contains(&search))
         {
             result.push(task.clone());
         }
