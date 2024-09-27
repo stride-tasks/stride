@@ -268,7 +268,7 @@ impl EncryptionKey {
     }
 }
 
-fn default_theme_mode() -> bool {
+const fn default_theme_mode() -> bool {
     true
 }
 
@@ -318,7 +318,7 @@ impl Default for Repository {
 }
 
 #[frb(dart_metadata=("freezed"))]
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     #[serde(default = "default_theme_mode")]
     pub dark_mode: bool,
@@ -337,12 +337,24 @@ pub struct Settings {
     pub selected_filter: Option<FilterSelection>,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            dark_mode: default_theme_mode(),
+            known_hosts: KnownHosts::default(),
+            repository: Repository::default(),
+            encryption_keys: Vec::default(),
+            periodic_sync: false,
+            filters: Vec::default(),
+            selected_filter: None,
+        }
+    }
+}
+
 impl Settings {
     #[frb(sync)]
     pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
+        Self::default()
     }
 }
 
