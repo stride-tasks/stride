@@ -51,3 +51,7 @@ cd "$FLUTTER_DIR"
 # Delete temp icons
 rm -v "$FLUTTER_DIR/assets/icon/logo.png"
 rm -v "$FLUTTER_DIR/assets/icon/logo_foreground.png"
+
+# Optimize images
+echo -e "\nOptimize images:\n"
+"$PROJECT_DIR"/scripts/optimize-images
