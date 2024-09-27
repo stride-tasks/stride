@@ -54,6 +54,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
               children: [
                 TextField(
                   controller: searchController,
+                  autofocus: true,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Search',
