@@ -105,11 +105,11 @@ class EncryptionKeysRoute extends StatelessWidget {
                           () async => EncryptionKey.removeKey(uuid: key.uuid),
                         );
                     if (result.isOk) {
-                      Navigator.of(context).pop();
-                      return Future.value(true);
+                      if (context.mounted) Navigator.of(context).pop();
+                      return true;
                     }
 
-                    Navigator.of(context).pop();
+                    if (context.mounted) Navigator.of(context).pop();
 
                     await Logger.trace(
                       message: 'Encryption Key deleted with UUID: ${key.uuid}',

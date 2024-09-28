@@ -60,7 +60,7 @@ class Ok<T, E> extends Result<T, E> {
   @override
   Result<R, E> map<R>(R Function(T value) f) => Result.ok(f(value));
   @override
-  Result<T, R> mapErr<R>(R Function(E error) _) => Result.ok(value);
+  Result<T, R> mapErr<R>(R Function(E error) f) => Result.ok(value);
 }
 
 class Err<T, E> extends Result<T, E> {
@@ -84,7 +84,7 @@ class Err<T, E> extends Result<T, E> {
   T unwrapOr(T elseValue) => elseValue;
 
   @override
-  Result<R, E> map<R>(R Function(T value) _) => Result.err(error);
+  Result<R, E> map<R>(R Function(T value) f) => Result.err(error);
   @override
   Result<T, R> mapErr<R>(R Function(E error) f) => Result.err(f(error));
 }

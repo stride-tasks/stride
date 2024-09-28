@@ -79,7 +79,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
           await context.read<LogBloc>().catch_(message: 'ssh key', () async {
             return SshKey.save(publicKey: publicKey, privateKey: privateKey);
           });
-          Navigator.pop(context);
+          if (context.mounted) Navigator.pop(context);
         },
         child: const Icon(Icons.add_task_sharp, size: 50),
       ),
