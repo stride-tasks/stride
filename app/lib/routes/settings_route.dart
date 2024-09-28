@@ -302,6 +302,8 @@ class SettingsRoute extends StatelessWidget {
         return;
       }
 
+      if (!context.mounted) return;
+
       final contents = await context.read<TaskBloc>().repository.export_();
 
       await File(filepath).writeAsString(
@@ -312,7 +314,10 @@ class SettingsRoute extends StatelessWidget {
   }
 
   Future<void> _importTasks(BuildContext context) async {
-    await context.read<LogBloc>().catch_(message: 'import tasks', () async {
+    final taskBloc = context.read<TaskBloc>();
+    final logBloc = context.read<LogBloc>();
+
+    await logBloc.catch_(message: 'import tasks', () async {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import tasks',
         allowedExtensions: const ['json'],
@@ -333,8 +338,8 @@ class SettingsRoute extends StatelessWidget {
       final bytes = file.bytes!;
       final content = const Utf8Decoder().convert(bytes);
 
-      context.read<TaskBloc>().repository.import_(content: content);
-      context.read<TaskBloc>().repository.addAndCommit(message: r'$IMPORT');
+      taskBloc.repository.import_(content: content);
+      taskBloc.repository.addAndCommit(message: r'$IMPORT');
     });
   }
 }

@@ -135,15 +135,15 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   ),
                   onConfirm: (context) async {
                     if (!await SshKey.removeKey(uuid: key.uuid)) {
-                      Navigator.of(context).pop();
-                      return Future.value(true);
+                      if (context.mounted) Navigator.of(context).pop();
+                      return true;
                     }
-                    Navigator.of(context).pop();
+                    if (context.mounted) Navigator.of(context).pop();
                     Logger.trace(
                       message: 'SSH Key deleted with UUID: ${key.uuid}',
                     );
                     setState(_reset);
-                    return Future.value(true);
+                    return true;
                   },
                 );
               },

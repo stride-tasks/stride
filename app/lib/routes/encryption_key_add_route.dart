@@ -92,7 +92,8 @@ class EncryptionKeyAddRouteState extends State<EncryptionKeyAddRoute> {
               }
             },
           );
-          Navigator.pop(context);
+
+          if (context.mounted) Navigator.pop(context);
         },
         child: const Icon(Icons.add_task_sharp, size: 50),
       ),
