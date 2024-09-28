@@ -329,7 +329,7 @@ impl KnownHosts {
 impl Display for KnownHosts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for host in self.hosts() {
-            write!(f, "{host}")?;
+            writeln!(f, "{host}")?;
         }
         Ok(())
     }
@@ -402,9 +402,9 @@ mod tests {
 
         assert_eq!(
             known_hosts.to_string(),
-            r"github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
-gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
-"
+            String::new()
+            + "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n"
+            + "gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf\n"
         );
     }
 }
