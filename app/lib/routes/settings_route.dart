@@ -291,25 +291,31 @@ class SettingsRoute extends StatelessWidget {
   }
 
   Future<void> _exportTasks(BuildContext context) async {
-    await context.read<LogBloc>().catch_(message: 'export tasks', () async {
+    final taskBloc = context.read<TaskBloc>();
+    final logBloc = context.read<LogBloc>();
+
+    await logBloc.catch_(message: 'export tasks', () async {
+      final contents = await taskBloc.repository.export_();
       final filepath = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Tasks',
         fileName: 'tasks.json',
-        allowedExtensions: const ['json'],
+        bytes: const Utf8Encoder().convert(contents),
       );
 
+      // On mobile `bytes` saves the file, and doing a write later can error,
+      // due to permission errors. So return early.
+      if (Platform.isAndroid || Platform.isIOS) {
+        return;
+      }
+
+      // Canceled.
       if (filepath == null) {
         return;
       }
 
-      if (!context.mounted) return;
-
-      final contents = await context.read<TaskBloc>().repository.export_();
-
-      await File(filepath).writeAsString(
-        contents,
-        flush: true,
-      );
+      // On Desktop `bytes` does not write, it only gives the path to the
+      // non-existant file. So we have to write to it directly.
+      await File(filepath).writeAsString(contents, flush: true);
     });
   }
 
@@ -318,28 +324,26 @@ class SettingsRoute extends StatelessWidget {
     final logBloc = context.read<LogBloc>();
 
     await logBloc.catch_(message: 'import tasks', () async {
+      // TODO: Maybe allow importing multiple files.
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Import tasks',
-        allowedExtensions: const ['json'],
-        withData: true,
       );
 
       if (result == null) {
         return;
       }
 
-      if (result.files.isEmpty) {
+      final file = result.files.firstOrNull;
+      if (file == null) {
         Logger.error(message: 'import file not selected.');
         return;
       }
 
-      final file = result.files.first;
-      // The withData flag has been passed so bytes should be available.
-      final bytes = file.bytes!;
-      final content = const Utf8Decoder().convert(bytes);
+      final content = await file.xFile.readAsString();
 
       taskBloc.repository.import_(content: content);
       taskBloc.repository.addAndCommit(message: r'$IMPORT');
+      taskBloc.add(TaskFetchEvent());
     });
   }
 }
