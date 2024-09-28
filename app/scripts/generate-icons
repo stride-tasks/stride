@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if [ -z "$(command -v ffmpeg)" ]; then
+  echo "ERROR: Missing ffmpeg program, please install it!"
+fi
+
 # Get location of the script
 SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 FLUTTER_DIR="$SCRIPTS_DIR/.."
@@ -36,6 +40,13 @@ ffmpeg \
 
 # Put icon in fastlane
 ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" logo.svg "$PROJECT_DIR/fastlane/metadata/android/en-US/images/icon.png"
+
+# Generate rounded icon for README.md
+ffmpeg \
+    -y \
+    -i logo.png \
+    -vf "format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(pow(X-W/2,2)+pow(Y-H/2,2),pow(min(W,H)/2,2)),255,0)'" \
+    "$PROJECT_DIR/assets/logo_circle.png"
 
 # Go to pubspec.yaml directory
 cd "$FLUTTER_DIR"

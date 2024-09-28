@@ -1,10 +1,31 @@
 # Stride
 
-<a href="https://github.com/HalidOdat/stride/actions">
-    <img src="https://github.com/stride-tasks/stride/workflows/ci/badge.svg" alt="Build Status">
-</a>
+<div align="center"><img src="assets/logo_circle.png" alt="Stride Logo" height="256"/></div>
 
-Extensible task menagement application with in-built git integration.
+<div align="center">
+    <a href="https://github.com/HalidOdat/stride/actions">
+        <img src="https://github.com/stride-tasks/stride/workflows/ci/badge.svg" alt="Build Status">
+    </a>
+    <a href="https://github.com/stride-tasks/stride/releases">
+        <img src="https://img.shields.io/github/v/release/stride-tasks/stride?include_prereleases&logo=github" alt="GitHub Release">
+    </a>
+</div>
+
+----
+
+Task menagement application with in-built git integration.
+
+> [!WARNING]
+> This is currently alpha, so **everything** is subject to change.
+
+## Installation
+
+<a href="https://github.com/stride-tasks/stride/releases/latest">
+    <img src="https://raw.githubusercontent.com/NeoApplications/Neo-Backup/49a25d0d07ae7f6c132e71a8e3970a369c67a26e/badge_github.png" alt="Get it on F-Droid", align="center" height="80">
+</a>
+<a href="https://f-droid.org/en/packages/org.stridetasks.stride/">
+    <img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid", align="center" height="80">
+</a>
 
 ## License
 
