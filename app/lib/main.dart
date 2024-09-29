@@ -8,6 +8,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/theme.dart';
 
@@ -96,6 +97,17 @@ class MyApp extends StatelessWidget {
                       behavior: SnackBarBehavior.floating,
                       duration: const Duration(seconds: 10),
                       backgroundColor: state.isError ? Colors.red[300] : null,
+                      action: SnackBarAction(
+                        label: 'Go to Logs',
+                        onPressed: () async {
+                          // TODO: Maybe don't push if already there on top.
+                          await Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (context) => const LoggingRoute(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   );
                 },
