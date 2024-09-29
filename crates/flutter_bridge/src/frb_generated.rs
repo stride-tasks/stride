@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.4.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -575310412;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2129107855;
 
 // Section: executor
 
@@ -1805,11 +1805,10 @@ fn wire__crate__api__settings__encryption_key_remove_key_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, RustError>((move || {
-                    let output_ok = crate::api::settings::EncryptionKey::remove_key(&api_uuid)?;
+                    let output_ok = crate::api::settings::EncryptionKey::remove_key()?;
                     Ok(output_ok)
                 })())
             }
@@ -1843,41 +1842,6 @@ fn wire__crate__api__settings__encryption_key_save_impl(
             move |context| {
                 transform_result_sse::<_, RustError>((move || {
                     let output_ok = crate::api::settings::EncryptionKey::save(&api_key)?;
-                    Ok(output_ok)
-                })())
-            }
-        },
-    )
-}
-fn wire__crate__api__settings__encryption_key_update_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "encryption_key_update",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
-            let api_key = <String>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| {
-                transform_result_sse::<_, RustError>((move || {
-                    let output_ok =
-                        crate::api::settings::EncryptionKey::update(api_uuid, &api_key)?;
                     Ok(output_ok)
                 })())
             }
@@ -1981,6 +1945,38 @@ fn wire__crate__api__settings__settings_default_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(crate::api::settings::Settings::default())?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__settings__settings_get_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "settings_get",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(crate::api::settings::Settings::get())?;
                     Ok(output_ok)
                 })())
             }
@@ -2420,12 +2416,8 @@ impl SseDecode for crate::api::repository::CommitItem {
 impl SseDecode for crate::api::settings::EncryptionKey {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
         let mut var_key = <String>::sse_decode(deserializer);
-        return crate::api::settings::EncryptionKey {
-            uuid: var_uuid,
-            key: var_key,
-        };
+        return crate::api::settings::EncryptionKey { key: var_key };
     }
 }
 
@@ -2577,20 +2569,6 @@ impl SseDecode for Vec<crate::api::repository::CommitItem> {
     }
 }
 
-impl SseDecode for Vec<crate::api::settings::EncryptionKey> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut len_ = <i32>::sse_decode(deserializer);
-        let mut ans_ = vec![];
-        for idx_ in 0..len_ {
-            ans_.push(<crate::api::settings::EncryptionKey>::sse_decode(
-                deserializer,
-            ));
-        }
-        return ans_;
-    }
-}
-
 impl SseDecode for Vec<crate::api::filter::Filter> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2715,6 +2693,19 @@ impl SseDecode for Option<chrono::DateTime<chrono::Utc>> {
     }
 }
 
+impl SseDecode for Option<crate::api::settings::EncryptionKey> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::settings::EncryptionKey>::sse_decode(
+                deserializer,
+            ));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<crate::api::filter::FilterSelection> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2802,14 +2793,15 @@ impl SseDecode for crate::api::settings::Repository {
         let mut var_email = <String>::sse_decode(deserializer);
         let mut var_branch = <String>::sse_decode(deserializer);
         let mut var_sshKeyUuid = <Option<uuid::Uuid>>::sse_decode(deserializer);
-        let mut var_encryptionKeyUuid = <Option<uuid::Uuid>>::sse_decode(deserializer);
+        let mut var_encryption =
+            <Option<crate::api::settings::EncryptionKey>>::sse_decode(deserializer);
         return crate::api::settings::Repository {
             origin: var_origin,
             author: var_author,
             email: var_email,
             branch: var_branch,
             ssh_key_uuid: var_sshKeyUuid,
-            encryption_key_uuid: var_encryptionKeyUuid,
+            encryption: var_encryption,
         };
     }
 }
@@ -2820,8 +2812,6 @@ impl SseDecode for crate::api::settings::Settings {
         let mut var_darkMode = <bool>::sse_decode(deserializer);
         let mut var_knownHosts = <crate::git::known_hosts::KnownHosts>::sse_decode(deserializer);
         let mut var_repository = <crate::api::settings::Repository>::sse_decode(deserializer);
-        let mut var_encryptionKeys =
-            <Vec<crate::api::settings::EncryptionKey>>::sse_decode(deserializer);
         let mut var_periodicSync = <bool>::sse_decode(deserializer);
         let mut var_filters = <Vec<crate::api::filter::Filter>>::sse_decode(deserializer);
         let mut var_selectedFilter =
@@ -2830,7 +2820,6 @@ impl SseDecode for crate::api::settings::Settings {
             dark_mode: var_darkMode,
             known_hosts: var_knownHosts,
             repository: var_repository,
-            encryption_keys: var_encryptionKeys,
             periodic_sync: var_periodicSync,
             filters: var_filters,
             selected_filter: var_selectedFilter,
@@ -3049,22 +3038,17 @@ fn pde_ffi_dispatcher_primary_impl(
         41 => {
             wire__crate__api__settings__encryption_key_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        42 => wire__crate__api__settings__encryption_key_update_impl(
-            port,
-            ptr,
-            rust_vec_len,
-            data_len,
-        ),
-        43 => {
+        42 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        44 => wire__crate__api__settings__settings_create_stream_impl(
+        43 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        45 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
         46 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
         48 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
         49 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
@@ -3227,11 +3211,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::repository::CommitItem>
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::settings::EncryptionKey {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.uuid.into_into_dart().into_dart(),
-            self.key.into_into_dart().into_dart(),
-        ]
-        .into_dart()
+        [self.key.into_into_dart().into_dart()].into_dart()
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
@@ -3374,7 +3354,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Repository {
             self.email.into_into_dart().into_dart(),
             self.branch.into_into_dart().into_dart(),
             self.ssh_key_uuid.into_into_dart().into_dart(),
-            self.encryption_key_uuid.into_into_dart().into_dart(),
+            self.encryption.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -3397,7 +3377,6 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Settings {
             self.dark_mode.into_into_dart().into_dart(),
             self.known_hosts.into_into_dart().into_dart(),
             self.repository.into_into_dart().into_dart(),
-            self.encryption_keys.into_into_dart().into_dart(),
             self.periodic_sync.into_into_dart().into_dart(),
             self.filters.into_into_dart().into_dart(),
             self.selected_filter.into_into_dart().into_dart(),
@@ -3641,7 +3620,6 @@ impl SseEncode for crate::api::repository::CommitItem {
 impl SseEncode for crate::api::settings::EncryptionKey {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <uuid::Uuid>::sse_encode(self.uuid, serializer);
         <String>::sse_encode(self.key, serializer);
     }
 }
@@ -3772,16 +3750,6 @@ impl SseEncode for Vec<crate::api::repository::CommitItem> {
     }
 }
 
-impl SseEncode for Vec<crate::api::settings::EncryptionKey> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(self.len() as _, serializer);
-        for item in self {
-            <crate::api::settings::EncryptionKey>::sse_encode(item, serializer);
-        }
-    }
-}
-
 impl SseEncode for Vec<crate::api::filter::Filter> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3887,6 +3855,16 @@ impl SseEncode for Option<chrono::DateTime<chrono::Utc>> {
     }
 }
 
+impl SseEncode for Option<crate::api::settings::EncryptionKey> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::settings::EncryptionKey>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<crate::api::filter::FilterSelection> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3963,7 +3941,7 @@ impl SseEncode for crate::api::settings::Repository {
         <String>::sse_encode(self.email, serializer);
         <String>::sse_encode(self.branch, serializer);
         <Option<uuid::Uuid>>::sse_encode(self.ssh_key_uuid, serializer);
-        <Option<uuid::Uuid>>::sse_encode(self.encryption_key_uuid, serializer);
+        <Option<crate::api::settings::EncryptionKey>>::sse_encode(self.encryption, serializer);
     }
 }
 
@@ -3973,7 +3951,6 @@ impl SseEncode for crate::api::settings::Settings {
         <bool>::sse_encode(self.dark_mode, serializer);
         <crate::git::known_hosts::KnownHosts>::sse_encode(self.known_hosts, serializer);
         <crate::api::settings::Repository>::sse_encode(self.repository, serializer);
-        <Vec<crate::api::settings::EncryptionKey>>::sse_encode(self.encryption_keys, serializer);
         <bool>::sse_encode(self.periodic_sync, serializer);
         <Vec<crate::api::filter::Filter>>::sse_encode(self.filters, serializer);
         <Option<crate::api::filter::FilterSelection>>::sse_encode(self.selected_filter, serializer);

@@ -10,8 +10,7 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/routes/commits_route.dart';
-import 'package:stride/routes/encryption_key_add_route.dart';
-import 'package:stride/routes/encryption_keys_route.dart';
+import 'package:stride/routes/encryption_key_route.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
@@ -153,21 +152,9 @@ class SettingsRoute extends StatelessWidget {
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.lock),
-                    title: const Text('Encryption Key'),
-                    builder: (context) => EncryptionKeysRoute(
-                      hasDelete: false,
-                      selected: settings.repository.encryptionKeyUuid,
-                      onTap: (key) {
-                        context.read<SettingsBloc>().add(
-                              SettingsUpdateEvent(
-                                settings: settings.copyWith(
-                                  repository: settings.repository
-                                      .copyWith(encryptionKeyUuid: key.uuid),
-                                ),
-                              ),
-                            );
-                        Navigator.of(context).pop();
-                      },
+                    title: const Text('Encryption'),
+                    builder: (context) => EncryptionKeyRoute(
+                      encryption: settings.repository.encryption,
                     ),
                   ),
                   SettingsTile(
@@ -249,22 +236,6 @@ class SettingsRoute extends StatelessWidget {
                     leading: const Icon(Icons.key_sharp),
                     title: const Text('SSH Known Hosts'),
                     builder: (context) => const KnownHostsRoute(),
-                  ),
-                  SettingsTileNavigation(
-                    leading: const Icon(Icons.lock),
-                    title: const Text('Encryption Keys'),
-                    builder: (context) => EncryptionKeysRoute(
-                      onTap: (key) {
-                        Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (context) => EncryptionKeyAddRoute(
-                              encryptionKey: key,
-                            ),
-                          ),
-                        );
-                        context.read<TaskBloc>().add(TaskRemoveAllEvent());
-                      },
-                    ),
                   ),
                 ],
               ),

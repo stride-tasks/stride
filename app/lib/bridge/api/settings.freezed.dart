@@ -21,7 +21,7 @@ mixin _$Repository {
   String get email => throw _privateConstructorUsedError;
   String get branch => throw _privateConstructorUsedError;
   UuidValue? get sshKeyUuid => throw _privateConstructorUsedError;
-  UuidValue? get encryptionKeyUuid => throw _privateConstructorUsedError;
+  EncryptionKey? get encryption => throw _privateConstructorUsedError;
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -42,7 +42,7 @@ abstract class $RepositoryCopyWith<$Res> {
       String email,
       String branch,
       UuidValue? sshKeyUuid,
-      UuidValue? encryptionKeyUuid});
+      EncryptionKey? encryption});
 }
 
 /// @nodoc
@@ -65,7 +65,7 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
     Object? email = null,
     Object? branch = null,
     Object? sshKeyUuid = freezed,
-    Object? encryptionKeyUuid = freezed,
+    Object? encryption = freezed,
   }) {
     return _then(_value.copyWith(
       origin: null == origin
@@ -88,10 +88,10 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
           ? _value.sshKeyUuid
           : sshKeyUuid // ignore: cast_nullable_to_non_nullable
               as UuidValue?,
-      encryptionKeyUuid: freezed == encryptionKeyUuid
-          ? _value.encryptionKeyUuid
-          : encryptionKeyUuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue?,
+      encryption: freezed == encryption
+          ? _value.encryption
+          : encryption // ignore: cast_nullable_to_non_nullable
+              as EncryptionKey?,
     ) as $Val);
   }
 }
@@ -110,7 +110,7 @@ abstract class _$$RepositoryImplCopyWith<$Res>
       String email,
       String branch,
       UuidValue? sshKeyUuid,
-      UuidValue? encryptionKeyUuid});
+      EncryptionKey? encryption});
 }
 
 /// @nodoc
@@ -131,7 +131,7 @@ class __$$RepositoryImplCopyWithImpl<$Res>
     Object? email = null,
     Object? branch = null,
     Object? sshKeyUuid = freezed,
-    Object? encryptionKeyUuid = freezed,
+    Object? encryption = freezed,
   }) {
     return _then(_$RepositoryImpl(
       origin: null == origin
@@ -154,10 +154,10 @@ class __$$RepositoryImplCopyWithImpl<$Res>
           ? _value.sshKeyUuid
           : sshKeyUuid // ignore: cast_nullable_to_non_nullable
               as UuidValue?,
-      encryptionKeyUuid: freezed == encryptionKeyUuid
-          ? _value.encryptionKeyUuid
-          : encryptionKeyUuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue?,
+      encryption: freezed == encryption
+          ? _value.encryption
+          : encryption // ignore: cast_nullable_to_non_nullable
+              as EncryptionKey?,
     ));
   }
 }
@@ -171,7 +171,7 @@ class _$RepositoryImpl extends _Repository {
       required this.email,
       required this.branch,
       this.sshKeyUuid,
-      this.encryptionKeyUuid})
+      this.encryption})
       : super._();
 
   @override
@@ -185,11 +185,11 @@ class _$RepositoryImpl extends _Repository {
   @override
   final UuidValue? sshKeyUuid;
   @override
-  final UuidValue? encryptionKeyUuid;
+  final EncryptionKey? encryption;
 
   @override
   String toString() {
-    return 'Repository(origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryptionKeyUuid: $encryptionKeyUuid)';
+    return 'Repository(origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
   }
 
   @override
@@ -203,13 +203,13 @@ class _$RepositoryImpl extends _Repository {
             (identical(other.branch, branch) || other.branch == branch) &&
             (identical(other.sshKeyUuid, sshKeyUuid) ||
                 other.sshKeyUuid == sshKeyUuid) &&
-            (identical(other.encryptionKeyUuid, encryptionKeyUuid) ||
-                other.encryptionKeyUuid == encryptionKeyUuid));
+            (identical(other.encryption, encryption) ||
+                other.encryption == encryption));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, origin, author, email, branch,
-      sshKeyUuid, encryptionKeyUuid);
+  int get hashCode => Object.hash(
+      runtimeType, origin, author, email, branch, sshKeyUuid, encryption);
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -227,7 +227,7 @@ abstract class _Repository extends Repository {
       required final String email,
       required final String branch,
       final UuidValue? sshKeyUuid,
-      final UuidValue? encryptionKeyUuid}) = _$RepositoryImpl;
+      final EncryptionKey? encryption}) = _$RepositoryImpl;
   const _Repository._() : super._();
 
   @override
@@ -241,7 +241,7 @@ abstract class _Repository extends Repository {
   @override
   UuidValue? get sshKeyUuid;
   @override
-  UuidValue? get encryptionKeyUuid;
+  EncryptionKey? get encryption;
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -256,7 +256,6 @@ mixin _$Settings {
   bool get darkMode => throw _privateConstructorUsedError;
   KnownHosts get knownHosts => throw _privateConstructorUsedError;
   Repository get repository => throw _privateConstructorUsedError;
-  List<EncryptionKey> get encryptionKeys => throw _privateConstructorUsedError;
   bool get periodicSync => throw _privateConstructorUsedError;
   List<Filter> get filters => throw _privateConstructorUsedError;
   FilterSelection? get selectedFilter => throw _privateConstructorUsedError;
@@ -266,7 +265,6 @@ mixin _$Settings {
             bool darkMode,
             KnownHosts knownHosts,
             Repository repository,
-            List<EncryptionKey> encryptionKeys,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)
@@ -279,7 +277,6 @@ mixin _$Settings {
             bool darkMode,
             KnownHosts knownHosts,
             Repository repository,
-            List<EncryptionKey> encryptionKeys,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
@@ -292,7 +289,6 @@ mixin _$Settings {
             bool darkMode,
             KnownHosts knownHosts,
             Repository repository,
-            List<EncryptionKey> encryptionKeys,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
@@ -333,7 +329,6 @@ abstract class $SettingsCopyWith<$Res> {
       {bool darkMode,
       KnownHosts knownHosts,
       Repository repository,
-      List<EncryptionKey> encryptionKeys,
       bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter});
@@ -361,7 +356,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? darkMode = null,
     Object? knownHosts = null,
     Object? repository = null,
-    Object? encryptionKeys = null,
     Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
@@ -379,10 +373,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.repository
           : repository // ignore: cast_nullable_to_non_nullable
               as Repository,
-      encryptionKeys: null == encryptionKeys
-          ? _value.encryptionKeys
-          : encryptionKeys // ignore: cast_nullable_to_non_nullable
-              as List<EncryptionKey>,
       periodicSync: null == periodicSync
           ? _value.periodicSync
           : periodicSync // ignore: cast_nullable_to_non_nullable
@@ -445,7 +435,6 @@ abstract class _$$SettingsImplCopyWith<$Res>
       {bool darkMode,
       KnownHosts knownHosts,
       Repository repository,
-      List<EncryptionKey> encryptionKeys,
       bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter});
@@ -474,7 +463,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? darkMode = null,
     Object? knownHosts = null,
     Object? repository = null,
-    Object? encryptionKeys = null,
     Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
@@ -492,10 +480,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.repository
           : repository // ignore: cast_nullable_to_non_nullable
               as Repository,
-      encryptionKeys: null == encryptionKeys
-          ? _value._encryptionKeys
-          : encryptionKeys // ignore: cast_nullable_to_non_nullable
-              as List<EncryptionKey>,
       periodicSync: null == periodicSync
           ? _value.periodicSync
           : periodicSync // ignore: cast_nullable_to_non_nullable
@@ -519,12 +503,10 @@ class _$SettingsImpl extends _Settings {
       {required this.darkMode,
       required this.knownHosts,
       required this.repository,
-      required final List<EncryptionKey> encryptionKeys,
       required this.periodicSync,
       required final List<Filter> filters,
       this.selectedFilter})
-      : _encryptionKeys = encryptionKeys,
-        _filters = filters,
+      : _filters = filters,
         super._();
 
   @override
@@ -533,14 +515,6 @@ class _$SettingsImpl extends _Settings {
   final KnownHosts knownHosts;
   @override
   final Repository repository;
-  final List<EncryptionKey> _encryptionKeys;
-  @override
-  List<EncryptionKey> get encryptionKeys {
-    if (_encryptionKeys is EqualUnmodifiableListView) return _encryptionKeys;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_encryptionKeys);
-  }
-
   @override
   final bool periodicSync;
   final List<Filter> _filters;
@@ -556,7 +530,7 @@ class _$SettingsImpl extends _Settings {
 
   @override
   String toString() {
-    return 'Settings.raw(darkMode: $darkMode, knownHosts: $knownHosts, repository: $repository, encryptionKeys: $encryptionKeys, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
+    return 'Settings.raw(darkMode: $darkMode, knownHosts: $knownHosts, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
   }
 
   @override
@@ -570,8 +544,6 @@ class _$SettingsImpl extends _Settings {
                 other.knownHosts == knownHosts) &&
             (identical(other.repository, repository) ||
                 other.repository == repository) &&
-            const DeepCollectionEquality()
-                .equals(other._encryptionKeys, _encryptionKeys) &&
             (identical(other.periodicSync, periodicSync) ||
                 other.periodicSync == periodicSync) &&
             const DeepCollectionEquality().equals(other._filters, _filters) &&
@@ -585,7 +557,6 @@ class _$SettingsImpl extends _Settings {
       darkMode,
       knownHosts,
       repository,
-      const DeepCollectionEquality().hash(_encryptionKeys),
       periodicSync,
       const DeepCollectionEquality().hash(_filters),
       selectedFilter);
@@ -605,14 +576,13 @@ class _$SettingsImpl extends _Settings {
             bool darkMode,
             KnownHosts knownHosts,
             Repository repository,
-            List<EncryptionKey> encryptionKeys,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)
         raw,
   }) {
-    return raw(darkMode, knownHosts, repository, encryptionKeys, periodicSync,
-        filters, selectedFilter);
+    return raw(darkMode, knownHosts, repository, periodicSync, filters,
+        selectedFilter);
   }
 
   @override
@@ -622,14 +592,13 @@ class _$SettingsImpl extends _Settings {
             bool darkMode,
             KnownHosts knownHosts,
             Repository repository,
-            List<EncryptionKey> encryptionKeys,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
         raw,
   }) {
-    return raw?.call(darkMode, knownHosts, repository, encryptionKeys,
-        periodicSync, filters, selectedFilter);
+    return raw?.call(darkMode, knownHosts, repository, periodicSync, filters,
+        selectedFilter);
   }
 
   @override
@@ -639,7 +608,6 @@ class _$SettingsImpl extends _Settings {
             bool darkMode,
             KnownHosts knownHosts,
             Repository repository,
-            List<EncryptionKey> encryptionKeys,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)?
@@ -647,8 +615,8 @@ class _$SettingsImpl extends _Settings {
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(darkMode, knownHosts, repository, encryptionKeys, periodicSync,
-          filters, selectedFilter);
+      return raw(darkMode, knownHosts, repository, periodicSync, filters,
+          selectedFilter);
     }
     return orElse();
   }
@@ -687,7 +655,6 @@ abstract class _Settings extends Settings {
       {required final bool darkMode,
       required final KnownHosts knownHosts,
       required final Repository repository,
-      required final List<EncryptionKey> encryptionKeys,
       required final bool periodicSync,
       required final List<Filter> filters,
       final FilterSelection? selectedFilter}) = _$SettingsImpl;
@@ -699,8 +666,6 @@ abstract class _Settings extends Settings {
   KnownHosts get knownHosts;
   @override
   Repository get repository;
-  @override
-  List<EncryptionKey> get encryptionKeys;
   @override
   bool get periodicSync;
   @override

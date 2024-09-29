@@ -150,6 +150,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw);
 
   @protected
+  EncryptionKey dco_decode_box_autoadd_encryption_key(dynamic raw);
+
+  @protected
   Filter dco_decode_box_autoadd_filter(dynamic raw);
 
   @protected
@@ -215,9 +218,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CommitItem> dco_decode_list_commit_item(dynamic raw);
 
   @protected
-  List<EncryptionKey> dco_decode_list_encryption_key(dynamic raw);
-
-  @protected
   List<Filter> dco_decode_list_filter(dynamic raw);
 
   @protected
@@ -251,6 +251,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DateTime? dco_decode_opt_box_autoadd_Chrono_Utc(dynamic raw);
+
+  @protected
+  EncryptionKey? dco_decode_opt_box_autoadd_encryption_key(dynamic raw);
 
   @protected
   FilterSelection? dco_decode_opt_box_autoadd_filter_selection(dynamic raw);
@@ -406,6 +409,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  EncryptionKey sse_decode_box_autoadd_encryption_key(
+      SseDeserializer deserializer);
+
+  @protected
   Filter sse_decode_box_autoadd_filter(SseDeserializer deserializer);
 
   @protected
@@ -473,10 +480,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CommitItem> sse_decode_list_commit_item(SseDeserializer deserializer);
 
   @protected
-  List<EncryptionKey> sse_decode_list_encryption_key(
-      SseDeserializer deserializer);
-
-  @protected
   List<Filter> sse_decode_list_filter(SseDeserializer deserializer);
 
   @protected
@@ -511,6 +514,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DateTime? sse_decode_opt_box_autoadd_Chrono_Utc(SseDeserializer deserializer);
+
+  @protected
+  EncryptionKey? sse_decode_opt_box_autoadd_encryption_key(
+      SseDeserializer deserializer);
 
   @protected
   FilterSelection? sse_decode_opt_box_autoadd_filter_selection(
@@ -678,6 +685,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ApplicationPaths self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_encryption_key(
+      EncryptionKey self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_filter(Filter self, SseSerializer serializer);
 
   @protected
@@ -748,10 +759,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       List<CommitItem> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_encryption_key(
-      List<EncryptionKey> self, SseSerializer serializer);
-
-  @protected
   void sse_encode_list_filter(List<Filter> self, SseSerializer serializer);
 
   @protected
@@ -790,6 +797,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_Chrono_Utc(
       DateTime? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_encryption_key(
+      EncryptionKey? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_filter_selection(

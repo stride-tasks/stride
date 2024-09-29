@@ -30,11 +30,6 @@ final class SettingsAddKnownHostEvent extends SettingsEvent {
   SettingsAddKnownHostEvent({required this.host});
 }
 
-final class SettingsAddEncryptionKeyEvent extends SettingsEvent {
-  final EncryptionKey key;
-  SettingsAddEncryptionKeyEvent({required this.key});
-}
-
 final class SettingsToggleTheme extends SettingsEvent {
   SettingsToggleTheme();
 }
@@ -92,13 +87,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         knownHosts: settings.knownHosts.copyWith(
           hosts: settings.knownHosts.hosts.toList()..add(event.host),
         ),
-      );
-      await Settings.save(settings: settings);
-    });
-
-    on<SettingsAddEncryptionKeyEvent>((event, emit) async {
-      settings = settings.copyWith(
-        encryptionKeys: settings.encryptionKeys.toList()..add(event.key),
       );
       await Settings.save(settings: settings);
     });

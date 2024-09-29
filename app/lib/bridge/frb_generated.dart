@@ -84,7 +84,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.4.0';
 
   @override
-  int get rustContentHash => -575310412;
+  int get rustContentHash => -2129107855;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -196,20 +196,18 @@ abstract class RustLibApi extends BaseApi {
 
   Future<EncryptionKey> crateApiSettingsEncryptionKeyGenerate();
 
-  Future<bool> crateApiSettingsEncryptionKeyRemoveKey(
-      {required UuidValue uuid});
+  Future<bool> crateApiSettingsEncryptionKeyRemoveKey();
 
   Future<EncryptionKey> crateApiSettingsEncryptionKeySave(
       {required String key});
-
-  Future<EncryptionKey> crateApiSettingsEncryptionKeyUpdate(
-      {required UuidValue uuid, required String key});
 
   Future<Repository> crateApiSettingsRepositoryDefault();
 
   Stream<Settings> crateApiSettingsSettingsCreateStream();
 
   Future<Settings> crateApiSettingsSettingsDefault();
+
+  Future<Settings> crateApiSettingsSettingsGet();
 
   Future<Settings> crateApiSettingsSettingsLoad(
       {required ApplicationPaths paths});
@@ -1312,12 +1310,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<bool> crateApiSettingsEncryptionKeyRemoveKey(
-      {required UuidValue uuid}) {
+  Future<bool> crateApiSettingsEncryptionKeyRemoveKey() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Uuid(uuid, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 40, port: port_);
       },
@@ -1327,7 +1323,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsEncryptionKeyRemoveKeyConstMeta,
-      argValues: [uuid],
+      argValues: [],
       apiImpl: this,
     ));
   }
@@ -1335,7 +1331,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiSettingsEncryptionKeyRemoveKeyConstMeta =>
       const TaskConstMeta(
         debugName: 'encryption_key_remove_key',
-        argNames: ['uuid'],
+        argNames: [],
       );
 
   @override
@@ -1366,40 +1362,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<EncryptionKey> crateApiSettingsEncryptionKeyUpdate(
-      {required UuidValue uuid, required String key}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Uuid(uuid, serializer);
-        sse_encode_String(key, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 42, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_encryption_key,
-        decodeErrorData:
-            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-      ),
-      constMeta: kCrateApiSettingsEncryptionKeyUpdateConstMeta,
-      argValues: [uuid, key],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSettingsEncryptionKeyUpdateConstMeta =>
-      const TaskConstMeta(
-        debugName: 'encryption_key_update',
-        argNames: ['uuid', 'key'],
-      );
-
-  @override
   Future<Repository> crateApiSettingsRepositoryDefault() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 43, port: port_);
+            funcId: 42, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_repository,
@@ -1425,7 +1393,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_StreamSink_settings_Sse(streamSink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 44, port: port_);
+            funcId: 43, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1450,7 +1418,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 45, port: port_);
+            funcId: 44, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -1465,6 +1433,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiSettingsSettingsDefaultConstMeta =>
       const TaskConstMeta(
         debugName: 'settings_default',
+        argNames: [],
+      );
+
+  @override
+  Future<Settings> crateApiSettingsSettingsGet() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 45, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_settings,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiSettingsSettingsGetConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiSettingsSettingsGetConstMeta =>
+      const TaskConstMeta(
+        debugName: 'settings_get',
         argNames: [],
       );
 
@@ -1868,6 +1860,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EncryptionKey dco_decode_box_autoadd_encryption_key(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_encryption_key(raw);
+  }
+
+  @protected
   Filter dco_decode_box_autoadd_filter(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_filter(raw);
@@ -1932,11 +1930,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   EncryptionKey dco_decode_encryption_key(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return EncryptionKey(
-      uuid: dco_decode_Uuid(arr[0]),
-      key: dco_decode_String(arr[1]),
+      key: dco_decode_String(arr[0]),
     );
   }
 
@@ -2056,12 +2053,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<EncryptionKey> dco_decode_list_encryption_key(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_encryption_key).toList();
-  }
-
-  @protected
   List<Filter> dco_decode_list_filter(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_filter).toList();
@@ -2136,6 +2127,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EncryptionKey? dco_decode_opt_box_autoadd_encryption_key(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_encryption_key(raw);
+  }
+
+  @protected
   FilterSelection? dco_decode_opt_box_autoadd_filter_selection(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_filter_selection(raw);
@@ -2196,7 +2193,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       email: dco_decode_String(arr[2]),
       branch: dco_decode_String(arr[3]),
       sshKeyUuid: dco_decode_opt_Uuid(arr[4]),
-      encryptionKeyUuid: dco_decode_opt_Uuid(arr[5]),
+      encryption: dco_decode_opt_box_autoadd_encryption_key(arr[5]),
     );
   }
 
@@ -2204,16 +2201,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
       knownHosts: dco_decode_known_hosts(arr[1]),
       repository: dco_decode_repository(arr[2]),
-      encryptionKeys: dco_decode_list_encryption_key(arr[3]),
-      periodicSync: dco_decode_bool(arr[4]),
-      filters: dco_decode_list_filter(arr[5]),
-      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[6]),
+      periodicSync: dco_decode_bool(arr[3]),
+      filters: dco_decode_list_filter(arr[4]),
+      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[5]),
     );
   }
 
@@ -2490,6 +2486,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EncryptionKey sse_decode_box_autoadd_encryption_key(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_encryption_key(deserializer);
+  }
+
+  @protected
   Filter sse_decode_box_autoadd_filter(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_filter(deserializer);
@@ -2556,9 +2559,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   EncryptionKey sse_decode_encryption_key(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_uuid = sse_decode_Uuid(deserializer);
     final var_key = sse_decode_String(deserializer);
-    return EncryptionKey(uuid: var_uuid, key: var_key);
+    return EncryptionKey(key: var_key);
   }
 
   @protected
@@ -2683,19 +2685,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<EncryptionKey> sse_decode_list_encryption_key(
-      SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <EncryptionKey>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_encryption_key(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
   List<Filter> sse_decode_list_filter(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2814,6 +2803,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EncryptionKey? sse_decode_opt_box_autoadd_encryption_key(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_encryption_key(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   FilterSelection? sse_decode_opt_box_autoadd_filter_selection(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -2899,14 +2900,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_email = sse_decode_String(deserializer);
     final var_branch = sse_decode_String(deserializer);
     final var_sshKeyUuid = sse_decode_opt_Uuid(deserializer);
-    final var_encryptionKeyUuid = sse_decode_opt_Uuid(deserializer);
+    final var_encryption =
+        sse_decode_opt_box_autoadd_encryption_key(deserializer);
     return Repository(
         origin: var_origin,
         author: var_author,
         email: var_email,
         branch: var_branch,
         sshKeyUuid: var_sshKeyUuid,
-        encryptionKeyUuid: var_encryptionKeyUuid);
+        encryption: var_encryption);
   }
 
   @protected
@@ -2915,7 +2917,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_darkMode = sse_decode_bool(deserializer);
     final var_knownHosts = sse_decode_known_hosts(deserializer);
     final var_repository = sse_decode_repository(deserializer);
-    final var_encryptionKeys = sse_decode_list_encryption_key(deserializer);
     final var_periodicSync = sse_decode_bool(deserializer);
     final var_filters = sse_decode_list_filter(deserializer);
     final var_selectedFilter =
@@ -2924,7 +2925,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         darkMode: var_darkMode,
         knownHosts: var_knownHosts,
         repository: var_repository,
-        encryptionKeys: var_encryptionKeys,
         periodicSync: var_periodicSync,
         filters: var_filters,
         selectedFilter: var_selectedFilter);
@@ -3217,6 +3217,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_encryption_key(
+      EncryptionKey self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_encryption_key(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_filter(Filter self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_filter(self, serializer);
@@ -3276,7 +3283,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_encryption_key(EncryptionKey self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Uuid(self.uuid, serializer);
     sse_encode_String(self.key, serializer);
   }
 
@@ -3385,16 +3391,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_encryption_key(
-      List<EncryptionKey> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_encryption_key(item, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_list_filter(List<Filter> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -3497,6 +3493,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_encryption_key(
+      EncryptionKey? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_encryption_key(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_filter_selection(
       FilterSelection? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -3575,7 +3582,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.email, serializer);
     sse_encode_String(self.branch, serializer);
     sse_encode_opt_Uuid(self.sshKeyUuid, serializer);
-    sse_encode_opt_Uuid(self.encryptionKeyUuid, serializer);
+    sse_encode_opt_box_autoadd_encryption_key(self.encryption, serializer);
   }
 
   @protected
@@ -3584,7 +3591,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.darkMode, serializer);
     sse_encode_known_hosts(self.knownHosts, serializer);
     sse_encode_repository(self.repository, serializer);
-    sse_encode_list_encryption_key(self.encryptionKeys, serializer);
     sse_encode_bool(self.periodicSync, serializer);
     sse_encode_list_filter(self.filters, serializer);
     sse_encode_opt_box_autoadd_filter_selection(

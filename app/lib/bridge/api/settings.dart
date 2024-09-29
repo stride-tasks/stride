@@ -21,10 +21,9 @@ import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_theme_mode`, `encryption_key`, `ssh_key_path`, `ssh_key`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_theme_mode`, `ssh_key_path`, `ssh_key`
 // These types are ignored because they are not used by any `pub` functions: `State`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
-// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `get`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
 Future<List<SshKey>> sshKeys() =>
@@ -90,37 +89,29 @@ class ApplicationPaths {
 }
 
 class EncryptionKey {
-  final UuidValue uuid;
   final String key;
 
   const EncryptionKey({
-    required this.uuid,
     required this.key,
   });
 
   static Future<EncryptionKey> generate() =>
       RustLib.instance.api.crateApiSettingsEncryptionKeyGenerate();
 
-  static Future<bool> removeKey({required UuidValue uuid}) =>
-      RustLib.instance.api.crateApiSettingsEncryptionKeyRemoveKey(uuid: uuid);
+  static Future<bool> removeKey() =>
+      RustLib.instance.api.crateApiSettingsEncryptionKeyRemoveKey();
 
   static Future<EncryptionKey> save({required String key}) =>
       RustLib.instance.api.crateApiSettingsEncryptionKeySave(key: key);
 
-  static Future<EncryptionKey> update(
-          {required UuidValue uuid, required String key}) =>
-      RustLib.instance.api
-          .crateApiSettingsEncryptionKeyUpdate(uuid: uuid, key: key);
-
   @override
-  int get hashCode => uuid.hashCode ^ key.hashCode;
+  int get hashCode => key.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is EncryptionKey &&
           runtimeType == other.runtimeType &&
-          uuid == other.uuid &&
           key == other.key;
 }
 
@@ -132,7 +123,7 @@ class Repository with _$Repository {
     required String email,
     required String branch,
     UuidValue? sshKeyUuid,
-    UuidValue? encryptionKeyUuid,
+    EncryptionKey? encryption,
   }) = _Repository;
   const Repository._();
   static Future<Repository> default_() =>
@@ -147,7 +138,6 @@ class Settings with _$Settings {
     required bool darkMode,
     required KnownHosts knownHosts,
     required Repository repository,
-    required List<EncryptionKey> encryptionKeys,
     required bool periodicSync,
     required List<Filter> filters,
     FilterSelection? selectedFilter,
@@ -157,6 +147,9 @@ class Settings with _$Settings {
 
   static Future<Settings> default_() =>
       RustLib.instance.api.crateApiSettingsSettingsDefault();
+
+  static Future<Settings> get_() =>
+      RustLib.instance.api.crateApiSettingsSettingsGet();
 
   static Future<Settings> load({required ApplicationPaths paths}) =>
       RustLib.instance.api.crateApiSettingsSettingsLoad(paths: paths);

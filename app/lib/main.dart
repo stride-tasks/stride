@@ -19,7 +19,7 @@ Future<void> main() async {
   final cachePath = await getApplicationCacheDirectory();
 
   await RustLib.init();
-  final settings = await Settings.load(
+  var settings = await Settings.load(
     paths: ApplicationPaths(
       supportPath: supportPath.path,
       documentPath: documentPath.path,
@@ -32,6 +32,9 @@ Future<void> main() async {
     path: path.join(supportPath.path, 'repository'),
     settings: settings,
   );
+
+  // Loading task storage may change settings.
+  settings = await Settings.get_();
 
   runApp(
     MyApp(

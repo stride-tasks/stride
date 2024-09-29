@@ -307,24 +307,16 @@ impl TaskStorage {
 
         let mut settings = settings.clone();
 
-        let encryption_key_uuid =
-            if let Some(encryption_key_uuid) = settings.repository.encryption_key_uuid {
-                encryption_key_uuid
-            } else {
-                let key = EncryptionKey::generate();
-                settings.encryption_keys.push(key.clone());
-                settings.repository.encryption_key_uuid = Some(key.uuid);
+        let encryption_key = if let Some(encryption_key) = &settings.repository.encryption {
+            encryption_key.clone()
+        } else {
+            let key = EncryptionKey::generate();
+            settings.repository.encryption = Some(key.clone());
+            Settings::save(settings.clone()).unwrap();
+            key
+        };
 
-                Settings::save(settings.clone()).unwrap();
-
-                key.uuid
-            };
-
-        let encryptin_key = settings
-            .encryption_key(&encryption_key_uuid)
-            .expect("there should be a key with the specified uuid");
-
-        let key = base64_decode(&encryptin_key.key).unwrap();
+        let key = base64_decode(&encryption_key.key).unwrap();
 
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
 

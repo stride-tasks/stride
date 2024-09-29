@@ -200,7 +200,6 @@ impl SshKey {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptionKey {
-    pub uuid: Uuid,
     pub key: String,
 }
 
@@ -209,18 +208,12 @@ impl EncryptionKey {
     #[allow(clippy::cast_possible_truncation)]
     pub fn generate() -> Self {
         let key = stride_crypto::crypter::Crypter::generate();
-
         Self {
-            uuid: Uuid::now_v7(),
             key: key.to_base64(),
         }
     }
 
     pub fn save(key: &str) -> Result<Self, RustError> {
-        Self::update(Uuid::now_v7(), key)
-    }
-
-    pub fn update(uuid: Uuid, key: &str) -> Result<Self, RustError> {
         let decoded = base64_decode(key)?;
 
         if decoded.len() != 32 {
@@ -232,11 +225,7 @@ impl EncryptionKey {
         }
 
         let mut settings = Settings::get();
-        if let Some(encryption_key) = settings
-            .encryption_keys
-            .iter_mut()
-            .find(|key| key.uuid == uuid)
-        {
+        if let Some(encryption_key) = &mut settings.repository.encryption {
             encryption_key.key = key.to_string();
             let result = encryption_key.to_owned();
             Settings::save(settings)?;
@@ -244,25 +233,18 @@ impl EncryptionKey {
         }
 
         let this = Self {
-            uuid,
             key: key.to_string(),
         };
 
-        settings.encryption_keys.push(this.clone());
+        settings.repository.encryption = Some(this.clone());
         Settings::save(settings)?;
         Ok(this)
     }
 
     // Store keys on disk instead of memory like ssh keys.
-    pub fn remove_key(uuid: &Uuid) -> Result<bool, RustError> {
+    pub fn remove_key() -> Result<bool, RustError> {
         let mut settings = Settings::get();
-        if settings.repository.encryption_key_uuid == Some(*uuid) {
-            Logger::error(&format!(
-                "error: trying to delete encryption key that is in use: {uuid}"
-            ));
-            return Ok(false);
-        }
-        settings.encryption_keys.retain(|key| &key.uuid != uuid);
+        settings.repository.encryption = None;
         Settings::save(settings)?;
         Ok(true)
     }
@@ -301,7 +283,7 @@ pub struct Repository {
 
     pub ssh_key_uuid: Option<Uuid>,
     #[serde(default)]
-    pub encryption_key_uuid: Option<Uuid>,
+    pub encryption: Option<EncryptionKey>,
 }
 
 impl Default for Repository {
@@ -312,7 +294,7 @@ impl Default for Repository {
             email: default_email(),
             branch: default_branch_name(),
             ssh_key_uuid: None,
-            encryption_key_uuid: None,
+            encryption: None,
         }
     }
 }
@@ -324,9 +306,6 @@ pub struct Settings {
     pub dark_mode: bool,
     pub known_hosts: KnownHosts,
     pub repository: Repository,
-
-    #[serde(default)]
-    pub encryption_keys: Vec<EncryptionKey>,
 
     #[serde(default)]
     pub periodic_sync: bool,
@@ -343,7 +322,6 @@ impl Default for Settings {
             dark_mode: default_theme_mode(),
             known_hosts: KnownHosts::default(),
             repository: Repository::default(),
-            encryption_keys: Vec::default(),
             periodic_sync: false,
             filters: Vec::default(),
             selected_filter: None,
@@ -359,7 +337,6 @@ impl Settings {
 }
 
 impl Settings {
-    #[frb(ignore)]
     pub fn get() -> Self {
         APPLICATION_STATE_INSTANCE.lock().unwrap().settings.clone()
     }
@@ -413,10 +390,6 @@ impl Settings {
     pub fn create_stream(stream_sink: StreamSink<Settings>) {
         let mut stream = SETTINGS_STREAM_SINK.lock().unwrap();
         *stream = Some(stream_sink);
-    }
-
-    pub(crate) fn encryption_key(&self, uuid: &Uuid) -> Option<&EncryptionKey> {
-        self.encryption_keys.iter().find(|key| &key.uuid == uuid)
     }
 }
 
