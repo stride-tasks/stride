@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:stride/bridge/api/logging.dart';
 
 class LoggingRoute extends StatefulWidget {
@@ -85,22 +86,34 @@ class _LoggingRouteState extends State<LoggingRoute> {
 
                     final isFirstTile = index == 0;
 
-                    return Card(
-                      child: body.isEmpty
-                          ? ListTile(
-                              leading: levelIcon,
-                              title: Text(title),
-                              subtitle: subtitle,
-                            )
-                          : ExpansionTile(
-                              leading: levelIcon,
-                              title: Text(title),
-                              subtitle: subtitle,
-                              initiallyExpanded: isFirstTile,
-                              expandedAlignment: Alignment.topLeft,
-                              childrenPadding: const EdgeInsets.all(8.0),
-                              children: [Text(body)],
+                    final copyButton = IconButton(
+                      onPressed: () async {
+                        final message = '$level: $title\n\n$body';
+                        await Clipboard.setData(ClipboardData(text: message));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Copied to clipbard!'),
                             ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.copy),
+                    );
+
+                    return Card(
+                      // SelectionArea selection removes newlines.
+                      // See: https://github.com/flutter/flutter/issues/104548
+                      child: SelectionArea(
+                        child: LogEntry(
+                          body: body,
+                          levelIcon: levelIcon,
+                          copyButton: copyButton,
+                          title: title,
+                          subtitle: subtitle,
+                          isInitialExpanded: isFirstTile,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -109,6 +122,54 @@ class _LoggingRouteState extends State<LoggingRoute> {
           );
         },
       ),
+    );
+  }
+}
+
+class LogEntry extends StatefulWidget {
+  const LogEntry({
+    super.key,
+    required this.body,
+    required this.levelIcon,
+    required this.copyButton,
+    required this.title,
+    required this.subtitle,
+    required this.isInitialExpanded,
+  });
+
+  final String body;
+  final Icon levelIcon;
+  final IconButton copyButton;
+  final String title;
+  final Text subtitle;
+  final bool isInitialExpanded;
+
+  @override
+  State<LogEntry> createState() => _LogEntryState();
+}
+
+class _LogEntryState extends State<LogEntry> {
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _isExpanded = widget.isInitialExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      leading: widget.levelIcon,
+      title: Text(widget.title),
+      trailing: _isExpanded ? widget.copyButton : null,
+      onExpansionChanged: (value) => setState(() => _isExpanded = value),
+      subtitle: SelectionContainer.disabled(child: widget.subtitle),
+      initiallyExpanded: _isExpanded,
+      expandedAlignment: Alignment.topLeft,
+      childrenPadding: const EdgeInsets.all(8.0),
+      children: [if (widget.body.isNotEmpty) Text(widget.body)],
     );
   }
 }
