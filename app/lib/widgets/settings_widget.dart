@@ -135,16 +135,17 @@ class SettingsTileText extends SettingsTile {
   }) : super(
           trailing: const Icon(Icons.arrow_forward),
           description: hidden
-              ? description
-              : (description ??
-                  Text(
-                    text,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.0,
-                      color: Colors.grey,
+              ? null
+              : description != null || text.isEmpty
+                  ? description
+                  : Text(
+                      text,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey,
+                      ),
                     ),
-                  )),
           onTap: (context) async {
             final controller = TextEditingController(text: text);
             await showAlertDialog(
