@@ -16,6 +16,7 @@ import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsRoute extends StatelessWidget {
   TextStyle get headingStyle => const TextStyle(
@@ -57,6 +58,11 @@ class SettingsRoute extends StatelessWidget {
                             settings: settings.copyWith(periodicSync: val),
                           ),
                         ),
+                  ),
+                  SettingsTileNavigation(
+                    leading: const Icon(Icons.file_open),
+                    title: const Text('Logs'),
+                    builder: (context) => const LoggingRoute(),
                   ),
                 ],
               ),
@@ -240,17 +246,79 @@ class SettingsRoute extends StatelessWidget {
                 ],
               ),
               SettingsSection(
-                title: Text('Misc', style: headingStyle),
+                title: Text('Project', style: headingStyle),
                 tiles: [
-                  SettingsTileNavigation(
-                    leading: const Icon(Icons.file_open),
-                    title: const Text('Logs'),
-                    builder: (context) => const LoggingRoute(),
+                  const SettingsTile(
+                    leading: Icon(Icons.pin),
+                    title: Text('Version'),
+                    description: Text(
+                      // NOTE: Change when pubspec.yaml version is changed.
+                      // maybe use package_info_plus to get the version.
+                      '0.0.1+1',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
-                  SettingsTileNavigation(
-                    leading: const Icon(Icons.file_copy_outlined),
-                    title: const Text('Open Source and Licence'),
-                    builder: (context) => const SshKeysRoute(),
+                  // TODO: Deduplicate string by using the SettingsTileText
+                  //       with null onChanged callback.
+                  SettingsTile(
+                    leading: const Icon(Icons.bug_report),
+                    description: const Text(
+                      'https://github.com/stride-tasks/stride/issues',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    title: const Text('Issue Tracker'),
+                    onTap: (context) async {
+                      const url =
+                          'https://github.com/stride-tasks/stride/issues';
+                      await context
+                          .read<LogBloc>()
+                          .catch_(() async => launchUrlString(url));
+                    },
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.code),
+                    title: const Text('Source Code'),
+                    description: const Text(
+                      'https://github.com/stride-tasks/stride',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    onTap: (context) async {
+                      const url = 'https://github.com/stride-tasks/stride';
+                      await context
+                          .read<LogBloc>()
+                          .catch_(() async => launchUrlString(url));
+                    },
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.copyright),
+                    title: const Text('License'),
+                    description: const Text(
+                      'AGPL-3.0-or-later',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    onTap: (context) async {
+                      const url =
+                          'https://www.gnu.org/licenses/agpl-3.0.en.html';
+                      await context
+                          .read<LogBloc>()
+                          .catch_(() async => launchUrlString(url));
+                    },
                   ),
                 ],
               ),
