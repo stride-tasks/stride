@@ -8,6 +8,8 @@ use flutter_rust_bridge::frb;
 use git2::cert::SshHostKeyType;
 use serde::{Deserialize, Serialize};
 
+use crate::{ErrorKind, RustError};
+
 // const BUNDELED_KEYS: &[KnownHostRef<'_>] = &[];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -48,7 +50,7 @@ impl From<HostKeyType> for SshHostKeyType {
 }
 
 impl TryFrom<SshHostKeyType> for HostKeyType {
-    type Error = HostKeyTypeError;
+    type Error = KnownHostsError;
     fn try_from(value: SshHostKeyType) -> Result<Self, Self::Error> {
         match value {
             SshHostKeyType::Rsa => Ok(Self::Rsa),
@@ -57,9 +59,7 @@ impl TryFrom<SshHostKeyType> for HostKeyType {
             SshHostKeyType::Ecdsa384 => Ok(Self::Ecdsa384),
             SshHostKeyType::Ecdsa521 => Ok(Self::Ecdsa521),
             SshHostKeyType::Ed255219 => Ok(Self::Ed255219),
-            _ => Err(HostKeyTypeError::Unknown {
-                value: "<NONE>".to_owned(),
-            }),
+            _ => Err(KnownHostsError::UnknownHostKeyType),
         }
     }
 }
@@ -70,22 +70,8 @@ impl Display for HostKeyType {
     }
 }
 
-#[derive(Debug)]
-pub enum HostKeyTypeError {
-    Unknown { value: String },
-}
-
-impl std::error::Error for HostKeyTypeError {}
-impl Display for HostKeyTypeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Unknown { value } => write!(f, "unknown host key type \"{value}\""),
-        }
-    }
-}
-
 impl FromStr for HostKeyType {
-    type Err = HostKeyTypeError;
+    type Err = KnownHostsError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -95,9 +81,7 @@ impl FromStr for HostKeyType {
             "ecdsa-sha2-nistp384" => Ok(HostKeyType::Ecdsa384),
             "ecdsa-sha2-nistp521" => Ok(HostKeyType::Ecdsa521),
             "ssh-ed25519" => Ok(HostKeyType::Ed255219),
-            value => Err(HostKeyTypeError::Unknown {
-                value: value.to_owned(),
-            }),
+            _ => Err(KnownHostsError::UnknownHostKeyType),
         }
     }
 }
@@ -150,46 +134,20 @@ impl Display for Host {
     }
 }
 
-#[derive(Debug)]
-pub enum HostParseError {
-    MissingHostname,
-    MissingKeyType,
-    InvalidKeyType(HostKeyTypeError),
-    MissingRemoteHostKey,
-}
-
-impl std::error::Error for HostParseError {}
-impl Display for HostParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MissingHostname => f.write_str("missing hostname"),
-            Self::MissingKeyType => f.write_str("missing key type"),
-            Self::InvalidKeyType(error) => write!(f, "Invalid key type {error}"),
-            Self::MissingRemoteHostKey => f.write_str("missing remote host key"),
-        }
-    }
-}
-
-impl From<HostKeyTypeError> for HostParseError {
-    fn from(error: HostKeyTypeError) -> Self {
-        Self::InvalidKeyType(error)
-    }
-}
-
 impl FromStr for Host {
-    type Err = HostParseError;
+    type Err = KnownHostsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut input = s.split_whitespace();
 
-        let hostname = input.next().ok_or(HostParseError::MissingHostname)?;
+        let hostname = input.next().ok_or(KnownHostsError::MissingHostname)?;
 
         let key_type = input
             .next()
-            .ok_or(HostParseError::MissingKeyType)?
+            .ok_or(KnownHostsError::MissingKeyType)?
             .parse()?;
 
         // TODO: Check if it's valid base64 encoded
-        let key = input.next().ok_or(HostParseError::MissingRemoteHostKey)?;
+        let key = input.next().ok_or(KnownHostsError::MissingRemoteHostKey)?;
 
         Ok(Self {
             hostname: hostname.to_owned(),
@@ -199,63 +157,29 @@ impl FromStr for Host {
     }
 }
 
-#[derive(Debug)]
-pub enum KnownHostsParseError {
-    InvalidHost(HostParseError),
-}
-
-impl std::error::Error for KnownHostsParseError {}
-impl Display for KnownHostsParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            KnownHostsParseError::InvalidHost(error) => write!(f, "Invalid host {error}"),
-        }
-    }
-}
-
-impl From<HostParseError> for KnownHostsParseError {
-    fn from(error: HostParseError) -> Self {
-        Self::InvalidHost(error)
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum KnownHostsError {
-    InvalidKnownHosts(KnownHostsParseError),
-    IoError(std::io::Error),
-    VarError(std::env::VarError),
+    MissingHostname,
+    MissingKeyType,
+    MissingRemoteHostKey,
+    UnknownHostKeyType,
 }
 
 impl std::error::Error for KnownHostsError {}
 impl Display for KnownHostsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidKnownHosts(error) => {
-                write!(f, "Invalid known hosts {error}")
-            }
-            Self::IoError(error) => {
-                write!(f, "Input/output error {error}")
-            }
-            Self::VarError(error) => {
-                write!(f, "environment variable error {error}")
-            }
+            Self::MissingHostname => f.write_str("missing hostname"),
+            Self::MissingKeyType => f.write_str("missing key type"),
+            Self::MissingRemoteHostKey => f.write_str("missing remote host key"),
+            Self::UnknownHostKeyType => f.write_str("unknown remote host key"),
         }
     }
 }
 
-impl From<KnownHostsParseError> for KnownHostsError {
-    fn from(error: KnownHostsParseError) -> Self {
-        Self::InvalidKnownHosts(error)
-    }
-}
-impl From<std::io::Error> for KnownHostsError {
-    fn from(error: std::io::Error) -> Self {
-        Self::IoError(error)
-    }
-}
-impl From<std::env::VarError> for KnownHostsError {
-    fn from(error: std::env::VarError) -> Self {
-        Self::VarError(error)
+impl From<KnownHostsError> for RustError {
+    fn from(error: KnownHostsError) -> Self {
+        ErrorKind::KnownHosts(error).into()
     }
 }
 
@@ -273,7 +197,7 @@ impl KnownHosts {
         Self { hosts: Vec::new() }
     }
 
-    pub fn parse_str(input: &str) -> Result<KnownHosts, KnownHostsParseError> {
+    pub fn parse_str(input: &str) -> Result<KnownHosts, RustError> {
         let mut hosts = Vec::new();
         for line in input.lines() {
             let line = line.trim();
@@ -287,12 +211,13 @@ impl KnownHosts {
         Ok(Self { hosts })
     }
 
-    pub fn read_file(filepath: &Path) -> Result<KnownHosts, KnownHostsError> {
+    pub fn read_file(filepath: &Path) -> Result<KnownHosts, RustError> {
         let contents = std::fs::read_to_string(filepath)?;
-        Ok(Self::parse_str(&contents)?)
+        Self::parse_str(&contents)
     }
 
-    pub fn read_standard_file() -> Result<KnownHosts, KnownHostsError> {
+    #[frb]
+    pub fn read_standard_file() -> Result<KnownHosts, RustError> {
         let home = std::env::var("HOME")?;
         Self::read_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))
     }
@@ -303,12 +228,14 @@ impl KnownHosts {
         Ok(())
     }
 
-    pub fn write_standard_file(&self) -> Result<(), KnownHostsError> {
+    #[frb]
+    pub fn write_standard_file(&self) -> Result<(), RustError> {
         let home = std::env::var("HOME")?;
         self.write_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))?;
         Ok(())
     }
 
+    #[frb]
     pub fn add(&mut self, host: Host) {
         self.hosts.push(host);
     }

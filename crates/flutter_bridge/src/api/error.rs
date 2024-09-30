@@ -1,4 +1,7 @@
-use crate::{git::known_hosts::Host, task::TaskStatus};
+use crate::{
+    git::known_hosts::{Host, KnownHostsError},
+    task::TaskStatus,
+};
 use flutter_rust_bridge::frb;
 use stride_crypto::crypter::Error as EncryptionError;
 
@@ -98,12 +101,14 @@ impl std::fmt::Display for ExportError {
 pub enum ErrorKind {
     NoSshKeysProvided,
     Io(std::io::Error),
+    VarEnv(std::env::VarError),
     Network {
         message: Box<str>,
     },
     Authentication {
         message: Box<str>,
     },
+    KnownHosts(KnownHostsError),
     UnknownHost {
         host: Host,
     },
@@ -136,6 +141,7 @@ impl std::fmt::Display for ErrorKind {
             Self::Io(error) => write!(f, "IO error: {error}"),
             Self::Network { message } => write!(f, "network error: {message}"),
             Self::Authentication { message } => write!(f, "ssh authentication error: {message}"),
+            Self::KnownHosts(error) => write!(f, "known hosts error: {error}"),
             Self::UnknownHost { host } => write!(f, "unknown host error: {host}"),
             Self::MissingHostKey { hostname } => {
                 write!(f, "{hostname} remote host key is not available")
@@ -154,6 +160,7 @@ impl std::fmt::Display for ErrorKind {
             Self::Encryption(error) => write!(f, "encryption error: {error}"),
             Self::Settings(error) => write!(f, "settings error: {error}"),
             Self::Base64Decode(error) => write!(f, "base64 decode error: {error}"),
+            Self::VarEnv(error) => write!(f, "var env error: {error}"),
         }
     }
 }
@@ -161,6 +168,11 @@ impl std::fmt::Display for ErrorKind {
 impl From<std::io::Error> for ErrorKind {
     fn from(error: std::io::Error) -> Self {
         Self::Io(error)
+    }
+}
+impl From<std::env::VarError> for ErrorKind {
+    fn from(error: std::env::VarError) -> Self {
+        Self::VarEnv(error)
     }
 }
 impl From<ImportError> for ErrorKind {
@@ -246,6 +258,11 @@ impl From<std::io::Error> for RustError {
         Self {
             repr: Box::from(ErrorKind::Io(error)),
         }
+    }
+}
+impl From<std::env::VarError> for RustError {
+    fn from(error: std::env::VarError) -> Self {
+        ErrorKind::from(error).into()
     }
 }
 
