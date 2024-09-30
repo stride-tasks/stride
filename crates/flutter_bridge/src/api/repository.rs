@@ -313,6 +313,7 @@ impl TaskStorage {
             let key = EncryptionKey::generate();
             settings.repository.encryption = Some(key.clone());
             Settings::save(settings.clone()).unwrap();
+            Logger::info("repository does not have encryption key, generating new encryption key");
             key
         };
 
