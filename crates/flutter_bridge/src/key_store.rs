@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc, Mutex},
 };
-use stride_crypto::crypter::Crypter;
+use stride_crypto::crypter::{Aes256Ocb, AesMode, Crypter};
 use uuid::Uuid;
 
 use crate::{
@@ -60,22 +60,19 @@ impl KeyStore {
                 identifier => return Err(KeyStoreError::InvalidTaskStatus { identifier }.into()),
             };
 
-            if decrypted.len() != 32 {
+            let Ok(decrypted) = decrypted.as_slice().try_into() else {
                 return Err(KeyStoreError::InvalidCipherLength {
                     actual_length: decrypted.len(),
-                    expected_length: 32,
+                    expected_length: Aes256Ocb::KEY_LEN,
                 }
                 .into());
-            }
+            };
 
             if keys.contains_key(&status) {
                 return Err(KeyStoreError::DuplicateEntry { status }.into());
             }
 
-            keys.insert(
-                status,
-                Crypter::new(decrypted.try_into().expect("already checked correct size")).into(),
-            );
+            keys.insert(status, Crypter::new(decrypted).into());
         }
 
         *self.keys.lock().map_err(|_| KeyStoreError::LockError)? = keys;
