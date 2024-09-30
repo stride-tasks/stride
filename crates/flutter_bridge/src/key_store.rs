@@ -49,7 +49,10 @@ impl KeyStore {
 
             let bytes = base64_decode(line)?;
 
-            let (aad, _iv, decrypted) = self.master_key.decrypt(&bytes, 1)?;
+            let (aad, _iv, decrypted) = self
+                .master_key
+                .decrypt(&bytes, 1)
+                .map_err(|_| KeyStoreError::Verification)?;
 
             let status = match aad[0] {
                 b'p' => TaskStatus::Pending,

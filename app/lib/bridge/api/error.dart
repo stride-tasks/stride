@@ -21,5 +21,7 @@ import 'package:stride/bridge/git/known_hosts.dart';
 abstract class RustError implements RustOpaqueInterface {
   Host? asUnknownHost();
 
+  bool isKeyStoreVerification();
+
   String toErrorString();
 }

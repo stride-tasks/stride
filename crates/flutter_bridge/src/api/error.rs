@@ -36,6 +36,7 @@ pub enum KeyStoreError {
         status: TaskStatus,
     },
     LockError,
+    Verification,
 }
 
 impl std::error::Error for KeyStoreError {}
@@ -55,9 +56,8 @@ impl std::fmt::Display for KeyStoreError {
             Self::DuplicateEntry { status } => {
                 write!(f, "already defined key of type {status:?}")
             }
-            Self::LockError => {
-                write!(f, "cannot lock key store")
-            }
+            Self::LockError => write!(f, "cannot lock key store"),
+            Self::Verification => f.write_str("encryption key verification"),
         }
     }
 }
@@ -229,6 +229,14 @@ impl RustError {
         };
 
         Some(host.clone())
+    }
+
+    #[frb(sync)]
+    pub fn is_key_store_verification(&self) -> bool {
+        matches!(
+            self.repr.as_ref(),
+            ErrorKind::KeyStore(KeyStoreError::Verification)
+        )
     }
 
     #[frb(sync)]
