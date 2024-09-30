@@ -169,22 +169,17 @@ impl SshKey {
         })
     }
 
-    pub fn remove_key(uuid: &Uuid) -> Result<bool, RustError> {
-        let settings = Settings::get();
+    pub fn remove_key(uuid: &Uuid) -> Result<(), RustError> {
+        let mut settings = Settings::get();
         if settings.repository.ssh_key_uuid == Some(*uuid) {
-            Logger::error(&format!(
-                "error: trying to delete ssh key that is in use: {uuid}"
-            ));
-            return Ok(false);
+            Logger::info(&format!("deleting ssh key that is in use: {uuid}"));
+            settings.repository.ssh_key_uuid = None;
         }
         let key_path = ssh_key_path().join(uuid.to_string());
-        if !key_path.exists() {
-            Logger::error("Trying to delete key that does not exit.");
-            return Ok(false);
+        if key_path.exists() {
+            std::fs::remove_dir_all(key_path)?;
         }
-
-        std::fs::remove_dir_all(key_path)?;
-        Ok(true)
+        Settings::save(settings)
     }
 
     #[frb(sync, getter)]

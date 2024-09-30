@@ -36,7 +36,7 @@ abstract class SshKey implements RustOpaqueInterface {
 
   String get publicKey;
 
-  static Future<bool> removeKey({required UuidValue uuid}) =>
+  static Future<void> removeKey({required UuidValue uuid}) =>
       RustLib.instance.api.crateApiSettingsSshKeyRemoveKey(uuid: uuid);
 
   static Future<SshKey> save(

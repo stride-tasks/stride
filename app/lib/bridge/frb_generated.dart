@@ -180,7 +180,7 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiSettingsSshKeyPublicKey({required SshKey that});
 
-  Future<bool> crateApiSettingsSshKeyRemoveKey({required UuidValue uuid});
+  Future<void> crateApiSettingsSshKeyRemoveKey({required UuidValue uuid});
 
   Future<SshKey> crateApiSettingsSshKeySave(
       {required String publicKey, required String privateKey});
@@ -1152,7 +1152,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<bool> crateApiSettingsSshKeyRemoveKey({required UuidValue uuid}) {
+  Future<void> crateApiSettingsSshKeyRemoveKey({required UuidValue uuid}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -1161,7 +1161,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             funcId: 34, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_bool,
+        decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),

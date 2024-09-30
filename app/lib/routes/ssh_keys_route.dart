@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
@@ -134,10 +136,10 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                     ],
                   ),
                   onConfirm: (context) async {
-                    if (!await SshKey.removeKey(uuid: key.uuid)) {
-                      if (context.mounted) Navigator.of(context).pop();
-                      return true;
-                    }
+                    await context.read<LogBloc>().catch_(
+                          message: 'ssh key',
+                          () async => SshKey.removeKey(uuid: key.uuid),
+                        );
                     if (context.mounted) Navigator.of(context).pop();
                     Logger.trace(
                       message: 'SSH Key deleted with UUID: ${key.uuid}',
