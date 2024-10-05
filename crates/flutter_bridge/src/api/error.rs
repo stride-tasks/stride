@@ -37,6 +37,7 @@ pub enum KeyStoreError {
     },
     LockError,
     Verification,
+    MissingEncryptionKeys,
 }
 
 impl std::error::Error for KeyStoreError {}
@@ -58,6 +59,7 @@ impl std::fmt::Display for KeyStoreError {
             }
             Self::LockError => write!(f, "cannot lock key store"),
             Self::Verification => f.write_str("encryption key verification"),
+            Self::MissingEncryptionKeys => f.write_str("missing encryption keys"),
         }
     }
 }

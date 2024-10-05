@@ -38,6 +38,16 @@ impl KeyStore {
             return Ok(());
         }
         if !self.path.exists() {
+            let mut keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
+            keys.insert(TaskStatus::Pending, Arc::new(Crypter::generate()));
+            keys.insert(TaskStatus::Complete, Arc::new(Crypter::generate()));
+            keys.insert(TaskStatus::Deleted, Arc::new(Crypter::generate()));
+            keys.insert(TaskStatus::Waiting, Arc::new(Crypter::generate()));
+            keys.insert(TaskStatus::Recurring, Arc::new(Crypter::generate()));
+            drop(keys);
+            self.loaded.store(true, std::sync::atomic::Ordering::SeqCst);
+
+            self.save()?;
             return Ok(());
         }
 
@@ -116,8 +126,8 @@ impl KeyStore {
     pub(crate) fn encrypt(
         &self,
         task: &Task,
-        iv: Option<[u8; 12]>,
-    ) -> Result<([u8; 12], String), RustError> {
+        iv: Option<[u8; Aes256Ocb::IV_LEN]>,
+    ) -> Result<([u8; Aes256Ocb::IV_LEN], String), RustError> {
         self.load()?;
 
         let mut keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
@@ -149,7 +159,7 @@ impl KeyStore {
         &self,
         status: TaskStatus,
         base64: &str,
-    ) -> Result<([u8; 12], Task), RustError> {
+    ) -> Result<([u8; Aes256Ocb::IV_LEN], Task), RustError> {
         self.load()?;
 
         let base64 = base64_decode(base64.trim())?;
