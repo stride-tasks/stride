@@ -274,7 +274,9 @@ fn default_branch_name() -> String {
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Repository {
-    // pub name: String,
+    #[serde(default = "Uuid::now_v7")]
+    pub uuid: Uuid,
+
     pub origin: String,
 
     #[serde(default = "default_author")]
@@ -294,6 +296,7 @@ pub struct Repository {
 impl Default for Repository {
     fn default() -> Self {
         Self {
+            uuid: Uuid::now_v7(),
             origin: String::new(),
             author: default_author(),
             email: default_email(),

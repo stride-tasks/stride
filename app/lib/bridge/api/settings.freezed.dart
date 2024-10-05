@@ -16,6 +16,7 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$Repository {
+  UuidValue get uuid => throw _privateConstructorUsedError;
   String get origin => throw _privateConstructorUsedError;
   String get author => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
@@ -37,7 +38,8 @@ abstract class $RepositoryCopyWith<$Res> {
       _$RepositoryCopyWithImpl<$Res, Repository>;
   @useResult
   $Res call(
-      {String origin,
+      {UuidValue uuid,
+      String origin,
       String author,
       String email,
       String branch,
@@ -60,6 +62,7 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? uuid = null,
     Object? origin = null,
     Object? author = null,
     Object? email = null,
@@ -68,6 +71,10 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
     Object? encryption = freezed,
   }) {
     return _then(_value.copyWith(
+      uuid: null == uuid
+          ? _value.uuid
+          : uuid // ignore: cast_nullable_to_non_nullable
+              as UuidValue,
       origin: null == origin
           ? _value.origin
           : origin // ignore: cast_nullable_to_non_nullable
@@ -105,7 +112,8 @@ abstract class _$$RepositoryImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String origin,
+      {UuidValue uuid,
+      String origin,
       String author,
       String email,
       String branch,
@@ -126,6 +134,7 @@ class __$$RepositoryImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? uuid = null,
     Object? origin = null,
     Object? author = null,
     Object? email = null,
@@ -134,6 +143,10 @@ class __$$RepositoryImplCopyWithImpl<$Res>
     Object? encryption = freezed,
   }) {
     return _then(_$RepositoryImpl(
+      uuid: null == uuid
+          ? _value.uuid
+          : uuid // ignore: cast_nullable_to_non_nullable
+              as UuidValue,
       origin: null == origin
           ? _value.origin
           : origin // ignore: cast_nullable_to_non_nullable
@@ -166,7 +179,8 @@ class __$$RepositoryImplCopyWithImpl<$Res>
 
 class _$RepositoryImpl extends _Repository {
   const _$RepositoryImpl(
-      {required this.origin,
+      {required this.uuid,
+      required this.origin,
       required this.author,
       required this.email,
       required this.branch,
@@ -174,6 +188,8 @@ class _$RepositoryImpl extends _Repository {
       this.encryption})
       : super._();
 
+  @override
+  final UuidValue uuid;
   @override
   final String origin;
   @override
@@ -189,7 +205,7 @@ class _$RepositoryImpl extends _Repository {
 
   @override
   String toString() {
-    return 'Repository(origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
+    return 'Repository(uuid: $uuid, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
   }
 
   @override
@@ -197,6 +213,7 @@ class _$RepositoryImpl extends _Repository {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$RepositoryImpl &&
+            (identical(other.uuid, uuid) || other.uuid == uuid) &&
             (identical(other.origin, origin) || other.origin == origin) &&
             (identical(other.author, author) || other.author == author) &&
             (identical(other.email, email) || other.email == email) &&
@@ -209,7 +226,7 @@ class _$RepositoryImpl extends _Repository {
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, origin, author, email, branch, sshKeyUuid, encryption);
+      runtimeType, uuid, origin, author, email, branch, sshKeyUuid, encryption);
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -222,7 +239,8 @@ class _$RepositoryImpl extends _Repository {
 
 abstract class _Repository extends Repository {
   const factory _Repository(
-      {required final String origin,
+      {required final UuidValue uuid,
+      required final String origin,
       required final String author,
       required final String email,
       required final String branch,
@@ -230,6 +248,8 @@ abstract class _Repository extends Repository {
       final EncryptionKey? encryption}) = _$RepositoryImpl;
   const _Repository._() : super._();
 
+  @override
+  UuidValue get uuid;
   @override
   String get origin;
   @override

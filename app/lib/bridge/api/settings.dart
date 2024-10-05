@@ -117,6 +117,7 @@ class EncryptionKey {
 @freezed
 class Repository with _$Repository {
   const factory Repository({
+    required UuidValue uuid,
     required String origin,
     required String author,
     required String email,

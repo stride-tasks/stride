@@ -2273,15 +2273,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Repository dco_decode_repository(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return Repository(
-      origin: dco_decode_String(arr[0]),
-      author: dco_decode_String(arr[1]),
-      email: dco_decode_String(arr[2]),
-      branch: dco_decode_String(arr[3]),
-      sshKeyUuid: dco_decode_opt_Uuid(arr[4]),
-      encryption: dco_decode_opt_box_autoadd_encryption_key(arr[5]),
+      uuid: dco_decode_Uuid(arr[0]),
+      origin: dco_decode_String(arr[1]),
+      author: dco_decode_String(arr[2]),
+      email: dco_decode_String(arr[3]),
+      branch: dco_decode_String(arr[4]),
+      sshKeyUuid: dco_decode_opt_Uuid(arr[5]),
+      encryption: dco_decode_opt_box_autoadd_encryption_key(arr[6]),
     );
   }
 
@@ -2988,6 +2989,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Repository sse_decode_repository(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_uuid = sse_decode_Uuid(deserializer);
     final var_origin = sse_decode_String(deserializer);
     final var_author = sse_decode_String(deserializer);
     final var_email = sse_decode_String(deserializer);
@@ -2996,6 +2998,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_encryption =
         sse_decode_opt_box_autoadd_encryption_key(deserializer);
     return Repository(
+        uuid: var_uuid,
         origin: var_origin,
         author: var_author,
         email: var_email,
@@ -3675,6 +3678,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_repository(Repository self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_Uuid(self.uuid, serializer);
     sse_encode_String(self.origin, serializer);
     sse_encode_String(self.author, serializer);
     sse_encode_String(self.email, serializer);

@@ -2901,6 +2901,7 @@ impl SseDecode for (String, String) {
 impl SseDecode for crate::api::settings::Repository {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
         let mut var_origin = <String>::sse_decode(deserializer);
         let mut var_author = <String>::sse_decode(deserializer);
         let mut var_email = <String>::sse_decode(deserializer);
@@ -2909,6 +2910,7 @@ impl SseDecode for crate::api::settings::Repository {
         let mut var_encryption =
             <Option<crate::api::settings::EncryptionKey>>::sse_decode(deserializer);
         return crate::api::settings::Repository {
+            uuid: var_uuid,
             origin: var_origin,
             author: var_author,
             email: var_email,
@@ -3471,6 +3473,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::logging::Logger>
 impl flutter_rust_bridge::IntoDart for crate::api::settings::Repository {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
+            self.uuid.into_into_dart().into_dart(),
             self.origin.into_into_dart().into_dart(),
             self.author.into_into_dart().into_dart(),
             self.email.into_into_dart().into_dart(),
@@ -4057,6 +4060,7 @@ impl SseEncode for (String, String) {
 impl SseEncode for crate::api::settings::Repository {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <uuid::Uuid>::sse_encode(self.uuid, serializer);
         <String>::sse_encode(self.origin, serializer);
         <String>::sse_encode(self.author, serializer);
         <String>::sse_encode(self.email, serializer);
