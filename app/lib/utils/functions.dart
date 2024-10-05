@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 Future<DateTime?> showPickDateTime({required BuildContext context}) async {
@@ -30,8 +32,8 @@ Future<DateTime?> showPickDateTime({required BuildContext context}) async {
 Future<bool> showAlertDialog({
   required BuildContext context,
   required Widget content,
-  Future<bool> Function(BuildContext context)? onCancel,
-  required Future<bool> Function(BuildContext context) onConfirm,
+  FutureOr<bool> Function(BuildContext context)? onCancel,
+  required FutureOr<bool> Function(BuildContext context) onConfirm,
 }) async {
   var result = false;
   await showDialog<void>(

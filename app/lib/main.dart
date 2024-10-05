@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
@@ -11,6 +12,7 @@ import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/theme.dart';
+import 'package:stride/utils/functions.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,9 +56,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<LogBloc>(
-          create: (context) => LogBloc(),
-        ),
+        BlocProvider<DialogBloc>(create: (context) => DialogBloc()),
+        BlocProvider<LogBloc>(create: (context) => LogBloc()),
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(
             settings: settings,
@@ -68,6 +69,7 @@ class MyApp extends StatelessWidget {
             repository: repository,
             settingsBloc: context.read<SettingsBloc>(),
             logBloc: context.read<LogBloc>(),
+            dialogBloc: context.read<DialogBloc>(),
           ),
         ),
       ],
@@ -111,7 +113,26 @@ class MyApp extends StatelessWidget {
                     ),
                   );
                 },
-                child: const TasksRoute(),
+                child: BlocListener<DialogBloc, DialogState>(
+                  listener: (context, state) async {
+                    final title = await state.title(context);
+                    if (!context.mounted) return;
+                    final description = await state.content?.call(context);
+                    if (!context.mounted) return;
+                    showAlertDialog(
+                      context: context,
+                      content: description == null
+                          ? title
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [title, description],
+                            ),
+                      onConfirm: state.onConfirm,
+                      onCancel: state.onCancel,
+                    );
+                  },
+                  child: const TasksRoute(),
+                ),
               ),
             );
           },

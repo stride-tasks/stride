@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/task.dart';
-import 'package:stride/utils/classes.dart';
+import 'package:stride/routes/encryption_key_route.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -60,11 +61,16 @@ final class TaskCheckoutBranchEvent extends TaskEvent {
 class TaskState {
   final List<Task> tasks;
   final bool syncing;
-  final RustError? error;
-  const TaskState({required this.tasks, this.syncing = false, this.error});
+  final Object? syncingError;
+  const TaskState({
+    required this.tasks,
+    this.syncing = false,
+    this.syncingError,
+  });
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
+  final DialogBloc dialogBloc;
   final SettingsBloc settingsBloc;
   final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
@@ -99,6 +105,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     required this.repository,
     required this.settingsBloc,
     required this.logBloc,
+    required this.dialogBloc,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
@@ -148,15 +155,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskSyncEvent>((event, emit) async {
-      final tasksOld = await _tasks();
-      emit(TaskState(tasks: tasksOld, syncing: true));
+      final tasks = await _tasks();
+      emit(TaskState(tasks: tasks, syncing: true));
 
-      final result = await logBloc.catch_(repository.sync_);
-      if (result case Err(:final error) when error is RustError) {
-        emit(TaskState(tasks: tasksOld, error: error));
-        return;
+      try {
+        await repository.sync_();
+      } catch (error) {
+        emit(TaskState(tasks: tasks, syncingError: error));
+        rethrow;
       }
-
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -185,12 +192,51 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
     logBloc.add(
-      LogErrorEvent(
-        error: error,
-        stackTrace: stackTrace,
-        message: 'task',
-      ),
+      LogErrorEvent(error: error, stackTrace: stackTrace, message: 'task'),
     );
+    if (error is RustError) {
+      final host = error.asUnknownHost();
+      if (host != null) {
+        dialogBloc.add(
+          DialogAlertEvent(
+            title: 'Accept Unknown Host: ${host.hostname}',
+            content: 'Host Key: ${host.keyType.name} ${host.key}',
+            onConfirm: (context) async {
+              settingsBloc.add(
+                SettingsUpdateEvent(
+                  settings: settingsBloc.settings.copyWith(
+                    knownHosts: settingsBloc.settings.knownHosts.copyWith(
+                      hosts: settingsBloc.settings.knownHosts.hosts.toList()
+                        ..add(host),
+                    ),
+                  ),
+                ),
+              );
+              Navigator.pop(context);
+              return true;
+            },
+          ),
+        );
+      } else if (error.isKeyStoreVerification()) {
+        dialogBloc.add(
+          DialogAlertEvent(
+            title: "Couldn't decrypt tasks using encryption key",
+            content: 'Are you sure the encryption key is correct?',
+            onConfirm: (context) async {
+              Navigator.pop(context);
+              await Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (context) => EncryptionKeyRoute(
+                    encryption: settingsBloc.settings.repository.encryption,
+                  ),
+                ),
+              );
+              return true;
+            },
+          ),
+        );
+      }
+    }
   }
 
   @override
