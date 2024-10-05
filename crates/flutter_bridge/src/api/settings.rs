@@ -129,6 +129,16 @@ pub fn ssh_keys() -> Result<Vec<SshKey>, RustError> {
     Ok(result)
 }
 
+impl KnownHosts {
+    pub fn load() -> Result<Self, RustError> {
+        KnownHosts::read_standard_file()
+    }
+
+    pub fn save(this: &Self) -> Result<(), RustError> {
+        KnownHosts::write_standard_file(this)
+    }
+}
+
 #[frb(opaque)]
 #[derive(Debug)]
 pub struct SshKey {
@@ -299,7 +309,6 @@ impl Default for Repository {
 pub struct Settings {
     #[serde(default = "default_theme_mode")]
     pub dark_mode: bool,
-    pub known_hosts: KnownHosts,
     pub repository: Repository,
 
     #[serde(default)]
@@ -315,7 +324,6 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             dark_mode: default_theme_mode(),
-            known_hosts: KnownHosts::default(),
             repository: Repository::default(),
             periodic_sync: false,
             filters: Vec::default(),
@@ -341,7 +349,6 @@ impl Settings {
         let ssh_path = Path::new(&paths.support_path).join(".ssh");
 
         std::fs::create_dir_all(&ssh_path)?;
-        std::fs::write(ssh_path.join("known_hosts"), "\n")?;
 
         init_logger(Path::new(&paths.log_path));
 

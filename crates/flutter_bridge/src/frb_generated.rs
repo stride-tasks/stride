@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.4.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1534348608;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1068412896;
 
 // Section: executor
 
@@ -2158,6 +2158,71 @@ fn wire__crate__api__settings__ssh_keys_impl(
         },
     )
 }
+fn wire__crate__git__known_hosts__known_hosts_load_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "known_hosts_load",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let output_ok = crate::git::known_hosts::KnownHosts::load()?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__git__known_hosts__known_hosts_save_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "known_hosts_save",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_this = <crate::git::known_hosts::KnownHosts>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let output_ok = crate::git::known_hosts::KnownHosts::save(&api_this)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__task__task_new_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -2858,7 +2923,6 @@ impl SseDecode for crate::api::settings::Settings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_darkMode = <bool>::sse_decode(deserializer);
-        let mut var_knownHosts = <crate::git::known_hosts::KnownHosts>::sse_decode(deserializer);
         let mut var_repository = <crate::api::settings::Repository>::sse_decode(deserializer);
         let mut var_periodicSync = <bool>::sse_decode(deserializer);
         let mut var_filters = <Vec<crate::api::filter::Filter>>::sse_decode(deserializer);
@@ -2866,7 +2930,6 @@ impl SseDecode for crate::api::settings::Settings {
             <Option<crate::api::filter::FilterSelection>>::sse_decode(deserializer);
         return crate::api::settings::Settings {
             dark_mode: var_darkMode,
-            known_hosts: var_knownHosts,
             repository: var_repository,
             periodic_sync: var_periodicSync,
             filters: var_filters,
@@ -3100,7 +3163,13 @@ fn pde_ffi_dispatcher_primary_impl(
         47 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
         49 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
         50 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        53 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        51 => {
+            wire__crate__git__known_hosts__known_hosts_load_impl(port, ptr, rust_vec_len, data_len)
+        }
+        52 => {
+            wire__crate__git__known_hosts__known_hosts_save_impl(port, ptr, rust_vec_len, data_len)
+        }
+        55 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3125,8 +3194,8 @@ fn pde_ffi_dispatcher_sync_impl(
         34 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
         38 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
         48 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        51 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
-        52 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        53 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
+        54 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3428,7 +3497,6 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Settings {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.dark_mode.into_into_dart().into_dart(),
-            self.known_hosts.into_into_dart().into_dart(),
             self.repository.into_into_dart().into_dart(),
             self.periodic_sync.into_into_dart().into_dart(),
             self.filters.into_into_dart().into_dart(),
@@ -4002,7 +4070,6 @@ impl SseEncode for crate::api::settings::Settings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.dark_mode, serializer);
-        <crate::git::known_hosts::KnownHosts>::sse_encode(self.known_hosts, serializer);
         <crate::api::settings::Repository>::sse_encode(self.repository, serializer);
         <bool>::sse_encode(self.periodic_sync, serializer);
         <Vec<crate::api::filter::Filter>>::sse_encode(self.filters, serializer);

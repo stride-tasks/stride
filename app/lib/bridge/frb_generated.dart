@@ -84,7 +84,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.4.0';
 
   @override
-  int get rustContentHash => 1534348608;
+  int get rustContentHash => 1068412896;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -219,6 +219,10 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiSettingsSettingsSave({required Settings settings});
 
   Future<List<SshKey>> crateApiSettingsSshKeys();
+
+  Future<KnownHosts> crateGitKnownHostsKnownHostsLoad();
+
+  Future<void> crateGitKnownHostsKnownHostsSave({required KnownHosts this_});
 
   Task crateTaskTaskNew({required String title});
 
@@ -1589,12 +1593,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<KnownHosts> crateGitKnownHostsKnownHostsLoad() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 51, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_known_hosts,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateGitKnownHostsKnownHostsLoadConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateGitKnownHostsKnownHostsLoadConstMeta =>
+      const TaskConstMeta(
+        debugName: 'known_hosts_load',
+        argNames: [],
+      );
+
+  @override
+  Future<void> crateGitKnownHostsKnownHostsSave({required KnownHosts this_}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_known_hosts(this_, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 52, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateGitKnownHostsKnownHostsSaveConstMeta,
+      argValues: [this_],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateGitKnownHostsKnownHostsSaveConstMeta =>
+      const TaskConstMeta(
+        debugName: 'known_hosts_save',
+        argNames: ['this_'],
+      );
+
+  @override
   Task crateTaskTaskNew({required String title}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(title, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -1617,7 +1672,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_f_32,
@@ -1643,7 +1698,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Uuid(uuid, serializer);
         sse_encode_String(title, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 53, port: port_);
+            funcId: 55, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -1908,6 +1963,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Host dco_decode_box_autoadd_host(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_host(raw);
+  }
+
+  @protected
+  KnownHosts dco_decode_box_autoadd_known_hosts(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_known_hosts(raw);
   }
 
   @protected
@@ -2228,15 +2289,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
-      knownHosts: dco_decode_known_hosts(arr[1]),
-      repository: dco_decode_repository(arr[2]),
-      periodicSync: dco_decode_bool(arr[3]),
-      filters: dco_decode_list_filter(arr[4]),
-      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[5]),
+      repository: dco_decode_repository(arr[1]),
+      periodicSync: dco_decode_bool(arr[2]),
+      filters: dco_decode_list_filter(arr[3]),
+      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[4]),
     );
   }
 
@@ -2536,6 +2596,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Host sse_decode_box_autoadd_host(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_host(deserializer);
+  }
+
+  @protected
+  KnownHosts sse_decode_box_autoadd_known_hosts(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_known_hosts(deserializer);
   }
 
   @protected
@@ -2942,7 +3008,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings sse_decode_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_darkMode = sse_decode_bool(deserializer);
-    final var_knownHosts = sse_decode_known_hosts(deserializer);
     final var_repository = sse_decode_repository(deserializer);
     final var_periodicSync = sse_decode_bool(deserializer);
     final var_filters = sse_decode_list_filter(deserializer);
@@ -2950,7 +3015,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_decode_opt_box_autoadd_filter_selection(deserializer);
     return Settings.raw(
         darkMode: var_darkMode,
-        knownHosts: var_knownHosts,
         repository: var_repository,
         periodicSync: var_periodicSync,
         filters: var_filters,
@@ -3267,6 +3331,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_box_autoadd_host(Host self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_host(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_known_hosts(
+      KnownHosts self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_known_hosts(self, serializer);
   }
 
   @protected
@@ -3616,7 +3687,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_settings(Settings self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.darkMode, serializer);
-    sse_encode_known_hosts(self.knownHosts, serializer);
     sse_encode_repository(self.repository, serializer);
     sse_encode_bool(self.periodicSync, serializer);
     sse_encode_list_filter(self.filters, serializer);

@@ -197,7 +197,7 @@ impl KnownHosts {
         Self { hosts: Vec::new() }
     }
 
-    pub fn parse_str(input: &str) -> Result<KnownHosts, RustError> {
+    pub fn parse_str(input: &str) -> Result<Self, RustError> {
         let mut hosts = Vec::new();
         for line in input.lines() {
             let line = line.trim();
@@ -211,13 +211,18 @@ impl KnownHosts {
         Ok(Self { hosts })
     }
 
-    pub fn read_file(filepath: &Path) -> Result<KnownHosts, RustError> {
+    pub fn read_file(filepath: &Path) -> Result<Self, RustError> {
+        if !filepath.exists() {
+            std::fs::write(filepath, "")?;
+            return Ok(Self::default());
+        }
+
         let contents = std::fs::read_to_string(filepath)?;
         Self::parse_str(&contents)
     }
 
     #[frb]
-    pub fn read_standard_file() -> Result<KnownHosts, RustError> {
+    pub fn read_standard_file() -> Result<Self, RustError> {
         let home = std::env::var("HOME")?;
         Self::read_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))
     }

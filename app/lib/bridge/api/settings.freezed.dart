@@ -254,7 +254,6 @@ abstract class _Repository extends Repository {
 /// @nodoc
 mixin _$Settings {
   bool get darkMode => throw _privateConstructorUsedError;
-  KnownHosts get knownHosts => throw _privateConstructorUsedError;
   Repository get repository => throw _privateConstructorUsedError;
   bool get periodicSync => throw _privateConstructorUsedError;
   List<Filter> get filters => throw _privateConstructorUsedError;
@@ -263,7 +262,6 @@ mixin _$Settings {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool darkMode,
-            KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
             List<Filter> filters,
@@ -273,25 +271,15 @@ mixin _$Settings {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(
-            bool darkMode,
-            KnownHosts knownHosts,
-            Repository repository,
-            bool periodicSync,
-            List<Filter> filters,
-            FilterSelection? selectedFilter)?
+    TResult? Function(bool darkMode, Repository repository, bool periodicSync,
+            List<Filter> filters, FilterSelection? selectedFilter)?
         raw,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(
-            bool darkMode,
-            KnownHosts knownHosts,
-            Repository repository,
-            bool periodicSync,
-            List<Filter> filters,
-            FilterSelection? selectedFilter)?
+    TResult Function(bool darkMode, Repository repository, bool periodicSync,
+            List<Filter> filters, FilterSelection? selectedFilter)?
         raw,
     required TResult orElse(),
   }) =>
@@ -327,13 +315,11 @@ abstract class $SettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool darkMode,
-      KnownHosts knownHosts,
       Repository repository,
       bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter});
 
-  $KnownHostsCopyWith<$Res> get knownHosts;
   $RepositoryCopyWith<$Res> get repository;
   $FilterSelectionCopyWith<$Res>? get selectedFilter;
 }
@@ -354,7 +340,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   @override
   $Res call({
     Object? darkMode = null,
-    Object? knownHosts = null,
     Object? repository = null,
     Object? periodicSync = null,
     Object? filters = null,
@@ -365,10 +350,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.darkMode
           : darkMode // ignore: cast_nullable_to_non_nullable
               as bool,
-      knownHosts: null == knownHosts
-          ? _value.knownHosts
-          : knownHosts // ignore: cast_nullable_to_non_nullable
-              as KnownHosts,
       repository: null == repository
           ? _value.repository
           : repository // ignore: cast_nullable_to_non_nullable
@@ -386,16 +367,6 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           : selectedFilter // ignore: cast_nullable_to_non_nullable
               as FilterSelection?,
     ) as $Val);
-  }
-
-  /// Create a copy of Settings
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $KnownHostsCopyWith<$Res> get knownHosts {
-    return $KnownHostsCopyWith<$Res>(_value.knownHosts, (value) {
-      return _then(_value.copyWith(knownHosts: value) as $Val);
-    });
   }
 
   /// Create a copy of Settings
@@ -433,14 +404,11 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool darkMode,
-      KnownHosts knownHosts,
       Repository repository,
       bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter});
 
-  @override
-  $KnownHostsCopyWith<$Res> get knownHosts;
   @override
   $RepositoryCopyWith<$Res> get repository;
   @override
@@ -461,7 +429,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? darkMode = null,
-    Object? knownHosts = null,
     Object? repository = null,
     Object? periodicSync = null,
     Object? filters = null,
@@ -472,10 +439,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.darkMode
           : darkMode // ignore: cast_nullable_to_non_nullable
               as bool,
-      knownHosts: null == knownHosts
-          ? _value.knownHosts
-          : knownHosts // ignore: cast_nullable_to_non_nullable
-              as KnownHosts,
       repository: null == repository
           ? _value.repository
           : repository // ignore: cast_nullable_to_non_nullable
@@ -501,7 +464,6 @@ class __$$SettingsImplCopyWithImpl<$Res>
 class _$SettingsImpl extends _Settings {
   const _$SettingsImpl(
       {required this.darkMode,
-      required this.knownHosts,
       required this.repository,
       required this.periodicSync,
       required final List<Filter> filters,
@@ -511,8 +473,6 @@ class _$SettingsImpl extends _Settings {
 
   @override
   final bool darkMode;
-  @override
-  final KnownHosts knownHosts;
   @override
   final Repository repository;
   @override
@@ -530,7 +490,7 @@ class _$SettingsImpl extends _Settings {
 
   @override
   String toString() {
-    return 'Settings.raw(darkMode: $darkMode, knownHosts: $knownHosts, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
+    return 'Settings.raw(darkMode: $darkMode, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
   }
 
   @override
@@ -540,8 +500,6 @@ class _$SettingsImpl extends _Settings {
             other is _$SettingsImpl &&
             (identical(other.darkMode, darkMode) ||
                 other.darkMode == darkMode) &&
-            (identical(other.knownHosts, knownHosts) ||
-                other.knownHosts == knownHosts) &&
             (identical(other.repository, repository) ||
                 other.repository == repository) &&
             (identical(other.periodicSync, periodicSync) ||
@@ -555,7 +513,6 @@ class _$SettingsImpl extends _Settings {
   int get hashCode => Object.hash(
       runtimeType,
       darkMode,
-      knownHosts,
       repository,
       periodicSync,
       const DeepCollectionEquality().hash(_filters),
@@ -574,49 +531,36 @@ class _$SettingsImpl extends _Settings {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool darkMode,
-            KnownHosts knownHosts,
             Repository repository,
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter)
         raw,
   }) {
-    return raw(darkMode, knownHosts, repository, periodicSync, filters,
-        selectedFilter);
+    return raw(darkMode, repository, periodicSync, filters, selectedFilter);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(
-            bool darkMode,
-            KnownHosts knownHosts,
-            Repository repository,
-            bool periodicSync,
-            List<Filter> filters,
-            FilterSelection? selectedFilter)?
+    TResult? Function(bool darkMode, Repository repository, bool periodicSync,
+            List<Filter> filters, FilterSelection? selectedFilter)?
         raw,
   }) {
-    return raw?.call(darkMode, knownHosts, repository, periodicSync, filters,
-        selectedFilter);
+    return raw?.call(
+        darkMode, repository, periodicSync, filters, selectedFilter);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(
-            bool darkMode,
-            KnownHosts knownHosts,
-            Repository repository,
-            bool periodicSync,
-            List<Filter> filters,
-            FilterSelection? selectedFilter)?
+    TResult Function(bool darkMode, Repository repository, bool periodicSync,
+            List<Filter> filters, FilterSelection? selectedFilter)?
         raw,
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(darkMode, knownHosts, repository, periodicSync, filters,
-          selectedFilter);
+      return raw(darkMode, repository, periodicSync, filters, selectedFilter);
     }
     return orElse();
   }
@@ -653,7 +597,6 @@ class _$SettingsImpl extends _Settings {
 abstract class _Settings extends Settings {
   const factory _Settings(
       {required final bool darkMode,
-      required final KnownHosts knownHosts,
       required final Repository repository,
       required final bool periodicSync,
       required final List<Filter> filters,
@@ -662,8 +605,6 @@ abstract class _Settings extends Settings {
 
   @override
   bool get darkMode;
-  @override
-  KnownHosts get knownHosts;
   @override
   Repository get repository;
   @override

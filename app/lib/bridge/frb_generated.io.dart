@@ -162,6 +162,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Host dco_decode_box_autoadd_host(dynamic raw);
 
   @protected
+  KnownHosts dco_decode_box_autoadd_known_hosts(dynamic raw);
+
+  @protected
   Settings dco_decode_box_autoadd_settings(dynamic raw);
 
   @protected
@@ -421,6 +424,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Host sse_decode_box_autoadd_host(SseDeserializer deserializer);
+
+  @protected
+  KnownHosts sse_decode_box_autoadd_known_hosts(SseDeserializer deserializer);
 
   @protected
   Settings sse_decode_box_autoadd_settings(SseDeserializer deserializer);
@@ -697,6 +703,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_host(Host self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_known_hosts(
+      KnownHosts self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_settings(Settings self, SseSerializer serializer);

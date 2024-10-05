@@ -15,7 +15,6 @@ import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/task.dart';
 import 'package:stride/bridge/task/annotation.dart';
 import 'package:uuid/uuid.dart';

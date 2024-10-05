@@ -15,7 +15,6 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/task.dart';
 import 'package:uuid/uuid.dart';
 
@@ -136,7 +135,6 @@ class Settings with _$Settings {
   const Settings._();
   const factory Settings.raw({
     required bool darkMode,
-    required KnownHosts knownHosts,
     required Repository repository,
     required bool periodicSync,
     required List<Filter> filters,

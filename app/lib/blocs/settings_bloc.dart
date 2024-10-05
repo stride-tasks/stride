@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
-import 'package:stride/bridge/git/known_hosts.dart';
 
 @immutable
 abstract class SettingsEvent {}
@@ -18,16 +17,6 @@ final class SettingsRefreshEvent extends SettingsEvent {
 final class SettingsUpdateEvent extends SettingsEvent {
   final Settings settings;
   SettingsUpdateEvent({required this.settings});
-}
-
-final class SettingsRemoveKnownHostEvent extends SettingsEvent {
-  final Host host;
-  SettingsRemoveKnownHostEvent({required this.host});
-}
-
-final class SettingsAddKnownHostEvent extends SettingsEvent {
-  final Host host;
-  SettingsAddKnownHostEvent({required this.host});
 }
 
 final class SettingsToggleTheme extends SettingsEvent {
@@ -66,29 +55,6 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
     on<SettingsUpdateEvent>((event, emit) async {
       await Settings.save(settings: event.settings);
-    });
-
-    on<SettingsRemoveKnownHostEvent>((event, emit) async {
-      settings = settings.copyWith(
-        knownHosts: settings.knownHosts.copyWith(
-          hosts: settings.knownHosts.hosts.toList()
-            ..removeWhere(
-              (element) =>
-                  element.hostname == event.host.hostname &&
-                  element.keyType == event.host.keyType,
-            ),
-        ),
-      );
-      await Settings.save(settings: settings);
-    });
-
-    on<SettingsAddKnownHostEvent>((event, emit) async {
-      settings = settings.copyWith(
-        knownHosts: settings.knownHosts.copyWith(
-          hosts: settings.knownHosts.hosts.toList()..add(event.host),
-        ),
-      );
-      await Settings.save(settings: settings);
     });
 
     on<SettingsToggleTheme>((event, emit) async {

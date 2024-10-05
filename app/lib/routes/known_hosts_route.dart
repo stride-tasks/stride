@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
 
-class KnownHostsRoute extends StatelessWidget {
+class KnownHostsRoute extends StatefulWidget {
   final void Function(Host key)? onTap;
   final bool hasDelete;
 
@@ -16,17 +16,44 @@ class KnownHostsRoute extends StatelessWidget {
   });
 
   @override
+  State<KnownHostsRoute> createState() => _KnownHostsRouteState();
+}
+
+class _KnownHostsRouteState extends State<KnownHostsRoute> {
+  Future<KnownHosts>? _knownHosts;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _knownHosts = KnownHosts.load();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('SSH Known Hosts')),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
+      body: FutureBuilder<KnownHosts>(
+        future: _knownHosts,
         builder: (context, state) {
-          final hosts = state.settings.knownHosts.hosts;
+          if (state.connectionState != ConnectionState.done) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (state.hasError) {
+            context.read<LogBloc>().add(LogErrorEvent(error: state.error!));
+            Navigator.of(context).pop();
+            return const Placeholder();
+          }
+
+          final knownHosts = state.data!;
+          final hosts = knownHosts.hosts;
           return ListView.builder(
             itemCount: hosts.length,
             itemBuilder: (context, index) {
-              final host = hosts[index];
-              return Card(child: _listItem(host, context));
+              return Card(child: _listItem(knownHosts, index, context));
             },
           );
         },
@@ -34,11 +61,12 @@ class KnownHostsRoute extends StatelessWidget {
     );
   }
 
-  ListTile _listItem(Host host, BuildContext context) {
+  ListTile _listItem(KnownHosts knownHosts, int index, BuildContext context) {
+    final host = knownHosts.hosts[index];
     return ListTile(
       title: Text('${host.hostname} - ${host.keyType.name}'),
       subtitle: Text(host.key),
-      trailing: !hasDelete
+      trailing: !widget.hasDelete
           ? null
           : IconButton(
               icon: const Icon(Icons.delete),
@@ -59,19 +87,23 @@ class KnownHostsRoute extends StatelessWidget {
                       ),
                     ],
                   ),
-                  onConfirm: (context) {
-                    context
-                        .read<SettingsBloc>()
-                        .add(SettingsRemoveKnownHostEvent(host: host));
+                  onConfirm: (context) async {
+                    context.read<LogBloc>().catch_(
+                          () async => KnownHosts.save(
+                            this_: knownHosts.copyWith(
+                              hosts: knownHosts.hosts.toList()
+                                ..removeWhere((element) => element == host),
+                            ),
+                          ),
+                        );
                     Navigator.of(context).pop();
-
-                    Logger.trace(message: 'SSH Key deleted');
-                    return Future.value(true);
+                    Logger.trace(message: 'Known host deleted');
+                    return true;
                   },
                 );
               },
             ),
-      onTap: onTap == null ? null : () => onTap!(host),
+      onTap: widget.onTap == null ? null : () => widget.onTap!(host),
     );
   }
 }

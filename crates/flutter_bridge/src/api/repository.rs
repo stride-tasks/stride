@@ -553,8 +553,7 @@ impl TaskStorage {
         let ssh_key = Self::ssh_key(&settings)?;
 
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error =
-            with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
+        let callback_error = with_authentication(ssh_key, &mut callbacks);
 
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(callbacks);
@@ -894,8 +893,7 @@ impl TaskStorage {
 
         let ssh_key = Self::ssh_key(&settings)?;
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error =
-            with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
+        let callback_error = with_authentication(ssh_key, &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
@@ -1002,8 +1000,7 @@ impl TaskStorage {
 
         let ssh_key = Self::ssh_key(&settings)?;
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error =
-            with_authentication(ssh_key, settings.known_hosts.clone(), &mut callbacks);
+        let callback_error = with_authentication(ssh_key, &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
@@ -1146,7 +1143,6 @@ impl TaskStorage {
 
 fn with_authentication(
     ssh_key: SshKey,
-    known_hosts: KnownHosts,
     callbacks: &mut RemoteCallbacks<'_>,
 ) -> Rc<RefCell<Option<RustError>>> {
     let mut tried_ssh = false;
@@ -1179,6 +1175,8 @@ fn with_authentication(
             None,
         )
     });
+
+    let known_hosts = KnownHosts::load().unwrap();
 
     let certificate_error = error.clone();
     callbacks.certificate_check(move |cert, hostname| {

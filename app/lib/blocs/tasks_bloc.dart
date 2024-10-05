@@ -8,6 +8,7 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
 
@@ -202,17 +203,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
             title: 'Accept Unknown Host: ${host.hostname}',
             content: 'Host Key: ${host.keyType.name} ${host.key}',
             onConfirm: (context) async {
-              settingsBloc.add(
-                SettingsUpdateEvent(
-                  settings: settingsBloc.settings.copyWith(
-                    knownHosts: settingsBloc.settings.knownHosts.copyWith(
-                      hosts: settingsBloc.settings.knownHosts.hosts.toList()
-                        ..add(host),
-                    ),
+              await logBloc.catch_(message: 'known hosts', () async {
+                final knownHosts = await KnownHosts.load();
+                KnownHosts.save(
+                  this_: knownHosts.copyWith(
+                    hosts: knownHosts.hosts.toList()..add(host),
                   ),
-                ),
-              );
-              Navigator.pop(context);
+                );
+              });
+              if (context.mounted) Navigator.pop(context);
               return true;
             },
           ),

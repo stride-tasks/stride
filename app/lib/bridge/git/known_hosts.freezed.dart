@@ -97,8 +97,10 @@ class __$$KnownHostsImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$KnownHostsImpl implements _KnownHosts {
-  const _$KnownHostsImpl({required final List<Host> hosts}) : _hosts = hosts;
+class _$KnownHostsImpl extends _KnownHosts {
+  const _$KnownHostsImpl({required final List<Host> hosts})
+      : _hosts = hosts,
+        super._();
 
   final List<Host> _hosts;
   @override
@@ -134,9 +136,10 @@ class _$KnownHostsImpl implements _KnownHosts {
       __$$KnownHostsImplCopyWithImpl<_$KnownHostsImpl>(this, _$identity);
 }
 
-abstract class _KnownHosts implements KnownHosts {
+abstract class _KnownHosts extends KnownHosts {
   const factory _KnownHosts({required final List<Host> hosts}) =
       _$KnownHostsImpl;
+  const _KnownHosts._() : super._();
 
   @override
   List<Host> get hosts;

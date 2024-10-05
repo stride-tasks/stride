@@ -12,6 +12,7 @@
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
+import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/frb_generated.dart';
 
 part 'known_hosts.freezed.dart';
@@ -59,4 +60,10 @@ class KnownHosts with _$KnownHosts {
   const factory KnownHosts({
     required List<Host> hosts,
   }) = _KnownHosts;
+  const KnownHosts._();
+  static Future<KnownHosts> load() =>
+      RustLib.instance.api.crateGitKnownHostsKnownHostsLoad();
+
+  static Future<void> save({required KnownHosts this_}) =>
+      RustLib.instance.api.crateGitKnownHostsKnownHostsSave(this_: this_);
 }
