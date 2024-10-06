@@ -6,9 +6,9 @@ import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/theme.dart';
@@ -22,7 +22,7 @@ Future<void> main() async {
   final cachePath = await getApplicationCacheDirectory();
 
   await RustLib.init();
-  var settings = await Settings.load(
+  final settings = await Settings.load(
     paths: ApplicationPaths(
       supportPath: supportPath.path,
       documentPath: documentPath.path,
@@ -31,26 +31,12 @@ Future<void> main() async {
     ),
   );
 
-  final repository = TaskStorage(
-    path: path.join(supportPath.path, 'repository'),
-    settings: settings,
-  );
-
-  // Loading task storage may change settings.
-  settings = await Settings.get_();
-
-  runApp(
-    MyApp(
-      repository: repository,
-      settings: settings,
-    ),
-  );
+  runApp(MyApp(settings: settings));
 }
 
 class MyApp extends StatelessWidget {
-  final TaskStorage repository;
   final Settings settings;
-  const MyApp({super.key, required this.repository, required this.settings});
+  const MyApp({super.key, required this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +52,6 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
-            repository: repository,
             settingsBloc: context.read<SettingsBloc>(),
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),
@@ -131,7 +116,9 @@ class MyApp extends StatelessWidget {
                       onCancel: state.onCancel,
                     );
                   },
-                  child: const TasksRoute(),
+                  child: settings.repositories.isEmpty
+                      ? const InitialRoute()
+                      : const TasksRoute(),
                 ),
               ),
             );

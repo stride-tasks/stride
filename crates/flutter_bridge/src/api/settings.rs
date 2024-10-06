@@ -8,13 +8,12 @@ use uuid::Uuid;
 
 use crate::{
     api::error::KeyStoreError, base64_decode, frb_generated::StreamSink,
-    git::known_hosts::KnownHosts, RustError,
+    git::known_hosts::KnownHosts, ErrorKind, RustError,
 };
 
 use super::{
     error::SettingsError,
     filter::{Filter, FilterSelection},
-    logging::Logger,
 };
 
 use super::logging::init_logger;
@@ -179,12 +178,16 @@ impl SshKey {
         })
     }
 
-    pub fn remove_key(uuid: &Uuid) -> Result<(), RustError> {
+    pub fn remove_key(uuid: Uuid) -> Result<(), RustError> {
         let mut settings = Settings::get();
-        if settings.repository.ssh_key_uuid == Some(*uuid) {
-            Logger::info(&format!("deleting ssh key that is in use: {uuid}"));
-            settings.repository.ssh_key_uuid = None;
+
+        for repository in &mut settings.repositories {
+            if repository.ssh_key_uuid != Some(uuid) {
+                continue;
+            }
+            repository.ssh_key_uuid = None;
         }
+
         let key_path = ssh_key_path().join(uuid.to_string());
         if key_path.exists() {
             std::fs::remove_dir_all(key_path)?;
@@ -218,7 +221,7 @@ impl EncryptionKey {
         }
     }
 
-    pub fn save(key: &str) -> Result<Self, RustError> {
+    pub fn save(repository_uuid: Uuid, key: &str) -> Result<Self, RustError> {
         let decoded = base64_decode(key)?;
 
         if decoded.len() != 32 {
@@ -230,7 +233,9 @@ impl EncryptionKey {
         }
 
         let mut settings = Settings::get();
-        if let Some(encryption_key) = &mut settings.repository.encryption {
+
+        let repository = settings.repository_mut(repository_uuid)?;
+        if let Some(encryption_key) = &mut repository.encryption {
             encryption_key.key = key.to_string();
             let result = encryption_key.to_owned();
             Settings::save(settings)?;
@@ -241,15 +246,15 @@ impl EncryptionKey {
             key: key.to_string(),
         };
 
-        settings.repository.encryption = Some(this.clone());
+        repository.encryption = Some(this.clone());
         Settings::save(settings)?;
         Ok(this)
     }
 
     // Store keys on disk instead of memory like ssh keys.
-    pub fn remove_key() -> Result<bool, RustError> {
+    pub fn remove_key(repository_uuid: Uuid) -> Result<bool, RustError> {
         let mut settings = Settings::get();
-        settings.repository.encryption = None;
+        settings.repository_mut(repository_uuid)?.encryption = None;
         Settings::save(settings)?;
         Ok(true)
     }
@@ -271,11 +276,18 @@ fn default_branch_name() -> String {
     String::from("main")
 }
 
+fn default_repository_name() -> String {
+    String::from("unnamed")
+}
+
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Repository {
     #[serde(default = "Uuid::now_v7")]
     pub uuid: Uuid,
+
+    #[serde(default = "default_repository_name")]
+    pub name: String,
 
     pub origin: String,
 
@@ -297,6 +309,7 @@ impl Default for Repository {
     fn default() -> Self {
         Self {
             uuid: Uuid::now_v7(),
+            name: default_repository_name(),
             origin: String::new(),
             author: default_author(),
             email: default_email(),
@@ -312,7 +325,6 @@ impl Default for Repository {
 pub struct Settings {
     #[serde(default = "default_theme_mode")]
     pub dark_mode: bool,
-    pub repository: Repository,
 
     #[serde(default)]
     pub periodic_sync: bool,
@@ -321,16 +333,19 @@ pub struct Settings {
     pub filters: Vec<Filter>,
     #[serde(default)]
     pub selected_filter: Option<FilterSelection>,
+
+    #[serde(default)]
+    pub repositories: Vec<Repository>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             dark_mode: default_theme_mode(),
-            repository: Repository::default(),
             periodic_sync: false,
             filters: Vec::default(),
             selected_filter: None,
+            repositories: Vec::default(),
         }
     }
 }
@@ -395,6 +410,21 @@ impl Settings {
     pub fn create_stream(stream_sink: StreamSink<Settings>) {
         let mut stream = SETTINGS_STREAM_SINK.lock().unwrap();
         *stream = Some(stream_sink);
+    }
+
+    pub(crate) fn repository(&self, uuid: Uuid) -> Result<&Repository, RustError> {
+        Ok(self
+            .repositories
+            .iter()
+            .find(|repository| repository.uuid == uuid)
+            .ok_or(ErrorKind::RepositoryNotFound)?)
+    }
+    pub(crate) fn repository_mut(&mut self, uuid: Uuid) -> Result<&mut Repository, RustError> {
+        Ok(self
+            .repositories
+            .iter_mut()
+            .find(|repository| repository.uuid == uuid)
+            .ok_or(ErrorKind::RepositoryNotFound)?)
     }
 }
 

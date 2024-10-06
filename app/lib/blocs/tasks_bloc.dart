@@ -11,6 +11,7 @@ import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
+import 'package:uuid/uuid.dart';
 
 @immutable
 abstract class TaskEvent {}
@@ -76,7 +77,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
 
-  final TaskStorage repository;
+  final Map<UuidValue, TaskStorage> repositories = {};
+  final UuidValue? current;
   Filter? filter;
 
   Timer? syncTimer;
@@ -102,11 +104,21 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
   }
 
+  TaskStorage? repository() {
+    if (current == null) {
+      return null;
+    }
+    if (!repositories.containsKey(current)) {
+      return null;
+    }
+    return repositories[current];
+  }
+
   TaskBloc({
-    required this.repository,
     required this.settingsBloc,
     required this.logBloc,
     required this.dialogBloc,
+    this.current,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
@@ -115,15 +127,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskAddEvent>((event, emit) async {
-      await repository.add(task: event.task);
+      await repository()?.add(task: event.task);
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskRemoveEvent>((event, emit) async {
       if (event.task.status == TaskStatus.deleted) {
-        await repository.removeByTask(task: event.task);
+        await repository()?.removeByTask(task: event.task);
       } else {
-        await repository.changeCategory(
+        await repository()?.changeCategory(
           task: event.task,
           status: TaskStatus.deleted,
         );
@@ -133,17 +145,17 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskRemoveAllEvent>((event, emit) async {
-      await repository.clear();
+      await repository()?.clear();
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskForcePushEvent>((event, emit) async {
-      await repository.push(force: true);
+      await repository()?.push(force: true);
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
-      await repository.changeCategory(
+      await repository()?.changeCategory(
         task: event.task,
         status: event.status,
       );
@@ -151,7 +163,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskUpdateEvent>((event, emit) async {
-      await repository.update(task: event.task);
+      await repository()?.update(task: event.task);
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -160,7 +172,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskState(tasks: tasks, syncing: true));
 
       try {
-        await repository.sync_();
+        await repository()?.sync_();
       } catch (error) {
         emit(TaskState(tasks: tasks, syncingError: error));
         rethrow;
@@ -174,20 +186,20 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskCheckoutBranchEvent>((event, emit) async {
-      await repository.checkout();
+      await repository()?.checkout();
       emit(TaskState(tasks: await _tasks()));
     });
   }
 
   Future<List<Task>> _tasks() async {
     if (filter == null) {
-      final tasks = await repository.tasksWithFilter(
+      final tasks = await repository()?.tasksWithFilter(
         filter: await Filter.default_(),
       );
-      return tasks;
+      return tasks ?? [];
     } else {
-      final tasks = await repository.tasksWithFilter(filter: filter!);
-      return tasks;
+      final tasks = await repository()?.tasksWithFilter(filter: filter!);
+      return tasks ?? [];
     }
   }
 
@@ -228,7 +240,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
               await Navigator.of(context).push<void>(
                 MaterialPageRoute(
                   builder: (context) => EncryptionKeyRoute(
-                    encryption: settingsBloc.settings.repository.encryption,
+                    repository: settingsBloc.settings.repositories.first,
                   ),
                 ),
               );

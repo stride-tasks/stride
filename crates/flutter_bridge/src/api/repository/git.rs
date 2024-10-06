@@ -280,6 +280,7 @@ impl Storage {
 
 #[frb(opaque)]
 pub struct TaskStorage {
+    pub(crate) uuid: Uuid,
     pub(crate) repository_path: PathBuf,
     tasks_path: PathBuf,
     key_store: Arc<KeyStore>,
@@ -299,18 +300,24 @@ impl TaskStorage {
     const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
     #[frb(sync)]
-    pub fn new(path: &str, settings: &Settings) -> Self {
-        let repository_path = Path::new(path);
+    pub fn new(repository_uuid: Uuid, path: &str, settings: &Settings) -> Self {
+        let repository_path = Path::new(path)
+            .join(repository_uuid.to_string())
+            .join("source");
+        std::fs::create_dir_all(&repository_path).unwrap();
         let tasks_path = repository_path.join("tasks");
         let keys_filepath = tasks_path.join("keys");
 
         let mut settings = settings.clone();
+        let repository = settings.repository_mut(repository_uuid).unwrap();
 
-        let encryption_key = if let Some(encryption_key) = &settings.repository.encryption {
+        let uuid = repository.uuid;
+
+        let encryption_key = if let Some(encryption_key) = &repository.encryption {
             encryption_key.clone()
         } else {
             let key = EncryptionKey::generate();
-            settings.repository.encryption = Some(key.clone());
+            repository.encryption = Some(key.clone());
             Settings::save(settings.clone()).unwrap();
             Logger::info("repository does not have encryption key, generating new encryption key");
             key
@@ -323,6 +330,7 @@ impl TaskStorage {
         let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
 
         Self {
+            uuid,
             repository_path: repository_path.to_path_buf(),
             pending: Storage::new(
                 tasks_path.join(Self::PENDING_DATA_FILENAME),
@@ -395,9 +403,9 @@ impl TaskStorage {
     }
 
     pub fn clone_repository(&mut self) -> Result<(), RustError> {
-        let settings = Settings::get();
-
-        let ssh_key = Self::ssh_key(&settings)?;
+        let mut settings = Settings::get();
+        let ssh_key = self.ssh_key(&settings)?;
+        let repo = settings.repository_mut(self.uuid)?;
 
         let mut callbacks = RemoteCallbacks::new();
         let callback_error = with_authentication(ssh_key, &mut callbacks);
@@ -407,9 +415,9 @@ impl TaskStorage {
 
         let mut builder = git2::build::RepoBuilder::new();
         builder.fetch_options(fo);
-        builder.branch(&settings.repository.branch);
+        builder.branch(&repo.branch);
 
-        let connection = builder.clone(&settings.repository.origin, &self.repository_path);
+        let connection = builder.clone(&repo.origin, &self.repository_path);
 
         if let Some(callback_error) = callback_error.borrow_mut().take() {
             return Err(callback_error);
@@ -432,10 +440,7 @@ impl TaskStorage {
             };
         }
 
-        log::info!(
-            "Repository {} cloned successfully!",
-            settings.repository.origin
-        );
+        log::info!("Repository {} cloned successfully!", repo.origin);
 
         self.unload();
 
@@ -448,13 +453,13 @@ impl TaskStorage {
     }
 
     pub fn force_hard_reset(&mut self, commit: Oid) -> Result<(), RustError> {
-        let settings = Settings::get();
+        let mut settings = Settings::get();
+        let repo = settings.repository_mut(self.uuid)?;
 
         let repository = Repository::open(&self.repository_path)?;
         let commit = repository.find_commit(commit)?;
 
-        let branch =
-            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
 
         let mut reference = branch.into_reference();
 
@@ -475,22 +480,22 @@ impl TaskStorage {
     }
 
     pub fn checkout(&mut self) -> Result<(), RustError> {
-        let settings = Settings::get();
+        let mut settings = Settings::get();
+        let repository = settings.repository_mut(self.uuid)?;
 
         self.sync()?;
         self.unload();
 
-        let repository = Repository::open(&self.repository_path)?;
-        let branch =
-            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let git_repository = Repository::open(&self.repository_path)?;
+        let branch = git_repository.find_branch(&repository.branch, git2::BranchType::Local)?;
         let reference = branch.into_reference();
         let tree = reference.peel_to_tree()?;
-        repository.checkout_tree(tree.as_object(), None)?;
+        git_repository.checkout_tree(tree.as_object(), None)?;
 
         let name = reference
             .name()
             .expect("invalid UTF-8 reference name of branch");
-        repository.set_head(name)?;
+        git_repository.set_head(name)?;
 
         if !self.tasks_path.exists() {
             std::fs::create_dir(&self.tasks_path)?;
@@ -500,7 +505,8 @@ impl TaskStorage {
     }
 
     pub fn init_repotitory(&self) -> Result<(), RustError> {
-        let settings = Settings::get();
+        let mut settings = Settings::get();
+        let repo = settings.repository_mut(self.uuid)?;
 
         let repository = Repository::init(&self.repository_path)?;
 
@@ -509,12 +515,12 @@ impl TaskStorage {
         let tree = index.write_tree()?;
         let tree = repository.find_tree(tree)?;
 
-        let author = Signature::now(&settings.repository.author, &settings.repository.email)?;
+        let author = Signature::now(&repo.author, &repo.email)?;
 
         let commit = repository.commit(None, &author, &author, "Initial Commit", &tree, &[])?;
         let commit = repository.find_commit(commit)?;
 
-        let branch = repository.branch(&settings.repository.branch, &commit, true)?;
+        let branch = repository.branch(&repo.branch, &commit, true)?;
         let mut branch_ref = branch.into_reference();
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();
@@ -529,6 +535,7 @@ impl TaskStorage {
 
     pub fn add_and_commit(&self, message: &str) -> Result<bool, RustError> {
         let settings = Settings::get();
+        let repo = settings.repository(self.uuid)?;
 
         let repository = Repository::open(&self.repository_path)?;
 
@@ -544,7 +551,7 @@ impl TaskStorage {
         let tree = index.write_tree()?;
         let tree = repository.find_tree(tree)?;
 
-        let author = Signature::now(&settings.repository.author, &settings.repository.email)?;
+        let author = Signature::now(&repo.author, &repo.email)?;
 
         let parent_commit = repository.head()?.peel_to_commit()?;
 
@@ -558,8 +565,7 @@ impl TaskStorage {
         )?;
         let commit = repository.find_commit(commit)?;
 
-        let branch =
-            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
         let mut branch_ref = branch.into_reference();
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();
@@ -633,6 +639,7 @@ impl TaskStorage {
         repository: &Repository,
         remote: &AnnotatedCommit<'_>,
     ) -> Result<(), RustError> {
+        let repo = settings.repository(self.uuid)?;
         let mut opts = RebaseOptions::new();
 
         let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
@@ -703,8 +710,7 @@ impl TaskStorage {
             index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
             index.write()?;
 
-            let committer =
-                Signature::now(&settings.repository.author, &settings.repository.email)?;
+            let committer = Signature::now(&repo.author, &repo.email)?;
             patch = rebase.commit(None, &committer, None)?;
         }
 
@@ -713,8 +719,9 @@ impl TaskStorage {
         Ok(())
     }
 
-    fn ssh_key(settings: &Settings) -> Result<SshKey, RustError> {
-        let Some(uuid) = settings.repository.ssh_key_uuid else {
+    fn ssh_key(&self, settings: &Settings) -> Result<SshKey, RustError> {
+        let repository = settings.repository(self.uuid)?;
+        let Some(uuid) = repository.ssh_key_uuid else {
             return Err(ErrorKind::NoSshKeysProvided.into());
         };
         let Some((public_path, private_path)) = ssh_key(&uuid) else {
@@ -735,10 +742,11 @@ impl TaskStorage {
     #[frb(ignore)]
     pub fn pull(&mut self) -> Result<bool, RustError> {
         let settings = Settings::get();
+        let repo = settings.repository(self.uuid)?;
 
         let repository = Repository::open(&self.repository_path)?;
 
-        let ssh_key = Self::ssh_key(&settings)?;
+        let ssh_key = self.ssh_key(&settings)?;
         let mut callbacks = RemoteCallbacks::new();
         let callback_error = with_authentication(ssh_key, &mut callbacks);
         callbacks.push_update_reference(|name, status| {
@@ -746,14 +754,14 @@ impl TaskStorage {
             Ok(())
         });
 
-        let remote = repository.remote("origin", &settings.repository.origin);
+        let remote = repository.remote("origin", &repo.origin);
         if let Err(error) = remote {
             if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
                 log::warn!("Couldn't create remote origin: {error}");
                 return Err(error.into());
             }
         }
-        repository.remote_set_url("origin", &settings.repository.origin)?;
+        repository.remote_set_url("origin", &repo.origin)?;
 
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
@@ -779,8 +787,7 @@ impl TaskStorage {
             };
         }
 
-        let branch =
-            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
         let branch_ref = branch.into_reference();
         let branch_ref_name = branch_ref.name().unwrap();
         let mut fetch_options = FetchOptions::new();
@@ -812,7 +819,7 @@ impl TaskStorage {
             };
         }
 
-        let local = repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let local = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
         let remote = local.upstream()?;
         let remote = remote.into_reference();
         let (ahead, behind) = repository.graph_ahead_behind(
@@ -834,7 +841,7 @@ impl TaskStorage {
         let fetch_head = repository.find_reference("FETCH_HEAD")?;
         let fetch_commit = repository.reference_to_annotated_commit(&fetch_head)?;
 
-        let remote_branch = &settings.repository.branch;
+        let remote_branch = &repo.branch;
         do_merge(&repository, remote_branch, &fetch_commit)?;
 
         Ok(true)
@@ -842,10 +849,11 @@ impl TaskStorage {
 
     pub fn push(&self, force: bool) -> Result<(), RustError> {
         let settings = Settings::get();
+        let repo = settings.repository(self.uuid)?;
 
         let repository = Repository::open(&self.repository_path)?;
 
-        let ssh_key = Self::ssh_key(&settings)?;
+        let ssh_key = self.ssh_key(&settings)?;
         let mut callbacks = RemoteCallbacks::new();
         let callback_error = with_authentication(ssh_key, &mut callbacks);
         callbacks.push_update_reference(|name, status| {
@@ -853,14 +861,14 @@ impl TaskStorage {
             Ok(())
         });
 
-        let remote = repository.remote("origin", &settings.repository.origin);
+        let remote = repository.remote("origin", &repo.origin);
         if let Err(error) = remote {
             if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
                 log::warn!("Couldn't create remote origin: {error}");
                 return Err(error.into());
             }
         }
-        repository.remote_set_url("origin", &settings.repository.origin)?;
+        repository.remote_set_url("origin", &repo.origin)?;
 
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Push, Some(callbacks), None);
@@ -886,8 +894,7 @@ impl TaskStorage {
             }
         };
 
-        let local_branch =
-            repository.find_branch(&settings.repository.branch, git2::BranchType::Local)?;
+        let local_branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
         let branch_ref = local_branch.into_reference();
         let mut branch_ref_name = branch_ref.name().unwrap().to_owned();
 

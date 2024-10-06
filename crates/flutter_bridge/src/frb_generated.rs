@@ -299,7 +299,7 @@ fn wire__crate__api__settings__SshKey_remove_key_impl(
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, RustError>((move || {
-                    let output_ok = crate::api::settings::SshKey::remove_key(&api_uuid)?;
+                    let output_ok = crate::api::settings::SshKey::remove_key(api_uuid)?;
                     Ok(output_ok)
                 })())
             }
@@ -1072,13 +1072,17 @@ fn wire__crate__api__repository__git__TaskStorage_new_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_repository_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
             let api_path = <String>::sse_decode(&mut deserializer);
             let api_settings = <crate::api::settings::Settings>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
-                let output_ok = Result::<_, ()>::Ok(
-                    crate::api::repository::git::TaskStorage::new(&api_path, &api_settings),
-                )?;
+                let output_ok =
+                    Result::<_, ()>::Ok(crate::api::repository::git::TaskStorage::new(
+                        api_repository_uuid,
+                        &api_path,
+                        &api_settings,
+                    ))?;
                 Ok(output_ok)
             })())
         },
@@ -1591,10 +1595,12 @@ fn wire__crate__api__settings__encryption_key_remove_key_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_repository_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, RustError>((move || {
-                    let output_ok = crate::api::settings::EncryptionKey::remove_key()?;
+                    let output_ok =
+                        crate::api::settings::EncryptionKey::remove_key(api_repository_uuid)?;
                     Ok(output_ok)
                 })())
             }
@@ -1623,11 +1629,13 @@ fn wire__crate__api__settings__encryption_key_save_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_repository_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
             let api_key = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, RustError>((move || {
-                    let output_ok = crate::api::settings::EncryptionKey::save(&api_key)?;
+                    let output_ok =
+                        crate::api::settings::EncryptionKey::save(api_repository_uuid, &api_key)?;
                     Ok(output_ok)
                 })())
             }
@@ -2801,6 +2809,18 @@ impl SseDecode for Vec<(String, String)> {
     }
 }
 
+impl SseDecode for Vec<crate::api::settings::Repository> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::settings::Repository>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::task::Task> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2961,6 +2981,7 @@ impl SseDecode for crate::api::settings::Repository {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
         let mut var_origin = <String>::sse_decode(deserializer);
         let mut var_author = <String>::sse_decode(deserializer);
         let mut var_email = <String>::sse_decode(deserializer);
@@ -2970,6 +2991,7 @@ impl SseDecode for crate::api::settings::Repository {
             <Option<crate::api::settings::EncryptionKey>>::sse_decode(deserializer);
         return crate::api::settings::Repository {
             uuid: var_uuid,
+            name: var_name,
             origin: var_origin,
             author: var_author,
             email: var_email,
@@ -2984,17 +3006,18 @@ impl SseDecode for crate::api::settings::Settings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_darkMode = <bool>::sse_decode(deserializer);
-        let mut var_repository = <crate::api::settings::Repository>::sse_decode(deserializer);
         let mut var_periodicSync = <bool>::sse_decode(deserializer);
         let mut var_filters = <Vec<crate::api::filter::Filter>>::sse_decode(deserializer);
         let mut var_selectedFilter =
             <Option<crate::api::filter::FilterSelection>>::sse_decode(deserializer);
+        let mut var_repositories =
+            <Vec<crate::api::settings::Repository>>::sse_decode(deserializer);
         return crate::api::settings::Settings {
             dark_mode: var_darkMode,
-            repository: var_repository,
             periodic_sync: var_periodicSync,
             filters: var_filters,
             selected_filter: var_selectedFilter,
+            repositories: var_repositories,
         };
     }
 }
@@ -3573,6 +3596,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Repository {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.uuid.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
             self.origin.into_into_dart().into_dart(),
             self.author.into_into_dart().into_dart(),
             self.email.into_into_dart().into_dart(),
@@ -3599,10 +3623,10 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Settings {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.dark_mode.into_into_dart().into_dart(),
-            self.repository.into_into_dart().into_dart(),
             self.periodic_sync.into_into_dart().into_dart(),
             self.filters.into_into_dart().into_dart(),
             self.selected_filter.into_into_dart().into_dart(),
+            self.repositories.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -4023,6 +4047,16 @@ impl SseEncode for Vec<(String, String)> {
     }
 }
 
+impl SseEncode for Vec<crate::api::settings::Repository> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::settings::Repository>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::task::Task> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4160,6 +4194,7 @@ impl SseEncode for crate::api::settings::Repository {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <uuid::Uuid>::sse_encode(self.uuid, serializer);
+        <String>::sse_encode(self.name, serializer);
         <String>::sse_encode(self.origin, serializer);
         <String>::sse_encode(self.author, serializer);
         <String>::sse_encode(self.email, serializer);
@@ -4173,10 +4208,10 @@ impl SseEncode for crate::api::settings::Settings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.dark_mode, serializer);
-        <crate::api::settings::Repository>::sse_encode(self.repository, serializer);
         <bool>::sse_encode(self.periodic_sync, serializer);
         <Vec<crate::api::filter::Filter>>::sse_encode(self.filters, serializer);
         <Option<crate::api::filter::FilterSelection>>::sse_encode(self.selected_filter, serializer);
+        <Vec<crate::api::settings::Repository>>::sse_encode(self.repositories, serializer);
     }
 }
 
