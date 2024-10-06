@@ -134,6 +134,8 @@ pub enum ErrorKind {
     Encryption(EncryptionError),
     Settings(SettingsError),
     Base64Decode(base64::DecodeError),
+
+    RepositoryNotFound,
 }
 
 impl std::error::Error for ErrorKind {}
@@ -165,6 +167,7 @@ impl std::fmt::Display for ErrorKind {
             Self::Base64Decode(error) => write!(f, "base64 decode error: {error}"),
             Self::VarEnv(error) => write!(f, "var env error: {error}"),
             Self::TaskChampion(error) => write!(f, "taskchampion error: {error}"),
+            Self::RepositoryNotFound => write!(f, "repository not found"),
         }
     }
 }

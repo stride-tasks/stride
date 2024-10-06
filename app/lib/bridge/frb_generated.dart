@@ -157,7 +157,9 @@ abstract class RustLibApi extends BaseApi {
       {required TaskStorage that, Oid? oid, int? n});
 
   TaskStorage crateApiRepositoryGitTaskStorageNew(
-      {required String path, required Settings settings});
+      {required UuidValue repositoryUuid,
+      required String path,
+      required Settings settings});
 
   Future<void> crateApiRepositoryGitTaskStoragePush(
       {required TaskStorage that, required bool force});
@@ -187,10 +189,11 @@ abstract class RustLibApi extends BaseApi {
 
   Future<EncryptionKey> crateApiSettingsEncryptionKeyGenerate();
 
-  Future<bool> crateApiSettingsEncryptionKeyRemoveKey();
+  Future<bool> crateApiSettingsEncryptionKeyRemoveKey(
+      {required UuidValue repositoryUuid});
 
   Future<EncryptionKey> crateApiSettingsEncryptionKeySave(
-      {required String key});
+      {required UuidValue repositoryUuid, required String key});
 
   Future<Filter> crateApiFilterFilterDefault();
 
@@ -861,10 +864,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   TaskStorage crateApiRepositoryGitTaskStorageNew(
-      {required String path, required Settings settings}) {
+      {required UuidValue repositoryUuid,
+      required String path,
+      required Settings settings}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(repositoryUuid, serializer);
         sse_encode_String(path, serializer);
         sse_encode_box_autoadd_settings(settings, serializer);
         return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22)!;
@@ -875,7 +881,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: null,
       ),
       constMeta: kCrateApiRepositoryGitTaskStorageNewConstMeta,
-      argValues: [path, settings],
+      argValues: [repositoryUuid, path, settings],
       apiImpl: this,
     ));
   }
@@ -883,7 +889,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiRepositoryGitTaskStorageNewConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_new',
-        argNames: ['path', 'settings'],
+        argNames: ['repositoryUuid', 'path', 'settings'],
       );
 
   @override
@@ -1164,10 +1170,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<bool> crateApiSettingsEncryptionKeyRemoveKey() {
+  Future<bool> crateApiSettingsEncryptionKeyRemoveKey(
+      {required UuidValue repositoryUuid}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(repositoryUuid, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 47, port: port_);
       },
@@ -1177,7 +1185,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsEncryptionKeyRemoveKeyConstMeta,
-      argValues: [],
+      argValues: [repositoryUuid],
       apiImpl: this,
     ));
   }
@@ -1185,15 +1193,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiSettingsEncryptionKeyRemoveKeyConstMeta =>
       const TaskConstMeta(
         debugName: 'encryption_key_remove_key',
-        argNames: [],
+        argNames: ['repositoryUuid'],
       );
 
   @override
   Future<EncryptionKey> crateApiSettingsEncryptionKeySave(
-      {required String key}) {
+      {required UuidValue repositoryUuid, required String key}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(repositoryUuid, serializer);
         sse_encode_String(key, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 48, port: port_);
@@ -1204,7 +1213,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
       constMeta: kCrateApiSettingsEncryptionKeySaveConstMeta,
-      argValues: [key],
+      argValues: [repositoryUuid, key],
       apiImpl: this,
     ));
   }
@@ -1212,7 +1221,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiSettingsEncryptionKeySaveConstMeta =>
       const TaskConstMeta(
         debugName: 'encryption_key_save',
-        argNames: ['key'],
+        argNames: ['repositoryUuid', 'key'],
       );
 
   @override
@@ -2222,6 +2231,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Repository> dco_decode_list_repository(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_repository).toList();
+  }
+
+  @protected
   List<Task> dco_decode_list_task(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_task).toList();
@@ -2324,16 +2339,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Repository dco_decode_repository(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return Repository(
       uuid: dco_decode_Uuid(arr[0]),
-      origin: dco_decode_String(arr[1]),
-      author: dco_decode_String(arr[2]),
-      email: dco_decode_String(arr[3]),
-      branch: dco_decode_String(arr[4]),
-      sshKeyUuid: dco_decode_opt_Uuid(arr[5]),
-      encryption: dco_decode_opt_box_autoadd_encryption_key(arr[6]),
+      name: dco_decode_String(arr[1]),
+      origin: dco_decode_String(arr[2]),
+      author: dco_decode_String(arr[3]),
+      email: dco_decode_String(arr[4]),
+      branch: dco_decode_String(arr[5]),
+      sshKeyUuid: dco_decode_opt_Uuid(arr[6]),
+      encryption: dco_decode_opt_box_autoadd_encryption_key(arr[7]),
     );
   }
 
@@ -2345,10 +2361,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
-      repository: dco_decode_repository(arr[1]),
-      periodicSync: dco_decode_bool(arr[2]),
-      filters: dco_decode_list_filter(arr[3]),
-      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[4]),
+      periodicSync: dco_decode_bool(arr[1]),
+      filters: dco_decode_list_filter(arr[2]),
+      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[3]),
+      repositories: dco_decode_list_repository(arr[4]),
     );
   }
 
@@ -2881,6 +2897,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Repository> sse_decode_list_repository(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Repository>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_repository(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<Task> sse_decode_list_task(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -3041,6 +3069,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Repository sse_decode_repository(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_uuid = sse_decode_Uuid(deserializer);
+    final var_name = sse_decode_String(deserializer);
     final var_origin = sse_decode_String(deserializer);
     final var_author = sse_decode_String(deserializer);
     final var_email = sse_decode_String(deserializer);
@@ -3050,6 +3079,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_decode_opt_box_autoadd_encryption_key(deserializer);
     return Repository(
         uuid: var_uuid,
+        name: var_name,
         origin: var_origin,
         author: var_author,
         email: var_email,
@@ -3062,17 +3092,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings sse_decode_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_darkMode = sse_decode_bool(deserializer);
-    final var_repository = sse_decode_repository(deserializer);
     final var_periodicSync = sse_decode_bool(deserializer);
     final var_filters = sse_decode_list_filter(deserializer);
     final var_selectedFilter =
         sse_decode_opt_box_autoadd_filter_selection(deserializer);
+    final var_repositories = sse_decode_list_repository(deserializer);
     return Settings.raw(
         darkMode: var_darkMode,
-        repository: var_repository,
         periodicSync: var_periodicSync,
         filters: var_filters,
-        selectedFilter: var_selectedFilter);
+        selectedFilter: var_selectedFilter,
+        repositories: var_repositories);
   }
 
   @protected
@@ -3587,6 +3617,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_repository(
+      List<Repository> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_repository(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_task(List<Task> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -3730,6 +3770,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_repository(Repository self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_Uuid(self.uuid, serializer);
+    sse_encode_String(self.name, serializer);
     sse_encode_String(self.origin, serializer);
     sse_encode_String(self.author, serializer);
     sse_encode_String(self.email, serializer);
@@ -3742,11 +3783,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_settings(Settings self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.darkMode, serializer);
-    sse_encode_repository(self.repository, serializer);
     sse_encode_bool(self.periodicSync, serializer);
     sse_encode_list_filter(self.filters, serializer);
     sse_encode_opt_box_autoadd_filter_selection(
         self.selectedFilter, serializer);
+    sse_encode_list_repository(self.repositories, serializer);
   }
 
   @protected
