@@ -226,7 +226,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
               await Navigator.of(context).push<void>(
                 MaterialPageRoute(
                   builder: (context) => EncryptionKeyRoute(
-                    encryption: settingsBloc.settings.repository.encryption,
+                    repository: settingsBloc.settings.repositories.first,
                   ),
                 ),
               );

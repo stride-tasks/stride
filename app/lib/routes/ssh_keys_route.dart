@@ -116,7 +116,9 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
     final publicKey = key.publicKey;
     final uuid = key.uuid;
 
-    final subtitle = switch (settings.repository.sshKeyUuid == uuid) {
+    final subtitle = switch (settings.repositories.any(
+      (element) => element.sshKeyUuid == uuid,
+    )) {
       false => Text(uuid.toString()),
       true => RichText(
           text: TextSpan(

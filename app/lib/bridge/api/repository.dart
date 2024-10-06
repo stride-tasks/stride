@@ -55,9 +55,12 @@ abstract class TaskStorage implements RustOpaqueInterface {
 
   Future<List<CommitItem>?> log({Oid? oid, int? n});
 
-  factory TaskStorage({required String path, required Settings settings}) =>
-      RustLib.instance.api
-          .crateApiRepositoryTaskStorageNew(path: path, settings: settings);
+  factory TaskStorage(
+          {required UuidValue repositoryUuid,
+          required String path,
+          required Settings settings}) =>
+      RustLib.instance.api.crateApiRepositoryTaskStorageNew(
+          repositoryUuid: repositoryUuid, path: path, settings: settings);
 
   Future<void> push({required bool force});
 

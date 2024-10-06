@@ -20,7 +20,7 @@ import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_theme_mode`, `ssh_key_path`, `ssh_key`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_repository_name`, `default_theme_mode`, `repository_mut`, `repository`, `ssh_key_path`, `ssh_key`
 // These types are ignored because they are not used by any `pub` functions: `State`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
@@ -97,11 +97,14 @@ class EncryptionKey {
   static Future<EncryptionKey> generate() =>
       RustLib.instance.api.crateApiSettingsEncryptionKeyGenerate();
 
-  static Future<bool> removeKey() =>
-      RustLib.instance.api.crateApiSettingsEncryptionKeyRemoveKey();
+  static Future<bool> removeKey({required UuidValue repositoryUuid}) => RustLib
+      .instance.api
+      .crateApiSettingsEncryptionKeyRemoveKey(repositoryUuid: repositoryUuid);
 
-  static Future<EncryptionKey> save({required String key}) =>
-      RustLib.instance.api.crateApiSettingsEncryptionKeySave(key: key);
+  static Future<EncryptionKey> save(
+          {required UuidValue repositoryUuid, required String key}) =>
+      RustLib.instance.api.crateApiSettingsEncryptionKeySave(
+          repositoryUuid: repositoryUuid, key: key);
 
   @override
   int get hashCode => key.hashCode;
@@ -118,6 +121,7 @@ class EncryptionKey {
 class Repository with _$Repository {
   const factory Repository({
     required UuidValue uuid,
+    required String name,
     required String origin,
     required String author,
     required String email,
@@ -136,10 +140,10 @@ class Settings with _$Settings {
   const Settings._();
   const factory Settings.raw({
     required bool darkMode,
-    required Repository repository,
     required bool periodicSync,
     required List<Filter> filters,
     FilterSelection? selectedFilter,
+    required List<Repository> repositories,
   }) = _Settings;
   static Stream<Settings> createStream() =>
       RustLib.instance.api.crateApiSettingsSettingsCreateStream();

@@ -9,6 +9,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/theme.dart';
@@ -31,8 +32,21 @@ Future<void> main() async {
     ),
   );
 
-  final repository = TaskStorage(
-    path: path.join(supportPath.path, 'repository'),
+  final repositoryPath = path.join(supportPath.path, 'repository');
+
+  if (settings.repositories.isEmpty) {
+    settings = settings.copyWith(
+      repositories: settings.repositories.toList()
+        ..add(await Repository.default_()),
+    );
+  }
+
+  await Settings.save(settings: settings);
+
+  final repository = settings.repositories.first;
+  final taskStorage = TaskStorage(
+    repositoryUuid: repository.uuid,
+    path: repositoryPath,
     settings: settings,
   );
 
@@ -41,7 +55,7 @@ Future<void> main() async {
 
   runApp(
     MyApp(
-      repository: repository,
+      repository: taskStorage,
       settings: settings,
     ),
   );
@@ -131,7 +145,9 @@ class MyApp extends StatelessWidget {
                       onCancel: state.onCancel,
                     );
                   },
-                  child: const TasksRoute(),
+                  child: settings.repositories.isEmpty
+                      ? const InitialRoute()
+                      : const TasksRoute(),
                 ),
               ),
             );
