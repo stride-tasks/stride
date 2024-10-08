@@ -15,21 +15,9 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies.flutter_rust_bridge]
-version = "=2.4.0"
+version = "=2.5.0"
 default-features = false
-features = [
-    "thread-pool",
-    "rust-async",
-    "user-utils",
-    "dart-opaque",
-    "chrono",
-    "uuid",
-
-    # TODO: Remove this.
-    # It is not needed but the generate command creates conversion
-    # for it and it fails to compile.
-    "anyhow",
-]
+features = ["thread-pool", "rust-async", "user-utils", "dart-opaque", "chrono", "uuid", "anyhow"]
 
 [dependencies]
 stride_crypto.workspace = true
