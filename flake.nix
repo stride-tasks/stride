@@ -59,16 +59,25 @@
         else pkgs.rust-bin.stable.latest.default;
 
       treefmtEval = import ./treefmt.nix {inherit treefmt-nix pkgs;};
+
+      cli = pkgs.callPackage ./packages/cli.nix {};
+
       tests = import ./tests.nix {
         inherit pkgs;
         inherit (pkgs) lib;
         specialArgs = {
+          stride-cli = cli;
           nixos-lib = import (nixpkgs + "/nixos/lib") {};
         };
       };
     in {
+      packages = {
+        inherit cli;
+      };
+
       checks =
         {
+          inherit cli;
           formatting = treefmtEval.config.build.check self;
         }
         // tests;
