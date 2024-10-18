@@ -37,7 +37,7 @@ const APPLICATION_NAME: &str = "stride";
 
 /// Choose correct path prefix based on availability.
 ///
-/// Currently it seems that dart's `path_provider` package does not seem to be consitent
+/// Currently it seems that dart's `path_provider` package does not seem to be consistent
 /// when creating the paths. Sometimes the path is the application id and other times it's
 /// the application name.
 fn choose_path_suffix(path: &Path) -> PathBuf {
@@ -203,7 +203,7 @@ fn main() -> anyhow::Result<()> {
                         break 'outer;
                     }
 
-                    // TODO: Make history formating configurable.
+                    // TODO: Make history formatting configurable.
                     println!(
                         "{:4}. {} {} {} {}",
                         count + 1,
