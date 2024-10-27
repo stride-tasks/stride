@@ -15,7 +15,7 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
-flutter_rust_bridge = { version = "=2.5.0", default-features = false, features = [
+flutter_rust_bridge = { version = "=2.6.0", default-features = false, features = [
   "thread-pool",
   "rust-async",
   "user-utils",

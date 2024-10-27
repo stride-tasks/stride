@@ -6,7 +6,7 @@ import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/routes/logging_routes.dart';

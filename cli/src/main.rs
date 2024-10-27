@@ -178,10 +178,10 @@ fn main() -> anyhow::Result<()> {
         Mode::Sync => {
             repository.sync()?;
         }
-        Mode::Log { limit, skip } => {
+        Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
             // TODO: Maybe figure out what is the best value.
-            const CHUNK_COUNT: u32 = 10000;
+            const _CHUNK_COUNT: u32 = 10000;
 
             todo!();
             // let mut last_oid = None;
@@ -234,14 +234,14 @@ fn main() -> anyhow::Result<()> {
         Mode::Export { filepath } => {
             let contents = repository.export()?;
             if let Some(filepath) = filepath {
-                std::fs::write(filepath, contents)?;
+                fs::write(filepath, contents)?;
             } else {
                 println!("{contents}");
             }
         }
         Mode::Import { filepath } => {
             let contents = if let Some(filepath) = filepath {
-                std::fs::read_to_string(filepath)?
+                fs::read_to_string(filepath)?
             } else {
                 let mut contents = String::new();
                 std::io::stdin().read_to_string(&mut contents)?;

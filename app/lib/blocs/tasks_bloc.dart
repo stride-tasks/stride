@@ -7,7 +7,7 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
-import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
@@ -121,7 +121,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskRemoveEvent>((event, emit) async {
       if (event.task.status == TaskStatus.deleted) {
-        await repository.removeTask(task: event.task);
+        await repository.removeByTask(task: event.task);
       } else {
         await repository.changeCategory(
           task: event.task,
@@ -181,7 +181,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<List<Task>> _tasks() async {
     if (filter == null) {
-      final tasks = await repository.tasks();
+      final tasks = await repository.tasksWithFilter(
+        filter: await Filter.default_(),
+      );
       return tasks;
     } else {
       final tasks = await repository.tasksWithFilter(filter: filter!);

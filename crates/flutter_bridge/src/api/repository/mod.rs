@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use flutter_rust_bridge::frb;
 use uuid::Uuid;
 
 use crate::{
@@ -46,7 +47,7 @@ pub trait StrideRepository {
     fn import(&mut self, content: &str) -> Result<(), RustError>;
 }
 
-#[warn(missing_docs)]
+#[frb(ignore)]
 /// An extension trait to the [`StrideRepository`] Trait.
 pub trait StrideRepositoryExt: StrideRepository {
     /// Get all [`Task`]s with status [`TaskStatus::Pending`]

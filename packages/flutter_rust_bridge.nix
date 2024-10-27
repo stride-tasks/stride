@@ -9,17 +9,17 @@
 }:
 rustPlatform.buildRustPackage rec {
   pname = "flutter-rust-bridge";
-  version = "2.5.0";
+  version = "2.6.0";
 
   src = fetchFromGitHub {
     owner = "fzyzcjy";
     repo = "flutter_rust_bridge";
     rev = "v${version}";
-    hash = "sha256-Te0egYpX7dWrXoeraNpNbNUxVBc6o2wFxotil1tHnzw=";
+    hash = "sha256-SGbl1l2jtANO9QMNz9GDXI794RY/K+ldpmDxLkqAa+Y=";
     fetchSubmodules = true;
   };
 
-  cargoHash = "sha256-kCxoIwPkCZFn5J/D7AhvolAG+qhsbliNMD4pJ7spHwg=";
+  cargoHash = "sha256-W6iHdLkQ/d6xqpQLf63I+97MXn3blLZw1IDxk4S1uTo=";
 
   buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
     darwin.apple_sdk.frameworks.CoreFoundation

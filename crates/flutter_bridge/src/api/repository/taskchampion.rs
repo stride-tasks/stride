@@ -1,6 +1,7 @@
 use std::{mem, path::Path};
 
 use chrono::Utc;
+use flutter_rust_bridge::frb;
 use taskchampion::{storage::SqliteStorage, Operations};
 
 use super::StrideRepository;
@@ -9,6 +10,7 @@ use super::StrideRepository;
 // `taskchampion`
 pub use taskchampion::ServerConfig;
 
+#[frb(ignore)]
 #[allow(missing_debug_implementations)] /* [`taskchampion::Replica`] does not implement [`Debug`] */
 pub struct Replica {
     source: taskchampion::Replica,
@@ -131,18 +133,18 @@ impl StrideRepository for Replica {
 
     fn remove_by_uuid(
         &mut self,
-        uuid: &uuid::Uuid,
+        _uuid: &uuid::Uuid,
     ) -> Result<Option<crate::task::Task>, crate::RustError> {
         todo!()
     }
 
-    fn remove_by_task(&mut self, task: &crate::task::Task) -> Result<bool, crate::RustError> {
+    fn remove_by_task(&mut self, _task: &crate::task::Task) -> Result<bool, crate::RustError> {
         todo!()
     }
 
     fn task_by_uuid(
         &mut self,
-        uuid: &uuid::Uuid,
+        _uuid: &uuid::Uuid,
     ) -> Result<Option<crate::task::Task>, crate::RustError> {
         todo!()
     }
@@ -171,14 +173,14 @@ impl StrideRepository for Replica {
         Ok(result)
     }
 
-    fn update(&mut self, task: &crate::task::Task) -> Result<bool, crate::RustError> {
+    fn update(&mut self, _task: &crate::task::Task) -> Result<bool, crate::RustError> {
         todo!()
     }
 
     fn change_category(
         &mut self,
-        task: &crate::task::Task,
-        status: crate::task::TaskStatus,
+        _task: &crate::task::Task,
+        _status: crate::task::TaskStatus,
     ) -> Result<bool, crate::RustError> {
         todo!()
     }
@@ -204,7 +206,7 @@ impl StrideRepository for Replica {
         todo!()
     }
 
-    fn import(&mut self, content: &str) -> Result<(), crate::RustError> {
+    fn import(&mut self, _content: &str) -> Result<(), crate::RustError> {
         todo!()
     }
 

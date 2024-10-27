@@ -19,7 +19,7 @@ dirs.workspace = true
 uuid.workspace = true
 serde.workspace = true
 clap = { version = "4.5.20", features = ["derive"] }
-url = {version = "2.5.2", features = ["serde"]}
+url = { version = "2.5.2", features = ["serde"] }
 toml = "0.8.19"
 
 [[bin]]
