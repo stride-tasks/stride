@@ -61,6 +61,7 @@
       treefmtEval = import ./treefmt.nix {inherit treefmt-nix pkgs;};
 
       cli = pkgs.callPackage ./packages/cli.nix {};
+      frb = pkgs.callPackage ./packages/flutter_rust_bridge.nix {};
 
       tests = import ./tests/tests.nix {
         inherit pkgs;
@@ -72,7 +73,7 @@
       };
     in {
       packages = {
-        inherit cli;
+        inherit cli frb;
       };
 
       checks =
@@ -103,6 +104,7 @@
 
         packages = [
           rust
+          frb
           pkgs.cargo-edit
 
           pkgs.flutter
