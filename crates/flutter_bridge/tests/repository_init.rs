@@ -3,7 +3,7 @@
 mod common;
 
 use common::*;
-use stride_flutter_bridge::api::{repository::TaskStorage, settings::Settings};
+use stride_flutter_bridge::api::{repository::git::TaskStorage, settings::Settings};
 
 #[test]
 fn init_repository() -> anyhow::Result<()> {
