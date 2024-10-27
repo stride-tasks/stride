@@ -9,7 +9,7 @@ use stride_crypto::crypter::{Aes256Ocb, AesMode, Crypter};
 use uuid::Uuid;
 
 use crate::{
-    api::{error::KeyStoreError, repository::generate_iv},
+    api::{error::KeyStoreError, repository::git::generate_iv},
     base64_decode, base64_encode,
     task::{Task, TaskStatus},
     ErrorKind, RustError,

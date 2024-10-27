@@ -14,10 +14,8 @@ publish = false
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
 
-[dependencies.flutter_rust_bridge]
-version = "=2.5.0"
-default-features = false
-features = [
+[dependencies]
+flutter_rust_bridge = { version = "=2.5.0", default-features = false, features = [
   "thread-pool",
   "rust-async",
   "user-utils",
@@ -25,9 +23,12 @@ features = [
   "chrono",
   "uuid",
   "anyhow",
-]
+] }
+taskchampion = { version = "0.8.0", default-features = false, features = [
+  "encryption",
+  "server-sync",
+] }
 
-[dependencies]
 stride_crypto.workspace = true
 serde.workspace = true
 serde_json.workspace = true

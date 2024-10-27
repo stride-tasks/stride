@@ -122,6 +122,7 @@ pub enum ErrorKind {
         expected: Box<str>,
         actual: Box<str>,
     },
+    TaskChampion(taskchampion::Error),
     CorruptTask,
     Import(ImportError),
     Export(ExportError),
@@ -163,6 +164,7 @@ impl std::fmt::Display for ErrorKind {
             Self::Settings(error) => write!(f, "settings error: {error}"),
             Self::Base64Decode(error) => write!(f, "base64 decode error: {error}"),
             Self::VarEnv(error) => write!(f, "var env error: {error}"),
+            Self::TaskChampion(error) => write!(f, "taskchampion error: {error}"),
         }
     }
 }
@@ -170,6 +172,11 @@ impl std::fmt::Display for ErrorKind {
 impl From<std::io::Error> for ErrorKind {
     fn from(error: std::io::Error) -> Self {
         Self::Io(error)
+    }
+}
+impl From<taskchampion::Error> for ErrorKind {
+    fn from(value: taskchampion::Error) -> Self {
+        Self::TaskChampion(value)
     }
 }
 impl From<std::env::VarError> for ErrorKind {
@@ -273,6 +280,11 @@ impl From<std::io::Error> for RustError {
 impl From<std::env::VarError> for RustError {
     fn from(error: std::env::VarError) -> Self {
         ErrorKind::from(error).into()
+    }
+}
+impl From<taskchampion::Error> for RustError {
+    fn from(value: taskchampion::Error) -> Self {
+        ErrorKind::from(value).into()
     }
 }
 
