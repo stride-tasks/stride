@@ -123,7 +123,7 @@ in
               )
 
               # Create all the metadata files (with the exception of the repository)
-              client.succeed('stride ""')
+              client.succeed('stride search ""')
 
               # This adds the required key attributes and such.
               client.succeed(
@@ -159,12 +159,12 @@ in
           client_send.succeed("stride sync")
 
         with subtest("Correct tasks were synced"):
-          count_before = client_receive.succeed('stride "" | wc -l')
+          count_before = client_receive.succeed('stride search "" | wc -l')
           client_send.succeed('stride add "Second task" && stride sync')
           client_receive.succeed('stride sync')
-          count_after = client_receive.succeed('stride "" | wc -l')
+          count_after = client_receive.succeed('stride search "" | wc -l')
 
-          search_output = client_receive.succeed('stride ""')
+          search_output = client_receive.succeed('stride search ""')
           expected_search_output = "    0: Task 1 of client_send\n    1: Second task\n"
 
           assert int(count_before) == 1, "Starting from a fresh clone should have 1 tasks"

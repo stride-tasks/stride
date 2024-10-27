@@ -1,4 +1,6 @@
 use anyhow::{bail, Context};
+use clap::Parser;
+use cli::{CliArgs, Mode, RepositoryType};
 use std::{
     io::Read,
     path::{Path, PathBuf},
@@ -12,25 +14,7 @@ use stride_flutter_bridge::{
     task::{Task, TaskStatus},
 };
 
-enum Mode {
-    FilterList {
-        filter: Filter,
-    },
-    Add {
-        content: String,
-    },
-    Sync,
-    Log {
-        limit: Option<u32>,
-        skip: Option<u32>,
-    },
-    Export {
-        filepath: Option<PathBuf>,
-    },
-    Import {
-        filepath: Option<PathBuf>,
-    },
-}
+pub mod cli;
 
 const APPLICATION_ID: &str = "org.stridetasks.stride";
 const APPLICATION_NAME: &str = "stride";
@@ -85,76 +69,28 @@ fn main() -> anyhow::Result<()> {
     let mut repository =
         TaskStorage::new(&support_dir.join("repository").to_string_lossy(), &settings);
 
-    let mut args = std::env::args();
-    let _program = args.next().expect("first argument should be program");
-    let Some(action) = args.next() else {
-        let tasks = repository.tasks()?;
-        print_tasks(&tasks);
-        return Ok(());
-    };
-    let mode = match action.as_str() {
-        "add" => Mode::Add {
-            content: args.collect::<Vec<_>>().join(" "),
-        },
-        "sync" => Mode::Sync,
-        "log" => {
-            let limit = args
-                .next()
-                .map(|value| {
-                    if value == "-" {
-                        u32::MAX.to_string()
-                    } else {
-                        value
-                    }
-                })
-                .map(|s| s.parse::<u32>())
-                .transpose()
-                .context("invalid limit value")?;
-            let skip = args
-                .next()
-                .map(|s| s.parse::<u32>())
-                .transpose()
-                .context("invalid limit value")?;
-            Mode::Log { limit, skip }
-        }
-        "export" => {
-            let filepath = match args.len() {
-                0 => None,
-                1 => args.next(),
-                _ => bail!("too many arguments provided"),
-            };
-            Mode::Export {
-                filepath: filepath.map(PathBuf::from),
-            }
-        }
-        "import" => {
-            let filepath = match args.len() {
-                0 => None,
-                1 => args.next(),
-                _ => bail!("too many arguments provided"),
-            };
-            Mode::Import {
-                filepath: filepath.map(PathBuf::from),
-            }
-        }
-        _ => Mode::FilterList {
-            filter: Filter {
-                search: std::iter::once(action)
-                    .chain(args)
-                    .collect::<Vec<_>>()
-                    .join(" "),
+    // TODO(@bpeetz): Re-add the functionality of running `stride` without
+    // args or not one of the defined subcommands to search  <2024-10-24>
+    // else {
+    //     let tasks = repository.tasks()?;
+    //     print_tasks(&tasks);
+    //     return Ok(());
+    // };
+    let args = CliArgs::parse();
+
+    match args.mode {
+        Mode::Search { filter } => {
+            let filter = Filter {
+                search: filter.join(" "),
                 status: [TaskStatus::Pending].into(),
                 ..Default::default()
-            },
-        },
-    };
-
-    match mode {
-        Mode::FilterList { filter } => {
+            };
             let tasks = repository.tasks_with_filter(&filter)?;
             print_tasks(&tasks);
         }
-        Mode::Add { mut content } => {
+        Mode::Add { content } => {
+            let mut content = content.join(" ");
+
             if content == "-" {
                 content = String::new();
                 std::io::stdin().read_line(&mut content)?;
@@ -192,7 +128,7 @@ fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let limit = count.saturating_add(limit.unwrap_or(u32::MAX));
+            let limit = count.saturating_add(limit);
 
             'outer: loop {
                 let Some(commits) = repository.log(last_oid, Some(CHUNK_COUNT))? else {
