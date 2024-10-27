@@ -62,23 +62,27 @@ nixos-lib.runTest {
               "cat ${user-dirs-file} > ~/.config/user-dirs.dirs",
               "mkdir ~/Documents"
           )
-          stride_client.succeed("touch ~/.taskrc")
-          stride_client.succeed("echo sync.server.origin=http://server:${port} >> ~/.taskrc")
-          stride_client.succeed("echo sync.server.client_id=${uuid} >> ~/.taskrc")
-          stride_client.succeed("echo sync.encryption_secret=${password} >> ~/.taskrc")
+          stride_client.succeed("${pkgs.writeShellScript "configure-stride-sync" ''
+        config_file="$HOME/.config/org.stridetasks.stride/config.toml"
+        mkdir --parents "$(dirname "$config_file")"
+        echo 'sync.server.origin="http://server:${port}"' >> "$config_file"
+        echo 'sync.server.client_id="${uuid}"' >> "$config_file"
+        echo 'sync.encryption_secret="${password}"' >> "$config_file"
+      ''}")
+
 
       with subtest("Can create tasks"):
           task_client.succeed("task add 'First task -- task_client'")
-          stride_client.succeed("stride add 'First task -- stride_client'")
+          stride_client.succeed("stride --repository task-champion add 'First task -- stride_client'")
 
       with subtest("Can sync tasks"):
           task_client.succeed("task sync")
-          stride_client.succeed("stride sync")
+          stride_client.succeed("stride --repository task-champion sync")
           task_client.succeed("task sync")
 
       with subtest("Have correct tasks"):
           count1 = task_client.succeed("task count")
-          count2 = stride_client.succeed('stride "" | wc -l')
+          count2 = stride_client.succeed('stride --repository task-champion search "" | wc -l')
 
           assert int(count1) == 2, f"We don't have exactly 2 tasks, but {count1}"
           assert count1 == count2, f"The clients don't have the same amount of tasks, stride_client: {count1}, task_client: {count2}"

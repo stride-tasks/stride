@@ -90,6 +90,10 @@
           # `openssl`.
           pkgs.perl
         ];
+        buildInputs = [
+          # Needed for `taskchampion`
+          pkgs.sqlite
+        ];
 
         env = {
           ANDROID_HOME = "${android.androidsdk}/libexec/android-sdk";

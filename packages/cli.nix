@@ -3,6 +3,7 @@
   lib,
   # nativeBuildInputs
   perl,
+  sqlite,
   ...
 }: let
   pname = "stride";
@@ -48,6 +49,11 @@ in
     nativeBuildInputs = [
       # Required by the `openssl` crate
       perl
+    ];
+
+    buildInputs = [
+      # Required by the `taskchampion` crate
+      sqlite
     ];
 
     doCheck = true;
