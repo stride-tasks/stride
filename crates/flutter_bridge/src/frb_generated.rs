@@ -26,7 +26,8 @@
 // Section: imports
 
 use crate::api::error::*;
-use crate::api::repository::*;
+use crate::api::repository::git::*;
+use crate::api::repository::StrideRepository;
 use crate::api::settings::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
@@ -40,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.5.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1068412896;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 12440326;
 
 // Section: executor
 
@@ -431,7 +432,7 @@ fn wire__crate__api__logging__logger_warn_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_add_impl(
+fn wire__crate__api__repository__git__TaskStorage_add_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -474,15 +475,17 @@ fn wire__crate__api__repository__TaskStorage_add_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok =
-                        crate::api::repository::TaskStorage::add(&mut *api_that_guard, api_task)?;
+                    let output_ok = crate::api::repository::git::TaskStorage::add(
+                        &mut *api_that_guard,
+                        api_task,
+                    )?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_add_and_commit_impl(
+fn wire__crate__api__repository__git__TaskStorage_add_and_commit_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -525,7 +528,7 @@ fn wire__crate__api__repository__TaskStorage_add_and_commit_impl(
                         }
                     }
                     let api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::add_and_commit(
+                    let output_ok = crate::api::repository::git::TaskStorage::add_and_commit(
                         &*api_that_guard,
                         &api_message,
                     )?;
@@ -535,7 +538,7 @@ fn wire__crate__api__repository__TaskStorage_add_and_commit_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_change_category_impl(
+fn wire__crate__api__repository__git__TaskStorage_change_category_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -579,7 +582,7 @@ fn wire__crate__api__repository__TaskStorage_change_category_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::change_category(
+                    let output_ok = crate::api::repository::git::TaskStorage::change_category(
                         &mut *api_that_guard,
                         &api_task,
                         api_status,
@@ -590,7 +593,7 @@ fn wire__crate__api__repository__TaskStorage_change_category_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_checkout_impl(
+fn wire__crate__api__repository__git__TaskStorage_checkout_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -633,14 +636,14 @@ fn wire__crate__api__repository__TaskStorage_checkout_impl(
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok =
-                        crate::api::repository::TaskStorage::checkout(&mut *api_that_guard)?;
+                        crate::api::repository::git::TaskStorage::checkout(&mut *api_that_guard)?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_clear_impl(
+fn wire__crate__api__repository__git__TaskStorage_clear_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -683,14 +686,14 @@ fn wire__crate__api__repository__TaskStorage_clear_impl(
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok =
-                        crate::api::repository::TaskStorage::clear(&mut *api_that_guard)?;
+                        crate::api::repository::git::TaskStorage::clear(&mut *api_that_guard)?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_clone_repository_impl(
+fn wire__crate__api__repository__git__TaskStorage_clone_repository_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -732,7 +735,7 @@ fn wire__crate__api__repository__TaskStorage_clone_repository_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::clone_repository(
+                    let output_ok = crate::api::repository::git::TaskStorage::clone_repository(
                         &mut *api_that_guard,
                     )?;
                     Ok(output_ok)
@@ -741,7 +744,7 @@ fn wire__crate__api__repository__TaskStorage_clone_repository_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_export_impl(
+fn wire__crate__api__repository__git__TaskStorage_export_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -784,14 +787,14 @@ fn wire__crate__api__repository__TaskStorage_export_impl(
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok =
-                        crate::api::repository::TaskStorage::export(&mut *api_that_guard)?;
+                        crate::api::repository::git::TaskStorage::export(&mut *api_that_guard)?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_force_hard_reset_impl(
+fn wire__crate__api__repository__git__TaskStorage_force_hard_reset_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -834,7 +837,7 @@ fn wire__crate__api__repository__TaskStorage_force_hard_reset_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::force_hard_reset(
+                    let output_ok = crate::api::repository::git::TaskStorage::force_hard_reset(
                         &mut *api_that_guard,
                         api_commit,
                     )?;
@@ -844,7 +847,7 @@ fn wire__crate__api__repository__TaskStorage_force_hard_reset_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_import_impl(
+fn wire__crate__api__repository__git__TaskStorage_import_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -887,7 +890,7 @@ fn wire__crate__api__repository__TaskStorage_import_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::import(
+                    let output_ok = crate::api::repository::git::TaskStorage::import(
                         &mut *api_that_guard,
                         &api_content,
                     )?;
@@ -897,7 +900,7 @@ fn wire__crate__api__repository__TaskStorage_import_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_init_repotitory_impl(
+fn wire__crate__api__repository__git__TaskStorage_init_repotitory_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -939,15 +942,16 @@ fn wire__crate__api__repository__TaskStorage_init_repotitory_impl(
                         }
                     }
                     let api_that_guard = api_that_guard.unwrap();
-                    let output_ok =
-                        crate::api::repository::TaskStorage::init_repotitory(&*api_that_guard)?;
+                    let output_ok = crate::api::repository::git::TaskStorage::init_repotitory(
+                        &*api_that_guard,
+                    )?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_log_impl(
+fn wire__crate__api__repository__git__TaskStorage_log_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -991,7 +995,7 @@ fn wire__crate__api__repository__TaskStorage_log_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::log(
+                    let output_ok = crate::api::repository::git::TaskStorage::log(
                         &mut *api_that_guard,
                         api_oid,
                         api_n,
@@ -1002,7 +1006,7 @@ fn wire__crate__api__repository__TaskStorage_log_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_new_impl(
+fn wire__crate__api__repository__git__TaskStorage_new_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
@@ -1027,16 +1031,15 @@ fn wire__crate__api__repository__TaskStorage_new_impl(
             let api_settings = <crate::api::settings::Settings>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
-                let output_ok = Result::<_, ()>::Ok(crate::api::repository::TaskStorage::new(
-                    &api_path,
-                    &api_settings,
-                ))?;
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::api::repository::git::TaskStorage::new(&api_path, &api_settings),
+                )?;
                 Ok(output_ok)
             })())
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_push_impl(
+fn wire__crate__api__repository__git__TaskStorage_push_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1079,15 +1082,17 @@ fn wire__crate__api__repository__TaskStorage_push_impl(
                         }
                     }
                     let api_that_guard = api_that_guard.unwrap();
-                    let output_ok =
-                        crate::api::repository::TaskStorage::push(&*api_that_guard, api_force)?;
+                    let output_ok = crate::api::repository::git::TaskStorage::push(
+                        &*api_that_guard,
+                        api_force,
+                    )?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_remove_task_impl(
+fn wire__crate__api__repository__git__TaskStorage_remove_by_task_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1095,7 +1100,7 @@ fn wire__crate__api__repository__TaskStorage_remove_task_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "TaskStorage_remove_task",
+            debug_name: "TaskStorage_remove_by_task",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -1130,7 +1135,7 @@ fn wire__crate__api__repository__TaskStorage_remove_task_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::remove_task(
+                    let output_ok = crate::api::repository::git::TaskStorage::remove_by_task(
                         &mut *api_that_guard,
                         &api_task,
                     )?;
@@ -1140,7 +1145,60 @@ fn wire__crate__api__repository__TaskStorage_remove_task_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_sync_impl(
+fn wire__crate__api__repository__git__TaskStorage_remove_by_uuid_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "TaskStorage_remove_by_uuid",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>,
+            >>::sse_decode(&mut deserializer);
+            let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok = crate::api::repository::git::TaskStorage::remove_by_uuid(
+                        &mut *api_that_guard,
+                        &api_uuid,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__repository__git__TaskStorage_sync_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1183,14 +1241,14 @@ fn wire__crate__api__repository__TaskStorage_sync_impl(
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok =
-                        crate::api::repository::TaskStorage::sync(&mut *api_that_guard)?;
+                        crate::api::repository::git::TaskStorage::sync(&mut *api_that_guard)?;
                     Ok(output_ok)
                 })())
             }
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
+fn wire__crate__api__repository__git__TaskStorage_task_by_uuid_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1233,7 +1291,7 @@ fn wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::task_by_uuid(
+                    let output_ok = crate::api::repository::git::TaskStorage::task_by_uuid(
                         &mut *api_that_guard,
                         &api_uuid,
                     )?;
@@ -1243,57 +1301,7 @@ fn wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_tasks_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "TaskStorage_tasks",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_that = <RustOpaqueMoi<
-                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>,
-            >>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| {
-                transform_result_sse::<_, RustError>((move || {
-                    let mut api_that_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_that, 0, true,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
-                            _ => unreachable!(),
-                        }
-                    }
-                    let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok =
-                        crate::api::repository::TaskStorage::tasks(&mut *api_that_guard)?;
-                    Ok(output_ok)
-                })())
-            }
-        },
-    )
-}
-fn wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
+fn wire__crate__api__repository__git__TaskStorage_tasks_with_filter_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1336,7 +1344,7 @@ fn wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::tasks_with_filter(
+                    let output_ok = crate::api::repository::git::TaskStorage::tasks_with_filter(
                         &mut *api_that_guard,
                         &api_filter,
                     )?;
@@ -1346,7 +1354,7 @@ fn wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_unload_impl(
+fn wire__crate__api__repository__git__TaskStorage_unload_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1389,7 +1397,7 @@ fn wire__crate__api__repository__TaskStorage_unload_impl(
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok = Result::<_, ()>::Ok({
-                        crate::api::repository::TaskStorage::unload(&mut *api_that_guard);
+                        crate::api::repository::git::TaskStorage::unload(&mut *api_that_guard);
                     })?;
                     Ok(output_ok)
                 })())
@@ -1397,7 +1405,7 @@ fn wire__crate__api__repository__TaskStorage_unload_impl(
         },
     )
 }
-fn wire__crate__api__repository__TaskStorage_update_impl(
+fn wire__crate__api__repository__git__TaskStorage_update_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1440,7 +1448,7 @@ fn wire__crate__api__repository__TaskStorage_update_impl(
                         }
                     }
                     let mut api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::TaskStorage::update(
+                    let output_ok = crate::api::repository::git::TaskStorage::update(
                         &mut *api_that_guard,
                         &api_task,
                     )?;
@@ -1450,7 +1458,7 @@ fn wire__crate__api__repository__TaskStorage_update_impl(
         },
     )
 }
-fn wire__crate__api__repository__init_app_impl(
+fn wire__crate__api__repository__git__init_app_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1476,7 +1484,7 @@ fn wire__crate__api__repository__init_app_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok({
-                        crate::api::repository::init_app();
+                        crate::api::repository::git::init_app();
                     })?;
                     Ok(output_ok)
                 })())
@@ -1484,7 +1492,7 @@ fn wire__crate__api__repository__init_app_impl(
         },
     )
 }
-fn wire__crate__api__repository__oid_to_string_impl(
+fn wire__crate__api__repository__git__oid_to_string_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
@@ -1524,8 +1532,9 @@ fn wire__crate__api__repository__oid_to_string_impl(
                     }
                 }
                 let api_oid_guard = api_oid_guard.unwrap();
-                let output_ok =
-                    Result::<_, ()>::Ok(crate::api::repository::oid_to_string(&*api_oid_guard))?;
+                let output_ok = Result::<_, ()>::Ok(crate::api::repository::git::oid_to_string(
+                    &*api_oid_guard,
+                ))?;
                 Ok(output_ok)
             })())
         },
@@ -2508,7 +2517,7 @@ impl SseDecode for bool {
     }
 }
 
-impl SseDecode for crate::api::repository::CommitItem {
+impl SseDecode for crate::api::repository::git::CommitItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_oid = <Oid>::sse_decode(deserializer);
@@ -2516,7 +2525,7 @@ impl SseDecode for crate::api::repository::CommitItem {
         let mut var_message = <String>::sse_decode(deserializer);
         let mut var_author = <String>::sse_decode(deserializer);
         let mut var_email = <String>::sse_decode(deserializer);
-        return crate::api::repository::CommitItem {
+        return crate::api::repository::git::CommitItem {
             oid: var_oid,
             parent: var_parent,
             message: var_message,
@@ -2668,13 +2677,13 @@ impl SseDecode for Vec<crate::task::annotation::Annotation> {
     }
 }
 
-impl SseDecode for Vec<crate::api::repository::CommitItem> {
+impl SseDecode for Vec<crate::api::repository::git::CommitItem> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
-            ans_.push(<crate::api::repository::CommitItem>::sse_decode(
+            ans_.push(<crate::api::repository::git::CommitItem>::sse_decode(
                 deserializer,
             ));
         }
@@ -2876,11 +2885,11 @@ impl SseDecode for Option<u32> {
     }
 }
 
-impl SseDecode for Option<Vec<crate::api::repository::CommitItem>> {
+impl SseDecode for Option<Vec<crate::api::repository::git::CommitItem>> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
-            return Some(<Vec<crate::api::repository::CommitItem>>::sse_decode(
+            return Some(<Vec<crate::api::repository::git::CommitItem>>::sse_decode(
                 deserializer,
             ));
         } else {
@@ -3045,133 +3054,167 @@ fn pde_ffi_dispatcher_primary_impl(
         8 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
         9 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
         10 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__repository__TaskStorage_add_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__repository__TaskStorage_add_and_commit_impl(
+        24 => wire__crate__api__repository__git__TaskStorage_add_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        13 => wire__crate__api__repository__TaskStorage_change_category_impl(
+        25 => wire__crate__api__repository__git__TaskStorage_add_and_commit_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        14 => wire__crate__api__repository__TaskStorage_checkout_impl(
+        26 => wire__crate__api__repository__git__TaskStorage_change_category_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        15 => {
-            wire__crate__api__repository__TaskStorage_clear_impl(port, ptr, rust_vec_len, data_len)
-        }
-        16 => wire__crate__api__repository__TaskStorage_clone_repository_impl(
+        27 => wire__crate__api__repository__git__TaskStorage_checkout_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        17 => {
-            wire__crate__api__repository__TaskStorage_export_impl(port, ptr, rust_vec_len, data_len)
-        }
-        18 => wire__crate__api__repository__TaskStorage_force_hard_reset_impl(
+        28 => wire__crate__api__repository__git__TaskStorage_clear_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        19 => {
-            wire__crate__api__repository__TaskStorage_import_impl(port, ptr, rust_vec_len, data_len)
-        }
-        20 => wire__crate__api__repository__TaskStorage_init_repotitory_impl(
+        29 => wire__crate__api__repository__git__TaskStorage_clone_repository_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        21 => wire__crate__api__repository__TaskStorage_log_impl(port, ptr, rust_vec_len, data_len),
-        23 => {
-            wire__crate__api__repository__TaskStorage_push_impl(port, ptr, rust_vec_len, data_len)
-        }
-        24 => wire__crate__api__repository__TaskStorage_remove_task_impl(
+        30 => wire__crate__api__repository__git__TaskStorage_export_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        25 => {
-            wire__crate__api__repository__TaskStorage_sync_impl(port, ptr, rust_vec_len, data_len)
-        }
-        26 => wire__crate__api__repository__TaskStorage_task_by_uuid_impl(
+        31 => wire__crate__api__repository__git__TaskStorage_force_hard_reset_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        27 => {
-            wire__crate__api__repository__TaskStorage_tasks_impl(port, ptr, rust_vec_len, data_len)
-        }
-        28 => wire__crate__api__repository__TaskStorage_tasks_with_filter_impl(
+        32 => wire__crate__api__repository__git__TaskStorage_import_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        29 => {
-            wire__crate__api__repository__TaskStorage_unload_impl(port, ptr, rust_vec_len, data_len)
-        }
-        30 => {
-            wire__crate__api__repository__TaskStorage_update_impl(port, ptr, rust_vec_len, data_len)
-        }
-        31 => wire__crate__api__repository__init_app_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__settings__SshKey_generate_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__settings__SshKey_remove_key_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__settings__SshKey_save_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__settings__SshKey_update_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__settings__application_paths_default_impl(
+        33 => wire__crate__api__repository__git__TaskStorage_init_repotitory_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        40 => wire__crate__api__settings__encryption_key_generate_impl(
+        34 => wire__crate__api__repository__git__TaskStorage_log_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        41 => wire__crate__api__settings__encryption_key_remove_key_impl(
+        36 => wire__crate__api__repository__git__TaskStorage_push_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        42 => {
+        37 => wire__crate__api__repository__git__TaskStorage_remove_by_task_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        38 => wire__crate__api__repository__git__TaskStorage_remove_by_uuid_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        39 => wire__crate__api__repository__git__TaskStorage_sync_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        40 => wire__crate__api__repository__git__TaskStorage_task_by_uuid_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        41 => wire__crate__api__repository__git__TaskStorage_tasks_with_filter_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        42 => wire__crate__api__repository__git__TaskStorage_unload_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        43 => wire__crate__api__repository__git__TaskStorage_update_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        44 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__settings__SshKey_generate_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__settings__SshKey_remove_key_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__settings__SshKey_save_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__crate__api__settings__SshKey_update_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__crate__api__settings__application_paths_default_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        53 => wire__crate__api__settings__encryption_key_generate_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        54 => wire__crate__api__settings__encryption_key_remove_key_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        55 => {
             wire__crate__api__settings__encryption_key_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        43 => {
+        56 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        44 => wire__crate__api__settings__settings_create_stream_impl(
+        57 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        45 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
-        47 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        51 => {
+        58 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        59 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
+        60 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        62 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        63 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        64 => {
             wire__crate__git__known_hosts__known_hosts_load_impl(port, ptr, rust_vec_len, data_len)
         }
-        52 => {
+        65 => {
             wire__crate__git__known_hosts__known_hosts_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        55 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        68 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3191,13 +3234,13 @@ fn pde_ffi_dispatcher_sync_impl(
             data_len,
         ),
         3 => wire__crate__api__error__RustError_to_error_string_impl(ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__repository__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__repository__oid_to_string_impl(ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
-        48 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        53 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
-        54 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
+        61 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        66 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
+        67 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3309,7 +3352,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::settings::ApplicationPaths>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::repository::CommitItem {
+impl flutter_rust_bridge::IntoDart for crate::api::repository::git::CommitItem {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.oid.into_into_dart().into_dart(),
@@ -3322,13 +3365,13 @@ impl flutter_rust_bridge::IntoDart for crate::api::repository::CommitItem {
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::api::repository::CommitItem
+    for crate::api::repository::git::CommitItem
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<crate::api::repository::CommitItem>
-    for crate::api::repository::CommitItem
+impl flutter_rust_bridge::IntoIntoDart<crate::api::repository::git::CommitItem>
+    for crate::api::repository::git::CommitItem
 {
-    fn into_into_dart(self) -> crate::api::repository::CommitItem {
+    fn into_into_dart(self) -> crate::api::repository::git::CommitItem {
         self
     }
 }
@@ -3730,7 +3773,7 @@ impl SseEncode for bool {
     }
 }
 
-impl SseEncode for crate::api::repository::CommitItem {
+impl SseEncode for crate::api::repository::git::CommitItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Oid>::sse_encode(self.oid, serializer);
@@ -3864,12 +3907,12 @@ impl SseEncode for Vec<crate::task::annotation::Annotation> {
     }
 }
 
-impl SseEncode for Vec<crate::api::repository::CommitItem> {
+impl SseEncode for Vec<crate::api::repository::git::CommitItem> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <crate::api::repository::CommitItem>::sse_encode(item, serializer);
+            <crate::api::repository::git::CommitItem>::sse_encode(item, serializer);
         }
     }
 }
@@ -4039,12 +4082,12 @@ impl SseEncode for Option<u32> {
     }
 }
 
-impl SseEncode for Option<Vec<crate::api::repository::CommitItem>> {
+impl SseEncode for Option<Vec<crate::api::repository::git::CommitItem>> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <Vec<crate::api::repository::CommitItem>>::sse_encode(value, serializer);
+            <Vec<crate::api::repository::git::CommitItem>>::sse_encode(value, serializer);
         }
     }
 }
@@ -4174,7 +4217,8 @@ mod io {
 
     use super::*;
     use crate::api::error::*;
-    use crate::api::repository::*;
+    use crate::api::repository::git::*;
+    use crate::api::repository::StrideRepository;
     use crate::api::settings::*;
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
@@ -4244,3 +4288,87 @@ mod io {
 }
 #[cfg(not(target_family = "wasm"))]
 pub use io::*;
+
+/// cbindgen:ignore
+#[cfg(target_family = "wasm")]
+mod web {
+    // This file is automatically generated, so please do not edit it.
+    // @generated by `flutter_rust_bridge`@ 2.5.0.
+
+    // Section: imports
+
+    use super::*;
+    use crate::api::error::*;
+    use crate::api::repository::git::*;
+    use crate::api::repository::StrideRepository;
+    use crate::api::settings::*;
+    use flutter_rust_bridge::for_generated::byteorder::{
+        NativeEndian, ReadBytesExt, WriteBytesExt,
+    };
+    use flutter_rust_bridge::for_generated::wasm_bindgen;
+    use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
+    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::{Handler, IntoIntoDart};
+
+    // Section: boilerplate
+
+    flutter_rust_bridge::frb_generated_boilerplate_web!();
+
+    #[wasm_bindgen]
+    pub fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Oid>>::increment_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Oid>>::decrement_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>::increment_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RustError>>::decrement_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshKey>>::increment_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshKey>>::decrement_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>>::increment_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>>::decrement_strong_count(ptr as _);
+    }
+}
+#[cfg(target_family = "wasm")]
+pub use web::*;
