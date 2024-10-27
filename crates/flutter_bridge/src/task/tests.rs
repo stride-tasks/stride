@@ -2,9 +2,7 @@
 
 use chrono::{DateTime, Utc};
 
-use crate::task::{Task, TaskPriority};
-
-use super::TaskStatus;
+use crate::task::{Task, TaskPriority, TaskStatus};
 
 #[test]
 fn conversion_task_status() -> anyhow::Result<()> {

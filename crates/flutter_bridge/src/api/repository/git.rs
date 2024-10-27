@@ -1,6 +1,5 @@
 use std::{
     cell::RefCell,
-    collections::HashSet,
     fs::File,
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
@@ -31,7 +30,7 @@ use git2::{
     FetchOptions, RebaseOptions, RemoteCallbacks, Repository, Signature,
 };
 
-use super::{
+use crate::api::{
     filter::Filter,
     logging::Logger,
     settings::{ssh_key, EncryptionKey, SshKey},
@@ -365,59 +364,6 @@ impl TaskStorage {
         ]
     }
 
-    pub fn unload(&mut self) {
-        for storage in self.storage_mut() {
-            storage.unload();
-        }
-    }
-
-    pub fn add(&mut self, task: Task) -> Result<(), RustError> {
-        if !self.repository_path.exists() {
-            self.init_repotitory()?;
-        }
-
-        let message = format!("$ADD {}", task.uuid.to_base64());
-        self.pending.append(task)?;
-        self.add_and_commit(&message)?;
-        Ok(())
-    }
-
-    pub fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
-        for storage in self.storage_mut() {
-            let task = storage.get_by_id(uuid)?;
-
-            if let Some(task) = task {
-                return Ok(Some(task.clone()));
-            }
-        }
-        Ok(None)
-    }
-
-    pub fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
-        let mut tasks = Vec::new();
-        for storage in self.storage_mut() {
-            storage.filter(filter, &mut tasks)?;
-        }
-
-        tasks.sort_unstable_by(|a, b| {
-            b.urgency()
-                .partial_cmp(&a.urgency())
-                .expect("should never be NaN")
-        });
-
-        Ok(tasks)
-    }
-
-    #[allow(unused)]
-    pub(crate) fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
-        for storage in self.storage_mut() {
-            if let Some(task) = storage.remove(uuid)? {
-                return Ok(Some(task));
-            }
-        }
-        Ok(None)
-    }
-
     pub(crate) fn update2(&mut self, task: &Task) -> Result<bool, RustError> {
         let mut updated = false;
         for storage in self.storage_mut() {
@@ -427,57 +373,6 @@ impl TaskStorage {
             }
         }
         Ok(updated)
-    }
-
-    pub fn update(&mut self, task: &Task) -> Result<bool, RustError> {
-        let updated = self.update2(task)?;
-        if updated {
-            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
-        }
-        Ok(updated)
-    }
-
-    pub fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
-        if task.status == status {
-            return Ok(true);
-        }
-
-        let mut found_task = None;
-        for storage in self.storage_mut() {
-            if task.status != storage.kind {
-                continue;
-            }
-
-            let index = storage.get_index(&task.uuid)?;
-            let Some(index) = index else {
-                break;
-            };
-
-            found_task = Some(storage.tasks.remove(index));
-
-            storage.save()?;
-        }
-
-        let Some(mut found_task) = found_task else {
-            return Ok(false);
-        };
-
-        found_task.task.active = false;
-        found_task.task.status = status;
-        found_task.task.modified = Some(Utc::now());
-
-        let transition = match status {
-            TaskStatus::Pending => "PEND",
-            TaskStatus::Waiting => "WAIT",
-            TaskStatus::Recurring => "RECUR",
-            TaskStatus::Deleted => "DELETE",
-            TaskStatus::Complete => "DONE",
-        };
-
-        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
-        self.storage_mut()[status as usize].append(found_task.task)?;
-        self.add_and_commit(&message)?;
-        Ok(false)
     }
 
     pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>, RustError> {
@@ -497,54 +392,6 @@ impl TaskStorage {
             storage.save()?;
         }
         Ok(found_task.map(|DecryptedTask { task, .. }| task))
-    }
-
-    pub fn remove_task(&mut self, task: &Task) -> Result<bool, RustError> {
-        let found_task = self.remove_task2(task)?;
-
-        let Some(found_task) = found_task else {
-            return Ok(false);
-        };
-
-        let message = format!("$PURGE {}", found_task.uuid.to_base64());
-
-        self.add_and_commit(&message)?;
-        Ok(false)
-    }
-
-    pub fn tasks(&mut self) -> Result<Vec<Task>, RustError> {
-        self.tasks_with_filter(&Filter {
-            name: "default".to_owned(),
-            status: HashSet::from_iter([TaskStatus::Pending]),
-            uuid: Uuid::now_v7(),
-            search: String::new(),
-        })
-    }
-
-    pub fn sync(&mut self) -> Result<(), RustError> {
-        if self.repository_path.exists() {
-            // TODO: Make sure that nothing is left behind!
-
-            if self.pull()? {
-                log::info!("Pulled tasks");
-                self.unload();
-            }
-
-            self.push(false)?;
-
-            log::info!("Task sync finished!");
-            Ok(())
-        } else {
-            self.clone_repository()
-        }
-    }
-
-    pub fn clear(&mut self) -> Result<(), RustError> {
-        for storage in self.storage_mut() {
-            storage.clear()?;
-        }
-        std::fs::remove_dir_all(&self.repository_path)?;
-        Ok(())
     }
 
     pub fn clone_repository(&mut self) -> Result<(), RustError> {
@@ -1073,8 +920,152 @@ impl TaskStorage {
 
         Ok(())
     }
+}
 
-    pub fn export(&mut self) -> Result<String, RustError> {
+impl StrideRepository for TaskStorage {
+    fn unload(&mut self) {
+        for storage in self.storage_mut() {
+            storage.unload();
+        }
+    }
+
+    fn add(&mut self, task: Task) -> Result<(), RustError> {
+        if !self.repository_path.exists() {
+            self.init_repotitory()?;
+        }
+
+        let message = format!("$ADD {}", task.uuid.to_base64());
+        self.pending.append(task)?;
+        self.add_and_commit(&message)?;
+        Ok(())
+    }
+
+    fn remove_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
+        for storage in self.storage_mut() {
+            if let Some(task) = storage.remove(uuid)? {
+                return Ok(Some(task));
+            }
+        }
+        Ok(None)
+    }
+
+    fn remove_by_task(&mut self, task: &Task) -> Result<bool, RustError> {
+        let found_task = self.remove_task2(task)?;
+
+        let Some(found_task) = found_task else {
+            return Ok(false);
+        };
+
+        let message = format!("$PURGE {}", found_task.uuid.to_base64());
+
+        self.add_and_commit(&message)?;
+        Ok(false)
+    }
+
+    fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
+        for storage in self.storage_mut() {
+            let task = storage.get_by_id(uuid)?;
+
+            if let Some(task) = task {
+                return Ok(Some(task.clone()));
+            }
+        }
+        Ok(None)
+    }
+
+    fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
+        let mut tasks = Vec::new();
+        for storage in self.storage_mut() {
+            storage.filter(filter, &mut tasks)?;
+        }
+
+        tasks.sort_unstable_by(|a, b| {
+            b.urgency()
+                .partial_cmp(&a.urgency())
+                .expect("should never be NaN")
+        });
+
+        Ok(tasks)
+    }
+
+    fn update(&mut self, task: &Task) -> Result<bool, RustError> {
+        let updated = self.update2(task)?;
+        if updated {
+            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
+        }
+        Ok(updated)
+    }
+
+    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
+        if task.status == status {
+            return Ok(true);
+        }
+
+        let mut found_task = None;
+        for storage in self.storage_mut() {
+            if task.status != storage.kind {
+                continue;
+            }
+
+            let index = storage.get_index(&task.uuid)?;
+            let Some(index) = index else {
+                break;
+            };
+
+            found_task = Some(storage.tasks.remove(index));
+
+            storage.save()?;
+        }
+
+        let Some(mut found_task) = found_task else {
+            return Ok(false);
+        };
+
+        found_task.task.active = false;
+        found_task.task.status = status;
+        found_task.task.modified = Some(Utc::now());
+
+        let transition = match status {
+            TaskStatus::Pending => "PEND",
+            TaskStatus::Waiting => "WAIT",
+            TaskStatus::Recurring => "RECUR",
+            TaskStatus::Deleted => "DELETE",
+            TaskStatus::Complete => "DONE",
+        };
+
+        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
+        self.storage_mut()[status as usize].append(found_task.task)?;
+        self.add_and_commit(&message)?;
+        Ok(false)
+    }
+
+    fn sync(&mut self) -> Result<(), RustError> {
+        if self.repository_path.exists() {
+            // TODO: Make sure that nothing is left behind!
+
+            if self.pull()? {
+                log::info!("Pulled tasks");
+                self.unload();
+            }
+
+            self.push(false)?;
+
+            log::info!("Task sync finished!");
+            Ok(())
+        } else {
+            self.clone_repository()
+        }
+    }
+
+    fn clear(&mut self) -> Result<(), RustError> {
+        for storage in self.storage_mut() {
+            storage.clear()?;
+        }
+        std::fs::remove_dir_all(&self.repository_path)?;
+        Ok(())
+    }
+
+    fn export(&mut self) -> Result<String, RustError> {
         #[derive(serde::Serialize)]
         struct ExportTask<'a> {
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
@@ -1104,7 +1095,7 @@ impl TaskStorage {
         Ok(serde_json::to_string(&record).map_err(ExportError::Serialize)?)
     }
 
-    pub fn import(&mut self, content: &str) -> Result<(), RustError> {
+    fn import(&mut self, content: &str) -> Result<(), RustError> {
         #[derive(serde::Deserialize)]
         struct ImportRecord {
             #[serde(default)]
@@ -1135,6 +1126,17 @@ impl TaskStorage {
 
         for storage in self.storage_mut() {
             storage.save()?;
+        }
+
+        Ok(())
+    }
+
+    fn commit(&mut self) -> Result<(), RustError> {
+        if self.repository_path.exists() {
+            self.add_and_commit(
+                "General commit. (This should probably never actully result in a commit, \
+                as all changes should commit their progress directly.)",
+            )?;
         }
 
         Ok(())
@@ -1315,6 +1317,8 @@ fn do_merge<'a>(
 }
 
 pub use git2::Oid;
+
+use super::StrideRepository;
 
 #[frb(opaque, mirror(Oid))]
 #[derive(Debug, Clone, Copy)]

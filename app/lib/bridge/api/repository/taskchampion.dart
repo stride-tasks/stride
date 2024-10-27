@@ -6,23 +6,17 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/frb_generated.dart';
 
-class Annotation {
-  final DateTime entry;
-  final String description;
+class Repository {
+  const Repository();
 
-  const Annotation({
-    required this.entry,
-    required this.description,
-  });
+  static Future<Repository> default_() =>
+      RustLib.instance.api.crateApiRepositoryTaskchampionRepositoryDefault();
 
   @override
-  int get hashCode => entry.hashCode ^ description.hashCode;
+  int get hashCode => 0;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Annotation &&
-          runtimeType == other.runtimeType &&
-          entry == other.entry &&
-          description == other.description;
+      other is Repository && runtimeType == other.runtimeType;
 }
