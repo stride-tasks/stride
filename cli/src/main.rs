@@ -1,18 +1,26 @@
 use anyhow::{bail, Context};
 use clap::Parser;
 use cli::{CliArgs, Mode, RepositoryType};
+use serde::Deserialize;
 use std::{
+    fs,
     io::Read,
     path::{Path, PathBuf},
 };
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
-        repository::TaskStorage,
+        repository::{
+            git::TaskStorage,
+            taskchampion::{self, Replica},
+            StrideRepository,
+        },
         settings::{ApplicationPaths, Settings},
     },
     task::{Task, TaskStatus},
 };
+use url::Url;
+use uuid::Uuid;
 
 pub mod cli;
 
@@ -48,27 +56,6 @@ fn print_tasks(tasks: &[Task]) {
 
 #[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<()> {
-    let cache_dir =
-        choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
-    let document_dir =
-        choose_path_suffix(&dirs::document_dir().context("could not get document directory")?);
-    let support_dir =
-        choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
-
-    let settings = Settings::load(ApplicationPaths {
-        support_path: support_dir.to_string_lossy().to_string(),
-        document_path: document_dir.to_string_lossy().to_string(),
-        cache_path: cache_dir.to_string_lossy().to_string(),
-        log_path: cache_dir
-            .join("logs")
-            .join("log.txt")
-            .to_string_lossy()
-            .to_string(),
-    })?;
-
-    let mut repository =
-        TaskStorage::new(&support_dir.join("repository").to_string_lossy(), &settings);
-
     // TODO(@bpeetz): Re-add the functionality of running `stride` without
     // args or not one of the defined subcommands to search  <2024-10-24>
     // else {
@@ -77,6 +64,91 @@ fn main() -> anyhow::Result<()> {
     //     return Ok(());
     // };
     let args = CliArgs::parse();
+
+    let repository: &mut dyn StrideRepository = match args.repository {
+        RepositoryType::Git => {
+            let cache_dir =
+                choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
+            let document_dir = choose_path_suffix(
+                &dirs::document_dir().context("could not get document directory")?,
+            );
+            let support_dir =
+                choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
+
+            let settings = Settings::load(ApplicationPaths {
+                support_path: support_dir.to_string_lossy().to_string(),
+                document_path: document_dir.to_string_lossy().to_string(),
+                cache_path: cache_dir.to_string_lossy().to_string(),
+                log_path: cache_dir
+                    .join("logs")
+                    .join("log.txt")
+                    .to_string_lossy()
+                    .to_string(),
+            })?;
+
+            &mut TaskStorage::new(&support_dir.join("repository").to_string_lossy(), &settings)
+        }
+        RepositoryType::TaskChampion => {
+            let data_dir =
+                choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
+            let config_dir = choose_path_suffix(
+                &dirs::config_dir().context("could not get document directory")?,
+            );
+
+            let db_path = data_dir.join("taskchampion");
+            let config_path = config_dir.join("config.toml");
+
+            let (url, client_id, encryption_secret) = {
+                #[derive(Deserialize)]
+                struct Config {
+                    sync: Sync,
+                }
+                #[derive(Deserialize)]
+                struct Sync {
+                    server: Server,
+                    encryption_secret: String,
+                }
+                #[derive(Deserialize)]
+                struct Server {
+                    origin: Url,
+                    client_id: Uuid,
+                }
+
+                let file = fs::read_to_string(&config_path).with_context(|| {
+                    format!("Failed to read config file at: '{}'", config_path.display())
+                })?;
+
+                let config: Config = toml::from_str(&file).with_context(|| {
+                    format!(
+                        "Failed to parse config file at: '{}' as toml config.",
+                        config_path.display()
+                    )
+                })?;
+
+                (
+                    config.sync.server.origin,
+                    config.sync.server.client_id,
+                    config.sync.encryption_secret,
+                )
+            };
+
+            let server_config = taskchampion::ServerConfig::Remote {
+                url: url.to_string(),
+                client_id,
+                encryption_secret: encryption_secret.as_bytes().to_vec(),
+            };
+            let constraint_environment = false;
+
+            &mut Replica::new(&db_path, server_config, constraint_environment).with_context(
+                || {
+                    format!(
+                        "Failed to initialize taskchampion storage at: {}",
+                        db_path.display()
+                    )
+                },
+            )?
+        }
+    };
 
     match args.mode {
         Mode::Search { filter } => {
@@ -111,52 +183,53 @@ fn main() -> anyhow::Result<()> {
             // TODO: Maybe figure out what is the best value.
             const CHUNK_COUNT: u32 = 10000;
 
-            let mut last_oid = None;
-            let mut count: u32 = 0;
-            if let Some(skip) = skip {
-                let Some(commits) = repository.log(last_oid, Some(skip))? else {
-                    return Ok(());
-                };
-                for commit in commits {
-                    last_oid = commit.parent;
-                    count += 1;
-                }
-
-                // If we skipped though all the commits, when we can just stop here.
-                if last_oid.is_none() {
-                    return Ok(());
-                }
-            }
-
-            let limit = count.saturating_add(limit);
-
-            'outer: loop {
-                let Some(commits) = repository.log(last_oid, Some(CHUNK_COUNT))? else {
-                    return Ok(());
-                };
-                for commit in commits {
-                    if count >= limit {
-                        break 'outer;
-                    }
-
-                    // TODO: Make history formatting configurable.
-                    println!(
-                        "{:4}. {} {} {} {}",
-                        count + 1,
-                        commit.oid,
-                        commit.author,
-                        commit.email,
-                        commit.message.trim()
-                    );
-
-                    last_oid = commit.parent;
-                    count += 1;
-                }
-
-                if last_oid.is_none() {
-                    break;
-                }
-            }
+            todo!();
+            // let mut last_oid = None;
+            // let mut count: u32 = 0;
+            // if let Some(skip) = skip {
+            //     let Some(commits) = repository.log(last_oid, Some(skip))? else {
+            //         return Ok(());
+            //     };
+            //     for commit in commits {
+            //         last_oid = commit.parent;
+            //         count += 1;
+            //     }
+            //
+            //     // If we skipped though all the commits, when we can just stop here.
+            //     if last_oid.is_none() {
+            //         return Ok(());
+            //     }
+            // }
+            //
+            // let limit = count.saturating_add(limit);
+            //
+            // 'outer: loop {
+            //     let Some(commits) = repository.log(last_oid, Some(CHUNK_COUNT))? else {
+            //         return Ok(());
+            //     };
+            //     for commit in commits {
+            //         if count >= limit {
+            //             break 'outer;
+            //         }
+            //
+            //         // TODO: Make history formatting configurable.
+            //         println!(
+            //             "{:4}. {} {} {} {}",
+            //             count + 1,
+            //             commit.oid,
+            //             commit.author,
+            //             commit.email,
+            //             commit.message.trim()
+            //         );
+            //
+            //         last_oid = commit.parent;
+            //         count += 1;
+            //     }
+            //
+            //     if last_oid.is_none() {
+            //         break;
+            //     }
+            // }
         }
         Mode::Export { filepath } => {
             let contents = repository.export()?;
@@ -177,6 +250,10 @@ fn main() -> anyhow::Result<()> {
             repository.import(&contents)?;
         }
     }
+
+    repository
+        .commit()
+        .context("Failed to commit the change to the repository")?;
 
     Ok(())
 }

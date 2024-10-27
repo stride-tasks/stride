@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -14,6 +14,20 @@ pub struct CliArgs {
     #[command(subcommand)]
     /// The mode to operate in
     pub mode: Mode,
+
+    #[arg(global = true, default_value = "git", short, long)]
+    /// Which repository to use as backend
+    pub repository: RepositoryType,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+/// The possible backend Repository types
+pub enum RepositoryType {
+    /// A `git` based repository, which tracks changes as commits
+    Git,
+
+    /// A `taskchampion` Replica, which can sync to `taskwarrior`
+    TaskChampion,
 }
 
 #[derive(Debug, Subcommand)]
