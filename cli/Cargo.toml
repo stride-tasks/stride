@@ -16,6 +16,7 @@ publish = false
 stride_flutter_bridge.workspace = true
 anyhow.workspace = true
 dirs.workspace = true
+clap = { version = "4.5.20", features = ["derive"] }
 
 [[bin]]
 name = "stride"
