@@ -14,7 +14,7 @@ treefmt-nix.lib.evalModule pkgs (
       mdformat.enable = true;
       shfmt = {
         enable = true;
-        indent_size = 4;
+        indent_size = 2;
       };
       shellcheck.enable = true;
       prettier = {
@@ -55,7 +55,7 @@ treefmt-nix.lib.evalModule pkgs (
     settings = {
       formatter = {
         clang-format = {
-          options = ["--style" "GNU"];
+          # options = ["--style" "Chromium"];
         };
         shfmt = {
           includes = ["*.bash"];
