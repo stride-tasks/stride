@@ -62,7 +62,7 @@
 
       cli = pkgs.callPackage ./packages/cli.nix {};
 
-      tests = import ./tests.nix {
+      tests = import ./tests/tests.nix {
         inherit pkgs;
         inherit (pkgs) lib;
         specialArgs = {

@@ -23,4 +23,4 @@
       lib.fileset.toList (lib.fileset.fileFilter (file: file.name == "test.nix") dir)
     ));
 in
-  importTests ./tests
+  importTests ./.
