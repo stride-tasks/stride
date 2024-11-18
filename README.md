@@ -11,12 +11,11 @@
     </a>
 </div>
 
-----
+---
 
 Task management application with in-built git integration.
 
-> [!WARNING]
-> This is currently alpha, so **everything** is subject to change.
+> \[!WARNING\] This is currently alpha, so **everything** is subject to change.
 
 ## Installation
 

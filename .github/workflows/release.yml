@@ -39,7 +39,9 @@ jobs:
 
       # Workaround: https://github.com/android-actions/setup-android/issues/461
       - name: Access Android SDK build-tools
-        run: echo "$ANDROID_HOME/build-tools"/*/ | awk -F' ' '{ print $1 }' >> $GITHUB_PATH
+        run:
+          echo "$ANDROID_HOME/build-tools"/*/ | awk -F' ' '{ print $1 }' >>
+          $GITHUB_PATH
 
       - name: Build APKs
         run: |

@@ -2,7 +2,9 @@
 # Details: https://fzyzcjy.github.io/flutter_rust_bridge/manual/integrate/builtin
 
 name: build_tool
-description: Cargokit build_tool. Facilitates the build of Rust crate during Flutter application build.
+description:
+  Cargokit build_tool. Facilitates the build of Rust crate during Flutter
+  application build.
 publish_to: none
 version: 1.0.0
 

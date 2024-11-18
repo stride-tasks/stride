@@ -20,7 +20,7 @@ else
   DART="$FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart"
 fi
 
-cat << EOF > "pubspec.yaml"
+cat <<EOF >"pubspec.yaml"
 name: build_tool_runner
 version: 1.0.0
 publish_to: none
@@ -35,7 +35,7 @@ EOF
 
 mkdir -p "bin"
 
-cat << EOF > "bin/build_tool_runner.dart"
+cat <<EOF >"bin/build_tool_runner.dart"
 import 'package:build_tool/build_tool.dart' as build_tool;
 void main(List<String> args) {
   build_tool.runMain(args);
@@ -49,7 +49,9 @@ EOF
 # package directory. This should be good enough, as the build_tool package
 # itself is not meant to have any path dependencies.
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
+# TODO: Fix code if possible instead of disabling lint.
+# shellcheck disable=SC2012
+if [[ $OSTYPE == "darwin"* ]]; then
   PACKAGE_HASH=$(ls -lTR "$BUILD_TOOL_PKG_DIR" | shasum)
 else
   PACKAGE_HASH=$(ls -lR --full-time "$BUILD_TOOL_PKG_DIR" | shasum)
@@ -58,17 +60,17 @@ fi
 PACKAGE_HASH_FILE=".package_hash"
 
 if [ -f "$PACKAGE_HASH_FILE" ]; then
-    EXISTING_HASH=$(cat "$PACKAGE_HASH_FILE")
-    if [ "$PACKAGE_HASH" != "$EXISTING_HASH" ]; then
-        rm "$PACKAGE_HASH_FILE"
-    fi
+  EXISTING_HASH=$(cat "$PACKAGE_HASH_FILE")
+  if [ "$PACKAGE_HASH" != "$EXISTING_HASH" ]; then
+    rm "$PACKAGE_HASH_FILE"
+  fi
 fi
 
 # Run pub get if needed.
 if [ ! -f "$PACKAGE_HASH_FILE" ]; then
-    "$DART" pub get --no-precompile
-    "$DART" compile kernel bin/build_tool_runner.dart
-    echo "$PACKAGE_HASH" > "$PACKAGE_HASH_FILE"
+  "$DART" pub get --no-precompile
+  "$DART" compile kernel bin/build_tool_runner.dart
+  echo "$PACKAGE_HASH" >"$PACKAGE_HASH_FILE"
 fi
 
 set +e

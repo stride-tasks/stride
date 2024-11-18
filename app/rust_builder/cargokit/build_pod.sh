@@ -1,13 +1,17 @@
-#!/bin/sh
+#!/bin/bash
+
 set -e
 
 BASEDIR=$(dirname "$0")
 
 # Workaround for https://github.com/dart-lang/pub/issues/4010
-BASEDIR=$(cd "$BASEDIR" ; pwd -P)
+BASEDIR=$(
+  cd "$BASEDIR"
+  pwd -P
+)
 
 # Remove XCode SDK from path. Otherwise this breaks tool compilation when building iOS project
-NEW_PATH=`echo $PATH | tr ":" "\n" | grep -v "Contents/Developer/" | tr "\n" ":"`
+NEW_PATH=$(echo "$PATH" | tr ":" "\n" | grep -v "Contents/Developer/" | tr "\n" ":")
 
 export PATH=${NEW_PATH%?} # remove trailing :
 
@@ -42,12 +46,12 @@ export CARGOKIT_ROOT_PROJECT_DIR=$SRCROOT
 
 FLUTTER_EXPORT_BUILD_ENVIRONMENT=(
   "$PODS_ROOT/../Flutter/ephemeral/flutter_export_environment.sh" # macOS
-  "$PODS_ROOT/../Flutter/flutter_export_environment.sh" # iOS
+  "$PODS_ROOT/../Flutter/flutter_export_environment.sh"           # iOS
 )
 
-for path in "${FLUTTER_EXPORT_BUILD_ENVIRONMENT[@]}"
-do
-  if [[ -f "$path" ]]; then
+for path in "${FLUTTER_EXPORT_BUILD_ENVIRONMENT[@]}"; do
+  if [[ -f $path ]]; then
+    # shellcheck source=/dev/null
     source "$path"
   fi
 done
