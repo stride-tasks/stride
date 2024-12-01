@@ -20,54 +20,57 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
+        final hasRepositories = state.settings.repositories.isNotEmpty;
         final hasFilter = state.settings.selectedFilter != null;
         return AppBar(
           title: Text(title),
           leading: leading,
           titleSpacing: NavigationToolbar.kMiddleSpacing / 2.0,
           actions: [
-            InkWell(
-              child: Ink(
-                child: hasFilter
-                    ? const Icon(Icons.filter_alt)
-                    : const Icon(Icons.filter_alt_off),
-              ),
-              onTap: () async {
-                await Navigator.of(context).push<void>(
-                  MaterialPageRoute(
-                    builder: (context) => const TaskFilterRoute(),
-                  ),
-                );
-              },
-              onLongPress: () {
-                if (!hasFilter) {
-                  return;
-                }
-                final newSettings =
-                    state.settings.copyWith(selectedFilter: null);
-                context
-                    .read<SettingsBloc>()
-                    .add(SettingsUpdateEvent(settings: newSettings));
-                context.read<TaskBloc>().add(TaskFilterEvent());
-              },
-            ),
-            IconButton(
-              icon: BlocBuilder<TaskBloc, TaskState>(
-                builder: (context, state) {
-                  if (state.syncing) {
-                    return const InfiniteRotationAnimation(
-                      child: Icon(Icons.sync),
-                    );
+            if (hasRepositories)
+              InkWell(
+                child: Ink(
+                  child: hasFilter
+                      ? const Icon(Icons.filter_alt)
+                      : const Icon(Icons.filter_alt_off),
+                ),
+                onTap: () async {
+                  await Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (context) => const TaskFilterRoute(),
+                    ),
+                  );
+                },
+                onLongPress: () {
+                  if (!hasFilter) {
+                    return;
                   }
-                  return state.syncingError == null
-                      ? const Icon(Icons.sync)
-                      : const Icon(Icons.sync_problem);
+                  final newSettings =
+                      state.settings.copyWith(selectedFilter: null);
+                  context
+                      .read<SettingsBloc>()
+                      .add(SettingsUpdateEvent(settings: newSettings));
+                  context.read<TaskBloc>().add(TaskFilterEvent());
                 },
               ),
-              onPressed: () {
-                context.read<TaskBloc>().add(TaskSyncEvent());
-              },
-            ),
+            if (hasRepositories)
+              IconButton(
+                icon: BlocBuilder<TaskBloc, TaskState>(
+                  builder: (context, state) {
+                    if (state.syncing) {
+                      return const InfiniteRotationAnimation(
+                        child: Icon(Icons.sync),
+                      );
+                    }
+                    return state.syncingError == null
+                        ? const Icon(Icons.sync)
+                        : const Icon(Icons.sync_problem);
+                  },
+                ),
+                onPressed: () {
+                  context.read<TaskBloc>().add(TaskSyncEvent());
+                },
+              ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {

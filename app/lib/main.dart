@@ -6,7 +6,6 @@ import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -23,7 +22,7 @@ Future<void> main() async {
   final cachePath = await getApplicationCacheDirectory();
 
   await RustLib.init();
-  var settings = await Settings.load(
+  final settings = await Settings.load(
     paths: ApplicationPaths(
       supportPath: supportPath.path,
       documentPath: documentPath.path,
@@ -32,39 +31,33 @@ Future<void> main() async {
     ),
   );
 
-  final repositoryPath = path.join(supportPath.path, 'repository');
+  // final repositoryPath = path.join(supportPath.path, 'repository');
 
-  if (settings.repositories.isEmpty) {
-    settings = settings.copyWith(
-      repositories: settings.repositories.toList()
-        ..add(await Repository.default_()),
-    );
-  }
+  // if (settings.repositories.isEmpty) {
+  //   settings = settings.copyWith(
+  //     repositories: settings.repositories.toList()
+  //       ..add(await Repository.default_()),
+  //   );
+  // }
 
-  await Settings.save(settings: settings);
+  // await Settings.save(settings: settings);
 
-  final repository = settings.repositories.first;
-  final taskStorage = TaskStorage(
-    repositoryUuid: repository.uuid,
-    path: repositoryPath,
-    settings: settings,
-  );
+  // final repository = settings.repositories.first;
+  // final taskStorage = TaskStorage(
+  //   repositoryUuid: repository.uuid,
+  //   path: repositoryPath,
+  //   settings: settings,
+  // );
 
   // Loading task storage may change settings.
-  settings = await Settings.get_();
+  // settings = await Settings.get_();
 
-  runApp(
-    MyApp(
-      repository: taskStorage,
-      settings: settings,
-    ),
-  );
+  runApp(MyApp(settings: settings));
 }
 
 class MyApp extends StatelessWidget {
-  final TaskStorage repository;
   final Settings settings;
-  const MyApp({super.key, required this.repository, required this.settings});
+  const MyApp({super.key, required this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +73,6 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
-            repository: repository,
             settingsBloc: context.read<SettingsBloc>(),
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),

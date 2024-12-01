@@ -8,6 +8,7 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/routes/commits_route.dart';
 import 'package:stride/routes/encryption_key_route.dart';
@@ -115,7 +116,8 @@ class RepositoryRoute extends StatelessWidget {
                         context.read<SettingsBloc>().add(
                               SettingsUpdateEvent(
                                 settings: settings.copyWith(
-                                    repositories: repositories),
+                                  repositories: repositories,
+                                ),
                               ),
                             );
                         Navigator.of(context).pop();
@@ -126,7 +128,8 @@ class RepositoryRoute extends StatelessWidget {
                     leading: const Icon(Icons.commit),
                     title: const Text('Commits'),
                     builder: (context) => CommitsRoute(
-                      repository: context.read<TaskBloc>().repository,
+                      repository:
+                          context.read<TaskBloc>().repository() as TaskStorage,
                     ),
                   ),
                   SettingsTileNavigation(
@@ -198,7 +201,7 @@ class RepositoryRoute extends StatelessWidget {
     final logBloc = context.read<LogBloc>();
 
     await logBloc.catch_(message: 'export tasks', () async {
-      final contents = await taskBloc.repository.export_();
+      final contents = await taskBloc.repository()?.export_() ?? '';
       final filepath = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Tasks',
         fileName: 'tasks.json',
@@ -244,8 +247,8 @@ class RepositoryRoute extends StatelessWidget {
 
       final content = await file.xFile.readAsString();
 
-      taskBloc.repository.import_(content: content);
-      taskBloc.repository.addAndCommit(message: r'$IMPORT');
+      taskBloc.repository()?.import_(content: content);
+      taskBloc.repository()?.addAndCommit(message: r'$IMPORT');
       taskBloc.add(TaskFetchEvent());
     });
   }
