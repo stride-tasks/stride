@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/settings_bloc.dart';
+import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
+import 'package:uuid/uuid.dart';
 
 class RepositoryNewRoute extends StatefulWidget {
   const RepositoryNewRoute({super.key});
@@ -8,21 +14,25 @@ class RepositoryNewRoute extends StatefulWidget {
   State<RepositoryNewRoute> createState() => _RepositoryNewRouteState();
 }
 
+const String defaultAuthorName = 'stride';
+const String defaultAuthorEmail = 'noreply.stride.tasks@gmail.com';
+const String defaultBranchName = 'main';
+
 class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
   int _currentStep = 0;
 
   bool get _isFirstStep => _currentStep == 0;
   bool get _isLastStep => _currentStep + 1 == _steps().length;
 
-  final _nameController = TextEditingController();
-  final _authorController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _branchController = TextEditingController();
-  final _encrytionKeyController = TextEditingController();
+  final _nameController = TextEditingController(text: 'my-repository');
+  final _authorController = TextEditingController(text: defaultAuthorName);
+  final _emailController = TextEditingController(text: defaultAuthorEmail);
+  final _branchController = TextEditingController(text: defaultBranchName);
+  // final _encrytionKeyController = TextEditingController();
 
   final GlobalKey<FormState> _generalFormKey = GlobalKey();
   final GlobalKey<FormState> _gitIntegrationFormKey = GlobalKey();
-  final GlobalKey<FormState> _encryptionFormKey = GlobalKey();
+  // final GlobalKey<FormState> _encryptionFormKey = GlobalKey();
 
   List<Step> _steps() => [
         Step(
@@ -43,14 +53,14 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
             branch: _branchController,
           ),
         ),
-        Step(
-          state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-          title: const Text('Encryption'),
-          content: _EncryptionRepositoryForm(
-            formKey: _encryptionFormKey,
-            encryptionKey: _encrytionKeyController,
-          ),
-        ),
+        // Step(
+        //   state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+        //   title: const Text('Encryption'),
+        //   content: _EncryptionRepositoryForm(
+        //     formKey: _encryptionFormKey,
+        //     encryptionKey: _encrytionKeyController,
+        //   ),
+        // ),
       ];
 
   @override
@@ -68,8 +78,34 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
     );
   }
 
-  void _onStepContinue() {
+  Future<void> _onStepContinue() async {
     if (_isLastStep) {
+      final settings = context.read<SettingsBloc>().settings;
+      final repositoryUuid = const Uuid().v7obj();
+      context.read<SettingsBloc>().add(
+            SettingsUpdateEvent(
+              settings: settings.copyWith(
+                repositories: settings.repositories.toList()
+                  ..add(
+                    Repository(
+                      uuid: repositoryUuid,
+                      name: _nameController.text,
+                      origin: '',
+                      author: _authorController.text,
+                      email: _emailController.text,
+                      branch: _branchController.text,
+                    ),
+                  ),
+                currentRepository: repositoryUuid,
+              ),
+            ),
+          );
+      context.read<TaskBloc>().add(TaskChangeRepository(uuid: repositoryUuid));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (context) => const TasksRoute(),
+        ),
+      );
     } else {
       setState(() => _currentStep += 1);
     }
@@ -169,7 +205,7 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
           TextFormField(
             controller: author,
             decoration: const InputDecoration(
-              hintText: 'Enter Commit Author Name',
+              hintText: 'Enter Commit Author',
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -181,7 +217,7 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
           TextFormField(
             controller: email,
             decoration: const InputDecoration(
-              hintText: 'Enter Commit Email Name',
+              hintText: 'Enter Commit Email',
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {

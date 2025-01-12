@@ -7,13 +7,24 @@ use uuid::Uuid;
 use crate::task::TaskStatus;
 
 #[frb(dart_metadata=("freezed"))]
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Filter {
     pub uuid: Uuid,
     pub name: String,
 
     pub status: HashSet<TaskStatus>,
     pub search: String,
+}
+
+impl Default for Filter {
+    fn default() -> Self {
+        Self {
+            uuid: Uuid::now_v7(),
+            name: "Default".to_string(),
+            status: [TaskStatus::Pending].into(),
+            search: String::new(),
+        }
+    }
 }
 
 #[frb(dart_metadata=("freezed"))]

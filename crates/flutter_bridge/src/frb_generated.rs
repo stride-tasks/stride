@@ -41,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.6.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1833831295;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 899113877;
 
 // Section: executor
 
@@ -945,17 +945,16 @@ fn wire__crate__api__repository__git__TaskStorage_import_impl(
         },
     )
 }
-fn wire__crate__api__repository__git__TaskStorage_init_repotitory_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
+fn wire__crate__api__repository__git__TaskStorage_load_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "TaskStorage_init_repotitory",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+            debug_name: "TaskStorage_load",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
         move || {
             let message = unsafe {
@@ -967,32 +966,13 @@ fn wire__crate__api__repository__git__TaskStorage_init_repotitory_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_that = <RustOpaqueMoi<
-                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>,
-            >>::sse_decode(&mut deserializer);
+            let api_uuid = <uuid::Uuid>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, RustError>((move || {
-                    let mut api_that_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_that, 0, false,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
-                            _ => unreachable!(),
-                        }
-                    }
-                    let api_that_guard = api_that_guard.unwrap();
-                    let output_ok = crate::api::repository::git::TaskStorage::init_repotitory(
-                        &*api_that_guard,
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
+            transform_result_sse::<_, ()>((move || {
+                let output_ok =
+                    Result::<_, ()>::Ok(crate::api::repository::git::TaskStorage::load(api_uuid))?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -3010,6 +2990,7 @@ impl SseDecode for crate::api::settings::Settings {
         let mut var_filters = <Vec<crate::api::filter::Filter>>::sse_decode(deserializer);
         let mut var_selectedFilter =
             <Option<crate::api::filter::FilterSelection>>::sse_decode(deserializer);
+        let mut var_currentRepository = <Option<uuid::Uuid>>::sse_decode(deserializer);
         let mut var_repositories =
             <Vec<crate::api::settings::Repository>>::sse_decode(deserializer);
         return crate::api::settings::Settings {
@@ -3017,6 +2998,7 @@ impl SseDecode for crate::api::settings::Settings {
             periodic_sync: var_periodicSync,
             filters: var_filters,
             selected_filter: var_selectedFilter,
+            current_repository: var_currentRepository,
             repositories: var_repositories,
         };
     }
@@ -3184,12 +3166,6 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        20 => wire__crate__api__repository__git__TaskStorage_init_repotitory_impl(
-            port,
-            ptr,
-            rust_vec_len,
-            data_len,
-        ),
         21 => wire__crate__api__repository__git__TaskStorage_log_impl(
             port,
             ptr,
@@ -3315,6 +3291,7 @@ fn pde_ffi_dispatcher_sync_impl(
         3 => wire__crate__api__error__RustError_to_error_string_impl(ptr, rust_vec_len, data_len),
         5 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
         9 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
         22 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
         59 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
         65 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
@@ -3626,6 +3603,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::Settings {
             self.periodic_sync.into_into_dart().into_dart(),
             self.filters.into_into_dart().into_dart(),
             self.selected_filter.into_into_dart().into_dart(),
+            self.current_repository.into_into_dart().into_dart(),
             self.repositories.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -4211,6 +4189,7 @@ impl SseEncode for crate::api::settings::Settings {
         <bool>::sse_encode(self.periodic_sync, serializer);
         <Vec<crate::api::filter::Filter>>::sse_encode(self.filters, serializer);
         <Option<crate::api::filter::FilterSelection>>::sse_encode(self.selected_filter, serializer);
+        <Option<uuid::Uuid>>::sse_encode(self.current_repository, serializer);
         <Vec<crate::api::settings::Repository>>::sse_encode(self.repositories, serializer);
     }
 }

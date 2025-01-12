@@ -85,7 +85,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.6.0';
 
   @override
-  int get rustContentHash => -1833831295;
+  int get rustContentHash => 899113877;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -150,8 +150,7 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiRepositoryGitTaskStorageImport(
       {required TaskStorage that, required String content});
 
-  Future<void> crateApiRepositoryGitTaskStorageInitRepotitory(
-      {required TaskStorage that});
+  TaskStorage crateApiRepositoryGitTaskStorageLoad({required UuidValue uuid});
 
   Future<List<CommitItem>?> crateApiRepositoryGitTaskStorageLog(
       {required TaskStorage that, Oid? oid, int? n});
@@ -804,31 +803,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageInitRepotitory(
-      {required TaskStorage that}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  TaskStorage crateApiRepositoryGitTaskStorageLoad({required UuidValue uuid}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
-            that, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 20, port: port_);
+        sse_encode_Uuid(uuid, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData:
-            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage,
+        decodeErrorData: null,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageInitRepotitoryConstMeta,
-      argValues: [that],
+      constMeta: kCrateApiRepositoryGitTaskStorageLoadConstMeta,
+      argValues: [uuid],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageInitRepotitoryConstMeta =>
+  TaskConstMeta get kCrateApiRepositoryGitTaskStorageLoadConstMeta =>
       const TaskConstMeta(
-        debugName: 'TaskStorage_init_repotitory',
-        argNames: ['that'],
+        debugName: 'TaskStorage_load',
+        argNames: ['uuid'],
       );
 
   @override
@@ -2357,14 +2353,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
       periodicSync: dco_decode_bool(arr[1]),
       filters: dco_decode_list_filter(arr[2]),
       selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[3]),
-      repositories: dco_decode_list_repository(arr[4]),
+      currentRepository: dco_decode_opt_Uuid(arr[4]),
+      repositories: dco_decode_list_repository(arr[5]),
     );
   }
 
@@ -3096,12 +3093,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_filters = sse_decode_list_filter(deserializer);
     final var_selectedFilter =
         sse_decode_opt_box_autoadd_filter_selection(deserializer);
+    final var_currentRepository = sse_decode_opt_Uuid(deserializer);
     final var_repositories = sse_decode_list_repository(deserializer);
     return Settings.raw(
         darkMode: var_darkMode,
         periodicSync: var_periodicSync,
         filters: var_filters,
         selectedFilter: var_selectedFilter,
+        currentRepository: var_currentRepository,
         repositories: var_repositories);
   }
 
@@ -3787,6 +3786,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_filter(self.filters, serializer);
     sse_encode_opt_box_autoadd_filter_selection(
         self.selectedFilter, serializer);
+    sse_encode_opt_Uuid(self.currentRepository, serializer);
     sse_encode_list_repository(self.repositories, serializer);
   }
 
@@ -3989,11 +3989,6 @@ class TaskStorageImpl extends RustOpaque implements TaskStorage {
 
   Future<void> import_({required String content}) => RustLib.instance.api
       .crateApiRepositoryGitTaskStorageImport(that: this, content: content);
-
-  Future<void> initRepotitory() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageInitRepotitory(
-        that: this,
-      );
 
   Future<List<CommitItem>?> log({Oid? oid, int? n}) => RustLib.instance.api
       .crateApiRepositoryGitTaskStorageLog(that: this, oid: oid, n: n);

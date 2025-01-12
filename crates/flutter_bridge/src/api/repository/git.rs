@@ -16,7 +16,7 @@ use uuid::Uuid;
 use crate::{
     api::{
         error::{ExportError, ImportError},
-        settings::Settings,
+        settings::{application_support_path, Settings},
     },
     base64_decode,
     git::known_hosts::{Host, HostKeyType, KnownHosts},
@@ -300,13 +300,25 @@ impl TaskStorage {
     const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
     #[frb(sync)]
+    pub fn load(uuid: Uuid) -> Self {
+        let path = application_support_path().join("repository");
+        let settings = Settings::get();
+        Self::new(uuid, &path.to_string_lossy(), &settings)
+    }
+
+    #[frb(sync)]
     pub fn new(repository_uuid: Uuid, path: &str, settings: &Settings) -> Self {
         let repository_path = Path::new(path)
             .join(repository_uuid.to_string())
             .join("source");
         std::fs::create_dir_all(&repository_path).unwrap();
+
         let tasks_path = repository_path.join("tasks");
         let keys_filepath = tasks_path.join("keys");
+
+        if !repository_path.join(".git").exists() {
+            Self::init_repotitory(repository_uuid, &repository_path, &tasks_path).unwrap();
+        }
 
         let mut settings = settings.clone();
         let repository = settings.repository_mut(repository_uuid).unwrap();
@@ -504,11 +516,15 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn init_repotitory(&self) -> Result<(), RustError> {
+    pub(crate) fn init_repotitory(
+        uuid: Uuid,
+        repository_path: &Path,
+        tasks_path: &Path,
+    ) -> Result<(), RustError> {
         let mut settings = Settings::get();
-        let repo = settings.repository_mut(self.uuid)?;
+        let repo = settings.repository_mut(uuid)?;
 
-        let repository = Repository::init(&self.repository_path)?;
+        let repository = Repository::init(repository_path)?;
 
         let mut index = repository.index()?;
 
@@ -526,8 +542,8 @@ impl TaskStorage {
         let branch_ref_name = branch_ref.name().unwrap();
         repository.set_head(branch_ref_name)?;
 
-        if !self.tasks_path.exists() {
-            std::fs::create_dir_all(&self.tasks_path)?;
+        if !tasks_path.exists() {
+            std::fs::create_dir_all(tasks_path)?;
         }
 
         Ok(())
@@ -937,10 +953,6 @@ impl StrideRepository for TaskStorage {
     }
 
     fn add(&mut self, task: Task) -> Result<(), RustError> {
-        if !self.repository_path.exists() {
-            self.init_repotitory()?;
-        }
-
         let message = format!("$ADD {}", task.uuid.to_base64());
         self.pending.append(task)?;
         self.add_and_commit(&message)?;

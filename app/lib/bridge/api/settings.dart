@@ -143,6 +143,7 @@ class Settings with _$Settings {
     required bool periodicSync,
     required List<Filter> filters,
     FilterSelection? selectedFilter,
+    UuidValue? currentRepository,
     required List<Repository> repositories,
   }) = _Settings;
   static Stream<Settings> createStream() =>

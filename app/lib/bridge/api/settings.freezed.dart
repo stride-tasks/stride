@@ -297,6 +297,7 @@ mixin _$Settings {
   bool get periodicSync => throw _privateConstructorUsedError;
   List<Filter> get filters => throw _privateConstructorUsedError;
   FilterSelection? get selectedFilter => throw _privateConstructorUsedError;
+  UuidValue? get currentRepository => throw _privateConstructorUsedError;
   List<Repository> get repositories => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -305,21 +306,32 @@ mixin _$Settings {
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
             List<Repository> repositories)
         raw,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(bool darkMode, bool periodicSync, List<Filter> filters,
-            FilterSelection? selectedFilter, List<Repository> repositories)?
+    TResult? Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(bool darkMode, bool periodicSync, List<Filter> filters,
-            FilterSelection? selectedFilter, List<Repository> repositories)?
+    TResult Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
     required TResult orElse(),
   }) =>
@@ -358,6 +370,7 @@ abstract class $SettingsCopyWith<$Res> {
       bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter,
+      UuidValue? currentRepository,
       List<Repository> repositories});
 
   $FilterSelectionCopyWith<$Res>? get selectedFilter;
@@ -382,6 +395,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
     Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
+    Object? currentRepository = freezed,
     Object? repositories = null,
   }) {
     return _then(_value.copyWith(
@@ -401,6 +415,10 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.selectedFilter
           : selectedFilter // ignore: cast_nullable_to_non_nullable
               as FilterSelection?,
+      currentRepository: freezed == currentRepository
+          ? _value.currentRepository
+          : currentRepository // ignore: cast_nullable_to_non_nullable
+              as UuidValue?,
       repositories: null == repositories
           ? _value.repositories
           : repositories // ignore: cast_nullable_to_non_nullable
@@ -436,6 +454,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       bool periodicSync,
       List<Filter> filters,
       FilterSelection? selectedFilter,
+      UuidValue? currentRepository,
       List<Repository> repositories});
 
   @override
@@ -459,6 +478,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
     Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
+    Object? currentRepository = freezed,
     Object? repositories = null,
   }) {
     return _then(_$SettingsImpl(
@@ -478,6 +498,10 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.selectedFilter
           : selectedFilter // ignore: cast_nullable_to_non_nullable
               as FilterSelection?,
+      currentRepository: freezed == currentRepository
+          ? _value.currentRepository
+          : currentRepository // ignore: cast_nullable_to_non_nullable
+              as UuidValue?,
       repositories: null == repositories
           ? _value._repositories
           : repositories // ignore: cast_nullable_to_non_nullable
@@ -494,6 +518,7 @@ class _$SettingsImpl extends _Settings {
       required this.periodicSync,
       required final List<Filter> filters,
       this.selectedFilter,
+      this.currentRepository,
       required final List<Repository> repositories})
       : _filters = filters,
         _repositories = repositories,
@@ -513,6 +538,8 @@ class _$SettingsImpl extends _Settings {
 
   @override
   final FilterSelection? selectedFilter;
+  @override
+  final UuidValue? currentRepository;
   final List<Repository> _repositories;
   @override
   List<Repository> get repositories {
@@ -523,7 +550,7 @@ class _$SettingsImpl extends _Settings {
 
   @override
   String toString() {
-    return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter, repositories: $repositories)';
+    return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter, currentRepository: $currentRepository, repositories: $repositories)';
   }
 
   @override
@@ -538,6 +565,8 @@ class _$SettingsImpl extends _Settings {
             const DeepCollectionEquality().equals(other._filters, _filters) &&
             (identical(other.selectedFilter, selectedFilter) ||
                 other.selectedFilter == selectedFilter) &&
+            (identical(other.currentRepository, currentRepository) ||
+                other.currentRepository == currentRepository) &&
             const DeepCollectionEquality()
                 .equals(other._repositories, _repositories));
   }
@@ -549,6 +578,7 @@ class _$SettingsImpl extends _Settings {
       periodicSync,
       const DeepCollectionEquality().hash(_filters),
       selectedFilter,
+      currentRepository,
       const DeepCollectionEquality().hash(_repositories));
 
   /// Create a copy of Settings
@@ -567,33 +597,46 @@ class _$SettingsImpl extends _Settings {
             bool periodicSync,
             List<Filter> filters,
             FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
             List<Repository> repositories)
         raw,
   }) {
-    return raw(darkMode, periodicSync, filters, selectedFilter, repositories);
+    return raw(darkMode, periodicSync, filters, selectedFilter,
+        currentRepository, repositories);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(bool darkMode, bool periodicSync, List<Filter> filters,
-            FilterSelection? selectedFilter, List<Repository> repositories)?
+    TResult? Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
   }) {
-    return raw?.call(
-        darkMode, periodicSync, filters, selectedFilter, repositories);
+    return raw?.call(darkMode, periodicSync, filters, selectedFilter,
+        currentRepository, repositories);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(bool darkMode, bool periodicSync, List<Filter> filters,
-            FilterSelection? selectedFilter, List<Repository> repositories)?
+    TResult Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(darkMode, periodicSync, filters, selectedFilter, repositories);
+      return raw(darkMode, periodicSync, filters, selectedFilter,
+          currentRepository, repositories);
     }
     return orElse();
   }
@@ -633,6 +676,7 @@ abstract class _Settings extends Settings {
       required final bool periodicSync,
       required final List<Filter> filters,
       final FilterSelection? selectedFilter,
+      final UuidValue? currentRepository,
       required final List<Repository> repositories}) = _$SettingsImpl;
   const _Settings._() : super._();
 
@@ -644,6 +688,8 @@ abstract class _Settings extends Settings {
   List<Filter> get filters;
   @override
   FilterSelection? get selectedFilter;
+  @override
+  UuidValue? get currentRepository;
   @override
   List<Repository> get repositories;
 

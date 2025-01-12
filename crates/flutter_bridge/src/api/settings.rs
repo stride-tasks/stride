@@ -334,6 +334,10 @@ pub struct Settings {
     #[serde(default)]
     pub selected_filter: Option<FilterSelection>,
 
+    /// The current selected repository.
+    #[serde(default)]
+    pub current_repository: Option<Uuid>,
+
     #[serde(default)]
     pub repositories: Vec<Repository>,
 }
@@ -345,6 +349,7 @@ impl Default for Settings {
             periodic_sync: false,
             filters: Vec::default(),
             selected_filter: None,
+            current_repository: None,
             repositories: Vec::default(),
         }
     }
@@ -355,9 +360,6 @@ impl Settings {
     pub fn new() -> Self {
         Self::default()
     }
-}
-
-impl Settings {
     pub fn get() -> Self {
         APPLICATION_STATE_INSTANCE.lock().unwrap().settings.clone()
     }

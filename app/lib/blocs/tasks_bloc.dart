@@ -18,6 +18,11 @@ abstract class TaskEvent {}
 
 final class TaskFetchEvent extends TaskEvent {}
 
+final class TaskChangeRepository extends TaskEvent {
+  final UuidValue uuid;
+  TaskChangeRepository({required this.uuid});
+}
+
 final class TaskAddEvent extends TaskEvent {
   final Task task;
   TaskAddEvent({required this.task});
@@ -77,8 +82,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
 
-  final Map<UuidValue, TaskStorage> repositories = {};
-  final UuidValue? current;
+  UuidValue? repositoryUuid;
+  TaskStorage? storage;
   Filter? filter;
 
   Timer? syncTimer;
@@ -105,25 +110,50 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   TaskStorage? repository() {
-    if (current == null) {
-      return null;
+    if (storage == null) {
+      repositoryUuid ??= settingsBloc.settings.currentRepository ??
+          settingsBloc.settings.repositories.firstOrNull?.uuid;
+      if (repositoryUuid == null) {
+        return null;
+      }
+
+      settingsBloc.add(
+        SettingsUpdateEvent(
+          settings: settingsBloc.settings.copyWith(
+            currentRepository: repositoryUuid,
+          ),
+        ),
+      );
+
+      storage = TaskStorage.load(uuid: repositoryUuid!);
+    } else if (repositoryUuid != settingsBloc.settings.currentRepository) {
+      repositoryUuid = settingsBloc.settings.currentRepository;
+      storage = TaskStorage.load(uuid: repositoryUuid!);
     }
-    if (!repositories.containsKey(current)) {
-      return null;
-    }
-    return repositories[current];
+    return storage;
   }
 
   TaskBloc({
     required this.settingsBloc,
     required this.logBloc,
     required this.dialogBloc,
-    this.current,
+    this.storage,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
     on<TaskFetchEvent>((event, emit) async {
       emit(TaskState(tasks: await _tasks()));
+    });
+
+    on<TaskChangeRepository>((event, emit) async {
+      if (storage != null) {
+        storage!.unload();
+        storage = null;
+      }
+
+      repositoryUuid = event.uuid;
+      storage = TaskStorage.load(uuid: event.uuid);
+      add(TaskFetchEvent());
     });
 
     on<TaskAddEvent>((event, emit) async {
