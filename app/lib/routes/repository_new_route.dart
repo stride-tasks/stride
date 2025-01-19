@@ -8,12 +8,14 @@ import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:uuid/uuid.dart';
 
 class RepositoryNewRoute extends StatefulWidget {
-  const RepositoryNewRoute({super.key});
+  final bool cloning;
+  const RepositoryNewRoute({super.key, this.cloning = false});
 
   @override
   State<RepositoryNewRoute> createState() => _RepositoryNewRouteState();
 }
 
+const String defaultOriginHint = 'git@github.com:user/repo.git';
 const String defaultAuthorName = 'stride';
 const String defaultAuthorEmail = 'noreply.stride.tasks@gmail.com';
 const String defaultBranchName = 'main';
@@ -25,6 +27,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
   bool get _isLastStep => _currentStep + 1 == _steps().length;
 
   final _nameController = TextEditingController(text: 'my-repository');
+  final _originController = TextEditingController(text: '');
   final _authorController = TextEditingController(text: defaultAuthorName);
   final _emailController = TextEditingController(text: defaultAuthorEmail);
   final _branchController = TextEditingController(text: defaultBranchName);
@@ -51,6 +54,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
             author: _authorController,
             email: _emailController,
             branch: _branchController,
+            origin: _originController,
           ),
         ),
         // Step(
@@ -188,12 +192,14 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
     required this.author,
     required this.email,
     required this.branch,
+    required this.origin,
   });
 
   final GlobalKey<FormState> formKey;
   final TextEditingController author;
   final TextEditingController email;
   final TextEditingController branch;
+  final TextEditingController origin;
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +239,14 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
               if (value == null || value.isEmpty) {
                 return 'Please enter some text';
               }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: origin,
+            decoration: const InputDecoration(hintText: defaultOriginHint),
+            validator: (value) {
+              // TODO: Add git URL validation.
               return null;
             },
           ),
