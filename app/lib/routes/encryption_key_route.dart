@@ -70,8 +70,8 @@ class EncryptionKeyRouteState extends State<EncryptionKeyRoute> {
                   ? null
                   : () => setState(() => showQrCode = !showQrCode),
               label: showQrCode
-                  ? const Text('Show QR Code')
-                  : const Text('Hide QR Code'),
+                  ? const Text('Hide QR Code')
+                  : const Text('Show QR Code'),
               icon: const Icon(Icons.qr_code),
             ),
             if (showQrCode)
