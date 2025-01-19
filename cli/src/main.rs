@@ -15,7 +15,7 @@ use stride_flutter_bridge::{
             taskchampion::{self, Replica},
             StrideRepository,
         },
-        settings::{ApplicationPaths, Settings},
+        settings::{ApplicationPaths, Repository, Settings},
     },
     task::{Task, TaskStatus},
 };
@@ -65,29 +65,48 @@ fn main() -> anyhow::Result<()> {
     // };
     let args = CliArgs::parse();
 
+    let cache_dir =
+        choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
+    let document_dir =
+        choose_path_suffix(&dirs::document_dir().context("could not get document directory")?);
+    let support_dir =
+        choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
+
+    let mut settings = Settings::load(ApplicationPaths {
+        support_path: support_dir.to_string_lossy().to_string(),
+        document_path: document_dir.to_string_lossy().to_string(),
+        cache_path: cache_dir.to_string_lossy().to_string(),
+        log_path: cache_dir
+            .join("logs")
+            .join("log.txt")
+            .to_string_lossy()
+            .to_string(),
+    })?;
+
+    let current_repository = settings.current_repository.or_else(|| {
+        settings
+            .repositories
+            .first()
+            .map(|repository| repository.uuid)
+    });
+
+    let current_repository = if let Some(uuid) = current_repository {
+        uuid
+    } else {
+        let repository = Repository::default();
+        let uuid = repository.uuid;
+        settings.repositories.push(repository);
+        settings.current_repository = Some(uuid);
+        Settings::save(settings.clone())?;
+        uuid
+    };
+
     let repository: &mut dyn StrideRepository = match args.repository {
-        RepositoryType::Git => {
-            let cache_dir =
-                choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
-            let document_dir = choose_path_suffix(
-                &dirs::document_dir().context("could not get document directory")?,
-            );
-            let support_dir =
-                choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
-
-            let settings = Settings::load(ApplicationPaths {
-                support_path: support_dir.to_string_lossy().to_string(),
-                document_path: document_dir.to_string_lossy().to_string(),
-                cache_path: cache_dir.to_string_lossy().to_string(),
-                log_path: cache_dir
-                    .join("logs")
-                    .join("log.txt")
-                    .to_string_lossy()
-                    .to_string(),
-            })?;
-
-            &mut TaskStorage::new(&support_dir.join("repository").to_string_lossy(), &settings)
-        }
+        RepositoryType::Git => &mut TaskStorage::new(
+            current_repository,
+            &support_dir.join("repository").to_string_lossy(),
+            &settings,
+        ),
         RepositoryType::TaskChampion => {
             let data_dir =
                 choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
@@ -248,6 +267,17 @@ fn main() -> anyhow::Result<()> {
                 contents
             };
             repository.import(&contents)?;
+        }
+        Mode::Repository { uuid } => {
+            let mut settings = Settings::get();
+            let repository = settings
+                .repositories
+                .iter()
+                .find(|repository| repository.uuid == uuid)
+                .context("Repository with specified uuid was not found")?;
+            println!("Switching to repository: {}", repository.name);
+            settings.current_repository = Some(uuid);
+            Settings::save(settings)?;
         }
     }
 

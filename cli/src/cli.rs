@@ -5,6 +5,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
+use uuid::Uuid;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -70,5 +71,11 @@ pub enum Mode {
     Import {
         /// The file path to read from. Otherwise will try to read from `stdin`.
         filepath: Option<PathBuf>,
+    },
+
+    /// Change repository.
+    Repository {
+        /// The UUID of the repository.
+        uuid: Uuid,
     },
 }
