@@ -7,6 +7,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/task.dart';
 import 'package:stride/routes/initial_route.dart';
+import 'package:stride/routes/repository_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/routes/task_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -207,6 +208,15 @@ class _TasksRouteState extends State<TasksRoute> {
                                       ),
                                     ),
                                   ),
+                          onLongPress: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (context) => RepositoryRoute(
+                                  repositoryUuid: repository.uuid,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
