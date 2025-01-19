@@ -41,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.6.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 899113877;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1450886450;
 
 // Section: executor
 
@@ -783,6 +783,56 @@ fn wire__crate__api__repository__git__TaskStorage_commit_impl(
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok =
                         crate::api::repository::git::TaskStorage::commit(&mut *api_that_guard)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__repository__git__TaskStorage_delete_all_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "TaskStorage_delete_all",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok =
+                        crate::api::repository::git::TaskStorage::delete_all(&mut *api_that_guard)?;
                     Ok(output_ok)
                 })())
             }
@@ -3148,128 +3198,134 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        17 => wire__crate__api__repository__git__TaskStorage_export_impl(
+        17 => wire__crate__api__repository__git__TaskStorage_delete_all_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        18 => wire__crate__api__repository__git__TaskStorage_force_hard_reset_impl(
+        18 => wire__crate__api__repository__git__TaskStorage_export_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        19 => wire__crate__api__repository__git__TaskStorage_import_impl(
+        19 => wire__crate__api__repository__git__TaskStorage_force_hard_reset_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        21 => wire__crate__api__repository__git__TaskStorage_log_impl(
+        20 => wire__crate__api__repository__git__TaskStorage_import_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        23 => wire__crate__api__repository__git__TaskStorage_push_impl(
+        22 => wire__crate__api__repository__git__TaskStorage_log_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        24 => wire__crate__api__repository__git__TaskStorage_remove_by_task_impl(
+        24 => wire__crate__api__repository__git__TaskStorage_push_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        25 => wire__crate__api__repository__git__TaskStorage_remove_by_uuid_impl(
+        25 => wire__crate__api__repository__git__TaskStorage_remove_by_task_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        26 => wire__crate__api__repository__git__TaskStorage_sync_impl(
+        26 => wire__crate__api__repository__git__TaskStorage_remove_by_uuid_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        27 => wire__crate__api__repository__git__TaskStorage_task_by_uuid_impl(
+        27 => wire__crate__api__repository__git__TaskStorage_sync_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        28 => wire__crate__api__repository__git__TaskStorage_tasks_with_filter_impl(
+        28 => wire__crate__api__repository__git__TaskStorage_task_by_uuid_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        29 => wire__crate__api__repository__git__TaskStorage_unload_impl(
+        29 => wire__crate__api__repository__git__TaskStorage_tasks_with_filter_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        30 => wire__crate__api__repository__git__TaskStorage_update_impl(
+        30 => wire__crate__api__repository__git__TaskStorage_unload_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        45 => wire__crate__api__settings__application_paths_default_impl(
+        31 => wire__crate__api__repository__git__TaskStorage_update_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        46 => wire__crate__api__settings__encryption_key_generate_impl(
+        46 => wire__crate__api__settings__application_paths_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        47 => wire__crate__api__settings__encryption_key_remove_key_impl(
+        47 => wire__crate__api__settings__encryption_key_generate_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        48 => {
+        48 => wire__crate__api__settings__encryption_key_remove_key_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        49 => {
             wire__crate__api__settings__encryption_key_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        49 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
-        52 => {
+        50 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
+        53 => {
             wire__crate__git__known_hosts__known_hosts_load_impl(port, ptr, rust_vec_len, data_len)
         }
-        53 => {
+        54 => {
             wire__crate__git__known_hosts__known_hosts_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        54 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
-        55 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
-        56 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
-        57 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
-        58 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
-        60 => {
+        55 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
+        59 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
+        61 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        61 => wire__crate__api__settings__settings_create_stream_impl(
+        62 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        62 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        63 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
-        64 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        66 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        67 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        70 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        63 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        64 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
+        65 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        67 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        68 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        71 => wire__crate__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3291,12 +3347,12 @@ fn pde_ffi_dispatcher_sync_impl(
         3 => wire__crate__api__error__RustError_to_error_string_impl(ptr, rust_vec_len, data_len),
         5 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
         9 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
-        59 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
-        65 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        68 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
-        69 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
+        60 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
+        66 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        69 => wire__crate__task__task_new_impl(ptr, rust_vec_len, data_len),
+        70 => wire__crate__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

@@ -29,7 +29,8 @@ final class TaskRemoveEvent extends TaskEvent {
 }
 
 final class TaskRemoveAllEvent extends TaskEvent {
-  TaskRemoveAllEvent();
+  final bool all;
+  TaskRemoveAllEvent({this.all = false});
 }
 
 final class TaskForcePushEvent extends TaskEvent {
@@ -155,7 +156,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskRemoveAllEvent>((event, emit) async {
-      await repository()?.clear();
+      if (event.all) {
+        await repository()?.deleteAll();
+      } else {
+        await repository()?.clear();
+      }
       emit(TaskState(tasks: await _tasks()));
     });
 

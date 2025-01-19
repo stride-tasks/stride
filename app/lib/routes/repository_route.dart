@@ -8,8 +8,6 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
-import 'package:stride/bridge/api/repository/git.dart';
-import 'package:stride/routes/commits_route.dart';
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -33,11 +31,51 @@ class RepositoryRoute extends StatelessWidget {
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final settings = state.settings;
-          final repository = settings.repositories.firstWhere(
+          final repositoryIndex = settings.repositories.indexWhere(
             (element) => element.uuid == repositoryUuid,
           );
+          if (repositoryIndex == -1) {
+            return const Column();
+          }
+          final repository = settings.repositories[repositoryIndex];
           return SettingsList(
             sections: [
+              SettingsSection(
+                title: Text('General', style: headingStyle),
+                tiles: [
+                  SettingsTileText(
+                    title: const Text('Name'),
+                    leading: const Icon(Icons.label),
+                    text: repository.name,
+                    onChanged: (text) {
+                      final repositories = settings.repositories
+                          .map(
+                            (e) => (e.uuid != repository.uuid)
+                                ? e
+                                : e.copyWith(name: text),
+                          )
+                          .toList();
+                      context.read<SettingsBloc>().add(
+                            SettingsUpdateEvent(
+                              settings:
+                                  settings.copyWith(repositories: repositories),
+                            ),
+                          );
+                    },
+                  ),
+                  // TODO: Currently only work for the currently loaded repository.
+                  // SettingsTile(
+                  //   leading: const Icon(Icons.save_alt),
+                  //   title: const Text('Export Tasks'),
+                  //   onTap: _exportTasks,
+                  // ),
+                  // SettingsTile(
+                  //   leading: const Icon(Icons.file_open),
+                  //   title: const Text('Import Tasks'),
+                  //   onTap: _importTasks,
+                  // ),
+                ],
+              ),
               SettingsSection(
                 title: Text('Git Integration', style: headingStyle),
                 tiles: [
@@ -147,14 +185,15 @@ class RepositoryRoute extends StatelessWidget {
                       },
                     ),
                   ),
-                  SettingsTileNavigation(
-                    leading: const Icon(Icons.commit),
-                    title: const Text('Commits'),
-                    builder: (context) => CommitsRoute(
-                      repository:
-                          context.read<TaskBloc>().repository() as TaskStorage,
-                    ),
-                  ),
+                  // TODO: Currently this only works for the currently loaded repository.
+                  // SettingsTileNavigation(
+                  //   leading: const Icon(Icons.commit),
+                  //   title: const Text('Commits'),
+                  //   builder: (context) => CommitsRoute(
+                  //     repository:
+                  //         context.read<TaskBloc>().repository() as TaskStorage,
+                  //   ),
+                  // ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.lock),
                     title: const Text('Encryption'),
@@ -163,18 +202,27 @@ class RepositoryRoute extends StatelessWidget {
                     ),
                   ),
                   SettingsTile(
-                    leading: const Icon(Icons.save_alt),
-                    title: const Text('Export Tasks'),
-                    onTap: _exportTasks,
-                  ),
-                  SettingsTile(
-                    leading: const Icon(Icons.file_open),
-                    title: const Text('Import Tasks'),
-                    onTap: _importTasks,
+                    leading: const Icon(Icons.push_pin, color: Colors.red),
+                    title: const Text('Force Push to Remote'),
+                    onTap: (context) async {
+                      await showAlertDialog(
+                        context: context,
+                        content: const Text(
+                          'Are you sure you want to force push local branch to remote repository?',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        onConfirm: (context) async {
+                          context.read<TaskBloc>().add(TaskForcePushEvent());
+                          Navigator.of(context).pop();
+                          return true;
+                        },
+                      );
+                    },
                   ),
                   SettingsTile(
                     leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text('Remove Repository'),
+                    title: const Text('Remove Repository Files'),
                     onTap: (context) async {
                       await showAlertDialog(
                         context: context,
@@ -192,19 +240,35 @@ class RepositoryRoute extends StatelessWidget {
                     },
                   ),
                   SettingsTile(
-                    leading: const Icon(Icons.push_pin, color: Colors.red),
-                    title: const Text('Force Push to Remote'),
+                    leading:
+                        const Icon(Icons.delete_forever, color: Colors.red),
+                    title: const Text('Remove Repository'),
                     onTap: (context) async {
                       await showAlertDialog(
                         context: context,
                         content: const Text(
-                          'Are you sure you want to force push local branch to remote repository?',
+                          'Are you sure you want to delete the (local) repository, including the repository settings?',
                           style: TextStyle(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                         onConfirm: (context) async {
-                          context.read<TaskBloc>().add(TaskForcePushEvent());
+                          context
+                              .read<TaskBloc>()
+                              .add(TaskRemoveAllEvent(all: true));
                           Navigator.of(context).pop();
+                          final settingsBloc = context.read<SettingsBloc>();
+                          final settings = settingsBloc.settings;
+                          settingsBloc.add(
+                            SettingsUpdateEvent(
+                              settings: settings.copyWith(
+                                repositories: settings.repositories.toList()
+                                  ..removeWhere(
+                                    (element) =>
+                                        element.uuid == repository.uuid,
+                                  ),
+                              ),
+                            ),
+                          );
                           return true;
                         },
                       );

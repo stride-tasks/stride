@@ -52,6 +52,8 @@ abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
   @override
   Future<void> commit();
 
+  Future<void> deleteAll();
+
   @override
   Future<String> export_();
 

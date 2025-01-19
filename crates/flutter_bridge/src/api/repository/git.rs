@@ -943,6 +943,19 @@ impl TaskStorage {
 
         Ok(())
     }
+
+    pub fn delete_all(&mut self) -> Result<(), RustError> {
+        for storage in self.storage_mut() {
+            storage.clear()?;
+        }
+        // delete repository root directory.
+        std::fs::remove_dir_all(
+            self.repository_path
+                .parent()
+                .unwrap_or(&self.repository_path),
+        )?;
+        Ok(())
+    }
 }
 
 impl StrideRepository for TaskStorage {
@@ -1080,6 +1093,7 @@ impl StrideRepository for TaskStorage {
         for storage in self.storage_mut() {
             storage.clear()?;
         }
+        // delete repository root directory.
         std::fs::remove_dir_all(&self.repository_path)?;
         Ok(())
     }
