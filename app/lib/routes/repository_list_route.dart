@@ -25,7 +25,9 @@ class RepositoryListRoute extends StatelessWidget {
             return SettingsTileNavigation(
               title: Text(repository.name),
               leading: const Icon(Icons.task),
-              builder: (context) => RepositoryRoute(repository: repository),
+              builder: (context) => RepositoryRoute(
+                repositoryUuid: repository.uuid,
+              ),
             );
           }).toList();
           return SettingsList(

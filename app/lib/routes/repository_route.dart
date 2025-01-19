@@ -9,22 +9,22 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/repository/git.dart';
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/routes/commits_route.dart';
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
+import 'package:uuid/uuid.dart';
 
 class RepositoryRoute extends StatelessWidget {
-  final Repository repository;
+  final UuidValue repositoryUuid;
   TextStyle get headingStyle => const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Colors.red,
       );
 
-  const RepositoryRoute({super.key, required this.repository});
+  const RepositoryRoute({super.key, required this.repositoryUuid});
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +33,9 @@ class RepositoryRoute extends StatelessWidget {
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           final settings = state.settings;
+          final repository = settings.repositories.firstWhere(
+            (element) => element.uuid == repositoryUuid,
+          );
           return SettingsList(
             sections: [
               SettingsSection(
@@ -41,11 +44,15 @@ class RepositoryRoute extends StatelessWidget {
                   SettingsTileText(
                     title: const Text('Repository URL'),
                     leading: const Icon(Icons.code),
-                    text: settings.repositories[0].origin,
+                    text: repository.origin,
                     onChanged: (text) {
-                      final repositories = settings.repositories.toList()
-                        ..removeWhere((e) => e.uuid == repository.uuid)
-                        ..add(repository.copyWith(origin: text));
+                      final repositories = settings.repositories
+                          .map(
+                            (e) => (e.uuid != repository.uuid)
+                                ? e
+                                : e.copyWith(origin: text),
+                          )
+                          .toList();
                       context.read<SettingsBloc>().add(
                             SettingsUpdateEvent(
                               settings:
@@ -59,9 +66,13 @@ class RepositoryRoute extends StatelessWidget {
                     title: const Text('Email'),
                     text: repository.email,
                     onChanged: (text) {
-                      final repositories = settings.repositories.toList()
-                        ..removeWhere((e) => e.uuid == repository.uuid)
-                        ..add(repository.copyWith(email: text));
+                      final repositories = settings.repositories
+                          .map(
+                            (e) => (e.uuid != repository.uuid)
+                                ? e
+                                : e.copyWith(email: text),
+                          )
+                          .toList();
                       context.read<SettingsBloc>().add(
                             SettingsUpdateEvent(
                               settings:
@@ -75,9 +86,13 @@ class RepositoryRoute extends StatelessWidget {
                     title: const Text('Author'),
                     text: repository.author,
                     onChanged: (text) {
-                      final repositories = settings.repositories.toList()
-                        ..removeWhere((e) => e.uuid == repository.uuid)
-                        ..add(repository.copyWith(author: text));
+                      final repositories = settings.repositories
+                          .map(
+                            (e) => (e.uuid != repository.uuid)
+                                ? e
+                                : e.copyWith(author: text),
+                          )
+                          .toList();
                       context.read<SettingsBloc>().add(
                             SettingsUpdateEvent(
                               settings:
@@ -91,9 +106,13 @@ class RepositoryRoute extends StatelessWidget {
                     title: const Text('Branch'),
                     text: repository.branch,
                     onChanged: (text) {
-                      final repositories = settings.repositories.toList()
-                        ..removeWhere((e) => e.uuid == repository.uuid)
-                        ..add(repository.copyWith(branch: text));
+                      final repositories = settings.repositories
+                          .map(
+                            (e) => (e.uuid != repository.uuid)
+                                ? e
+                                : e.copyWith(branch: text),
+                          )
+                          .toList();
                       context.read<SettingsBloc>().add(
                             SettingsUpdateEvent(
                               settings:
@@ -110,9 +129,13 @@ class RepositoryRoute extends StatelessWidget {
                       hasDelete: false,
                       selected: repository.sshKeyUuid,
                       onTap: (key) {
-                        final repositories = settings.repositories.toList()
-                          ..removeWhere((e) => e.uuid == repository.uuid)
-                          ..add(repository.copyWith(sshKeyUuid: key.uuid));
+                        final repositories = settings.repositories
+                            .map(
+                              (e) => (e.uuid != repository.uuid)
+                                  ? e
+                                  : e.copyWith(sshKeyUuid: key.uuid),
+                            )
+                            .toList();
                         context.read<SettingsBloc>().add(
                               SettingsUpdateEvent(
                                 settings: settings.copyWith(

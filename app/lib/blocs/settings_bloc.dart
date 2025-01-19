@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:uuid/uuid.dart';
+
+extension CurrentRepositoryUuidOrFirstExt on Settings {
+  UuidValue? currentRepositoryUuidOrFirst() =>
+      currentRepository ?? repositories.firstOrNull?.uuid;
+}
 
 @immutable
 abstract class SettingsEvent {}

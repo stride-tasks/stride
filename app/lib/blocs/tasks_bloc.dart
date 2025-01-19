@@ -18,11 +18,6 @@ abstract class TaskEvent {}
 
 final class TaskFetchEvent extends TaskEvent {}
 
-final class TaskChangeRepository extends TaskEvent {
-  final UuidValue uuid;
-  TaskChangeRepository({required this.uuid});
-}
-
 final class TaskAddEvent extends TaskEvent {
   final Task task;
   TaskAddEvent({required this.task});
@@ -96,6 +91,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       );
     }
 
+    repositoryUuid ??= settingsBloc.settings.currentRepositoryUuidOrFirst();
+
     settingsSubscription = settingsBloc.stream.listen((event) {
       if (event.settings.periodicSync) {
         syncTimer ??= Timer.periodic(
@@ -106,31 +103,25 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         syncTimer?.cancel();
         syncTimer = null;
       }
+
+      final nextRepositoryUuid = event.settings.currentRepositoryUuidOrFirst();
+      if (repositoryUuid != nextRepositoryUuid) {
+        storage?.unload();
+        storage = null;
+        repositoryUuid = nextRepositoryUuid;
+        add(TaskFetchEvent());
+      }
     });
   }
 
   TaskStorage? repository() {
-    if (storage == null) {
-      repositoryUuid ??= settingsBloc.settings.currentRepository ??
-          settingsBloc.settings.repositories.firstOrNull?.uuid;
-      if (repositoryUuid == null) {
-        return null;
-      }
-
-      settingsBloc.add(
-        SettingsUpdateEvent(
-          settings: settingsBloc.settings.copyWith(
-            currentRepository: repositoryUuid,
-          ),
-        ),
-      );
-
-      storage = TaskStorage.load(uuid: repositoryUuid!);
-    } else if (repositoryUuid != settingsBloc.settings.currentRepository) {
-      repositoryUuid = settingsBloc.settings.currentRepository;
-      storage = TaskStorage.load(uuid: repositoryUuid!);
+    if (storage != null) {
+      return storage;
     }
-    return storage;
+    if (repositoryUuid == null) {
+      return null;
+    }
+    return storage = TaskStorage.load(uuid: repositoryUuid!);
   }
 
   TaskBloc({
@@ -143,17 +134,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskFetchEvent>((event, emit) async {
       emit(TaskState(tasks: await _tasks()));
-    });
-
-    on<TaskChangeRepository>((event, emit) async {
-      if (storage != null) {
-        storage!.unload();
-        storage = null;
-      }
-
-      repositoryUuid = event.uuid;
-      storage = TaskStorage.load(uuid: event.uuid);
-      add(TaskFetchEvent());
     });
 
     on<TaskAddEvent>((event, emit) async {

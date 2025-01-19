@@ -6,6 +6,7 @@ import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/task.dart';
+import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/routes/task_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -147,23 +148,76 @@ class _TasksRouteState extends State<TasksRoute> {
   }
 
   Drawer _drawer() {
+    final taskBloc = context.read<TaskBloc>();
     return Drawer(
-      child: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          final settings = state.settings;
-          final filters = settings.filters;
-          return Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Filters',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const Divider(),
-                Expanded(
-                  child: ListView.builder(
+      child: SingleChildScrollView(
+        child: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, state) {
+            final settings = state.settings;
+            final filters = settings.filters;
+            final repositories = settings.repositories;
+            return Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Repository',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.of(context).push<void>(
+                            MaterialPageRoute(
+                              builder: (context) => const InitialRoute(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: repositories.length,
+                    itemBuilder: (context, index) {
+                      final repository = repositories[index];
+                      final selected =
+                          repository.uuid == taskBloc.repositoryUuid;
+                      return Card(
+                        child: ListTile(
+                          title: Text(repository.name),
+                          subtitle: Text(repository.uuid.toString()),
+                          subtitleTextStyle: const TextStyle(fontSize: 8),
+                          selected: selected,
+                          selectedColor: Colors.amber[900],
+                          onTap: selected
+                              ? null
+                              : () => context.read<SettingsBloc>().add(
+                                    SettingsUpdateEvent(
+                                      settings: settings.copyWith(
+                                        currentRepository: repository.uuid,
+                                      ),
+                                    ),
+                                  ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Filters',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const Divider(),
+                  ListView.builder(
                     shrinkWrap: true,
                     itemCount: filters.length,
                     itemBuilder: (context, index) {
@@ -219,11 +273,11 @@ class _TasksRouteState extends State<TasksRoute> {
                       );
                     },
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

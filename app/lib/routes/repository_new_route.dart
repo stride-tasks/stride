@@ -83,36 +83,35 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
   }
 
   Future<void> _onStepContinue() async {
-    if (_isLastStep) {
-      final settings = context.read<SettingsBloc>().settings;
-      final repositoryUuid = const Uuid().v7obj();
-      context.read<SettingsBloc>().add(
-            SettingsUpdateEvent(
-              settings: settings.copyWith(
-                repositories: settings.repositories.toList()
-                  ..add(
-                    Repository(
-                      uuid: repositoryUuid,
-                      name: _nameController.text,
-                      origin: '',
-                      author: _authorController.text,
-                      email: _emailController.text,
-                      branch: _branchController.text,
-                    ),
-                  ),
-                currentRepository: repositoryUuid,
-              ),
-            ),
-          );
-      context.read<TaskBloc>().add(TaskChangeRepository(uuid: repositoryUuid));
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (context) => const TasksRoute(),
-        ),
-      );
-    } else {
+    if (!_isLastStep) {
       setState(() => _currentStep += 1);
+      return;
     }
+    final repositoryUuid = const Uuid().v7obj();
+    final settings = context.read<SettingsBloc>().settings;
+    context.read<SettingsBloc>().add(
+          SettingsUpdateEvent(
+            settings: settings.copyWith(
+              repositories: settings.repositories.toList()
+                ..add(
+                  Repository(
+                    uuid: repositoryUuid,
+                    name: _nameController.text,
+                    origin: '',
+                    author: _authorController.text,
+                    email: _emailController.text,
+                    branch: _branchController.text,
+                  ),
+                ),
+              currentRepository: repositoryUuid,
+            ),
+          ),
+        );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (context) => const TasksRoute(),
+      ),
+    );
   }
 
   void _onStepTapped(int value) => setState(() => _currentStep = value);
