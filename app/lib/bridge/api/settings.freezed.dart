@@ -17,6 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$Repository {
   UuidValue get uuid => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
   String get origin => throw _privateConstructorUsedError;
   String get author => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
@@ -39,6 +40,7 @@ abstract class $RepositoryCopyWith<$Res> {
   @useResult
   $Res call(
       {UuidValue uuid,
+      String name,
       String origin,
       String author,
       String email,
@@ -63,6 +65,7 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
   @override
   $Res call({
     Object? uuid = null,
+    Object? name = null,
     Object? origin = null,
     Object? author = null,
     Object? email = null,
@@ -75,6 +78,10 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
           ? _value.uuid
           : uuid // ignore: cast_nullable_to_non_nullable
               as UuidValue,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
       origin: null == origin
           ? _value.origin
           : origin // ignore: cast_nullable_to_non_nullable
@@ -113,6 +120,7 @@ abstract class _$$RepositoryImplCopyWith<$Res>
   @useResult
   $Res call(
       {UuidValue uuid,
+      String name,
       String origin,
       String author,
       String email,
@@ -135,6 +143,7 @@ class __$$RepositoryImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? uuid = null,
+    Object? name = null,
     Object? origin = null,
     Object? author = null,
     Object? email = null,
@@ -147,6 +156,10 @@ class __$$RepositoryImplCopyWithImpl<$Res>
           ? _value.uuid
           : uuid // ignore: cast_nullable_to_non_nullable
               as UuidValue,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
       origin: null == origin
           ? _value.origin
           : origin // ignore: cast_nullable_to_non_nullable
@@ -180,6 +193,7 @@ class __$$RepositoryImplCopyWithImpl<$Res>
 class _$RepositoryImpl extends _Repository {
   const _$RepositoryImpl(
       {required this.uuid,
+      required this.name,
       required this.origin,
       required this.author,
       required this.email,
@@ -190,6 +204,8 @@ class _$RepositoryImpl extends _Repository {
 
   @override
   final UuidValue uuid;
+  @override
+  final String name;
   @override
   final String origin;
   @override
@@ -205,7 +221,7 @@ class _$RepositoryImpl extends _Repository {
 
   @override
   String toString() {
-    return 'Repository(uuid: $uuid, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
+    return 'Repository(uuid: $uuid, name: $name, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
   }
 
   @override
@@ -214,6 +230,7 @@ class _$RepositoryImpl extends _Repository {
         (other.runtimeType == runtimeType &&
             other is _$RepositoryImpl &&
             (identical(other.uuid, uuid) || other.uuid == uuid) &&
+            (identical(other.name, name) || other.name == name) &&
             (identical(other.origin, origin) || other.origin == origin) &&
             (identical(other.author, author) || other.author == author) &&
             (identical(other.email, email) || other.email == email) &&
@@ -225,8 +242,8 @@ class _$RepositoryImpl extends _Repository {
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, uuid, origin, author, email, branch, sshKeyUuid, encryption);
+  int get hashCode => Object.hash(runtimeType, uuid, name, origin, author,
+      email, branch, sshKeyUuid, encryption);
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -240,6 +257,7 @@ class _$RepositoryImpl extends _Repository {
 abstract class _Repository extends Repository {
   const factory _Repository(
       {required final UuidValue uuid,
+      required final String name,
       required final String origin,
       required final String author,
       required final String email,
@@ -250,6 +268,8 @@ abstract class _Repository extends Repository {
 
   @override
   UuidValue get uuid;
+  @override
+  String get name;
   @override
   String get origin;
   @override
@@ -274,32 +294,44 @@ abstract class _Repository extends Repository {
 /// @nodoc
 mixin _$Settings {
   bool get darkMode => throw _privateConstructorUsedError;
-  Repository get repository => throw _privateConstructorUsedError;
   bool get periodicSync => throw _privateConstructorUsedError;
   List<Filter> get filters => throw _privateConstructorUsedError;
   FilterSelection? get selectedFilter => throw _privateConstructorUsedError;
+  UuidValue? get currentRepository => throw _privateConstructorUsedError;
+  List<Repository> get repositories => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool darkMode,
-            Repository repository,
             bool periodicSync,
             List<Filter> filters,
-            FilterSelection? selectedFilter)
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)
         raw,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(bool darkMode, Repository repository, bool periodicSync,
-            List<Filter> filters, FilterSelection? selectedFilter)?
+    TResult? Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(bool darkMode, Repository repository, bool periodicSync,
-            List<Filter> filters, FilterSelection? selectedFilter)?
+    TResult Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
     required TResult orElse(),
   }) =>
@@ -335,12 +367,12 @@ abstract class $SettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {bool darkMode,
-      Repository repository,
       bool periodicSync,
       List<Filter> filters,
-      FilterSelection? selectedFilter});
+      FilterSelection? selectedFilter,
+      UuidValue? currentRepository,
+      List<Repository> repositories});
 
-  $RepositoryCopyWith<$Res> get repository;
   $FilterSelectionCopyWith<$Res>? get selectedFilter;
 }
 
@@ -360,20 +392,17 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
   @override
   $Res call({
     Object? darkMode = null,
-    Object? repository = null,
     Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
+    Object? currentRepository = freezed,
+    Object? repositories = null,
   }) {
     return _then(_value.copyWith(
       darkMode: null == darkMode
           ? _value.darkMode
           : darkMode // ignore: cast_nullable_to_non_nullable
               as bool,
-      repository: null == repository
-          ? _value.repository
-          : repository // ignore: cast_nullable_to_non_nullable
-              as Repository,
       periodicSync: null == periodicSync
           ? _value.periodicSync
           : periodicSync // ignore: cast_nullable_to_non_nullable
@@ -386,17 +415,15 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
           ? _value.selectedFilter
           : selectedFilter // ignore: cast_nullable_to_non_nullable
               as FilterSelection?,
+      currentRepository: freezed == currentRepository
+          ? _value.currentRepository
+          : currentRepository // ignore: cast_nullable_to_non_nullable
+              as UuidValue?,
+      repositories: null == repositories
+          ? _value.repositories
+          : repositories // ignore: cast_nullable_to_non_nullable
+              as List<Repository>,
     ) as $Val);
-  }
-
-  /// Create a copy of Settings
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $RepositoryCopyWith<$Res> get repository {
-    return $RepositoryCopyWith<$Res>(_value.repository, (value) {
-      return _then(_value.copyWith(repository: value) as $Val);
-    });
   }
 
   /// Create a copy of Settings
@@ -424,13 +451,12 @@ abstract class _$$SettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool darkMode,
-      Repository repository,
       bool periodicSync,
       List<Filter> filters,
-      FilterSelection? selectedFilter});
+      FilterSelection? selectedFilter,
+      UuidValue? currentRepository,
+      List<Repository> repositories});
 
-  @override
-  $RepositoryCopyWith<$Res> get repository;
   @override
   $FilterSelectionCopyWith<$Res>? get selectedFilter;
 }
@@ -449,20 +475,17 @@ class __$$SettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? darkMode = null,
-    Object? repository = null,
     Object? periodicSync = null,
     Object? filters = null,
     Object? selectedFilter = freezed,
+    Object? currentRepository = freezed,
+    Object? repositories = null,
   }) {
     return _then(_$SettingsImpl(
       darkMode: null == darkMode
           ? _value.darkMode
           : darkMode // ignore: cast_nullable_to_non_nullable
               as bool,
-      repository: null == repository
-          ? _value.repository
-          : repository // ignore: cast_nullable_to_non_nullable
-              as Repository,
       periodicSync: null == periodicSync
           ? _value.periodicSync
           : periodicSync // ignore: cast_nullable_to_non_nullable
@@ -475,6 +498,14 @@ class __$$SettingsImplCopyWithImpl<$Res>
           ? _value.selectedFilter
           : selectedFilter // ignore: cast_nullable_to_non_nullable
               as FilterSelection?,
+      currentRepository: freezed == currentRepository
+          ? _value.currentRepository
+          : currentRepository // ignore: cast_nullable_to_non_nullable
+              as UuidValue?,
+      repositories: null == repositories
+          ? _value._repositories
+          : repositories // ignore: cast_nullable_to_non_nullable
+              as List<Repository>,
     ));
   }
 }
@@ -484,17 +515,17 @@ class __$$SettingsImplCopyWithImpl<$Res>
 class _$SettingsImpl extends _Settings {
   const _$SettingsImpl(
       {required this.darkMode,
-      required this.repository,
       required this.periodicSync,
       required final List<Filter> filters,
-      this.selectedFilter})
+      this.selectedFilter,
+      this.currentRepository,
+      required final List<Repository> repositories})
       : _filters = filters,
+        _repositories = repositories,
         super._();
 
   @override
   final bool darkMode;
-  @override
-  final Repository repository;
   @override
   final bool periodicSync;
   final List<Filter> _filters;
@@ -507,10 +538,19 @@ class _$SettingsImpl extends _Settings {
 
   @override
   final FilterSelection? selectedFilter;
+  @override
+  final UuidValue? currentRepository;
+  final List<Repository> _repositories;
+  @override
+  List<Repository> get repositories {
+    if (_repositories is EqualUnmodifiableListView) return _repositories;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_repositories);
+  }
 
   @override
   String toString() {
-    return 'Settings.raw(darkMode: $darkMode, repository: $repository, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter)';
+    return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter, currentRepository: $currentRepository, repositories: $repositories)';
   }
 
   @override
@@ -520,23 +560,26 @@ class _$SettingsImpl extends _Settings {
             other is _$SettingsImpl &&
             (identical(other.darkMode, darkMode) ||
                 other.darkMode == darkMode) &&
-            (identical(other.repository, repository) ||
-                other.repository == repository) &&
             (identical(other.periodicSync, periodicSync) ||
                 other.periodicSync == periodicSync) &&
             const DeepCollectionEquality().equals(other._filters, _filters) &&
             (identical(other.selectedFilter, selectedFilter) ||
-                other.selectedFilter == selectedFilter));
+                other.selectedFilter == selectedFilter) &&
+            (identical(other.currentRepository, currentRepository) ||
+                other.currentRepository == currentRepository) &&
+            const DeepCollectionEquality()
+                .equals(other._repositories, _repositories));
   }
 
   @override
   int get hashCode => Object.hash(
       runtimeType,
       darkMode,
-      repository,
       periodicSync,
       const DeepCollectionEquality().hash(_filters),
-      selectedFilter);
+      selectedFilter,
+      currentRepository,
+      const DeepCollectionEquality().hash(_repositories));
 
   /// Create a copy of Settings
   /// with the given fields replaced by the non-null parameter values.
@@ -551,36 +594,49 @@ class _$SettingsImpl extends _Settings {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool darkMode,
-            Repository repository,
             bool periodicSync,
             List<Filter> filters,
-            FilterSelection? selectedFilter)
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)
         raw,
   }) {
-    return raw(darkMode, repository, periodicSync, filters, selectedFilter);
+    return raw(darkMode, periodicSync, filters, selectedFilter,
+        currentRepository, repositories);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(bool darkMode, Repository repository, bool periodicSync,
-            List<Filter> filters, FilterSelection? selectedFilter)?
+    TResult? Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
   }) {
-    return raw?.call(
-        darkMode, repository, periodicSync, filters, selectedFilter);
+    return raw?.call(darkMode, periodicSync, filters, selectedFilter,
+        currentRepository, repositories);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(bool darkMode, Repository repository, bool periodicSync,
-            List<Filter> filters, FilterSelection? selectedFilter)?
+    TResult Function(
+            bool darkMode,
+            bool periodicSync,
+            List<Filter> filters,
+            FilterSelection? selectedFilter,
+            UuidValue? currentRepository,
+            List<Repository> repositories)?
         raw,
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(darkMode, repository, periodicSync, filters, selectedFilter);
+      return raw(darkMode, periodicSync, filters, selectedFilter,
+          currentRepository, repositories);
     }
     return orElse();
   }
@@ -617,22 +673,25 @@ class _$SettingsImpl extends _Settings {
 abstract class _Settings extends Settings {
   const factory _Settings(
       {required final bool darkMode,
-      required final Repository repository,
       required final bool periodicSync,
       required final List<Filter> filters,
-      final FilterSelection? selectedFilter}) = _$SettingsImpl;
+      final FilterSelection? selectedFilter,
+      final UuidValue? currentRepository,
+      required final List<Repository> repositories}) = _$SettingsImpl;
   const _Settings._() : super._();
 
   @override
   bool get darkMode;
-  @override
-  Repository get repository;
   @override
   bool get periodicSync;
   @override
   List<Filter> get filters;
   @override
   FilterSelection? get selectedFilter;
+  @override
+  UuidValue? get currentRepository;
+  @override
+  List<Repository> get repositories;
 
   /// Create a copy of Settings
   /// with the given fields replaced by the non-null parameter values.

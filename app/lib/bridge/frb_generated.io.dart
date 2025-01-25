@@ -243,6 +243,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
 
   @protected
+  List<Repository> dco_decode_list_repository(dynamic raw);
+
+  @protected
   List<Task> dco_decode_list_task(dynamic raw);
 
   @protected
@@ -250,6 +253,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Logger dco_decode_logger(dynamic raw);
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw);
 
   @protected
   UuidValue? dco_decode_opt_Uuid(dynamic raw);
@@ -509,6 +515,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  List<Repository> sse_decode_list_repository(SseDeserializer deserializer);
+
+  @protected
   List<Task> sse_decode_list_task(SseDeserializer deserializer);
 
   @protected
@@ -516,6 +525,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Logger sse_decode_logger(SseDeserializer deserializer);
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
   UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer);
@@ -794,6 +806,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       List<(String, String)> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_repository(
+      List<Repository> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_task(List<Task> self, SseSerializer serializer);
 
   @protected
@@ -802,6 +818,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_logger(Logger self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer);

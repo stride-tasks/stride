@@ -6,11 +6,8 @@ import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class EncryptionKeyRoute extends StatefulWidget {
-  final EncryptionKey? encryption;
-  const EncryptionKeyRoute({
-    super.key,
-    this.encryption,
-  });
+  final Repository repository;
+  const EncryptionKeyRoute({super.key, required this.repository});
 
   @override
   State<EncryptionKeyRoute> createState() => EncryptionKeyRouteState();
@@ -24,7 +21,7 @@ class EncryptionKeyRouteState extends State<EncryptionKeyRoute> {
   void initState() {
     super.initState();
 
-    _key = widget.encryption?.key ?? '';
+    _key = widget.repository.encryption?.key ?? '';
   }
 
   @override
@@ -59,14 +56,17 @@ class EncryptionKeyRouteState extends State<EncryptionKeyRoute> {
 
                 await context.read<LogBloc>().catch_(
                       message: 'encrypiton key',
-                      () async => EncryptionKey.save(key: _key),
+                      () async => EncryptionKey.save(
+                        repositoryUuid: widget.repository.uuid,
+                        key: _key,
+                      ),
                     );
                 setState(() {});
               },
             ),
             const Divider(),
             ElevatedButton.icon(
-              onPressed: widget.encryption == null
+              onPressed: widget.repository.encryption == null
                   ? null
                   : () => setState(() => showQrCode = !showQrCode),
               label: showQrCode

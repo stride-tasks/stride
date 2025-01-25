@@ -20,7 +20,7 @@ import 'package:stride/bridge/task.dart';
 import 'package:stride/bridge/task/annotation.dart';
 import 'package:uuid/uuid.dart';
 
-// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `generate_iv`, `get_by_id`, `get_index`, `load`, `new`, `rebase`, `remove_task2`, `remove`, `resolve_conflicts`, `save`, `ssh_key`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
+// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `generate_iv`, `get_by_id`, `get_index`, `init_repotitory`, `load`, `new`, `rebase`, `remove_task2`, `remove`, `resolve_conflicts`, `save`, `ssh_key`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
 // These types are ignored because they are not used by any `pub` functions: `DecryptedTask`, `LogIter`, `Storage`, `TaskDiff`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `pull`
@@ -52,6 +52,8 @@ abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
   @override
   Future<void> commit();
 
+  Future<void> deleteAll();
+
   @override
   Future<String> export_();
 
@@ -60,13 +62,17 @@ abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
   @override
   Future<void> import_({required String content});
 
-  Future<void> initRepotitory();
+  static TaskStorage load({required UuidValue uuid}) =>
+      RustLib.instance.api.crateApiRepositoryGitTaskStorageLoad(uuid: uuid);
 
   Future<List<CommitItem>?> log({Oid? oid, int? n});
 
-  factory TaskStorage({required String path, required Settings settings}) =>
-      RustLib.instance.api
-          .crateApiRepositoryGitTaskStorageNew(path: path, settings: settings);
+  factory TaskStorage(
+          {required UuidValue repositoryUuid,
+          required String path,
+          required Settings settings}) =>
+      RustLib.instance.api.crateApiRepositoryGitTaskStorageNew(
+          repositoryUuid: repositoryUuid, path: path, settings: settings);
 
   Future<void> push({required bool force});
 
