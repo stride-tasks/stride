@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
+import 'package:stride/widgets/icon_text_button.dart';
 import 'package:uuid/uuid.dart';
 
 class RepositoryNewRoute extends StatefulWidget {
@@ -27,44 +29,61 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
   bool get _isLastStep => _currentStep + 1 == _steps().length;
 
   final _nameController = TextEditingController(text: 'my-repository');
-  final _originController = TextEditingController(text: '');
+  final _originController = TextEditingController();
   final _authorController = TextEditingController(text: defaultAuthorName);
   final _emailController = TextEditingController(text: defaultAuthorEmail);
   final _branchController = TextEditingController(text: defaultBranchName);
-  // final _encrytionKeyController = TextEditingController();
+  final _sshKeyController = TextEditingController();
+  final _encrytionKeyController = TextEditingController();
 
   final GlobalKey<FormState> _generalFormKey = GlobalKey();
   final GlobalKey<FormState> _gitIntegrationFormKey = GlobalKey();
-  // final GlobalKey<FormState> _encryptionFormKey = GlobalKey();
+  final GlobalKey<FormState> _encryptionFormKey = GlobalKey();
 
-  List<Step> _steps() => [
+  List<Step> _steps() {
+    final steps = [
+      Step(
+        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+        title: const Text('General'),
+        content: _GeneralRepositoryForm(
+          formKey: _generalFormKey,
+          name: _nameController,
+        ),
+      ),
+      Step(
+        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+        title: const Text('Git Integration'),
+        content: _GitIntegrationRepositoryForm(
+          formKey: _gitIntegrationFormKey,
+          author: _authorController,
+          email: _emailController,
+          branch: _branchController,
+          origin: _originController,
+          sshKey: _sshKeyController,
+          cloning: widget.cloning,
+        ),
+      ),
+    ];
+    if (widget.cloning) {
+      steps.add(
         Step(
-          state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-          title: const Text('General'),
-          content: _GeneralRepositoryForm(
-            formKey: _generalFormKey,
-            name: _nameController,
+          state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+          title: const Text('Encryption'),
+          content: _EncryptionRepositoryForm(
+            formKey: _encryptionFormKey,
+            encryptionKey: _encrytionKeyController,
           ),
         ),
-        Step(
-          state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-          title: const Text('Git Integration'),
-          content: _GitIntegrationRepositoryForm(
-            formKey: _gitIntegrationFormKey,
-            author: _authorController,
-            email: _emailController,
-            branch: _branchController,
-            origin: _originController,
-          ),
-        ),
-        // Step(
-        //   state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-        //   title: const Text('Encryption'),
-        //   content: _EncryptionRepositoryForm(
-        //     formKey: _encryptionFormKey,
-        //     encryptionKey: _encrytionKeyController,
-        //   ),
-        // ),
+      );
+    }
+
+    return steps;
+  }
+
+  List<GlobalKey<FormState>> _formKeys() => [
+        _generalFormKey,
+        _gitIntegrationFormKey,
+        if (widget.cloning) _encryptionFormKey,
       ];
 
   @override
@@ -83,10 +102,26 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
   }
 
   Future<void> _onStepContinue() async {
+    final keys = _formKeys();
+    if (!keys[_currentStep].currentState!.validate()) {
+      return;
+    }
+
     if (!_isLastStep) {
       setState(() => _currentStep += 1);
       return;
     }
+
+    EncryptionKey? encrpytionKey;
+    if (widget.cloning) {
+      // NOTE: encryption key should be validated by form validaters
+      encrpytionKey = EncryptionKey(key: _encrytionKeyController.text);
+    } else {
+      encrpytionKey = await EncryptionKey.generate();
+    }
+
+    if (!mounted) return;
+
     final repositoryUuid = const Uuid().v7obj();
     final settings = context.read<SettingsBloc>().settings;
     context.read<SettingsBloc>().add(
@@ -97,10 +132,14 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
                   Repository(
                     uuid: repositoryUuid,
                     name: _nameController.text,
-                    origin: '',
+                    origin: _originController.text,
                     author: _authorController.text,
                     email: _emailController.text,
                     branch: _branchController.text,
+                    encryption: encrpytionKey,
+                    sshKeyUuid: _sshKeyController.text.isEmpty
+                        ? null
+                        : UuidValue.fromString(_sshKeyController.text),
                   ),
                 ),
               currentRepository: repositoryUuid,
@@ -112,6 +151,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
         builder: (context) => const TasksRoute(),
       ),
     );
+    context.read<TaskBloc>().add(TaskSyncEvent());
   }
 
   void _onStepTapped(int value) => setState(() => _currentStep = value);
@@ -160,6 +200,10 @@ class _GeneralRepositoryForm extends StatelessWidget {
     required this.name,
   });
 
+  void _onChange(String _) {
+    formKey.currentState!.validate();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -178,6 +222,7 @@ class _GeneralRepositoryForm extends StatelessWidget {
               }
               return null;
             },
+            onChanged: _onChange,
           ),
         ],
       ),
@@ -185,13 +230,15 @@ class _GeneralRepositoryForm extends StatelessWidget {
   }
 }
 
-class _GitIntegrationRepositoryForm extends StatelessWidget {
+class _GitIntegrationRepositoryForm extends StatefulWidget {
   const _GitIntegrationRepositoryForm({
     required this.formKey,
     required this.author,
     required this.email,
     required this.branch,
     required this.origin,
+    required this.sshKey,
+    this.cloning = false,
   });
 
   final GlobalKey<FormState> formKey;
@@ -199,16 +246,29 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
   final TextEditingController email;
   final TextEditingController branch;
   final TextEditingController origin;
+  final TextEditingController sshKey;
+  final bool cloning;
+
+  @override
+  State<_GitIntegrationRepositoryForm> createState() =>
+      _GitIntegrationRepositoryFormState();
+}
+
+class _GitIntegrationRepositoryFormState
+    extends State<_GitIntegrationRepositoryForm> {
+  void _onChange(String _) {
+    widget.formKey.currentState!.validate();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: formKey,
+      key: widget.formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
-            controller: author,
+            controller: widget.author,
             decoration: const InputDecoration(
               hintText: 'Enter Commit Author',
             ),
@@ -218,9 +278,10 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
               }
               return null;
             },
+            onChanged: _onChange,
           ),
           TextFormField(
-            controller: email,
+            controller: widget.email,
             decoration: const InputDecoration(
               hintText: 'Enter Commit Email',
             ),
@@ -230,9 +291,10 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
               }
               return null;
             },
+            onChanged: _onChange,
           ),
           TextFormField(
-            controller: branch,
+            controller: widget.branch,
             decoration: const InputDecoration(hintText: 'Enter Branch Name'),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -240,12 +302,57 @@ class _GitIntegrationRepositoryForm extends StatelessWidget {
               }
               return null;
             },
+            onChanged: _onChange,
           ),
           TextFormField(
-            controller: origin,
+            controller: widget.origin,
             decoration: const InputDecoration(hintText: defaultOriginHint),
             validator: (value) {
-              // TODO: Add git URL validation.
+              if (value == null || value.isEmpty) {
+                if (!widget.cloning) {
+                  return null;
+                }
+                return 'Please enter some text';
+              }
+              return null;
+            },
+            onChanged: _onChange,
+            autovalidateMode: AutovalidateMode.always,
+          ),
+          FormField(
+            builder: (field) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    IconTextButton(
+                      icon: const Icon(Icons.key),
+                      text: 'Choose SSH Key',
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute<SshKey>(
+                            builder: (context) => SshKeysRoute(
+                              onTap: (key) {
+                                widget.sshKey.text = key.uuid.toString();
+                                Navigator.of(context).pop();
+                              },
+                              hasDelete: false,
+                            ),
+                          ),
+                        );
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    if (widget.sshKey.text.isNotEmpty) const Icon(Icons.check),
+                  ],
+                ),
+              );
+            },
+            validator: (value) {
+              if (widget.sshKey.text.isEmpty && widget.cloning) {
+                return 'must choose an ssh key';
+              }
               return null;
             },
           ),
@@ -264,6 +371,10 @@ class _EncryptionRepositoryForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController encryptionKey;
 
+  void _onChange(String _) {
+    formKey.currentState!.validate();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -278,10 +389,11 @@ class _EncryptionRepositoryForm extends StatelessWidget {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter some text';
+                return 'please enter some text';
               }
-              return null;
+              return EncryptionKey.validate(key: value);
             },
+            onChanged: _onChange,
           ),
         ],
       ),

@@ -40,7 +40,15 @@ class InitialRoute extends StatelessWidget {
               width: 250,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (context) => const RepositoryNewRoute(
+                        cloning: true,
+                      ),
+                    ),
+                  );
+                },
                 label: const Text('Clone Repository'),
                 icon: const Icon(Icons.cloud),
                 style: ElevatedButton.styleFrom(

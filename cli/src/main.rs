@@ -106,7 +106,7 @@ fn main() -> anyhow::Result<()> {
             current_repository,
             &support_dir.join("repository").to_string_lossy(),
             &settings,
-        ),
+        )?,
         RepositoryType::TaskChampion => {
             let data_dir =
                 choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);

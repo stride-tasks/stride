@@ -258,6 +258,19 @@ impl EncryptionKey {
         Settings::save(settings)?;
         Ok(true)
     }
+
+    #[frb(sync)]
+    #[must_use]
+    pub fn validate(key: &str) -> Option<String> {
+        let Ok(decoded) = base64_decode(key) else {
+            return Some("invalid base64".to_owned());
+        };
+
+        if decoded.len() != 32 {
+            return Some("encryption key must be ${32 * 8} bits".to_owned());
+        }
+        None
+    }
 }
 
 const fn default_theme_mode() -> bool {

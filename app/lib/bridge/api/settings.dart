@@ -106,6 +106,9 @@ class EncryptionKey {
       RustLib.instance.api.crateApiSettingsEncryptionKeySave(
           repositoryUuid: repositoryUuid, key: key);
 
+  static String? validate({required String key}) =>
+      RustLib.instance.api.crateApiSettingsEncryptionKeyValidate(key: key);
+
   @override
   int get hashCode => key.hashCode;
 

@@ -300,28 +300,31 @@ impl TaskStorage {
     const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
     #[frb(sync)]
-    pub fn load(uuid: Uuid) -> Self {
+    pub fn load(uuid: Uuid) -> Result<Self, RustError> {
         let path = application_support_path().join("repository");
         let settings = Settings::get();
         Self::new(uuid, &path.to_string_lossy(), &settings)
     }
 
+    fn init_repository_if_needed(&self) -> Result<(), RustError> {
+        if !self.repository_path.join(".git").exists() {
+            Self::init_repotitory(self.uuid, &self.repository_path, &self.tasks_path)?;
+        }
+        Ok(())
+    }
+
     #[frb(sync)]
-    pub fn new(repository_uuid: Uuid, path: &str, settings: &Settings) -> Self {
+    pub fn new(repository_uuid: Uuid, path: &str, settings: &Settings) -> Result<Self, RustError> {
         let repository_path = Path::new(path)
             .join(repository_uuid.to_string())
             .join("source");
-        std::fs::create_dir_all(&repository_path).unwrap();
+        std::fs::create_dir_all(&repository_path)?;
 
         let tasks_path = repository_path.join("tasks");
         let keys_filepath = tasks_path.join("keys");
 
-        if !repository_path.join(".git").exists() {
-            Self::init_repotitory(repository_uuid, &repository_path, &tasks_path).unwrap();
-        }
-
         let mut settings = settings.clone();
-        let repository = settings.repository_mut(repository_uuid).unwrap();
+        let repository = settings.repository_mut(repository_uuid)?;
 
         let uuid = repository.uuid;
 
@@ -330,18 +333,18 @@ impl TaskStorage {
         } else {
             let key = EncryptionKey::generate();
             repository.encryption = Some(key.clone());
-            Settings::save(settings.clone()).unwrap();
+            Settings::save(settings.clone())?;
             Logger::info("repository does not have encryption key, generating new encryption key");
             key
         };
 
-        let key = base64_decode(&encryption_key.key).unwrap();
+        let key = base64_decode(&encryption_key.key)?;
 
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
 
         let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
 
-        Self {
+        Ok(Self {
             uuid,
             repository_path: repository_path.to_path_buf(),
             pending: Storage::new(
@@ -371,7 +374,7 @@ impl TaskStorage {
             ),
             tasks_path,
             key_store,
-        }
+        })
     }
 
     fn storage_mut(&mut self) -> [&mut Storage; 5] {
@@ -465,6 +468,8 @@ impl TaskStorage {
     }
 
     pub fn force_hard_reset(&mut self, commit: Oid) -> Result<(), RustError> {
+        self.init_repository_if_needed()?;
+
         let mut settings = Settings::get();
         let repo = settings.repository_mut(self.uuid)?;
 
@@ -492,6 +497,8 @@ impl TaskStorage {
     }
 
     pub fn checkout(&mut self) -> Result<(), RustError> {
+        self.init_repository_if_needed()?;
+
         let mut settings = Settings::get();
         let repository = settings.repository_mut(self.uuid)?;
 
@@ -550,6 +557,8 @@ impl TaskStorage {
     }
 
     pub fn add_and_commit(&self, message: &str) -> Result<bool, RustError> {
+        self.init_repository_if_needed()?;
+
         let settings = Settings::get();
         let repo = settings.repository(self.uuid)?;
 
@@ -966,6 +975,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn add(&mut self, task: Task) -> Result<(), RustError> {
+        self.init_repository_if_needed()?;
+
         let message = format!("$ADD {}", task.uuid.to_base64());
         self.pending.append(task)?;
         self.add_and_commit(&message)?;
@@ -973,6 +984,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn remove_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
+        self.init_repository_if_needed()?;
+
         for storage in self.storage_mut() {
             if let Some(task) = storage.remove(uuid)? {
                 return Ok(Some(task));
@@ -982,6 +995,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn remove_by_task(&mut self, task: &Task) -> Result<bool, RustError> {
+        self.init_repository_if_needed()?;
+
         let found_task = self.remove_task2(task)?;
 
         let Some(found_task) = found_task else {
@@ -1021,6 +1036,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn update(&mut self, task: &Task) -> Result<bool, RustError> {
+        self.init_repository_if_needed()?;
+
         let updated = self.update2(task)?;
         if updated {
             self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
@@ -1029,6 +1046,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
+        self.init_repository_if_needed()?;
+
         if task.status == status {
             return Ok(true);
         }
@@ -1072,7 +1091,7 @@ impl StrideRepository for TaskStorage {
     }
 
     fn sync(&mut self) -> Result<(), RustError> {
-        if self.repository_path.exists() {
+        if self.repository_path.join(".git").exists() {
             // TODO: Make sure that nothing is left behind!
 
             if self.pull()? {
@@ -1090,6 +1109,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn clear(&mut self) -> Result<(), RustError> {
+        self.init_repository_if_needed()?;
+
         for storage in self.storage_mut() {
             storage.clear()?;
         }
@@ -1112,6 +1133,8 @@ impl StrideRepository for TaskStorage {
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
             recurring: &'a [DecryptedTask],
         }
+
+        self.init_repository_if_needed()?;
 
         for storage in self.storage_mut() {
             storage.load()?;
@@ -1143,6 +1166,8 @@ impl StrideRepository for TaskStorage {
             recurring: Vec<DecryptedTask>,
         }
 
+        self.init_repository_if_needed()?;
+
         let record: ImportRecord =
             serde_json::from_str(content).map_err(ImportError::Deserialize)?;
 
@@ -1165,6 +1190,8 @@ impl StrideRepository for TaskStorage {
     }
 
     fn commit(&mut self) -> Result<(), RustError> {
+        self.init_repository_if_needed()?;
+
         if self.repository_path.exists() {
             self.add_and_commit(
                 "General commit. (This should probably never actully result in a commit, \
