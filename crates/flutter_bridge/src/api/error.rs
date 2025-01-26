@@ -4,6 +4,7 @@ use crate::{
 };
 use flutter_rust_bridge::frb;
 use stride_crypto::crypter::Error as EncryptionError;
+use zip::result::ZipError;
 
 // pub type Result<T> = std::result::Result<T, Error>;
 
@@ -100,6 +101,42 @@ impl std::fmt::Display for ExportError {
 
 #[frb(ignore)]
 #[derive(Debug)]
+pub enum PluginError {
+    Decompression(ZipError),
+    Serialize(toml::ser::Error),
+    Deserialize(toml::de::Error),
+    UnknownFile { filename: String },
+    MissingManifest,
+    MissingCode,
+    InvalidCode(wasmi::Error),
+}
+
+impl std::error::Error for PluginError {}
+impl std::fmt::Display for PluginError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Decompression(error) => write!(f, "decompression error: {error}"),
+            Self::Deserialize(error) => {
+                write!(f, "deserialization error: {error}")
+            }
+            Self::Serialize(error) => {
+                write!(f, "serialize error: {error}")
+            }
+            Self::UnknownFile { filename } => write!(f, "unknown archive file: {filename}"),
+            Self::MissingManifest => write!(f, "missing manifest.toml"),
+            Self::MissingCode => write!(f, "missing code.wasm"),
+            Self::InvalidCode(error) => write!(f, "invalid code error: {error}"),
+        }
+    }
+}
+impl From<ZipError> for PluginError {
+    fn from(error: ZipError) -> Self {
+        Self::Decompression(error)
+    }
+}
+
+#[frb(ignore)]
+#[derive(Debug)]
 pub enum ErrorKind {
     NoSshKeysProvided,
     Io(std::io::Error),
@@ -136,6 +173,8 @@ pub enum ErrorKind {
     Base64Decode(base64::DecodeError),
 
     RepositoryNotFound,
+
+    Plugin(PluginError),
 }
 
 impl std::error::Error for ErrorKind {}
@@ -168,6 +207,7 @@ impl std::fmt::Display for ErrorKind {
             Self::VarEnv(error) => write!(f, "var env error: {error}"),
             Self::TaskChampion(error) => write!(f, "taskchampion error: {error}"),
             Self::RepositoryNotFound => write!(f, "repository not found"),
+            Self::Plugin(error) => write!(f, "plugin error: {error}"),
         }
     }
 }
@@ -217,6 +257,11 @@ impl From<base64::DecodeError> for ErrorKind {
         Self::Base64Decode(error)
     }
 }
+impl From<PluginError> for ErrorKind {
+    fn from(error: PluginError) -> Self {
+        Self::Plugin(error)
+    }
+}
 
 #[frb(opaque)]
 #[derive(Debug)]
@@ -258,6 +303,14 @@ impl RustError {
     }
 }
 
+impl<T: Into<ErrorKind>> From<T> for RustError {
+    fn from(value: T) -> Self {
+        Self {
+            repr: Box::new(value.into()),
+        }
+    }
+}
+
 impl From<git2::Error> for RustError {
     fn from(error: git2::Error) -> Self {
         let kind = match error.class() {
@@ -269,79 +322,6 @@ impl From<git2::Error> for RustError {
 
         Self {
             repr: Box::from(kind),
-        }
-    }
-}
-
-impl From<std::io::Error> for RustError {
-    fn from(error: std::io::Error) -> Self {
-        Self {
-            repr: Box::from(ErrorKind::Io(error)),
-        }
-    }
-}
-impl From<std::env::VarError> for RustError {
-    fn from(error: std::env::VarError) -> Self {
-        ErrorKind::from(error).into()
-    }
-}
-impl From<taskchampion::Error> for RustError {
-    fn from(value: taskchampion::Error) -> Self {
-        ErrorKind::from(value).into()
-    }
-}
-
-impl From<ErrorKind> for RustError {
-    fn from(error: ErrorKind) -> Self {
-        Self {
-            repr: Box::from(error),
-        }
-    }
-}
-
-impl From<ImportError> for RustError {
-    fn from(error: ImportError) -> Self {
-        Self {
-            repr: Box::new(error.into()),
-        }
-    }
-}
-
-impl From<ExportError> for RustError {
-    fn from(error: ExportError) -> Self {
-        Self {
-            repr: Box::new(error.into()),
-        }
-    }
-}
-impl From<EncryptionError> for RustError {
-    fn from(error: EncryptionError) -> Self {
-        Self {
-            repr: Box::from(ErrorKind::Encryption(error)),
-        }
-    }
-}
-
-impl From<KeyStoreError> for RustError {
-    fn from(error: KeyStoreError) -> Self {
-        Self {
-            repr: Box::from(ErrorKind::KeyStore(error)),
-        }
-    }
-}
-
-impl From<SettingsError> for RustError {
-    fn from(error: SettingsError) -> Self {
-        Self {
-            repr: Box::from(ErrorKind::Settings(error)),
-        }
-    }
-}
-
-impl From<base64::DecodeError> for RustError {
-    fn from(error: base64::DecodeError) -> Self {
-        Self {
-            repr: Box::from(ErrorKind::Base64Decode(error)),
         }
     }
 }
