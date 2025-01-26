@@ -10,6 +10,7 @@ use std::{
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
+        plugin::PluginManager,
         repository::{
             git::TaskStorage,
             taskchampion::{self, Replica},
@@ -277,6 +278,23 @@ fn main() -> anyhow::Result<()> {
             println!("Switching to repository: {}", repository.name);
             settings.current_repository = Some(uuid);
             Settings::save(settings)?;
+        }
+        Mode::Plugin { command } => {
+            let mut plugin_manager = PluginManager::new()?;
+            plugin_manager.load()?;
+            match command {
+                None => {
+                    let plugins = plugin_manager.list()?;
+                    for plugin in plugins {
+                        println!("{}", plugin.manifest.name);
+                    }
+                }
+                Some(command) => match command {
+                    cli::PluginCommand::Import { filepath } => {
+                        plugin_manager.import(filepath.to_string_lossy().to_string())?;
+                    }
+                },
+            };
         }
     }
 
