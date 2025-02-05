@@ -10,7 +10,6 @@ use std::{
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
-        plugin::PluginManager,
         repository::{
             git::TaskStorage,
             taskchampion::{self, Replica},
@@ -18,6 +17,7 @@ use stride_flutter_bridge::{
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
+    plugin::{Event, EventType, PluginManager},
     task::{Task, TaskStatus},
 };
 use url::Url;
@@ -101,6 +101,9 @@ fn main() -> anyhow::Result<()> {
         Settings::save(settings.clone())?;
         uuid
     };
+
+    let mut plugin_manager = PluginManager::new()?;
+    plugin_manager.load()?;
 
     let repository: &mut dyn StrideRepository = match args.repository {
         RepositoryType::Git => &mut TaskStorage::new(
@@ -193,6 +196,16 @@ fn main() -> anyhow::Result<()> {
             }
 
             let task = Task::new(content.trim().to_string());
+            plugin_manager.emit_event(&Event {
+                ty: EventType::StrideTaskCreate,
+            })?;
+            // plugin_manager.emit_event(Event {
+            //     ty: EventType::Custom {
+            //         name: "testing".to_string(),
+            //         sender: "me".to_string(),
+            //         receiver: "you".to_string(),
+            //     },
+            // })?;
             repository.add(task)?;
         }
         Mode::Sync => {
@@ -281,8 +294,6 @@ fn main() -> anyhow::Result<()> {
             Settings::save(settings)?;
         }
         Mode::Plugin { command } => {
-            let mut plugin_manager = PluginManager::new()?;
-            plugin_manager.load()?;
             match command {
                 None => {
                     let plugins = plugin_manager.list()?;
@@ -292,7 +303,10 @@ fn main() -> anyhow::Result<()> {
                 }
                 Some(command) => match command {
                     cli::PluginCommand::Import { filepath } => {
-                        plugin_manager.import(filepath.to_string_lossy().to_string())?;
+                        plugin_manager.import(&filepath.to_string_lossy())?;
+                    }
+                    cli::PluginCommand::Toggle { plugin_name } => {
+                        plugin_manager.toggle(&plugin_name)?;
                     }
                 },
             };
