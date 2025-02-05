@@ -12,6 +12,7 @@ use uuid::Uuid;
 pub mod api;
 pub mod git;
 pub mod key_store;
+pub mod plugin;
 pub mod task;
 
 pub use api::error::{ErrorKind, RustError};

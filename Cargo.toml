@@ -37,8 +37,9 @@ getrandom = "0.3"
 zeroize = { version = "1.0", features = ["zeroize_derive"] }
 dirs = "6.0"
 toml = "0.8"
-zip = { version = "2.2", default-features = false }
+zip = { version = "2.2" }
 wasmi = "0.40"
+wasmi_wasi = "0.40"
 
 [profile.release]
 # strip = "debug"

@@ -108,7 +108,11 @@ pub enum PluginError {
     UnknownFile { filename: String },
     MissingManifest,
     MissingCode,
+    InvalidName { name: String },
     InvalidCode(wasmi::Error),
+    InvalidEventHandlerName(String),
+    MissingEventHandler(String),
+    EventHandlerSignature(String),
 }
 
 impl std::error::Error for PluginError {}
@@ -125,7 +129,23 @@ impl std::fmt::Display for PluginError {
             Self::UnknownFile { filename } => write!(f, "unknown archive file: {filename}"),
             Self::MissingManifest => write!(f, "missing manifest.toml"),
             Self::MissingCode => write!(f, "missing code.wasm"),
+            Self::InvalidName { name } => write!(f, "invalid name error: {name}"),
             Self::InvalidCode(error) => write!(f, "invalid code error: {error}"),
+            Self::InvalidEventHandlerName(name) => {
+                write!(f, "invalid event handler name error: {name}")
+            }
+            Self::MissingEventHandler(name) => {
+                write!(
+                    f,
+                    "plugin code contains event that is not in manifest: {name}"
+                )
+            }
+            Self::EventHandlerSignature(name) => {
+                write!(
+                    f,
+                    "Event handler has incorrect signature (should be (*const u8, usize) -> bool): {name}"
+                )
+            }
         }
     }
 }

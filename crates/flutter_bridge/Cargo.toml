@@ -43,6 +43,7 @@ getrandom.workspace = true
 toml.workspace = true
 zip.workspace = true
 wasmi.workspace = true
+wasmi_wasi.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

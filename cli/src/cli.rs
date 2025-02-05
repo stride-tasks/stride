@@ -95,4 +95,9 @@ pub enum PluginCommand {
         /// Filepath to the .zip plugin archive.
         filepath: PathBuf,
     },
+    /// Enable/Disable plugin.
+    Toggle {
+        /// Plugin to toggle.
+        plugin_name: String,
+    },
 }
