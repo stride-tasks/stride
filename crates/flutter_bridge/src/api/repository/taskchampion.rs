@@ -2,7 +2,7 @@ use std::{mem, path::Path};
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use taskchampion::{storage::SqliteStorage, Operations};
+use taskchampion::{Operations, StorageConfig};
 
 use super::StrideRepository;
 
@@ -28,8 +28,13 @@ impl Replica {
         server_config: ServerConfig,
         constraint_environment: bool,
     ) -> Result<Self, crate::RustError> {
-        let storage = SqliteStorage::new(storage_dir, true)?;
-        let source = taskchampion::Replica::new(Box::new(storage));
+        let storage = StorageConfig::OnDisk {
+            taskdb_dir: storage_dir.to_path_buf(),
+            create_if_missing: true,
+            access_mode: taskchampion::storage::AccessMode::ReadWrite,
+        }
+        .into_storage()?;
+        let source = taskchampion::Replica::new(storage);
 
         Ok(Self {
             source,

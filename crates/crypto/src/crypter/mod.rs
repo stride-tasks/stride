@@ -73,7 +73,7 @@ impl Crypter {
     #[must_use]
     pub fn generate() -> Self {
         let mut key = [0u8; Aes256Ocb::KEY_LEN];
-        getrandom::getrandom(&mut key).expect("could not get random");
+        getrandom::fill(&mut key).expect("could not get random");
         Self {
             encryption_key: key,
         }
@@ -86,7 +86,7 @@ impl Crypter {
     /// Panics if we can't get random bytes from `getrandom`.
     pub fn encrypt(&self, data: &[u8], aad: &[u8]) -> Result<Vec<u8>> {
         let mut iv = [0u8; Aes256Ocb::IV_LEN];
-        getrandom::getrandom(&mut iv).expect("cannot get random");
+        getrandom::fill(&mut iv).expect("cannot get random");
 
         let mut tag = [0u8; Aes256Ocb::TAG_LEN];
         let ciphertext = openssl::symm::encrypt_aead(

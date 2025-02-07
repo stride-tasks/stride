@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=3.24.3
+VERSION=3.27.4
 
 APP_DIR="$( cd "$( dirname "$0" )" && pwd )"
 FLUTTER_DIR="$APP_DIR/.flutter"

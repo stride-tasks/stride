@@ -255,7 +255,7 @@ impl PrivateKey {
         let keytype = KeyType::Ed25519;
 
         let mut checkint_bytes = [0u8; size_of::<u32>()];
-        getrandom::getrandom(&mut checkint_bytes).expect("unable to get random bytes");
+        getrandom::fill(&mut checkint_bytes).expect("unable to get random bytes");
         let checkint = u32::from_be_bytes(checkint_bytes);
 
         Self {
