@@ -3,7 +3,6 @@
   lib,
   # nativeBuildInputs
   perl,
-  sqlite,
   ...
 }: let
   pname = "stride";
@@ -51,10 +50,7 @@ in
       perl
     ];
 
-    buildInputs = [
-      # Required by the `taskchampion` crate
-      sqlite
-    ];
+    buildInputs = [];
 
     doCheck = true;
 

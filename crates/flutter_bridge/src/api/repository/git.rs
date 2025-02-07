@@ -96,7 +96,7 @@ const IV_LEN: usize = 12;
 
 pub(crate) fn generate_iv() -> [u8; IV_LEN] {
     let mut iv = [0u8; IV_LEN];
-    getrandom::getrandom(&mut iv).unwrap();
+    getrandom::fill(&mut iv).unwrap();
     iv
 }
 

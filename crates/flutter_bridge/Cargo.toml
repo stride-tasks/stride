@@ -15,10 +15,11 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
-flutter_rust_bridge = { version = "=2.6.0", default-features = false, features = ["thread-pool", "rust-async", "user-utils", "dart-opaque", "chrono", "uuid", "anyhow"] }
-taskchampion = { version = "0.8.0", default-features = false, features = [
+flutter_rust_bridge = { version = "=2.7.1", default-features = false, features = ["thread-pool", "rust-async", "user-utils", "dart-opaque", "chrono", "uuid", "anyhow"] }
+taskchampion = { version = "2.0.2", default-features = false, features = [
   "encryption",
   "server-sync",
+  "bundled",
 ] }
 
 stride_crypto.workspace = true
