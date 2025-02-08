@@ -102,7 +102,8 @@ fn main() -> anyhow::Result<()> {
         uuid
     };
 
-    let mut plugin_manager = PluginManager::new()?;
+    let plugins_path = support_dir.join("plugins");
+    let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
     let repository: &mut dyn StrideRepository = match args.repository {

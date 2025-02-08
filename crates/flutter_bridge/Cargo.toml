@@ -15,6 +15,9 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
+stride_crypto.workspace = true
+stride_plugin_manager.workspace = true
+
 flutter_rust_bridge = { version = "=2.7.1", default-features = false, features = [
   "thread-pool",
   "rust-async",
@@ -29,8 +32,6 @@ taskchampion = { version = "2.0.2", default-features = false, features = [
   "server-sync",
   "bundled",
 ] }
-
-stride_crypto.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
@@ -40,10 +41,6 @@ base64.workspace = true
 log.workspace = true
 env_logger.workspace = true
 getrandom.workspace = true
-toml.workspace = true
-zip.workspace = true
-wasmi.workspace = true
-wasmi_wasi.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

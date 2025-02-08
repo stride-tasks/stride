@@ -17,6 +17,7 @@ description = "An extensible task menagment application that uses git as it's da
 # Repository Crates
 stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
+stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
 
 # Shared Dependencies
 serde = { version = "1.0", features = ["derive"] }

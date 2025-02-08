@@ -1,0 +1,27 @@
+[package]
+name = "stride_plugin_manager"
+description = "Stride WebAssemply plugin manager"
+keywords = ["stride", "wasm", "plugin"]
+categories = []
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+zip.workspace = true
+wasmi.workspace = true
+wasmi_wasi.workspace = true
+serde.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

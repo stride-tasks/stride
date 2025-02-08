@@ -2,7 +2,7 @@ use std::io::Write;
 
 use wasmi_wasi::wasi_common::pipe::WritePipe;
 
-use crate::api::logging::Logger;
+// use crate::api::logging::Logger;
 
 pub(crate) struct PluginLogger {
     plugin_name: String,
@@ -26,9 +26,9 @@ impl Write for PluginLogger {
             String::from_utf8_lossy(buf)
         );
         if self.is_error {
-            Logger::error(result.trim());
+            // Logger::error(result.trim());
         } else {
-            Logger::info(result.trim());
+            // Logger::info(result.trim());
         }
 
         Ok(buf.len())

@@ -12,10 +12,11 @@ use uuid::Uuid;
 pub mod api;
 pub mod git;
 pub mod key_store;
-pub mod plugin;
 pub mod task;
 
 pub use api::error::{ErrorKind, RustError};
+
+pub use stride_plugin_manager as plugin;
 
 #[allow(clippy::unreadable_literal)]
 #[allow(unused_qualifications)]
