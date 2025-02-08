@@ -1847,9 +1847,17 @@ dependencies = [
  "serde",
  "serde_json",
  "stride_crypto",
+ "stride_plugin_manager",
  "taskchampion",
- "toml",
  "uuid",
+]
+
+[[package]]
+name = "stride_plugin_manager"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "toml",
  "wasmi",
  "wasmi_wasi",
  "zip",

@@ -1,24 +1,25 @@
-mod logging;
+//! Plugin Manager used in `stride`.
+
+#![allow(clippy::missing_errors_doc)]
 
 use std::{
     collections::{HashMap, VecDeque},
     fmt::Debug,
     fs::File,
     io::Read,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
-use flutter_rust_bridge::frb;
 use logging::PluginLogger;
 use serde::{Deserialize, Serialize};
 use wasmi::{core::ValType, Caller, Config, Engine, Func, Linker, Module, Store};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
-use crate::{
-    api::{error::PluginError, logging::Logger, settings::application_support_path},
-    ErrorKind, RustError,
-};
+mod error;
+mod logging;
+
+pub use error::{Error, Result};
 
 /// Creates the [`WasiCtx`] for this session.
 fn wasi_context(plugin_name: &str) -> WasiCtx {
@@ -48,7 +49,6 @@ struct HostState {
     wasi: WasiCtx,
 }
 
-#[frb(ignore)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EventType {
     pub plugin: String,
@@ -70,14 +70,12 @@ impl EventType {
     }
 }
 
-#[frb(ignore)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EventHandlerType {
     plugin: String,
     ty: String,
 }
 
-#[frb(ignore)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Event {
     pub ty: EventType,
@@ -145,14 +143,9 @@ pub struct Plugin {
 }
 
 pub trait Hook: Debug {
-    fn hook(
-        &mut self,
-        plugin_manager: &mut PluginManager,
-        event: &Event,
-    ) -> Result<bool, RustError>;
+    fn hook(&mut self, plugin_manager: &mut PluginManager, event: &Event) -> Result<bool>;
 }
 
-#[frb(ignore)]
 #[derive(Debug)]
 pub struct PluginManager {
     plugins_path: PathBuf,
@@ -165,10 +158,10 @@ pub struct PluginManager {
 }
 
 impl PluginManager {
-    pub fn new() -> Result<Self, RustError> {
-        let plugins_path = application_support_path().join("plugins");
+    pub fn new(plugins_path: &Path) -> Result<Self> {
+        // let plugins_path = application_support_path().join("plugins");
         if !plugins_path.exists() {
-            std::fs::create_dir_all(&plugins_path)?;
+            std::fs::create_dir_all(plugins_path)?;
         }
 
         let mut config = Config::default();
@@ -176,7 +169,7 @@ impl PluginManager {
         let engine = Engine::new(&config);
 
         Ok(Self {
-            plugins_path,
+            plugins_path: plugins_path.to_path_buf(),
             plugins: Vec::new(),
 
             engine,
@@ -186,7 +179,7 @@ impl PluginManager {
         })
     }
 
-    pub fn load(&mut self) -> Result<(), RustError> {
+    pub fn load(&mut self) -> Result<()> {
         let entries = self.plugins_path.read_dir()?;
 
         let mut plugins = Vec::new();
@@ -205,8 +198,8 @@ impl PluginManager {
 
             let manifest_content = std::fs::read_to_string(&manifest_path)?;
 
-            let manifest: PluginManifest<PluginState> = toml::from_str(&manifest_content)
-                .map_err(|error| ErrorKind::from(PluginError::Deserialize(error)))?;
+            let manifest: PluginManifest<PluginState> =
+                toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
 
             if !manifest.state.enabled {
                 continue;
@@ -219,13 +212,12 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn list(&self) -> Result<&[Plugin], RustError> {
+    pub fn list(&self) -> Result<&[Plugin]> {
         Ok(&self.plugins)
     }
 
-    fn validate_wasm_code(&self, manifest: &PluginManifest, wasm: &[u8]) -> Result<(), RustError> {
-        let module = Module::new(&self.engine, wasm)
-            .map_err(|error| RustError::from(PluginError::InvalidCode(error)))?;
+    fn validate_wasm_code(&self, manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
+        let module = Module::new(&self.engine, wasm).map_err(Error::InvalidCode)?;
 
         let mut event_handler_exports = HashMap::new();
         for export in module.exports() {
@@ -235,23 +227,23 @@ impl PluginManager {
 
             let name = export.name();
             if !name.starts_with(EVENT_HANDLER_PREFIX) {
-                Logger::warn(&format!(
-                    "Plugin({}): Skipping exported function: {name}",
-                    manifest.name
-                ));
+                // Logger::warn(&format!(
+                //     "Plugin({}): Skipping exported function: {name}",
+                //     manifest.name
+                // ));
                 continue;
             }
             let name_without_prefix = &name[EVENT_HANDLER_PREFIX.len()..];
             let Some((plugin_name, event_type)) = name_without_prefix.split_once("__") else {
-                return Err(PluginError::InvalidEventHandlerName(name.to_string()).into());
+                return Err(Error::InvalidEventHandlerName(name.to_string()));
             };
 
             let event_type = event_type.replace('_', "-");
             let Some(plugin_event) = manifest.events.get(plugin_name) else {
-                Logger::warn(&format!(
-                    "Plugin({}): manifest missing event handler: {plugin_name}/{event_type}",
-                    manifest.name
-                ));
+                // Logger::warn(&format!(
+                //     "Plugin({}): manifest missing event handler: {plugin_name}/{event_type}",
+                //     manifest.name
+                // ));
                 continue;
             };
             let event_handler_export = event_handler_exports
@@ -259,66 +251,63 @@ impl PluginManager {
                 .or_insert_with(Vec::new);
 
             if !plugin_event.types.contains(&event_type) {
-                return Err(PluginError::MissingEventHandler(format!(
+                return Err(Error::MissingEventHandler(format!(
                     "{plugin_name}/{event_type}"
-                ))
-                .into());
+                )));
             }
             event_handler_export.push(event_type);
 
             let params = func.params();
             if params != [ValType::I32, ValType::I32] {
-                return Err(PluginError::EventHandlerSignature(name.to_string()).into());
+                return Err(Error::EventHandlerSignature(name.to_string()));
             }
 
             let results = func.results();
             if results != [ValType::I32] {
-                return Err(PluginError::EventHandlerSignature(name.to_string()).into());
+                return Err(Error::EventHandlerSignature(name.to_string()));
             }
         }
         // for hook in
         Ok(())
     }
 
-    pub fn import(&mut self, plugin_archive_path: &str) -> Result<(), RustError> {
+    pub fn import(&mut self, plugin_archive_path: &str) -> Result<()> {
         let file = File::open(plugin_archive_path)?;
-        let mut archive = ZipArchive::new(file).map_err(PluginError::from)?;
+        let mut archive = ZipArchive::new(file).map_err(Error::from)?;
 
         let mut manifest: Option<PluginManifest> = None;
         let mut code_content = None;
 
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).map_err(PluginError::from)?;
+            let mut file = archive.by_index(i).map_err(Error::from)?;
             let filename = file.name();
             if filename == "manifest.toml" {
                 let mut contents = String::new();
                 file.read_to_string(&mut contents)?;
-                manifest = Some(toml::from_str(&contents).map_err(PluginError::Deserialize)?);
+                manifest = Some(toml::from_str(&contents).map_err(Error::Deserialize)?);
             } else if filename == "code.wasm" {
                 let mut contents = Vec::<u8>::new();
                 file.read_to_end(&mut contents)?;
                 code_content = Some(contents);
             } else {
-                return Err(PluginError::UnknownFile {
+                return Err(Error::UnknownFile {
                     filename: filename.to_string(),
-                }
-                .into());
+                });
             }
         }
 
         let Some(manifest) = manifest else {
-            return Err(PluginError::MissingManifest.into());
+            return Err(Error::MissingManifest);
         };
 
         if manifest.name.is_empty() || manifest.name.len() > 255 || !manifest.name.is_ascii() {
-            return Err(PluginError::InvalidName {
+            return Err(Error::InvalidName {
                 name: manifest.name.to_string(),
-            }
-            .into());
+            });
         }
 
         let Some(code_content) = code_content else {
-            return Err(PluginError::MissingCode.into());
+            return Err(Error::MissingCode);
         };
 
         self.validate_wasm_code(&manifest, &code_content)?;
@@ -336,7 +325,7 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn toggle(&mut self, plugin_name: &str) -> Result<bool, RustError> {
+    pub fn toggle(&mut self, plugin_name: &str) -> Result<bool> {
         let Some(plugin) = self
             .plugins
             .iter_mut()
@@ -353,20 +342,20 @@ impl PluginManager {
 
         let manifest_path = source_path.join("manifest.toml");
         let manifest_content =
-            toml::to_string_pretty(&plugin.manifest).map_err(PluginError::Serialize)?;
+            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
         std::fs::write(&manifest_path, manifest_content)?;
 
         Ok(true)
     }
 
-    fn install(&mut self, plugin: Plugin, code: &[u8]) -> Result<(), RustError> {
+    fn install(&mut self, plugin: Plugin, code: &[u8]) -> Result<()> {
         let plugin_path = self.plugins_path.join(&plugin.manifest.name);
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
         let manifest_path = source_path.join("manifest.toml");
         let manifest_content =
-            toml::to_string_pretty(&plugin.manifest).map_err(PluginError::Serialize)?;
+            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
         std::fs::write(&manifest_path, manifest_content)?;
 
         let code_path = source_path.join("code.wasm");
@@ -379,7 +368,7 @@ impl PluginManager {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_wrap)]
-    pub fn emit_event(&mut self, event: &Event) -> Result<(), RustError> {
+    pub fn emit_event(&mut self, event: &Event) -> Result<()> {
         for plugin in &self.plugins {
             if !plugin
                 .manifest
@@ -442,7 +431,7 @@ impl PluginManager {
             linker
                 .define(
                     "env",
-                    "stride__resource__get__stirde__task_title",
+                    "stride__resource_get__stirde__task_title",
                     host_hello,
                 )
                 .unwrap();

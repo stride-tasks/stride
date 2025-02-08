@@ -4,7 +4,7 @@ use crate::{
 };
 use flutter_rust_bridge::frb;
 use stride_crypto::crypter::Error as EncryptionError;
-use zip::result::ZipError;
+use stride_plugin_manager::Error as PluginError;
 
 // pub type Result<T> = std::result::Result<T, Error>;
 
@@ -96,62 +96,6 @@ impl std::fmt::Display for ExportError {
                 write!(f, "serialization error: {error}")
             }
         }
-    }
-}
-
-#[frb(ignore)]
-#[derive(Debug)]
-pub enum PluginError {
-    Decompression(ZipError),
-    Serialize(toml::ser::Error),
-    Deserialize(toml::de::Error),
-    UnknownFile { filename: String },
-    MissingManifest,
-    MissingCode,
-    InvalidName { name: String },
-    InvalidCode(wasmi::Error),
-    InvalidEventHandlerName(String),
-    MissingEventHandler(String),
-    EventHandlerSignature(String),
-}
-
-impl std::error::Error for PluginError {}
-impl std::fmt::Display for PluginError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Decompression(error) => write!(f, "decompression error: {error}"),
-            Self::Deserialize(error) => {
-                write!(f, "deserialization error: {error}")
-            }
-            Self::Serialize(error) => {
-                write!(f, "serialize error: {error}")
-            }
-            Self::UnknownFile { filename } => write!(f, "unknown archive file: {filename}"),
-            Self::MissingManifest => write!(f, "missing manifest.toml"),
-            Self::MissingCode => write!(f, "missing code.wasm"),
-            Self::InvalidName { name } => write!(f, "invalid name error: {name}"),
-            Self::InvalidCode(error) => write!(f, "invalid code error: {error}"),
-            Self::InvalidEventHandlerName(name) => {
-                write!(f, "invalid event handler name error: {name}")
-            }
-            Self::MissingEventHandler(name) => {
-                write!(
-                    f,
-                    "plugin code contains event that is not in manifest: {name}"
-                )
-            }
-            Self::EventHandlerSignature(name) => {
-                write!(
-                    f,
-                    "Event handler has incorrect signature (should be (*const u8, usize) -> bool): {name}"
-                )
-            }
-        }
-    }
-}
-impl From<ZipError> for PluginError {
-    fn from(error: ZipError) -> Self {
-        Self::Decompression(error)
     }
 }
 
