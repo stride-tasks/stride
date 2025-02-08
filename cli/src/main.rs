@@ -197,15 +197,12 @@ fn main() -> anyhow::Result<()> {
 
             let task = Task::new(content.trim().to_string());
             plugin_manager.emit_event(&Event {
-                ty: EventType::StrideTaskCreate,
+                ty: EventType {
+                    plugin: "stride".into(),
+                    name: "task-remove".into(),
+                },
+                data: Uuid::now_v7().as_bytes().to_vec(),
             })?;
-            // plugin_manager.emit_event(Event {
-            //     ty: EventType::Custom {
-            //         name: "testing".to_string(),
-            //         sender: "me".to_string(),
-            //         receiver: "you".to_string(),
-            //     },
-            // })?;
             repository.add(task)?;
         }
         Mode::Sync => {

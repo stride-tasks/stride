@@ -1,13 +1,18 @@
 mod logging;
 
-use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
+use std::{
+    collections::{HashMap, VecDeque},
+    fmt::Debug,
+    fs::File,
+    io::Read,
+    path::PathBuf,
+};
 
 use flutter_rust_bridge::frb;
 use logging::PluginLogger;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use wasmi::{core::ValType, Config, Engine, Linker, Module, Store};
-use wasmi_wasi::WasiCtxBuilder;
+use wasmi::{core::ValType, Caller, Config, Engine, Func, Linker, Module, Store};
+use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
 use crate::{
@@ -15,42 +20,50 @@ use crate::{
     ErrorKind, RustError,
 };
 
+/// Creates the [`WasiCtx`] for this session.
+fn wasi_context(plugin_name: &str) -> WasiCtx {
+    let mut wasi_builder = WasiCtxBuilder::new();
+    // wasi_builder.preopened_dir(Dir::, guest_path);
+    // wasi_builder.args(&self.argv())?;
+    // Add pre-opened TCP sockets.
+    //
+    // Note that `num_fd` starts at 3 because the inherited `stdin`, `stdout` and `stderr`
+    // are already mapped to `0, 1, 2` respectively.
+
+    // wasi_builder.inherit_stdout();
+    wasi_builder.stdout(Box::new(PluginLogger::new(plugin_name.to_string(), false)));
+    wasi_builder.stderr(Box::new(PluginLogger::new(plugin_name.to_string(), true)));
+
+    // for (socket, num_fd) in self.preopen_sockets()?.into_iter().zip(3..) {
+    //     wasi_builder.preopened_socket(num_fd, socket)?;
+    // }
+    // Add pre-opened directories.
+    // for (dir_name, dir) in self.preopen_dirs()? {
+    //     wasi_builder.preopened_dir(dir, dir_name)?;
+    // }
+    wasi_builder.build()
+}
+
+struct HostState {
+    wasi: WasiCtx,
+}
+
 #[frb(ignore)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum EventType {
-    StrideTaskCreate,
-    StrideTaskRemove,
-
-    Plugin { plugin: String, name: String },
+pub struct EventType {
+    pub plugin: String,
+    pub name: String,
 }
 
 impl EventType {
     fn plugin_name(&self) -> &str {
-        match self {
-            Self::Plugin { plugin, .. } => plugin,
-            _ => "stride",
-        }
+        &self.plugin
     }
     fn event_name(&self) -> &str {
-        match self {
-            EventType::StrideTaskCreate => "task-create",
-            EventType::StrideTaskRemove => "task-remove",
-            Self::Plugin { name, .. } => name,
-        }
+        &self.name
     }
     fn new(plugin_name: &str, event_name: &str) -> Self {
-        if plugin_name == "stride" {
-            return match event_name {
-                "task-create" => Self::StrideTaskCreate,
-                "task-remove" => Self::StrideTaskRemove,
-                _ => Self::Plugin {
-                    plugin: plugin_name.to_string(),
-                    name: event_name.to_string(),
-                },
-            };
-        }
-
-        Self::Plugin {
+        Self {
             plugin: plugin_name.to_string(),
             name: event_name.to_string(),
         }
@@ -68,6 +81,7 @@ pub struct EventHandlerType {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Event {
     pub ty: EventType,
+    pub data: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -76,7 +90,7 @@ pub enum PluginApi {
     V1,
 }
 
-const EVENT_HANDLER_PREFIX: &str = "stride__event_handler__";
+const EVENT_HANDLER_PREFIX: &str = "stride__handler__";
 
 pub type PluginName = String;
 pub type EventName = String;
@@ -130,6 +144,14 @@ pub struct Plugin {
     pub manifest: PluginManifest<PluginState>,
 }
 
+pub trait Hook: Debug {
+    fn hook(
+        &mut self,
+        plugin_manager: &mut PluginManager,
+        event: &Event,
+    ) -> Result<bool, RustError>;
+}
+
 #[frb(ignore)]
 #[derive(Debug)]
 pub struct PluginManager {
@@ -137,6 +159,9 @@ pub struct PluginManager {
     plugins: Vec<Plugin>,
 
     engine: Engine,
+
+    hooks: HashMap<EventType, Box<dyn Hook + 'static>>,
+    events: VecDeque<Event>,
 }
 
 impl PluginManager {
@@ -155,6 +180,9 @@ impl PluginManager {
             plugins: Vec::new(),
 
             engine,
+
+            hooks: HashMap::new(),
+            events: VecDeque::new(),
         })
     }
 
@@ -352,29 +380,6 @@ impl PluginManager {
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_wrap)]
     pub fn emit_event(&mut self, event: &Event) -> Result<(), RustError> {
-        /// Creates the [`WasiCtx`] for this session.
-        fn wasi_context(plugin_name: &str) -> wasmi_wasi::WasiCtx {
-            let mut wasi_builder = WasiCtxBuilder::new();
-            // wasi_builder.preopened_dir(Dir::, guest_path);
-            // wasi_builder.args(&self.argv())?;
-            // Add pre-opened TCP sockets.
-            //
-            // Note that `num_fd` starts at 3 because the inherited `stdin`, `stdout` and `stderr`
-            // are already mapped to `0, 1, 2` respectively.
-
-            // wasi_builder.inherit_stdout();
-            wasi_builder.stdout(Box::new(PluginLogger::new(plugin_name.to_string(), false)));
-            wasi_builder.stderr(Box::new(PluginLogger::new(plugin_name.to_string(), true)));
-
-            // for (socket, num_fd) in self.preopen_sockets()?.into_iter().zip(3..) {
-            //     wasi_builder.preopened_socket(num_fd, socket)?;
-            // }
-            // Add pre-opened directories.
-            // for (dir_name, dir) in self.preopen_dirs()? {
-            //     wasi_builder.preopened_dir(dir, dir_name)?;
-            // }
-            wasi_builder.build()
-        }
         for plugin in &self.plugins {
             if !plugin
                 .manifest
@@ -416,33 +421,32 @@ impl PluginManager {
                     .insert(EventType::new(plugin_name, event_type.as_str()), name);
             }
 
-            // All Wasm objects operate within the context of a `Store`.
-            // Each `Store` has a type parameter to store host-specific data,
-            // which in this case we are using `42` for.
-            // type HostState = ();
-            // let mut store = Store::new(&self.engine, ());
-
             let wasi_ctx = wasi_context(&plugin.manifest.name);
-            let mut store = Store::new(&self.engine, wasi_ctx);
+            let host_state = HostState { wasi: wasi_ctx };
+            let mut store = Store::new(&self.engine, host_state);
             store.set_fuel(500).unwrap();
-            // let host_hello =
-            //     Func::wrap(&mut store, |caller: Caller<'_, HostState>, param: i32| {
-            //         println!("Got {param} from WebAssembly");
-            //         println!("My host state is: {}", caller.data());
-            //     });
 
             // In order to create Wasm module instances and link their imports
             // and exports we require a `Linker`.
-            let mut linker = <Linker<wasmi_wasi::WasiCtx>>::new(&self.engine);
+            let mut linker = <Linker<HostState>>::new(&self.engine);
 
-            wasmi_wasi::add_to_linker(&mut linker, |ctx| ctx).unwrap();
+            wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).unwrap();
 
-            // Instantiation of a Wasm module requires defining its imports and then
-            // afterwards we can fetch exports by name, as well as asserting the
-            // type signature of the function with `get_typed_func`.
-            //
-            // Also before using an instance created this way we need to start it.
-            // linker.define("host", "hello", host_hello)?;
+            let host_hello = Func::wrap(
+                &mut store,
+                |_caller: Caller<'_, HostState>, param1: i32, param2: i32, param3: i32| {
+                    println!("Got {param1},{param2},{param3} from WebAssembly");
+                    0
+                },
+            );
+            linker
+                .define(
+                    "env",
+                    "stride__resource__get__stirde__task_title",
+                    host_hello,
+                )
+                .unwrap();
+
             let instance = linker
                 .instantiate(&mut store, &module)
                 .unwrap()
@@ -465,15 +469,14 @@ impl PluginManager {
                 .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
                 .unwrap();
 
-            let event_data = Uuid::now_v7().to_bytes_le();
             store.set_fuel(50_000).unwrap();
             let ret = stride_allocate
-                .call(&mut store, event_data.len() as i32)
+                .call(&mut store, event.data.len() as i32)
                 .unwrap() as usize;
 
             let memory = instance.get_memory(&mut store, "memory").unwrap();
-            memory.data_mut(&mut store)[ret..ret + event_data.len()]
-                .copy_from_slice(event_data.as_slice());
+            memory.data_mut(&mut store)[ret..ret + event.data.len()]
+                .copy_from_slice(event.data.as_slice());
 
             let Some(event_handler) = event_handlers.get(&event.ty) else {
                 println!("Spec is incorrect/mismatch: {:?}", event.ty);
@@ -482,13 +485,21 @@ impl PluginManager {
 
             // And finally we can call the wasm!
             event_handler
-                .call(&mut store, (ret as i32, event_data.len() as i32))
+                .call(&mut store, (ret as i32, event.data.len() as i32))
                 .unwrap();
 
             stride_deallocate
-                .call(&mut store, (ret as i32, event_data.len() as i32))
+                .call(&mut store, (ret as i32, event.data.len() as i32))
                 .unwrap();
         }
         Ok(())
+    }
+
+    pub fn insert_hook<T: Hook + 'static>(
+        &mut self,
+        event_type: EventType,
+        hook: T,
+    ) -> Option<Box<dyn Hook>> {
+        self.hooks.insert(event_type, Box::new(hook))
     }
 }
