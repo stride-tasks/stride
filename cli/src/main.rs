@@ -3,9 +3,11 @@ use clap::Parser;
 use cli::{CliArgs, Mode, RepositoryType};
 use serde::{Deserialize, Serialize};
 use std::{
+    cell::RefCell,
     fs,
     io::Read,
     path::{Path, PathBuf},
+    rc::Rc,
 };
 use stride_flutter_bridge::{
     api::{
@@ -17,8 +19,9 @@ use stride_flutter_bridge::{
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
-    plugin::{Event, EventType, PluginManager},
+    plugin::{Event, EventType, Hook, PluginManager},
     task::{Task, TaskStatus},
+    RustError,
 };
 use url::Url;
 use uuid::Uuid;
@@ -72,6 +75,40 @@ pub enum PluginEvent {
     TaskSync,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum EmitEvent {
+    TaskCreate { task: Task },
+    TaskRemove { task: Uuid },
+    TaskModify { task: Task },
+    TaskSync,
+}
+
+struct TestHook {
+    repository: Rc<RefCell<dyn StrideRepository>>,
+}
+
+impl std::fmt::Debug for TestHook {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
+}
+
+impl Hook<RustError> for TestHook {
+    fn hook(&mut self, plugin: &str, event_data: &[u8]) -> Result<bool, RustError> {
+        let event: EmitEvent = serde_json::from_slice(event_data).unwrap();
+
+        // TODO: Check if a plugin can create a task.
+        match event {
+            EmitEvent::TaskCreate { task } => {
+                println!("CREATE: {task:#?}");
+                self.repository.borrow_mut().add(task)?;
+            }
+            _ => println!("IGNORED: {event:#?}"),
+        }
+        Ok(true)
+    }
+}
+
 #[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<()> {
     // TODO(@bpeetz): Re-add the functionality of running `stride` without
@@ -120,15 +157,15 @@ fn main() -> anyhow::Result<()> {
     };
 
     let plugins_path = support_dir.join("plugins");
-    let mut plugin_manager = PluginManager::new(&plugins_path)?;
+    let mut plugin_manager = PluginManager::<RustError>::new(&plugins_path)?;
     plugin_manager.load()?;
 
-    let repository: &mut dyn StrideRepository = match args.repository {
-        RepositoryType::Git => &mut TaskStorage::new(
+    let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
+        RepositoryType::Git => Rc::new(RefCell::new(TaskStorage::new(
             current_repository,
             &support_dir.join("repository").to_string_lossy(),
             &settings,
-        )?,
+        )?)),
         RepositoryType::TaskChampion => {
             let data_dir =
                 choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
@@ -179,16 +216,22 @@ fn main() -> anyhow::Result<()> {
             };
             let constraint_environment = false;
 
-            &mut Replica::new(&db_path, server_config, constraint_environment).with_context(
-                || {
-                    format!(
-                        "Failed to initialize taskchampion storage at: {}",
-                        db_path.display()
-                    )
-                },
-            )?
+            Rc::new(RefCell::new(
+                Replica::new(&db_path, server_config, constraint_environment).with_context(
+                    || {
+                        format!(
+                            "Failed to initialize taskchampion storage at: {}",
+                            db_path.display()
+                        )
+                    },
+                )?,
+            ))
         }
     };
+
+    plugin_manager.insert_hook(TestHook {
+        repository: repository.clone(),
+    });
 
     match args.mode {
         Mode::Search { filter } => {
@@ -197,7 +240,7 @@ fn main() -> anyhow::Result<()> {
                 status: [TaskStatus::Pending].into(),
                 ..Default::default()
             };
-            let tasks = repository.tasks_with_filter(&filter)?;
+            let tasks = repository.borrow_mut().tasks_with_filter(&filter)?;
             print_tasks(&tasks);
         }
         Mode::Add { content } => {
@@ -217,17 +260,17 @@ fn main() -> anyhow::Result<()> {
                 task: Some(Box::new(task.clone())),
             };
             let json = serde_json::to_string(&event_data)?;
-            repository.add(task)?;
+            repository.borrow_mut().add(task)?;
             plugin_manager.emit_event(&Event {
                 ty: EventType {
                     plugin: "stride".into(),
                     name: "task-create".into(),
                 },
                 data: json.into(),
-            })?;
+            })??;
         }
         Mode::Sync => {
-            repository.sync()?;
+            repository.borrow_mut().sync()?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
@@ -283,7 +326,7 @@ fn main() -> anyhow::Result<()> {
             // }
         }
         Mode::Export { filepath } => {
-            let contents = repository.export()?;
+            let contents = repository.borrow_mut().export()?;
             if let Some(filepath) = filepath {
                 fs::write(filepath, contents)?;
             } else {
@@ -298,7 +341,7 @@ fn main() -> anyhow::Result<()> {
                 std::io::stdin().read_to_string(&mut contents)?;
                 contents
             };
-            repository.import(&contents)?;
+            repository.borrow_mut().import(&contents)?;
         }
         Mode::Repository { uuid } => {
             let mut settings = Settings::get();
@@ -332,6 +375,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     repository
+        .borrow_mut()
         .commit()
         .context("Failed to commit the change to the repository")?;
 

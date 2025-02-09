@@ -47,6 +47,7 @@ fn wasi_context(plugin_name: &str) -> WasiCtx {
 
 struct HostState {
     wasi: WasiCtx,
+    events: VecDeque<Vec<u8>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -142,22 +143,21 @@ pub struct Plugin {
     pub manifest: PluginManifest<PluginState>,
 }
 
-pub trait Hook: Debug {
-    fn hook(&mut self, plugin_manager: &mut PluginManager, event: &Event) -> Result<bool>;
+pub trait Hook<E>: Debug {
+    fn hook(&mut self, plugin: &str, event_data: &[u8]) -> std::result::Result<bool, E>;
 }
 
 #[derive(Debug)]
-pub struct PluginManager {
+pub struct PluginManager<R> {
     plugins_path: PathBuf,
     plugins: Vec<Plugin>,
 
     engine: Engine,
 
-    hooks: HashMap<EventType, Box<dyn Hook + 'static>>,
-    events: VecDeque<Event>,
+    hook: Option<Box<dyn Hook<R>>>,
 }
 
-impl PluginManager {
+impl<R> PluginManager<R> {
     pub fn new(plugins_path: &Path) -> Result<Self> {
         // let plugins_path = application_support_path().join("plugins");
         if !plugins_path.exists() {
@@ -174,8 +174,7 @@ impl PluginManager {
 
             engine,
 
-            hooks: HashMap::new(),
-            events: VecDeque::new(),
+            hook: None,
         })
     }
 
@@ -341,7 +340,7 @@ impl PluginManager {
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn emit_event(&mut self, event: &Event) -> Result<()> {
+    pub fn emit_event(&mut self, event: &Event) -> Result<std::result::Result<(), R>> {
         for plugin in &self.plugins {
             if !plugin
                 .manifest
@@ -363,79 +362,38 @@ impl PluginManager {
             let module = Module::new(&self.engine, &wasm).expect("already validated");
 
             let wasi_ctx = wasi_context(&plugin.manifest.name);
-            let host_state = HostState { wasi: wasi_ctx };
+            let host_state = HostState {
+                wasi: wasi_ctx,
+                events: VecDeque::default(),
+            };
             let mut store = Store::new(&self.engine, host_state);
 
             let mut linker = <Linker<HostState>>::new(&self.engine);
 
             wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).unwrap();
 
-            // let host_hello = Func::wrap(
-            //     &mut store,
-            //     |mut caller: Caller<'_, HostState>,
-            //      plugin_name: i32,
-            //      resource_name: i32,
-            //      query_data: i32,
-            //      query_len: i32,
-            //      output_data: i32,
-            //      output_len: i32| {
-            //         fn cstring(data: &[u8], string_ptr: i32) -> Option<&[u8]> {
-            //             let start = string_ptr as usize;
-            //             let data = data.get(start..)?;
-            //             let mut count = 0;
-            //             for byte in data {
-            //                 if *byte == b'\0' {
-            //                     break;
-            //                 }
-            //                 count += 1;
-            //             }
-            //             data.get(..count)
-            //         }
+            let stride_emit = Func::wrap(
+                &mut store,
+                |mut caller: Caller<'_, HostState>, event_data: i32, event_len: i32| {
+                    let Some(memory_export) =
+                        caller.get_export("memory").and_then(Extern::into_memory)
+                    else {
+                        return;
+                    };
 
-            //         let Some(memory_export) =
-            //             caller.get_export("memory").and_then(Extern::into_memory)
-            //         else {
-            //             return -1;
-            //         };
+                    let data = memory_export.data(&mut caller);
 
-            //         let data = memory_export.data_mut(&mut caller);
+                    let event_data = event_data as usize;
+                    let event_len = event_len as usize;
+                    let json = data
+                        .get(event_data..event_data + event_len)
+                        .unwrap()
+                        .to_vec();
 
-            //         let plugin_name = cstring(data, plugin_name).unwrap();
-
-            //         if plugin_name != b"stride" {
-            //             return -2;
-            //         }
-
-            //         let resource_name = cstring(data, resource_name).unwrap();
-
-            //         if resource_name != b"metadata-task-count" {
-            //             return -3;
-            //         }
-
-            //         if query_data != 0 {
-            //             return -4;
-            //         }
-            //         if query_len != 0 {
-            //             return -5;
-            //         }
-
-            //         if output_len != 4 {
-            //             return -6;
-            //         }
-
-            //         let output_data_index = output_data as usize;
-            //         let output_slice = data
-            //             .get_mut(output_data_index..output_data_index + 4)
-            //             .unwrap();
-
-            //         output_slice.copy_from_slice(123_456u32.to_be_bytes().as_slice());
-
-            //         123_456
-            //     },
-            // );
-            // linker
-            //     .define("env", "stride__resource__get", host_hello)
-            //     .unwrap();
+                    caller.data_mut().events.push_back(json);
+                },
+            );
+            linker.define("env", "stride__emit", stride_emit).unwrap();
 
             let instance = linker
                 .instantiate(&mut store, &module)
@@ -480,15 +438,21 @@ impl PluginManager {
             stride_deallocate
                 .call(&mut store, (ret as i32, event.data.len() as i32))
                 .unwrap();
+
+            let Some(hook) = &mut self.hook else {
+                return Ok(Ok(()));
+            };
+            for event in store.into_data().events {
+                let result = hook.hook(&plugin.manifest.name, &event);
+                if result.is_err() {
+                    return Ok(result.map(|_| ()));
+                }
+            }
         }
-        Ok(())
+        Ok(Ok(()))
     }
 
-    pub fn insert_hook<T: Hook + 'static>(
-        &mut self,
-        event_type: EventType,
-        hook: T,
-    ) -> Option<Box<dyn Hook>> {
-        self.hooks.insert(event_type, Box::new(hook))
+    pub fn insert_hook<T: Hook<R> + 'static>(&mut self, hook: T) -> Option<Box<dyn Hook<R>>> {
+        self.hook.replace(Box::new(hook))
     }
 }
