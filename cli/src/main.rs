@@ -1,7 +1,7 @@
 use anyhow::{bail, Context};
 use clap::Parser;
 use cli::{CliArgs, Mode, RepositoryType};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::Read,
@@ -53,6 +53,23 @@ fn print_tasks(tasks: &[Task]) {
         }
         println!("{active_char}{i:4}: {}", task.title);
     }
+}
+
+// TODO: Ideally we shouldn't be copying code from `stride-plugin` crate.
+//       There should be a common crate that both use.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum PluginEvent {
+    TaskCreate {
+        task: Option<Box<Task>>,
+    },
+    TaskRemove {
+        task: Option<Box<Task>>,
+    },
+    TaskModified {
+        current: Option<Box<Task>>,
+        previous: Option<Box<Task>>,
+    },
+    TaskSync,
 }
 
 #[allow(clippy::too_many_lines)]
@@ -196,14 +213,18 @@ fn main() -> anyhow::Result<()> {
             }
 
             let task = Task::new(content.trim().to_string());
+            let event_data = PluginEvent::TaskCreate {
+                task: Some(Box::new(task.clone())),
+            };
+            let json = serde_json::to_string(&event_data)?;
+            repository.add(task)?;
             plugin_manager.emit_event(&Event {
                 ty: EventType {
                     plugin: "stride".into(),
-                    name: "task-remove".into(),
+                    name: "task-create".into(),
                 },
-                data: Uuid::now_v7().as_bytes().to_vec(),
+                data: json.into(),
             })?;
-            repository.add(task)?;
         }
         Mode::Sync => {
             repository.sync()?;

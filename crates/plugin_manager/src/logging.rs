@@ -25,10 +25,13 @@ impl Write for PluginLogger {
             self.plugin_name.clone(),
             String::from_utf8_lossy(buf)
         );
+        // TODO: Pass logger somehow to the stride-plugin-manager crate.
         if self.is_error {
             // Logger::error(result.trim());
+            println!("{}", result.trim());
         } else {
             // Logger::info(result.trim());
+            eprintln!("{}", result.trim());
         }
 
         Ok(buf.len())
