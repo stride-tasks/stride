@@ -34,6 +34,13 @@ pub enum TaskStatus {
     Complete,
 }
 
+impl TaskStatus {
+    #[must_use]
+    pub fn is_pending(&self) -> bool {
+        *self == TaskStatus::Pending
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum TaskPriority {
@@ -60,6 +67,8 @@ impl TaskPriority {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "TaskStatus::is_pending")]
     pub status: TaskStatus,
     pub title: String,
 
