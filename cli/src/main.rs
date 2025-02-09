@@ -12,6 +12,7 @@ use std::{
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
+        logging::Logger,
         repository::{
             git::TaskStorage,
             taskchampion::{self, Replica},
@@ -19,7 +20,7 @@ use stride_flutter_bridge::{
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
-    plugin::{Event, EventType, Hook, PluginManager},
+    plugin::{Event, EventType, Hook, PluginAction, PluginManager},
     task::{Task, TaskStatus},
     RustError,
 };
@@ -94,18 +95,32 @@ impl std::fmt::Debug for TestHook {
 }
 
 impl Hook<RustError> for TestHook {
-    fn hook(&mut self, plugin: &str, event_data: &[u8]) -> Result<bool, RustError> {
+    fn hook(
+        &mut self,
+        plugin_manager: &mut PluginManager,
+        plugin_name: &str,
+        event_data: &[u8],
+    ) -> Result<PluginAction, RustError> {
         let event: EmitEvent = serde_json::from_slice(event_data).unwrap();
+
+        let plugin = plugin_manager.plugin(plugin_name).unwrap();
 
         // TODO: Check if a plugin can create a task.
         match event {
             EmitEvent::TaskCreate { task } => {
-                println!("CREATE: {task:#?}");
+                if !plugin.manifest.permissions.tasks.create {
+                    Logger::error(&format!(
+                        "Disabling {plugin_name} because of missing tasks.create permission"
+                    ));
+                    return Ok(PluginAction::Disable {
+                        reason: "missing permissions".to_string(),
+                    });
+                }
                 self.repository.borrow_mut().add(task)?;
             }
             _ => println!("IGNORED: {event:#?}"),
         }
-        Ok(true)
+        Ok(PluginAction::Ok)
     }
 }
 
@@ -157,7 +172,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let plugins_path = support_dir.join("plugins");
-    let mut plugin_manager = PluginManager::<RustError>::new(&plugins_path)?;
+    let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
     let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
@@ -229,9 +244,9 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    plugin_manager.insert_hook(TestHook {
+    let hook = &mut TestHook {
         repository: repository.clone(),
-    });
+    };
 
     match args.mode {
         Mode::Search { filter } => {
@@ -261,13 +276,16 @@ fn main() -> anyhow::Result<()> {
             };
             let json = serde_json::to_string(&event_data)?;
             repository.borrow_mut().add(task)?;
-            plugin_manager.emit_event(&Event {
-                ty: EventType {
-                    plugin: "stride".into(),
-                    name: "task-create".into(),
+            plugin_manager.emit_event(
+                &Event {
+                    ty: EventType {
+                        plugin: "stride".into(),
+                        name: "task-create".into(),
+                    },
+                    data: json.into(),
                 },
-                data: json.into(),
-            })??;
+                hook,
+            )??;
         }
         Mode::Sync => {
             repository.borrow_mut().sync()?;
