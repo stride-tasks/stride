@@ -12,7 +12,7 @@ use std::{
 
 use logging::PluginLogger;
 use serde::{Deserialize, Serialize};
-use wasmi::{core::ValType, Caller, Config, Engine, Func, Linker, Module, Store};
+use wasmi::{core::ValType, Caller, Config, Engine, Extern, Func, Linker, Module, Store};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
@@ -88,7 +88,7 @@ pub enum PluginApi {
     V1,
 }
 
-const EVENT_HANDLER_PREFIX: &str = "stride__handler__";
+const EVENT_HANDLER_NAME: &str = "stride__event_handler";
 
 pub type PluginName = String;
 pub type EventName = String;
@@ -216,46 +216,18 @@ impl PluginManager {
         Ok(&self.plugins)
     }
 
-    fn validate_wasm_code(&self, manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
+    fn validate_wasm_code(&self, _manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
         let module = Module::new(&self.engine, wasm).map_err(Error::InvalidCode)?;
 
-        let mut event_handler_exports = HashMap::new();
         for export in module.exports() {
             let Some(func) = export.ty().func() else {
                 continue;
             };
 
             let name = export.name();
-            if !name.starts_with(EVENT_HANDLER_PREFIX) {
-                // Logger::warn(&format!(
-                //     "Plugin({}): Skipping exported function: {name}",
-                //     manifest.name
-                // ));
+            if name != EVENT_HANDLER_NAME {
                 continue;
             }
-            let name_without_prefix = &name[EVENT_HANDLER_PREFIX.len()..];
-            let Some((plugin_name, event_type)) = name_without_prefix.split_once("__") else {
-                return Err(Error::InvalidEventHandlerName(name.to_string()));
-            };
-
-            let event_type = event_type.replace('_', "-");
-            let Some(plugin_event) = manifest.events.get(plugin_name) else {
-                // Logger::warn(&format!(
-                //     "Plugin({}): manifest missing event handler: {plugin_name}/{event_type}",
-                //     manifest.name
-                // ));
-                continue;
-            };
-            let event_handler_export = event_handler_exports
-                .entry(plugin_name)
-                .or_insert_with(Vec::new);
-
-            if !plugin_event.types.contains(&event_type) {
-                return Err(Error::MissingEventHandler(format!(
-                    "{plugin_name}/{event_type}"
-                )));
-            }
-            event_handler_export.push(event_type);
 
             let params = func.params();
             if params != [ValType::I32, ValType::I32] {
@@ -267,7 +239,6 @@ impl PluginManager {
                 return Err(Error::EventHandlerSignature(name.to_string()));
             }
         }
-        // for hook in
         Ok(())
     }
 
@@ -368,6 +339,8 @@ impl PluginManager {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_wrap)]
+    #[allow(clippy::missing_panics_doc)]
+    #[allow(clippy::too_many_lines)]
     pub fn emit_event(&mut self, event: &Event) -> Result<()> {
         for plugin in &self.plugins {
             if !plugin
@@ -389,66 +362,86 @@ impl PluginManager {
             let wasm = std::fs::read(code_path)?;
             let module = Module::new(&self.engine, &wasm).expect("already validated");
 
-            let mut event_handler_exports = HashMap::new();
-            for export in module.exports() {
-                let Some(_func) = export.ty().func() else {
-                    continue;
-                };
-
-                let name = export.name();
-                if !name.starts_with(EVENT_HANDLER_PREFIX) {
-                    continue;
-                }
-                let name_without_prefix = &name[EVENT_HANDLER_PREFIX.len()..];
-                let Some((plugin_name, event_type)) = name_without_prefix.split_once("__") else {
-                    continue;
-                };
-
-                let event_type = event_type.replace('_', "-");
-
-                event_handler_exports
-                    .insert(EventType::new(plugin_name, event_type.as_str()), name);
-            }
-
             let wasi_ctx = wasi_context(&plugin.manifest.name);
             let host_state = HostState { wasi: wasi_ctx };
             let mut store = Store::new(&self.engine, host_state);
-            store.set_fuel(500).unwrap();
 
-            // In order to create Wasm module instances and link their imports
-            // and exports we require a `Linker`.
             let mut linker = <Linker<HostState>>::new(&self.engine);
 
             wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).unwrap();
 
-            let host_hello = Func::wrap(
-                &mut store,
-                |_caller: Caller<'_, HostState>, param1: i32, param2: i32, param3: i32| {
-                    println!("Got {param1},{param2},{param3} from WebAssembly");
-                    0
-                },
-            );
-            linker
-                .define(
-                    "env",
-                    "stride__resource_get__stirde__task_title",
-                    host_hello,
-                )
-                .unwrap();
+            // let host_hello = Func::wrap(
+            //     &mut store,
+            //     |mut caller: Caller<'_, HostState>,
+            //      plugin_name: i32,
+            //      resource_name: i32,
+            //      query_data: i32,
+            //      query_len: i32,
+            //      output_data: i32,
+            //      output_len: i32| {
+            //         fn cstring(data: &[u8], string_ptr: i32) -> Option<&[u8]> {
+            //             let start = string_ptr as usize;
+            //             let data = data.get(start..)?;
+            //             let mut count = 0;
+            //             for byte in data {
+            //                 if *byte == b'\0' {
+            //                     break;
+            //                 }
+            //                 count += 1;
+            //             }
+            //             data.get(..count)
+            //         }
+
+            //         let Some(memory_export) =
+            //             caller.get_export("memory").and_then(Extern::into_memory)
+            //         else {
+            //             return -1;
+            //         };
+
+            //         let data = memory_export.data_mut(&mut caller);
+
+            //         let plugin_name = cstring(data, plugin_name).unwrap();
+
+            //         if plugin_name != b"stride" {
+            //             return -2;
+            //         }
+
+            //         let resource_name = cstring(data, resource_name).unwrap();
+
+            //         if resource_name != b"metadata-task-count" {
+            //             return -3;
+            //         }
+
+            //         if query_data != 0 {
+            //             return -4;
+            //         }
+            //         if query_len != 0 {
+            //             return -5;
+            //         }
+
+            //         if output_len != 4 {
+            //             return -6;
+            //         }
+
+            //         let output_data_index = output_data as usize;
+            //         let output_slice = data
+            //             .get_mut(output_data_index..output_data_index + 4)
+            //             .unwrap();
+
+            //         output_slice.copy_from_slice(123_456u32.to_be_bytes().as_slice());
+
+            //         123_456
+            //     },
+            // );
+            // linker
+            //     .define("env", "stride__resource__get", host_hello)
+            //     .unwrap();
 
             let instance = linker
                 .instantiate(&mut store, &module)
                 .unwrap()
-                .start(&mut store)
+                .ensure_no_start(&mut store)
                 .unwrap();
-
-            let mut event_handlers = HashMap::new();
-            for (event_type, export_name) in event_handler_exports {
-                let event_handler = instance
-                    .get_typed_func::<(i32, i32), i32>(&store, export_name)
-                    .unwrap();
-                event_handlers.insert(event_type, event_handler);
-            }
 
             let stride_allocate = instance
                 .get_typed_func::<i32, i32>(&store, "stride__allocate")
@@ -458,7 +451,18 @@ impl PluginManager {
                 .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
                 .unwrap();
 
-            store.set_fuel(50_000).unwrap();
+            let stride_init = instance
+                .get_typed_func::<(), ()>(&store, "stride__init")
+                .unwrap();
+
+            let event_handler = instance
+                .get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)
+                .unwrap();
+
+            store.set_fuel(100_000).unwrap();
+            stride_init.call(&mut store, ()).unwrap();
+
+            store.set_fuel(100_000).unwrap();
             let ret = stride_allocate
                 .call(&mut store, event.data.len() as i32)
                 .unwrap() as usize;
@@ -467,12 +471,8 @@ impl PluginManager {
             memory.data_mut(&mut store)[ret..ret + event.data.len()]
                 .copy_from_slice(event.data.as_slice());
 
-            let Some(event_handler) = event_handlers.get(&event.ty) else {
-                println!("Spec is incorrect/mismatch: {:?}", event.ty);
-                continue;
-            };
-
             // And finally we can call the wasm!
+            store.set_fuel(1_000_000).unwrap();
             event_handler
                 .call(&mut store, (ret as i32, event.data.len() as i32))
                 .unwrap();
