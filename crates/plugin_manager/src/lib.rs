@@ -3,7 +3,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     fmt::Debug,
     fs::File,
     io::Read,
@@ -47,7 +47,7 @@ fn wasi_context(plugin_name: &str) -> WasiCtx {
 
 struct HostState {
     wasi: WasiCtx,
-    events: VecDeque<Vec<u8>>,
+    events: Vec<Box<[u8]>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -57,13 +57,16 @@ pub struct EventType {
 }
 
 impl EventType {
-    fn plugin_name(&self) -> &str {
+    #[must_use]
+    pub fn plugin_name(&self) -> &str {
         &self.plugin
     }
-    fn event_name(&self) -> &str {
+    #[must_use]
+    pub fn event_name(&self) -> &str {
         &self.name
     }
-    fn new(plugin_name: &str, event_name: &str) -> Self {
+    #[must_use]
+    pub fn new(plugin_name: &str, event_name: &str) -> Self {
         Self {
             plugin: plugin_name.to_string(),
             name: event_name.to_string(),
@@ -100,6 +103,23 @@ pub struct PluginEvent {
     types: Vec<EventName>,
 }
 
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[serde(rename_all = "kebab-case")]
+pub struct ManifestPermissionTask {
+    #[serde(default)]
+    pub create: bool,
+}
+
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[serde(rename_all = "kebab-case")]
+pub struct ManifestPermissions {
+    pub tasks: ManifestPermissionTask,
+}
+
 pub trait ManifestState: Sized {
     fn skip_serializing(&self) -> bool {
         true
@@ -131,7 +151,12 @@ impl ManifestState for PluginState {
 pub struct PluginManifest<T: ManifestState = ()> {
     pub api: PluginApi,
     pub name: PluginName,
+
+    #[serde(default)]
     pub events: HashMap<PluginName, PluginEvent>,
+
+    #[serde(default)]
+    pub permissions: ManifestPermissions,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "ManifestState::skip_serializing")]
@@ -143,21 +168,30 @@ pub struct Plugin {
     pub manifest: PluginManifest<PluginState>,
 }
 
+#[derive(Debug, Clone)]
+pub enum PluginAction {
+    Ok,
+    Disable { reason: String },
+}
+
 pub trait Hook<E>: Debug {
-    fn hook(&mut self, plugin: &str, event_data: &[u8]) -> std::result::Result<bool, E>;
+    fn hook(
+        &mut self,
+        plugin_manager: &mut PluginManager,
+        plugin: &str,
+        event_data: &[u8],
+    ) -> std::result::Result<PluginAction, E>;
 }
 
 #[derive(Debug)]
-pub struct PluginManager<R> {
+pub struct PluginManager {
     plugins_path: PathBuf,
     plugins: Vec<Plugin>,
 
     engine: Engine,
-
-    hook: Option<Box<dyn Hook<R>>>,
 }
 
-impl<R> PluginManager<R> {
+impl PluginManager {
     pub fn new(plugins_path: &Path) -> Result<Self> {
         // let plugins_path = application_support_path().join("plugins");
         if !plugins_path.exists() {
@@ -173,8 +207,6 @@ impl<R> PluginManager<R> {
             plugins: Vec::new(),
 
             engine,
-
-            hook: None,
         })
     }
 
@@ -287,6 +319,7 @@ impl<R> PluginManager<R> {
                 api: manifest.api,
                 name: manifest.name,
                 events: manifest.events,
+                permissions: manifest.permissions,
                 state: PluginState::default(),
             },
         };
@@ -340,8 +373,17 @@ impl<R> PluginManager<R> {
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn emit_event(&mut self, event: &Event) -> Result<std::result::Result<(), R>> {
-        for plugin in &self.plugins {
+    pub fn emit_event<R>(
+        &mut self,
+        event: &Event,
+        hook: &mut dyn Hook<R>,
+    ) -> Result<std::result::Result<(), R>> {
+        struct EventQueue {
+            plugin: String,
+            events: Vec<Box<[u8]>>,
+        }
+        let mut events: VecDeque<EventQueue> = VecDeque::new();
+        for (i, plugin) in self.plugins.iter().enumerate() {
             if !plugin
                 .manifest
                 .events
@@ -364,7 +406,7 @@ impl<R> PluginManager<R> {
             let wasi_ctx = wasi_context(&plugin.manifest.name);
             let host_state = HostState {
                 wasi: wasi_ctx,
-                events: VecDeque::default(),
+                events: Vec::default(),
             };
             let mut store = Store::new(&self.engine, host_state);
 
@@ -390,7 +432,7 @@ impl<R> PluginManager<R> {
                         .unwrap()
                         .to_vec();
 
-                    caller.data_mut().events.push_back(json);
+                    caller.data_mut().events.push(json.into_boxed_slice());
                 },
             );
             linker.define("env", "stride__emit", stride_emit).unwrap();
@@ -439,20 +481,37 @@ impl<R> PluginManager<R> {
                 .call(&mut store, (ret as i32, event.data.len() as i32))
                 .unwrap();
 
-            let Some(hook) = &mut self.hook else {
-                return Ok(Ok(()));
-            };
-            for event in store.into_data().events {
-                let result = hook.hook(&plugin.manifest.name, &event);
+            events.push_back(EventQueue {
+                plugin: plugin.manifest.name.clone(),
+                events: std::mem::take(&mut store.data_mut().events),
+            });
+        }
+
+        for EventQueue { plugin, events } in events {
+            for event in events {
+                let result = hook.hook(self, &plugin, &event);
                 if result.is_err() {
                     return Ok(result.map(|_| ()));
                 }
+                match result {
+                    Err(err) => return Ok(Err(err)),
+                    Ok(action) => match action {
+                        PluginAction::Ok => {}
+                        PluginAction::Disable { reason } => {
+                            self.toggle(&plugin)?;
+                        }
+                    },
+                }
             }
         }
+
         Ok(Ok(()))
     }
 
-    pub fn insert_hook<T: Hook<R> + 'static>(&mut self, hook: T) -> Option<Box<dyn Hook<R>>> {
-        self.hook.replace(Box::new(hook))
+    #[must_use]
+    pub fn plugin(&self, plugin_name: &str) -> Option<&Plugin> {
+        self.plugins
+            .iter()
+            .find(|plugin| plugin.manifest.name == plugin_name)
     }
 }
