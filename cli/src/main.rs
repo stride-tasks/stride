@@ -276,16 +276,14 @@ fn main() -> anyhow::Result<()> {
             };
             let json = serde_json::to_string(&event_data)?;
             repository.borrow_mut().add(task)?;
-            plugin_manager.emit_event(
-                &Event {
-                    ty: EventType {
-                        plugin: "stride".into(),
-                        name: "task-create".into(),
-                    },
-                    data: json.into(),
+            plugin_manager.emit_event(&Event {
+                ty: EventType {
+                    plugin: "stride".into(),
+                    name: "task-create".into(),
                 },
-                hook,
-            )??;
+                data: json.into(),
+            })?;
+            plugin_manager.process_events(hook)??;
         }
         Mode::Sync => {
             repository.borrow_mut().sync()?;

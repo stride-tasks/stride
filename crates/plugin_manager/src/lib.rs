@@ -86,6 +86,12 @@ pub struct Event {
     pub data: Vec<u8>,
 }
 
+#[derive(Debug)]
+pub struct EventQueue {
+    plugin: String,
+    events: Vec<Box<[u8]>>,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum PluginApi {
@@ -189,6 +195,8 @@ pub struct PluginManager {
     plugins: Vec<Plugin>,
 
     engine: Engine,
+
+    events: VecDeque<EventQueue>,
 }
 
 impl PluginManager {
@@ -207,6 +215,7 @@ impl PluginManager {
             plugins: Vec::new(),
 
             engine,
+            events: VecDeque::new(),
         })
     }
 
@@ -373,17 +382,8 @@ impl PluginManager {
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn emit_event<R>(
-        &mut self,
-        event: &Event,
-        hook: &mut dyn Hook<R>,
-    ) -> Result<std::result::Result<(), R>> {
-        struct EventQueue {
-            plugin: String,
-            events: Vec<Box<[u8]>>,
-        }
-        let mut events: VecDeque<EventQueue> = VecDeque::new();
-        for (i, plugin) in self.plugins.iter().enumerate() {
+    pub fn emit_event(&mut self, event: &Event) -> Result<()> {
+        for plugin in &self.plugins {
             if !plugin
                 .manifest
                 .events
@@ -481,12 +481,20 @@ impl PluginManager {
                 .call(&mut store, (ret as i32, event.data.len() as i32))
                 .unwrap();
 
-            events.push_back(EventQueue {
+            self.events.push_back(EventQueue {
                 plugin: plugin.manifest.name.clone(),
                 events: std::mem::take(&mut store.data_mut().events),
             });
         }
 
+        Ok(())
+    }
+
+    pub fn process_events<R>(
+        &mut self,
+        hook: &mut dyn Hook<R>,
+    ) -> Result<std::result::Result<(), R>> {
+        let events = std::mem::take(&mut self.events);
         for EventQueue { plugin, events } in events {
             for event in events {
                 let result = hook.hook(self, &plugin, &event);
@@ -504,7 +512,6 @@ impl PluginManager {
                 }
             }
         }
-
         Ok(Ok(()))
     }
 
