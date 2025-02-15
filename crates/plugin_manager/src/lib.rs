@@ -3,7 +3,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::VecDeque,
     fmt::Debug,
     fs::File,
     io::Read,
@@ -11,15 +11,18 @@ use std::{
 };
 
 use logging::PluginLogger;
-use serde::{Deserialize, Serialize};
+use manifest::{PluginManifest, PluginState};
 use wasmi::{core::ValType, Caller, Config, Engine, Extern, Func, Linker, Module, Store};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
 mod error;
 mod logging;
+pub mod manifest;
 
 pub use error::{Error, Result};
+
+const EVENT_HANDLER_NAME: &str = "stride__event_handler";
 
 /// Creates the [`WasiCtx`] for this session.
 fn wasi_context(plugin_name: &str) -> WasiCtx {
@@ -50,34 +53,11 @@ struct HostState {
     events: Vec<Box<[u8]>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct EventType {
-    pub plugin: String,
-    pub name: String,
-}
-
-impl EventType {
-    #[must_use]
-    pub fn plugin_name(&self) -> &str {
-        &self.plugin
-    }
-    #[must_use]
-    pub fn event_name(&self) -> &str {
-        &self.name
-    }
-    #[must_use]
-    pub fn new(plugin_name: &str, event_name: &str) -> Self {
-        Self {
-            plugin: plugin_name.to_string(),
-            name: event_name.to_string(),
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct EventHandlerType {
-    plugin: String,
-    ty: String,
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum EventType {
+    TaskCreate,
+    TaskModify,
+    TaskSync,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -90,83 +70,6 @@ pub struct Event {
 pub struct EventQueue {
     plugin: String,
     events: Vec<Box<[u8]>>,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum PluginApi {
-    V1,
-}
-
-const EVENT_HANDLER_NAME: &str = "stride__event_handler";
-
-pub type PluginName = String;
-pub type EventName = String;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PluginEvent {
-    types: Vec<EventName>,
-}
-
-#[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
-)]
-#[serde(rename_all = "kebab-case")]
-pub struct ManifestPermissionTask {
-    #[serde(default)]
-    pub create: bool,
-}
-
-#[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
-)]
-#[serde(rename_all = "kebab-case")]
-pub struct ManifestPermissions {
-    pub tasks: ManifestPermissionTask,
-}
-
-pub trait ManifestState: Sized {
-    fn skip_serializing(&self) -> bool {
-        true
-    }
-}
-
-impl ManifestState for () {}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PluginState {
-    pub enabled: bool,
-}
-
-impl Default for PluginState {
-    fn default() -> Self {
-        Self { enabled: true }
-    }
-}
-
-impl ManifestState for PluginState {
-    fn skip_serializing(&self) -> bool {
-        false
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PluginManifest<T: ManifestState = ()> {
-    pub api: PluginApi,
-    pub name: PluginName,
-
-    #[serde(default)]
-    pub events: HashMap<PluginName, PluginEvent>,
-
-    #[serde(default)]
-    pub permissions: ManifestPermissions,
-
-    #[serde(default)]
-    #[serde(skip_serializing_if = "ManifestState::skip_serializing")]
-    pub state: T,
 }
 
 #[derive(Debug)]
@@ -241,7 +144,7 @@ impl PluginManager {
             let manifest: PluginManifest<PluginState> =
                 toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
 
-            if !manifest.state.enabled {
+            if !manifest.state.is_enabled() {
                 continue;
             }
 
@@ -254,6 +157,19 @@ impl PluginManager {
 
     pub fn list(&self) -> Result<&[Plugin]> {
         Ok(&self.plugins)
+    }
+
+    #[must_use]
+    pub fn plugin(&self, plugin_name: &str) -> Option<&Plugin> {
+        self.plugins
+            .iter()
+            .find(|plugin| plugin.manifest.name == plugin_name)
+    }
+    #[must_use]
+    pub fn plugin_mut(&mut self, plugin_name: &str) -> Option<&mut Plugin> {
+        self.plugins
+            .iter_mut()
+            .find(|plugin| plugin.manifest.name == plugin_name)
     }
 
     fn validate_wasm_code(&self, _manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
@@ -346,7 +262,38 @@ impl PluginManager {
             return Ok(false);
         };
 
-        plugin.manifest.state.enabled = !plugin.manifest.state.enabled;
+        plugin.manifest.state = match plugin.manifest.state {
+            PluginState::Disable { .. } => PluginState::Enable,
+            PluginState::Enable => PluginState::Disable { reason: None },
+        };
+
+        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let source_path = plugin_path.join("source");
+        std::fs::create_dir_all(&source_path)?;
+
+        let manifest_path = source_path.join("manifest.toml");
+        let manifest_content =
+            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
+        std::fs::write(&manifest_path, manifest_content)?;
+
+        Ok(true)
+    }
+
+    pub fn disable(&mut self, plugin_name: &str, reason: Option<Box<str>>) -> Result<bool> {
+        let Some(plugin) = self
+            .plugins
+            .iter_mut()
+            .find(|plugin| plugin.manifest.name == plugin_name)
+        else {
+            return Ok(false);
+        };
+
+        match plugin.manifest.state {
+            PluginState::Disable { .. } => return Ok(false),
+            PluginState::Enable => {}
+        }
+
+        plugin.manifest.state = PluginState::Disable { reason };
 
         let plugin_path = self.plugins_path.join(&plugin.manifest.name);
         let source_path = plugin_path.join("source");
@@ -384,17 +331,11 @@ impl PluginManager {
     #[allow(clippy::too_many_lines)]
     pub fn emit_event(&mut self, event: &Event) -> Result<()> {
         for plugin in &self.plugins {
-            if !plugin
-                .manifest
-                .events
-                .get(event.ty.plugin_name())
-                .is_some_and(|plugin_event| {
-                    plugin_event
-                        .types
-                        .contains(&event.ty.event_name().to_string())
-                })
-            {
-                continue;
+            match event.ty {
+                EventType::TaskCreate if !plugin.manifest.events.task.create => continue,
+                EventType::TaskModify if !plugin.manifest.events.task.modify => continue,
+                EventType::TaskSync if !plugin.manifest.events.task.sync => continue,
+                EventType::TaskCreate | EventType::TaskModify | EventType::TaskSync => {}
             }
 
             let plugin_path = self.plugins_path.join(&plugin.manifest.name);
@@ -506,19 +447,12 @@ impl PluginManager {
                     Ok(action) => match action {
                         PluginAction::Ok => {}
                         PluginAction::Disable { reason } => {
-                            self.toggle(&plugin)?;
+                            self.disable(&plugin, Some(reason.into_boxed_str()))?;
                         }
                     },
                 }
             }
         }
         Ok(Ok(()))
-    }
-
-    #[must_use]
-    pub fn plugin(&self, plugin_name: &str) -> Option<&Plugin> {
-        self.plugins
-            .iter()
-            .find(|plugin| plugin.manifest.name == plugin_name)
     }
 }

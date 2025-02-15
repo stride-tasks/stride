@@ -8,78 +8,51 @@
 // ignore_for_file: argument_type_not_assignable
 // ignore_for_file: inference_failure_on_instance_creation
 
-
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
-import '../frb_generated.dart';
-import '../task.dart';
-import '../task/annotation.dart';
-import 'error.dart';
-import 'filter.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:stride/bridge/api/error.dart';
+import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/bridge/third_party/stride_core/task.dart';
+import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:uuid/uuid.dart';
 
+abstract class StrideRepository {
+  /// Add a [`Task`] to the Repository
+  Future<void> add({required Task task});
 
-            
+  Future<bool> changeCategory({required Task task, required TaskStatus status});
 
-            
+  Future<void> clear();
 
-            
-                abstract class StrideRepository {
-                    /// Add a [`Task`] to the Repository
- Future<void>  add({required Task task });
+  /// Ensure that all previous operations are written to disk.
+  Future<void> commit();
 
+  Future<String> export_();
 
- Future<bool>  changeCategory({required Task task , required TaskStatus status });
+  Future<void> import_({required String content});
 
+  /// Remove an existing [`Task`], returning [`true`] if it was previously added
+  Future<bool> removeByTask({required Task task});
 
- Future<void>  clear();
+  /// Remove a [`Task`], will return [`None`] if it did not exists
+  Future<Task?> removeByUuid({required UuidValue uuid});
 
+  Future<void> sync_();
 
-/// Ensure that all previous operations are written to disk.
- Future<void>  commit();
+  /// Try to get a [`Task`] by [`Uuid`]
+  Future<Task?> taskByUuid({required UuidValue uuid});
 
+  /// Get all [`Task`]s matching [`Filter`]
+  Future<List<Task>> tasksWithFilter({required Filter filter});
 
- Future<String>  export_();
+  Future<void> unload();
 
+  Future<bool> update({required Task task});
+}
 
- Future<void>  import_({required String content });
-
-
-/// Remove an existing [`Task`], returning [`true`] if it was previously added
- Future<bool>  removeByTask({required Task task });
-
-
-/// Remove a [`Task`], will return [`None`] if it did not exists
- Future<Task?>  removeByUuid({required UuidValue uuid });
-
-
- Future<void>  sync_();
-
-
-/// Try to get a [`Task`] by [`Uuid`]
- Future<Task?>  taskByUuid({required UuidValue uuid });
-
-
-/// Get all [`Task`]s matching [`Filter`]
- Future<List<Task>>  tasksWithFilter({required Filter filter });
-
-
- Future<void>  unload();
-
-
- Future<bool>  update({required Task task });
-
-
-                }
-                
-
-
-                abstract class StrideRepositoryExt {
-                    /// Get all [`Task`]s with status [`TaskStatus::Pending`]
- Future<List<Task>>  tasks();
-
-
-                }
-                
-            
+abstract class StrideRepositoryExt {
+  /// Get all [`Task`]s with status [`TaskStatus::Pending`]
+  Future<List<Task>> tasks();
+}
