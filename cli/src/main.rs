@@ -105,18 +105,39 @@ impl Hook<RustError> for TestHook {
 
         let plugin = plugin_manager.plugin(plugin_name).unwrap();
 
-        // TODO: Check if a plugin can create a task.
         match event {
             EmitEvent::TaskCreate { task } => {
-                if !plugin.manifest.permissions.tasks.create {
+                if !plugin.manifest.permissions.task.create {
                     Logger::error(&format!(
-                        "Disabling {plugin_name} because of missing tasks.create permission"
+                        "Disabling {plugin_name} because of missing task.create permission"
                     ));
                     return Ok(PluginAction::Disable {
-                        reason: "missing permissions".to_string(),
+                        reason: "missing 'task.create' permissions".to_string(),
                     });
                 }
                 self.repository.borrow_mut().add(task)?;
+            }
+            EmitEvent::TaskModify { task } => {
+                if !plugin.manifest.permissions.task.modify {
+                    Logger::error(&format!(
+                        "Disabling {plugin_name} because of missing task.modify permission"
+                    ));
+                    return Ok(PluginAction::Disable {
+                        reason: "missing 'task.modify' permissions".to_string(),
+                    });
+                }
+                self.repository.borrow_mut().update(&task)?;
+            }
+            EmitEvent::TaskSync => {
+                if !plugin.manifest.permissions.task.sync {
+                    Logger::error(&format!(
+                        "Disabling {plugin_name} because of missing task.sync permission"
+                    ));
+                    return Ok(PluginAction::Disable {
+                        reason: "missing 'task.sync' permissions".to_string(),
+                    });
+                }
+                self.repository.borrow_mut().sync()?;
             }
             _ => println!("IGNORED: {event:#?}"),
         }
@@ -277,10 +298,7 @@ fn main() -> anyhow::Result<()> {
             let json = serde_json::to_string(&event_data)?;
             repository.borrow_mut().add(task)?;
             plugin_manager.emit_event(&Event {
-                ty: EventType {
-                    plugin: "stride".into(),
-                    name: "task-create".into(),
-                },
+                ty: EventType::TaskCreate,
                 data: json.into(),
             })?;
             plugin_manager.process_events(hook)??;

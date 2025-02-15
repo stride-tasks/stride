@@ -31,13 +31,13 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  integration_test:
-    sdk: flutter
+  # integration_test:
+  #   sdk: flutter
 
   flutter_lints: ^5.0.0
   mocktail: ^1.0.4
-  test: ^1.25.2
-  freezed: ^3.0.0-0.0.dev
+  # test: ^1.25.2
+  freezed: ^2.5.8
   build_runner: ^2.4.14
 
   flutter_launcher_icons: ^0.14.3
@@ -68,7 +68,7 @@ flutter_native_splash:
   web: false
 
 flutter_rust_bridge:
-  rust_input: crate::api
+  rust_input: crate::api,stride_core
   rust_root: ../crates/flutter_bridge/
   dart_output: lib/bridge
   web: false

@@ -45,65 +45,6 @@ impl Replica {
     }
 }
 
-impl From<taskchampion::Task> for crate::task::Task {
-    fn from(v: taskchampion::Task) -> Self {
-        /* TODO(@bpeetz): Remove the `None`s and `Vec`s with their actually conversion <2024-10-26> */
-        Self {
-            uuid: v.get_uuid(),
-            status: v.get_status().into(),
-            title: v.get_description().to_owned(),
-            active: v.get_status() == taskchampion::Status::Pending,
-            modified: v.get_modified(),
-            due: v.get_due(),
-            project: None,
-            tags: vec![],
-            annotations: v.get_annotations().map(Into::into).collect(),
-            priority: None,
-            wait: v.get_wait(),
-            depends: v.get_dependencies().collect(),
-            uda: v
-                .get_udas()
-                .map(|((namespace, key), value)| (format!("{namespace}.{key}"), value.to_owned()))
-                .collect(),
-        }
-    }
-}
-impl From<taskchampion::Annotation> for crate::task::Annotation {
-    fn from(value: taskchampion::Annotation) -> Self {
-        Self {
-            entry: value.entry,
-            description: value.description,
-        }
-    }
-}
-impl From<taskchampion::Status> for crate::task::TaskStatus {
-    fn from(value: taskchampion::Status) -> Self {
-        match value {
-            taskchampion::Status::Pending => Self::Pending,
-            taskchampion::Status::Completed => Self::Complete,
-            taskchampion::Status::Deleted => Self::Deleted,
-            taskchampion::Status::Recurring => Self::Recurring,
-            taskchampion::Status::Unknown(other) => {
-                todo!("No implementation for unknown status: {other}")
-            }
-        }
-    }
-}
-impl From<crate::task::TaskStatus> for taskchampion::Status {
-    fn from(value: crate::task::TaskStatus) -> Self {
-        match value {
-            crate::task::TaskStatus::Pending => Self::Pending,
-
-            /* FIXME(@bpeetz): This can't be correct <2024-10-26> */
-            crate::task::TaskStatus::Waiting => Self::Unknown("Waiting".to_owned()),
-
-            crate::task::TaskStatus::Recurring => Self::Recurring,
-            crate::task::TaskStatus::Deleted => Self::Deleted,
-            crate::task::TaskStatus::Complete => Self::Completed,
-        }
-    }
-}
-
 impl StrideRepository for Replica {
     fn unload(&mut self) {
         todo!()

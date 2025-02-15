@@ -1821,6 +1821,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "serde",
+ "serde_json",
+ "taskchampion",
+ "uuid",
+]
+
+[[package]]
 name = "stride_crypto"
 version = "0.1.0"
 dependencies = [
@@ -1844,6 +1856,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "stride_core",
  "stride_crypto",
  "stride_plugin_manager",
  "taskchampion",

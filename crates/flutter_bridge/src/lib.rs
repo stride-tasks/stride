@@ -12,10 +12,10 @@ use uuid::Uuid;
 pub mod api;
 pub mod git;
 pub mod key_store;
-pub mod task;
 
 pub use api::error::{ErrorKind, RustError};
 
+pub use stride_core::task;
 pub use stride_plugin_manager as plugin;
 
 #[allow(clippy::unreadable_literal)]
@@ -36,14 +36,14 @@ pub(crate) fn base64_encode<T: AsRef<[u8]>>(input: T) -> String {
     fn inner(input: &[u8]) -> String {
         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(input)
     }
-    return inner(input.as_ref());
+    inner(input.as_ref())
 }
 
 pub(crate) fn base64_decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, DecodeError> {
     fn inner(input: &[u8]) -> Result<Vec<u8>, DecodeError> {
         base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(input)
     }
-    return inner(input.as_ref());
+    inner(input.as_ref())
 }
 
 pub(crate) trait ToBase64 {

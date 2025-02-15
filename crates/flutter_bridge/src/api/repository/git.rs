@@ -21,7 +21,7 @@ use crate::{
     base64_decode,
     git::known_hosts::{Host, HostKeyType, KnownHosts},
     key_store::KeyStore,
-    task::{Task, TaskPriority, TaskStatus},
+    task::{Task, TaskStatus},
     ErrorKind, RustError, ToBase64,
 };
 
@@ -40,56 +40,6 @@ use crate::api::{
 pub fn init_app() {
     // Default utilities - feel free to customize
     flutter_rust_bridge::setup_default_user_utils();
-}
-
-impl Task {
-    #[frb(sync)]
-    pub fn new(title: String) -> Self {
-        Task {
-            title,
-            ..Default::default()
-        }
-    }
-
-    #[must_use]
-    pub fn with_uuid(uuid: Uuid, title: String) -> Self {
-        Task {
-            uuid,
-            title,
-            ..Default::default()
-        }
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    #[must_use]
-    #[frb(sync)]
-    pub fn urgency(&self) -> f32 {
-        const THREE_DAYS: i64 = 3 * 24 * 60 * 60;
-
-        let mut urgency = 0.0;
-        urgency += f32::from(self.active) * 15.0;
-        if let Some(due) = self.due {
-            let today = Utc::now();
-            let delta = due - today;
-
-            urgency += 1.0;
-
-            let seconds = delta.num_seconds();
-            if seconds < 0 {
-                urgency += 11.0;
-            } else if seconds <= THREE_DAYS {
-                urgency += (seconds as f32 / THREE_DAYS as f32) * 11.0;
-            }
-        }
-        if let Some(priority) = self.priority {
-            match priority {
-                TaskPriority::H => urgency += 6.0,
-                TaskPriority::M => urgency += 3.0,
-                TaskPriority::L => urgency += -3.0,
-            }
-        }
-        urgency
-    }
 }
 
 const IV_LEN: usize = 12;

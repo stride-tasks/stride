@@ -15,11 +15,26 @@ description = "An extensible task menagment application that uses git as it's da
 
 [workspace.dependencies]
 # Repository Crates
+stride_core = { version = "~0.1.0", path = "crates/core" }
 stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
 stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
 
 # Shared Dependencies
+flutter_rust_bridge = { version = "=2.7.1", default-features = false, features = [
+  "thread-pool",
+  "rust-async",
+  "user-utils",
+  "dart-opaque",
+  "chrono",
+  "uuid",
+  "anyhow",
+] }
+taskchampion = { version = "2.0.2", default-features = false, features = [
+  "encryption",
+  "server-sync",
+  "bundled",
+] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 uuid = { version = "1.7", features = ["v7", "serde"] }

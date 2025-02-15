@@ -15,23 +15,12 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
+stride_core.workspace = true
 stride_crypto.workspace = true
 stride_plugin_manager.workspace = true
 
-flutter_rust_bridge = { version = "=2.7.1", default-features = false, features = [
-  "thread-pool",
-  "rust-async",
-  "user-utils",
-  "dart-opaque",
-  "chrono",
-  "uuid",
-  "anyhow",
-] }
-taskchampion = { version = "2.0.2", default-features = false, features = [
-  "encryption",
-  "server-sync",
-  "bundled",
-] }
+flutter_rust_bridge.workspace = true
+taskchampion.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
