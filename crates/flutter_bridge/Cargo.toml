@@ -15,7 +15,7 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
-stride_core.workspace = true
+stride_core = { workspace = true, features = ["taskchampion"] }
 stride_crypto.workspace = true
 stride_plugin_manager.workspace = true
 
