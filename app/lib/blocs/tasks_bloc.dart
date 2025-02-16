@@ -9,7 +9,7 @@ import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
-import 'package:stride/bridge/task.dart';
+import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:uuid/uuid.dart';
 

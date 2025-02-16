@@ -3,10 +3,13 @@ use clap::Parser;
 use cli::{CliArgs, Mode, RepositoryType};
 use serde::Deserialize;
 use std::{
+    cell::RefCell,
     fs,
     io::Read,
     path::{Path, PathBuf},
+    rc::Rc,
 };
+use stride_core::event::{HostEvent, PluginEvent};
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
@@ -17,7 +20,9 @@ use stride_flutter_bridge::{
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
+    plugin::{Hook, PluginAction, PluginManager},
     task::{Task, TaskStatus},
+    RustError,
 };
 use url::Url;
 use uuid::Uuid;
@@ -51,6 +56,38 @@ fn print_tasks(tasks: &[Task]) {
             active_char = '>';
         }
         println!("{active_char}{i:4}: {}", task.title);
+    }
+}
+
+struct TestHook {
+    repository: Rc<RefCell<dyn StrideRepository>>,
+}
+
+impl std::fmt::Debug for TestHook {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
+}
+
+impl Hook<RustError> for TestHook {
+    fn hook(
+        &mut self,
+        _plugin_manager: &mut PluginManager,
+        _plugin_name: &str,
+        event: PluginEvent,
+    ) -> Result<PluginAction, RustError> {
+        match event {
+            PluginEvent::TaskCreate { task } => {
+                self.repository.borrow_mut().add(task)?;
+            }
+            PluginEvent::TaskModify { task } => {
+                self.repository.borrow_mut().update(&task)?;
+            }
+            PluginEvent::TaskSync => {
+                self.repository.borrow_mut().sync()?;
+            }
+        }
+        Ok(PluginAction::Ok)
     }
 }
 
@@ -101,12 +138,16 @@ fn main() -> anyhow::Result<()> {
         uuid
     };
 
-    let repository: &mut dyn StrideRepository = match args.repository {
-        RepositoryType::Git => &mut TaskStorage::new(
+    let plugins_path = support_dir.join("plugins");
+    let mut plugin_manager = PluginManager::new(&plugins_path)?;
+    plugin_manager.load()?;
+
+    let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
+        RepositoryType::Git => Rc::new(RefCell::new(TaskStorage::new(
             current_repository,
             &support_dir.join("repository").to_string_lossy(),
             &settings,
-        )?,
+        )?)),
         RepositoryType::TaskChampion => {
             let data_dir =
                 choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
@@ -158,15 +199,21 @@ fn main() -> anyhow::Result<()> {
             };
             let constraint_environment = false;
 
-            &mut Replica::new(&db_path, server_config, constraint_environment).with_context(
-                || {
-                    format!(
-                        "Failed to initialize taskchampion storage at: {}",
-                        db_path.display()
-                    )
-                },
-            )?
+            Rc::new(RefCell::new(
+                Replica::new(&db_path, server_config, constraint_environment).with_context(
+                    || {
+                        format!(
+                            "Failed to initialize taskchampion storage at: {}",
+                            db_path.display()
+                        )
+                    },
+                )?,
+            ))
         }
+    };
+
+    let hook = &mut TestHook {
+        repository: repository.clone(),
     };
 
     match args.mode {
@@ -176,7 +223,7 @@ fn main() -> anyhow::Result<()> {
                 status: [TaskStatus::Pending].into(),
                 ..Default::default()
             };
-            let tasks = repository.tasks_with_filter(&filter)?;
+            let tasks = repository.borrow_mut().tasks_with_filter(&filter)?;
             print_tasks(&tasks);
         }
         Mode::Add { content } => {
@@ -192,10 +239,15 @@ fn main() -> anyhow::Result<()> {
             }
 
             let task = Task::new(content.trim().to_string());
-            repository.add(task)?;
+            let event = HostEvent::TaskCreate {
+                task: Some(Box::new(task.clone())),
+            };
+            repository.borrow_mut().add(task)?;
+            plugin_manager.emit_event(&event)?;
+            plugin_manager.process_events(hook)??;
         }
         Mode::Sync => {
-            repository.sync()?;
+            repository.borrow_mut().sync()?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
@@ -251,7 +303,7 @@ fn main() -> anyhow::Result<()> {
             // }
         }
         Mode::Export { filepath } => {
-            let contents = repository.export()?;
+            let contents = repository.borrow_mut().export()?;
             if let Some(filepath) = filepath {
                 fs::write(filepath, contents)?;
             } else {
@@ -266,7 +318,7 @@ fn main() -> anyhow::Result<()> {
                 std::io::stdin().read_to_string(&mut contents)?;
                 contents
             };
-            repository.import(&contents)?;
+            repository.borrow_mut().import(&contents)?;
         }
         Mode::Repository { uuid } => {
             let mut settings = Settings::get();
@@ -279,9 +331,28 @@ fn main() -> anyhow::Result<()> {
             settings.current_repository = Some(uuid);
             Settings::save(settings)?;
         }
+        Mode::Plugin { command } => {
+            match command {
+                None => {
+                    let plugins = plugin_manager.list()?;
+                    for plugin in plugins {
+                        println!("{}", plugin.manifest.name);
+                    }
+                }
+                Some(command) => match command {
+                    cli::PluginCommand::Import { filepath } => {
+                        plugin_manager.import(&filepath.to_string_lossy())?;
+                    }
+                    cli::PluginCommand::Toggle { plugin_name } => {
+                        plugin_manager.toggle(&plugin_name)?;
+                    }
+                },
+            };
+        }
     }
 
     repository
+        .borrow_mut()
         .commit()
         .context("Failed to commit the change to the repository")?;
 
