@@ -1,7 +1,7 @@
 use anyhow::{bail, Context};
 use clap::Parser;
 use cli::{CliArgs, Mode, RepositoryType};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{
     cell::RefCell,
     fs,
@@ -9,10 +9,10 @@ use std::{
     path::{Path, PathBuf},
     rc::Rc,
 };
+use stride_core::event::{HostEvent, PluginEvent};
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
-        logging::Logger,
         repository::{
             git::TaskStorage,
             taskchampion::{self, Replica},
@@ -20,7 +20,7 @@ use stride_flutter_bridge::{
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
-    plugin::{Event, EventType, Hook, PluginAction, PluginManager},
+    plugin::{Hook, PluginAction, PluginManager},
     task::{Task, TaskStatus},
     RustError,
 };
@@ -59,31 +59,6 @@ fn print_tasks(tasks: &[Task]) {
     }
 }
 
-// TODO: Ideally we shouldn't be copying code from `stride-plugin` crate.
-//       There should be a common crate that both use.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum PluginEvent {
-    TaskCreate {
-        task: Option<Box<Task>>,
-    },
-    TaskRemove {
-        task: Option<Box<Task>>,
-    },
-    TaskModified {
-        current: Option<Box<Task>>,
-        previous: Option<Box<Task>>,
-    },
-    TaskSync,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum EmitEvent {
-    TaskCreate { task: Task },
-    TaskRemove { task: Uuid },
-    TaskModify { task: Task },
-    TaskSync,
-}
-
 struct TestHook {
     repository: Rc<RefCell<dyn StrideRepository>>,
 }
@@ -97,49 +72,20 @@ impl std::fmt::Debug for TestHook {
 impl Hook<RustError> for TestHook {
     fn hook(
         &mut self,
-        plugin_manager: &mut PluginManager,
-        plugin_name: &str,
-        event_data: &[u8],
+        _plugin_manager: &mut PluginManager,
+        _plugin_name: &str,
+        event: PluginEvent,
     ) -> Result<PluginAction, RustError> {
-        let event: EmitEvent = serde_json::from_slice(event_data).unwrap();
-
-        let plugin = plugin_manager.plugin(plugin_name).unwrap();
-
         match event {
-            EmitEvent::TaskCreate { task } => {
-                if !plugin.manifest.permissions.task.create {
-                    Logger::error(&format!(
-                        "Disabling {plugin_name} because of missing task.create permission"
-                    ));
-                    return Ok(PluginAction::Disable {
-                        reason: "missing 'task.create' permissions".to_string(),
-                    });
-                }
+            PluginEvent::TaskCreate { task } => {
                 self.repository.borrow_mut().add(task)?;
             }
-            EmitEvent::TaskModify { task } => {
-                if !plugin.manifest.permissions.task.modify {
-                    Logger::error(&format!(
-                        "Disabling {plugin_name} because of missing task.modify permission"
-                    ));
-                    return Ok(PluginAction::Disable {
-                        reason: "missing 'task.modify' permissions".to_string(),
-                    });
-                }
+            PluginEvent::TaskModify { task } => {
                 self.repository.borrow_mut().update(&task)?;
             }
-            EmitEvent::TaskSync => {
-                if !plugin.manifest.permissions.task.sync {
-                    Logger::error(&format!(
-                        "Disabling {plugin_name} because of missing task.sync permission"
-                    ));
-                    return Ok(PluginAction::Disable {
-                        reason: "missing 'task.sync' permissions".to_string(),
-                    });
-                }
+            PluginEvent::TaskSync => {
                 self.repository.borrow_mut().sync()?;
             }
-            _ => println!("IGNORED: {event:#?}"),
         }
         Ok(PluginAction::Ok)
     }
@@ -292,15 +238,11 @@ fn main() -> anyhow::Result<()> {
             }
 
             let task = Task::new(content.trim().to_string());
-            let event_data = PluginEvent::TaskCreate {
+            let event = HostEvent::TaskCreate {
                 task: Some(Box::new(task.clone())),
             };
-            let json = serde_json::to_string(&event_data)?;
             repository.borrow_mut().add(task)?;
-            plugin_manager.emit_event(&Event {
-                ty: EventType::TaskCreate,
-                data: json.into(),
-            })?;
+            plugin_manager.emit_event(&event)?;
             plugin_manager.process_events(hook)??;
         }
         Mode::Sync => {

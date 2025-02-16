@@ -196,6 +196,7 @@ impl Task {
     }
 
     #[allow(clippy::too_many_lines)]
+    #[must_use]
     pub fn from_data(input: &[u8]) -> Option<Task> {
         let (uuid_bytes, input) = input.split_at_checked(16)?;
         let uuid = Uuid::from_bytes(uuid_bytes.try_into().ok()?);
@@ -292,6 +293,7 @@ impl Task {
     }
 
     /// flutter_rust_bridge:sync
+    #[must_use]
     pub fn new(title: String) -> Self {
         Task {
             title,
