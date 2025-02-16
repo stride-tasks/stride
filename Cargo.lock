@@ -1864,6 +1864,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_plugin"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "stride_core",
+]
+
+[[package]]
 name = "stride_plugin_manager"
 version = "0.1.0"
 dependencies = [

@@ -1,8 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["crates/flutter_bridge", "crates/crypto", "cli"]
+members = [
+  "crates/flutter_bridge",
+  "crates/crypto",
+  "crates/plugin",
+  "crates/plugin_manager",
+  "cli",
+]
 
-exclude = ["flutter"]
+exclude = ["app"]
 
 [workspace.package]
 edition = "2021"
@@ -15,9 +21,10 @@ description = "An extensible task menagment application that uses git as it's da
 
 [workspace.dependencies]
 # Repository Crates
-stride_core = { version = "~0.1.0", path = "crates/core" }
+stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
 stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
+stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
 stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
 
 # Shared Dependencies
