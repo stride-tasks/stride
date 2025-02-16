@@ -12,11 +12,14 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
+stride_core.workspace = true
+
 zip.workspace = true
 wasmi.workspace = true
 wasmi_wasi.workspace = true
 serde.workspace = true
 toml.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 

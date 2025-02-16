@@ -83,6 +83,7 @@ impl ManifestState for PluginState {
 }
 
 impl PluginState {
+    #[must_use]
     pub fn is_enabled(&self) -> bool {
         matches!(self, Self::Enable)
     }
