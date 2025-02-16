@@ -342,6 +342,7 @@ impl Task {
     }
 }
 
+#[cfg(feature = "taskchampion")]
 impl From<taskchampion::Task> for Task {
     fn from(v: taskchampion::Task) -> Self {
         /* TODO(@bpeetz): Remove the `None`s and `Vec`s with their actually conversion <2024-10-26> */
@@ -365,6 +366,7 @@ impl From<taskchampion::Task> for Task {
         }
     }
 }
+#[cfg(feature = "taskchampion")]
 impl From<taskchampion::Annotation> for Annotation {
     fn from(value: taskchampion::Annotation) -> Self {
         Self {
@@ -373,6 +375,7 @@ impl From<taskchampion::Annotation> for Annotation {
         }
     }
 }
+#[cfg(feature = "taskchampion")]
 impl From<taskchampion::Status> for TaskStatus {
     fn from(value: taskchampion::Status) -> Self {
         match value {
@@ -386,6 +389,7 @@ impl From<taskchampion::Status> for TaskStatus {
         }
     }
 }
+#[cfg(feature = "taskchampion")]
 impl From<TaskStatus> for taskchampion::Status {
     fn from(value: TaskStatus) -> Self {
         match value {
