@@ -110,9 +110,8 @@ fn main() -> anyhow::Result<()> {
         RepositoryType::TaskChampion => {
             let data_dir =
                 choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
-            let config_dir = choose_path_suffix(
-                &dirs::config_dir().context("could not get document directory")?,
-            );
+            let config_dir =
+                choose_path_suffix(&dirs::config_dir().context("could not get config directory")?);
 
             let db_path = data_dir.join("taskchampion");
             let config_path = config_dir.join("config.toml");
