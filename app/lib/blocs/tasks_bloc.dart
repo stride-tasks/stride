@@ -4,11 +4,13 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
+import 'package:stride/blocs/plugin_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:uuid/uuid.dart';
@@ -20,7 +22,8 @@ final class TaskFetchEvent extends TaskEvent {}
 
 final class TaskAddEvent extends TaskEvent {
   final Task task;
-  TaskAddEvent({required this.task});
+  final bool fromHost;
+  TaskAddEvent({required this.task, this.fromHost = true});
 }
 
 final class TaskRemoveEvent extends TaskEvent {
@@ -40,16 +43,28 @@ final class TaskForcePushEvent extends TaskEvent {
 final class TaskChangeStatusEvent extends TaskEvent {
   final Task task;
   final TaskStatus status;
-  TaskChangeStatusEvent({required this.task, required this.status});
+  final bool fromHost;
+  TaskChangeStatusEvent({
+    required this.task,
+    required this.status,
+    this.fromHost = true,
+  });
 }
 
 final class TaskUpdateEvent extends TaskEvent {
-  final Task task;
-  TaskUpdateEvent({required this.task});
+  final Task current;
+  final Task? previous;
+  final bool fromHost;
+  TaskUpdateEvent({
+    required this.current,
+    this.previous,
+    this.fromHost = true,
+  });
 }
 
 final class TaskSyncEvent extends TaskEvent {
-  TaskSyncEvent();
+  final bool fromHost;
+  TaskSyncEvent({this.fromHost = true});
 }
 
 final class TaskFilterEvent extends TaskEvent {
@@ -76,6 +91,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final DialogBloc dialogBloc;
   final SettingsBloc settingsBloc;
   final LogBloc logBloc;
+  final PluginManagerBloc pluginManagerBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
 
   UuidValue? repositoryUuid;
@@ -129,6 +145,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     required this.settingsBloc,
     required this.logBloc,
     required this.dialogBloc,
+    required this.pluginManagerBloc,
     this.storage,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
@@ -139,6 +156,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskAddEvent>((event, emit) async {
       await repository()?.add(task: event.task);
+      if (event.fromHost) {
+        pluginManagerBloc.emitHostEvent(
+          HostEvent.taskCreate(task: event.task),
+          this,
+        );
+      }
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -170,15 +193,34 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
-      await repository()?.changeCategory(
+      final changed = await repository()?.changeCategory(
         task: event.task,
         status: event.status,
       );
+      if (event.fromHost) {
+        if (changed ?? false) {
+          pluginManagerBloc.emitHostEvent(
+            HostEvent.taskModify(
+              current: event.task,
+            ),
+            this,
+          );
+        }
+      }
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskUpdateEvent>((event, emit) async {
-      await repository()?.update(task: event.task);
+      await repository()?.update(task: event.current);
+      if (event.fromHost) {
+        pluginManagerBloc.emitHostEvent(
+          HostEvent.taskModify(
+            current: event.current,
+            previous: event.previous,
+          ),
+          this,
+        );
+      }
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -191,6 +233,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       } catch (error) {
         emit(TaskState(tasks: tasks, syncingError: error));
         rethrow;
+      }
+      if (event.fromHost) {
+        pluginManagerBloc.emitHostEvent(HostEvent.taskSync(), this);
       }
       emit(TaskState(tasks: await _tasks()));
     });

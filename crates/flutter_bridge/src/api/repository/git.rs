@@ -42,8 +42,10 @@ pub fn init_app() {
     flutter_rust_bridge::setup_default_user_utils();
 }
 
-const IV_LEN: usize = 12;
+#[frb(ignore)]
+pub const IV_LEN: usize = 12;
 
+#[frb(ignore)]
 pub(crate) fn generate_iv() -> [u8; IV_LEN] {
     let mut iv = [0u8; IV_LEN];
     getrandom::fill(&mut iv).unwrap();

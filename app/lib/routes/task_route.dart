@@ -168,7 +168,12 @@ class _TaskRouteState extends State<TaskRoute> {
             if (widget.task == null) {
               context.read<TaskBloc>().add(TaskAddEvent(task: task));
             } else {
-              context.read<TaskBloc>().add(TaskUpdateEvent(task: task));
+              context.read<TaskBloc>().add(
+                    TaskUpdateEvent(
+                      current: task,
+                      previous: widget.task,
+                    ),
+                  );
             }
 
             final text =

@@ -1,26 +1,25 @@
 //! Plugin Manager used in `stride`.
 
 #![allow(clippy::missing_errors_doc)]
+#![allow(clippy::doc_markdown)]
 
-use std::{
-    fmt::Debug,
-    fs::File,
-    io::Read,
-    path::{Path, PathBuf},
-};
+use std::{collections::VecDeque, fmt::Debug, fs::File, io::Read};
 
 use logging::PluginLogger;
 use manifest::{PluginManifest, PluginState};
 use stride_core::event::{HostEvent, PluginEvent};
-use wasmi::{core::ValType, Caller, Config, Engine, Extern, Func, Linker, Module, Store};
+use wasmi::{core::ValType, Caller, Extern, Func, Linker, Module, Store};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
 mod error;
 mod logging;
+pub mod manager;
 pub mod manifest;
 
 pub use error::{Error, Result};
+
+pub use manager::PluginManager;
 
 const EVENT_HANDLER_NAME: &str = "stride__event_handler";
 
@@ -50,13 +49,13 @@ fn wasi_context(plugin_name: &str) -> WasiCtx {
 
 struct HostState {
     wasi: WasiCtx,
-    events: Vec<PluginEvent>,
+    events: VecDeque<PluginEvent>,
 }
 
 #[derive(Debug)]
 pub struct EventQueue {
     plugin_name: String,
-    events: Vec<PluginEvent>,
+    events: VecDeque<PluginEvent>,
 }
 
 #[derive(Debug)]
@@ -64,88 +63,7 @@ pub struct Plugin {
     pub manifest: PluginManifest<PluginState>,
 }
 
-#[derive(Debug, Clone)]
-pub enum PluginAction {
-    Ok,
-    Disable { reason: String },
-}
-
-pub trait Hook<E>: Debug {
-    fn hook(
-        &mut self,
-        plugin_manager: &mut PluginManager,
-        plugin_name: &str,
-        event: PluginEvent,
-    ) -> std::result::Result<PluginAction, E>;
-}
-
-#[derive(Debug)]
-pub struct PluginManager {
-    plugins_path: PathBuf,
-    plugins: Vec<Plugin>,
-
-    engine: Engine,
-
-    plugin_events: Vec<EventQueue>,
-}
-
 impl PluginManager {
-    pub fn new(plugins_path: &Path) -> Result<Self> {
-        // let plugins_path = application_support_path().join("plugins");
-        if !plugins_path.exists() {
-            std::fs::create_dir_all(plugins_path)?;
-        }
-
-        let mut config = Config::default();
-        config.consume_fuel(true);
-        let engine = Engine::new(&config);
-
-        Ok(Self {
-            plugins_path: plugins_path.to_path_buf(),
-            plugins: Vec::new(),
-
-            engine,
-            plugin_events: Vec::new(),
-        })
-    }
-
-    pub fn load(&mut self) -> Result<()> {
-        let entries = self.plugins_path.read_dir()?;
-
-        let mut plugins = Vec::new();
-        for entry in entries {
-            let Ok(entry) = entry else {
-                continue;
-            };
-
-            let Ok(name) = entry.file_name().into_string() else {
-                continue;
-            };
-
-            let plugin_path = self.plugins_path.join(name);
-            let source_path = plugin_path.join("source");
-            let manifest_path = source_path.join("manifest.toml");
-
-            let manifest_content = std::fs::read_to_string(&manifest_path)?;
-
-            let manifest: PluginManifest<PluginState> =
-                toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
-
-            if !manifest.state.is_enabled() {
-                continue;
-            }
-
-            plugins.push(Plugin { manifest });
-        }
-
-        self.plugins = plugins;
-        Ok(())
-    }
-
-    pub fn list(&self) -> Result<&[Plugin]> {
-        Ok(&self.plugins)
-    }
-
     #[must_use]
     pub fn plugin(&self, plugin_name: &str) -> Option<&Plugin> {
         self.plugins
@@ -266,34 +184,6 @@ impl PluginManager {
         Ok(true)
     }
 
-    pub fn disable(&mut self, plugin_name: &str, reason: Option<Box<str>>) -> Result<bool> {
-        let Some(plugin) = self
-            .plugins
-            .iter_mut()
-            .find(|plugin| plugin.manifest.name == plugin_name)
-        else {
-            return Ok(false);
-        };
-
-        match plugin.manifest.state {
-            PluginState::Disable { .. } => return Ok(false),
-            PluginState::Enable => {}
-        }
-
-        plugin.manifest.state = PluginState::Disable { reason };
-
-        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
-        let source_path = plugin_path.join("source");
-        std::fs::create_dir_all(&source_path)?;
-
-        let manifest_path = source_path.join("manifest.toml");
-        let manifest_content =
-            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
-        std::fs::write(&manifest_path, manifest_content)?;
-
-        Ok(true)
-    }
-
     fn install(&mut self, plugin: Plugin, code: &[u8]) -> Result<()> {
         let plugin_path = self.plugins_path.join(&plugin.manifest.name);
         let source_path = plugin_path.join("source");
@@ -336,7 +226,7 @@ impl PluginManager {
             let wasi_ctx = wasi_context(&plugin.manifest.name);
             let host_state = HostState {
                 wasi: wasi_ctx,
-                events: Vec::default(),
+                events: VecDeque::default(),
             };
             let mut store = Store::new(&self.engine, host_state);
 
@@ -361,7 +251,7 @@ impl PluginManager {
 
                     let event: PluginEvent = serde_json::from_slice(data).unwrap();
 
-                    caller.data_mut().events.push(event);
+                    caller.data_mut().events.push_back(event);
                 },
             );
             linker.define("env", "stride__emit", stride_emit).unwrap();
@@ -411,75 +301,12 @@ impl PluginManager {
                 .call(&mut store, (ret as i32, event_data.len() as i32))
                 .unwrap();
 
-            self.plugin_events.push(EventQueue {
+            self.plugin_events.push_back(EventQueue {
                 plugin_name: plugin.manifest.name.clone(),
                 events: std::mem::take(&mut store.data_mut().events),
             });
         }
 
         Ok(())
-    }
-
-    fn process_action(&mut self, plugin_name: &str, action: PluginAction) -> Result<()> {
-        match action {
-            PluginAction::Ok => {}
-            PluginAction::Disable { reason } => {
-                // TODO: use logger
-                println!("Disabling {plugin_name}: {reason}");
-                self.disable(plugin_name, Some(reason.into_boxed_str()))?;
-            }
-        }
-        Ok(())
-    }
-
-    #[allow(clippy::missing_panics_doc)]
-    pub fn process_events<R>(
-        &mut self,
-        hook: &mut dyn Hook<R>,
-    ) -> Result<std::result::Result<(), R>> {
-        let plugin_events = std::mem::take(&mut self.plugin_events);
-        for EventQueue {
-            plugin_name,
-            events,
-        } in plugin_events
-        {
-            for event in events {
-                let plugin = self.plugin(&plugin_name).unwrap();
-                let action = match event {
-                    PluginEvent::TaskCreate { .. } if !plugin.manifest.permissions.task.create => {
-                        Some(PluginAction::Disable {
-                            reason: "missing 'task.create' permission".to_string(),
-                        })
-                    }
-                    PluginEvent::TaskModify { .. } if !plugin.manifest.permissions.task.modify => {
-                        Some(PluginAction::Disable {
-                            reason: "missing 'task.modify' permission".to_string(),
-                        })
-                    }
-                    PluginEvent::TaskSync if !plugin.manifest.permissions.task.sync => {
-                        Some(PluginAction::Disable {
-                            reason: "missing 'task.sync' permission".to_string(),
-                        })
-                    }
-                    _ => None,
-                };
-
-                if let Some(action) = action {
-                    self.process_action(&plugin_name, action)?;
-                    return Ok(Ok(()));
-                }
-
-                let result = hook.hook(self, &plugin_name, event);
-                if result.is_err() {
-                    return Ok(result.map(|_| ()));
-                }
-                let action = match result {
-                    Err(err) => return Ok(Err(err)),
-                    Ok(action) => action,
-                };
-                self.process_action(&plugin_name, action)?;
-            }
-        }
-        Ok(Ok(()))
     }
 }

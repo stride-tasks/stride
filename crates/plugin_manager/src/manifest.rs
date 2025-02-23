@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use stride_core::event::PluginEvent;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -56,6 +57,7 @@ pub struct ManifestPermissions {
     pub task: ManifestPermissionTask,
 }
 
+/// flutter_rust_bridge:ignore
 pub trait ManifestState: Sized {
     fn skip_serializing(&self) -> bool {
         true
@@ -104,4 +106,32 @@ pub struct PluginManifest<T: ManifestState = ()> {
     #[serde(default)]
     #[serde(skip_serializing_if = "ManifestState::skip_serializing")]
     pub state: T,
+}
+
+pub type PluginInstanceManifest = PluginManifest<PluginState>;
+
+impl PluginInstanceManifest {
+    /// flutter_rust_bridge:sync
+    #[must_use]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    /// flutter_rust_bridge:sync
+    #[must_use]
+    pub fn events(&self) -> &ManifestEvents {
+        &self.events
+    }
+}
+
+/// flutter_rust_bridge:non_opaque
+#[derive(Debug, Clone)]
+pub enum PluginAction {
+    Event {
+        plugin_name: String,
+        event: PluginEvent,
+    },
+    Disable {
+        plugin_name: String,
+        reason: String,
+    },
 }

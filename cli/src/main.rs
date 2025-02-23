@@ -13,6 +13,7 @@ use stride_core::event::{HostEvent, PluginEvent};
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
+        logging::Logger,
         repository::{
             git::TaskStorage,
             taskchampion::{self, Replica},
@@ -20,9 +21,8 @@ use stride_flutter_bridge::{
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
-    plugin::{Hook, PluginAction, PluginManager},
+    plugin::{manifest::PluginAction, PluginManager},
     task::{Task, TaskStatus},
-    RustError,
 };
 use url::Url;
 use uuid::Uuid;
@@ -56,38 +56,6 @@ fn print_tasks(tasks: &[Task]) {
             active_char = '>';
         }
         println!("{active_char}{i:4}: {}", task.title);
-    }
-}
-
-struct TestHook {
-    repository: Rc<RefCell<dyn StrideRepository>>,
-}
-
-impl std::fmt::Debug for TestHook {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Ok(())
-    }
-}
-
-impl Hook<RustError> for TestHook {
-    fn hook(
-        &mut self,
-        _plugin_manager: &mut PluginManager,
-        _plugin_name: &str,
-        event: PluginEvent,
-    ) -> Result<PluginAction, RustError> {
-        match event {
-            PluginEvent::TaskCreate { task } => {
-                self.repository.borrow_mut().add(task)?;
-            }
-            PluginEvent::TaskModify { task } => {
-                self.repository.borrow_mut().update(&task)?;
-            }
-            PluginEvent::TaskSync => {
-                self.repository.borrow_mut().sync()?;
-            }
-        }
-        Ok(PluginAction::Ok)
     }
 }
 
@@ -139,7 +107,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let plugins_path = support_dir.join("plugins");
-    let mut plugin_manager = PluginManager::new(&plugins_path)?;
+    let mut plugin_manager = PluginManager::new(plugins_path.to_string_lossy().to_string())?;
     plugin_manager.load()?;
 
     let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
@@ -211,10 +179,6 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    let hook = &mut TestHook {
-        repository: repository.clone(),
-    };
-
     match args.mode {
         Mode::Search { filter } => {
             let filter = Filter {
@@ -243,7 +207,30 @@ fn main() -> anyhow::Result<()> {
             };
             repository.borrow_mut().add(task)?;
             plugin_manager.emit_event(&event)?;
-            plugin_manager.process_events(hook)??;
+            while let Some(action) = plugin_manager.process_event() {
+                let (_plugin_name, event) = match action {
+                    PluginAction::Event { plugin_name, event } => (plugin_name, event),
+                    PluginAction::Disable {
+                        plugin_name,
+                        reason,
+                    } => {
+                        Logger::error(&format!("Disabling plugin {plugin_name}: {reason}"));
+                        plugin_manager.disable(&plugin_name, Some(reason))?;
+                        continue;
+                    }
+                };
+                match event {
+                    PluginEvent::TaskCreate { task } => {
+                        repository.borrow_mut().add(task)?;
+                    }
+                    PluginEvent::TaskModify { task } => {
+                        repository.borrow_mut().update(&task)?;
+                    }
+                    PluginEvent::TaskSync => {
+                        repository.borrow_mut().sync()?;
+                    }
+                }
+            }
         }
         Mode::Sync => {
             repository.borrow_mut().sync()?;

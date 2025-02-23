@@ -86,9 +86,10 @@ class TaskItem extends StatelessWidget {
       selected: task.active,
       onLongPress: onLongPress,
       onTap: () {
+        final current = task.copyWith(active: !task.active);
         context
             .read<TaskBloc>()
-            .add(TaskUpdateEvent(task: task.copyWith(active: !task.active)));
+            .add(TaskUpdateEvent(current: current, previous: task));
       },
       subtitle: subtitle,
       trailing: Text(task.urgency().toStringAsFixed(2)),
