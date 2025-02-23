@@ -16,7 +16,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   stride_flutter_bridge:
     path: rust_builder
-  flutter_rust_bridge: ^2.7.1
+  flutter_rust_bridge: ^2.8.0
   uuid: ^4.5.1
   path: ^1.9.0
   path_provider: ^2.1.5
@@ -68,7 +68,7 @@ flutter_native_splash:
   web: false
 
 flutter_rust_bridge:
-  rust_input: crate::api,stride_core
+  rust_input: crate::api,stride_core,stride_plugin_manager::manifest,stride_plugin_manager::manager
   rust_root: ../crates/flutter_bridge/
   dart_output: lib/bridge
   web: false

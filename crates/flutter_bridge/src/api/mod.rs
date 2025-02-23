@@ -5,5 +5,6 @@
 pub mod error;
 pub mod filter;
 pub mod logging;
+pub mod plugin;
 pub mod repository;
 pub mod settings;

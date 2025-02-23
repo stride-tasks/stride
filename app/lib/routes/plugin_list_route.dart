@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/plugin_bloc.dart';
+import 'package:stride/bridge/api/plugin.dart';
+import 'package:stride/widgets/settings_widget.dart';
+
+class PluginListRoute extends StatelessWidget {
+  const PluginListRoute({super.key});
+
+  TextStyle get headingStyle => const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Colors.red,
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Plugin List')),
+      body: BlocBuilder<PluginManagerBloc, PluginManagerState>(
+        builder: (context, state) {
+          final plugins = state.plugins.map((plugin) {
+            return SettingsTile(
+              title: Text(pluginInstanceManifestName(manifest: plugin)),
+              leading: const Icon(Icons.task),
+            );
+          }).toList();
+          return SettingsList(
+            sections: [
+              SettingsSection(
+                title: Text('Plugins', style: headingStyle),
+                tiles: plugins,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
