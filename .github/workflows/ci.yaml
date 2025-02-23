@@ -79,6 +79,20 @@ jobs:
       - name: Generate documentation
         run: cargo doc -v --document-private-items --all-features
 
+  integration-tests:
+    name: NixOS VM integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout flake
+        uses: actions/checkout@v4
+
+      - name: Install nix
+        uses: DeterminateSystems/nix-installer-action@v9
+
+      - name: Run tests
+        run: |
+          nix --print-build-logs flake check
+
   test-flutter:
     name: Flutter Test
     runs-on: ubuntu-latest
