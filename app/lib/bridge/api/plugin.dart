@@ -22,6 +22,11 @@ Future<List<PluginManifestPluginState>> pluginManifests(
     RustLib.instance.api
         .crateApiPluginPluginManifests(pluginManager: pluginManager);
 
+Future<PluginManifestPluginState> pluginManagerParsePlugin(
+        {required PluginManager pluginManager, required String filepath}) =>
+    RustLib.instance.api.crateApiPluginPluginManagerParsePlugin(
+        pluginManager: pluginManager, filepath: filepath);
+
 String pluginInstanceManifestName(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api

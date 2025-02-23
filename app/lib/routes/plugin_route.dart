@@ -1,18 +1,17 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_bloc.dart';
-import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class PluginRoute extends StatelessWidget {
   final PluginManifestPluginState plugin;
+  final String? importPath;
 
-  const PluginRoute({super.key, required this.plugin});
+  const PluginRoute({super.key, required this.plugin, this.importPath});
 
   TextStyle get headingStyle => const TextStyle(
         fontSize: 16,
@@ -59,31 +58,20 @@ class PluginRoute extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () async {
-          final logBloc = context.read<LogBloc>();
-          final pluginManagerBloc = context.read<PluginManagerBloc>();
-          await logBloc.catch_(message: 'import plugin', () async {
-            final result = await FilePicker.platform.pickFiles(
-              dialogTitle: 'Import Plugin',
-            );
-
-            if (result == null) {
-              return;
-            }
-
-            final file = result.files.firstOrNull;
-            if (file == null) {
-              Logger.error(message: 'plugin file not selected.');
-              return;
-            }
-
-            await pluginManagerBloc.import(file.xFile.path);
-          });
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: importPath == null
+          ? null
+          : FloatingActionButton(
+              shape: const CircleBorder(),
+              onPressed: () async {
+                final logBloc = context.read<LogBloc>();
+                final pluginManagerBloc = context.read<PluginManagerBloc>();
+                Navigator.of(context).pop();
+                await logBloc.catch_(message: 'import plugin', () async {
+                  await pluginManagerBloc.import(importPath!);
+                });
+              },
+              child: const Icon(Icons.check_circle),
+            ),
     );
   }
 

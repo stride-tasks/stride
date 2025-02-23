@@ -1,3 +1,7 @@
+#![allow(clippy::needless_pass_by_value)]
+
+use std::path::Path;
+
 use flutter_rust_bridge::frb;
 use stride_core::event::HostEvent;
 use stride_plugin_manager::{
@@ -16,7 +20,16 @@ pub fn plugin_manifests(
         .map(|plugin| plugin.manifest.clone())
         .collect::<Vec<_>>())
 }
-
+pub fn plugin_manager_parse_plugin(
+    plugin_manager: &PluginManager,
+    filepath: String,
+) -> Result<PluginInstanceManifest, RustError> {
+    plugin_manager
+        .parse_plugin(Path::new(&filepath))
+        .map(|plugin| plugin.manifest)
+        .map_err(ErrorKind::Plugin)
+        .map_err(Into::into)
+}
 #[frb(sync)]
 #[must_use]
 pub fn plugin_instance_manifest_name(manifest: &PluginInstanceManifest) -> String {
@@ -64,7 +77,7 @@ pub fn plugin_manager_import(
     filepath: String,
 ) -> Result<(), RustError> {
     Ok(plugin_manager
-        .import(&filepath)
+        .import(Path::new(&filepath))
         .map_err(ErrorKind::Plugin)?)
 }
 

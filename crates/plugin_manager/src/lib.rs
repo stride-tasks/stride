@@ -3,7 +3,7 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::doc_markdown)]
 
-use std::{collections::VecDeque, fmt::Debug, fs::File, io::Read};
+use std::{collections::VecDeque, fmt::Debug, fs::File, io::Read, path::Path};
 
 use logging::PluginLogger;
 use manifest::{PluginManifest, PluginState};
@@ -59,6 +59,12 @@ pub struct EventQueue {
 }
 
 #[derive(Debug)]
+pub struct ParsePlugin {
+    pub manifest: PluginManifest<PluginState>,
+    pub code: Box<[u8]>,
+}
+
+#[derive(Debug)]
 pub struct Plugin {
     pub manifest: PluginManifest<PluginState>,
 }
@@ -103,7 +109,7 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn import(&mut self, plugin_archive_path: &str) -> Result<()> {
+    pub fn parse_plugin(&self, plugin_archive_path: &Path) -> Result<ParsePlugin> {
         let file = File::open(plugin_archive_path)?;
         let mut archive = ZipArchive::new(file).map_err(Error::from)?;
 
@@ -144,7 +150,7 @@ impl PluginManager {
 
         self.validate_wasm_code(&manifest, &code_content)?;
 
-        let plugin = Plugin {
+        Ok(ParsePlugin {
             manifest: PluginManifest::<PluginState> {
                 api: manifest.api,
                 name: manifest.name,
@@ -152,9 +158,14 @@ impl PluginManager {
                 permissions: manifest.permissions,
                 state: PluginState::default(),
             },
-        };
+            code: code_content.into_boxed_slice(),
+        })
+    }
 
-        self.install(plugin, code_content.as_slice())?;
+    pub fn import(&mut self, plugin_archive_path: &Path) -> Result<()> {
+        let plugin = self.parse_plugin(plugin_archive_path)?;
+
+        self.install(plugin)?;
         Ok(())
     }
 
@@ -184,7 +195,7 @@ impl PluginManager {
         Ok(true)
     }
 
-    fn install(&mut self, plugin: Plugin, code: &[u8]) -> Result<()> {
+    fn install(&mut self, plugin: ParsePlugin) -> Result<()> {
         let plugin_path = self.plugins_path.join(&plugin.manifest.name);
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
@@ -195,9 +206,11 @@ impl PluginManager {
         std::fs::write(&manifest_path, manifest_content)?;
 
         let code_path = source_path.join("code.wasm");
-        std::fs::write(&code_path, code)?;
+        std::fs::write(&code_path, &plugin.code)?;
 
-        self.plugins.push(plugin);
+        self.plugins.push(Plugin {
+            manifest: plugin.manifest,
+        });
         Ok(())
     }
 

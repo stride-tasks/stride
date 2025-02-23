@@ -327,7 +327,7 @@ fn main() -> anyhow::Result<()> {
                 }
                 Some(command) => match command {
                     cli::PluginCommand::Import { filepath } => {
-                        plugin_manager.import(&filepath.to_string_lossy())?;
+                        plugin_manager.import(&filepath)?;
                     }
                     cli::PluginCommand::Toggle { plugin_name } => {
                         plugin_manager.toggle(&plugin_name)?;

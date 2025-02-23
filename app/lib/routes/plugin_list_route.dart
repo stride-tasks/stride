@@ -57,7 +57,21 @@ class PluginListRoute extends StatelessWidget {
               return;
             }
 
-            await pluginManagerBloc.import(file.xFile.path);
+            final filepath = file.xFile.path;
+            final manifest = await pluginManagerParsePlugin(
+              pluginManager: pluginManagerBloc.pluginManager,
+              filepath: filepath,
+            );
+            if (context.mounted) {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (context) => PluginRoute(
+                    plugin: manifest,
+                    importPath: file.xFile.path,
+                  ),
+                ),
+              );
+            }
           });
         },
         child: const Icon(Icons.add),
