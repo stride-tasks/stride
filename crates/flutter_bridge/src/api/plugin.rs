@@ -3,7 +3,7 @@ use stride_plugin_manager::{
     PluginManager,
 };
 
-use crate::RustError;
+use crate::{ErrorKind, RustError};
 
 pub fn plugin_manifests(
     plugin_manager: &PluginManager,
@@ -24,4 +24,13 @@ pub fn plugin_instance_manifest_name(manifest: &PluginInstanceManifest) -> Strin
 #[must_use]
 pub fn plugin_instance_manifest_events(manifest: &PluginInstanceManifest) -> ManifestEvents {
     *manifest.events()
+}
+
+pub fn plugin_manager_import(
+    plugin_manager: &mut PluginManager,
+    filepath: String,
+) -> Result<(), RustError> {
+    Ok(plugin_manager
+        .import(&filepath)
+        .map_err(ErrorKind::Plugin)?)
 }

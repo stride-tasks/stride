@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manager.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
@@ -24,7 +25,12 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
     required this.logBloc,
     required this.pluginManager,
     required PluginManagerState state,
-  }) : super(state);
+  }) : super(state) {
+    on<PluginManagerFetchEvent>((event, emit) async {
+      final plugins = await pluginManifests(pluginManager: pluginManager);
+      emit(PluginManagerState(plugins: plugins));
+    });
+  }
 
   Future<void> emitHostEvent(HostEvent event, TaskBloc bloc) async {
     await pluginManager.emit(event: event);
@@ -55,5 +61,11 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
           pluginManager.disable(pluginName: pluginName, reason: reason);
       }
     }
+  }
+
+  Future<void> import(String filepath) async {
+    await pluginManagerImport(pluginManager: pluginManager, filepath: filepath);
+    // Refresh plugin list.
+    add(PluginManagerFetchEvent());
   }
 }

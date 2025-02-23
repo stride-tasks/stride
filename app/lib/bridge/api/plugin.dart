@@ -32,3 +32,8 @@ ManifestEvents pluginInstanceManifestEvents(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
         .crateApiPluginPluginInstanceManifestEvents(manifest: manifest);
+
+Future<void> pluginManagerImport(
+        {required PluginManager pluginManager, required String filepath}) =>
+    RustLib.instance.api.crateApiPluginPluginManagerImport(
+        pluginManager: pluginManager, filepath: filepath);
