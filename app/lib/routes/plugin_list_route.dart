@@ -6,6 +6,7 @@ import 'package:stride/blocs/plugin_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
+import 'package:stride/routes/plugin_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
@@ -89,10 +90,18 @@ class PluginListRoute extends StatelessWidget {
           : null,
       trailing: Switch.adaptive(
         value: enabled,
+        activeColor: Colors.redAccent,
         onChanged: (value) async {
           await context.read<PluginManagerBloc>().toggle(name);
         },
       ),
+      onTap: (context) {
+        Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (context) => PluginRoute(plugin: plugin),
+          ),
+        );
+      },
     );
   }
 

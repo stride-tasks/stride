@@ -1,7 +1,7 @@
 use flutter_rust_bridge::frb;
 use stride_core::event::HostEvent;
 use stride_plugin_manager::{
-    manifest::{ManifestEvents, PluginInstanceManifest, PluginState},
+    manifest::{ManifestEvents, ManifestPermissions, PluginInstanceManifest, PluginState},
     PluginManager,
 };
 
@@ -17,7 +17,7 @@ pub fn plugin_manifests(
         .collect::<Vec<_>>())
 }
 
-#[frb]
+#[frb(sync)]
 #[must_use]
 pub fn plugin_instance_manifest_name(manifest: &PluginInstanceManifest) -> String {
     manifest.name().to_string()
@@ -36,6 +36,13 @@ pub fn plugin_instance_manifest_disabled_reason(
         PluginState::Enable => None,
         PluginState::Disable { reason } => reason.as_deref().map(ToString::to_string),
     }
+}
+#[frb(sync)]
+#[must_use]
+pub fn plugin_instance_manifest_permissions(
+    manifest: &PluginInstanceManifest,
+) -> ManifestPermissions {
+    manifest.permissions
 }
 #[frb(sync)]
 #[must_use]

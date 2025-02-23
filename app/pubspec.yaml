@@ -27,6 +27,7 @@ dependencies:
   file_picker: ^8.3.1
   qr_flutter: ^4.1.0
   url_launcher: ^6.3.1
+  intersperse: ^2.0.0
 
 dev_dependencies:
   flutter_test:

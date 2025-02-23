@@ -22,25 +22,26 @@ Future<List<PluginManifestPluginState>> pluginManifests(
     RustLib.instance.api
         .crateApiPluginPluginManifests(pluginManager: pluginManager);
 
-/// flutter_rust_bridge:sync
 String pluginInstanceManifestName(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
         .crateApiPluginPluginInstanceManifestName(manifest: manifest);
 
-/// flutter_rust_bridge:sync
 bool pluginInstanceManifestEnabled(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
         .crateApiPluginPluginInstanceManifestEnabled(manifest: manifest);
 
-/// flutter_rust_bridge:sync
 String? pluginInstanceManifestDisabledReason(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
         .crateApiPluginPluginInstanceManifestDisabledReason(manifest: manifest);
 
-/// flutter_rust_bridge:sync
+ManifestPermissions pluginInstanceManifestPermissions(
+        {required PluginManifestPluginState manifest}) =>
+    RustLib.instance.api
+        .crateApiPluginPluginInstanceManifestPermissions(manifest: manifest);
+
 ManifestEvents pluginInstanceManifestEvents(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
