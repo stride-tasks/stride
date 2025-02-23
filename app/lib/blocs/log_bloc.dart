@@ -10,8 +10,13 @@ abstract class LogEvent {}
 
 final class LogMessageEvent extends LogEvent {
   final String message;
+  final bool isError;
   final bool show;
-  LogMessageEvent({required this.message, this.show = true});
+  LogMessageEvent({
+    required this.message,
+    this.isError = false,
+    this.show = true,
+  });
 }
 
 final class LogErrorEvent extends LogEvent {
@@ -41,7 +46,13 @@ class LogState {
 class LogBloc extends Bloc<LogEvent, LogState> {
   LogBloc() : super(const LogState(message: '')) {
     on<LogMessageEvent>((event, emit) async {
-      emit(LogState(message: event.message, show: event.show));
+      emit(
+        LogState(
+          message: event.message,
+          isError: event.isError,
+          show: event.show,
+        ),
+      );
     });
 
     on<LogErrorEvent>((event, emit) async {
