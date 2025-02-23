@@ -1,0 +1,22 @@
+[package]
+name = "stride_plugin"
+description = "Stride WebAssemply plugin library."
+keywords = ["stride", "wasm", "plugin"]
+categories = []
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+stride_core.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
