@@ -65,15 +65,18 @@ in
       strideTasksRepoPath = "/srv/git/stride-tasks.git";
 
       sshKeyUuid = "93d873d5-96c8-47df-80a4-d5edec397828";
+      repositoryUuid = "090d0730-085e-4fa0-b972-a2d28450bee0";
       adjustConfig = pkgs.writeText "adjust_config.py" ''
         import json
         import sys
 
         with sys.stdin as f:
             d = json.load(f)
-            d["repository"]["ssh_key_uuid"] = "${sshKeyUuid}"
-            d["repository"]["origin"] = "git@server:${strideTasksRepoPath}"
-            d["repository"]["encryption"]["key"] = "lfRpC9kVZmG3iw4Vaq1fTB5DETvmSndM3jLR6WAdnkM"
+            d["current_repository"] = "${repositoryUuid}"
+            d["repositories"][0]["uuid"] = "${repositoryUuid}"
+            d["repositories"][0]["ssh_key_uuid"] = "${sshKeyUuid}"
+            d["repositories"][0]["origin"] = "git@server:${strideTasksRepoPath}"
+            d["repositories"][0]["encryption"]["key"] = "lfRpC9kVZmG3iw4Vaq1fTB5DETvmSndM3jLR6WAdnkM"
             print(json.dumps(d, sort_keys=True, indent=2))
       '';
       settingsPath = "/root/.local/share/org.stridetasks.stride";
@@ -127,7 +130,9 @@ in
 
               # This adds the required key attributes and such.
               client.succeed(
-                  'echo "$(cat ${settingsJsonPath} | python3 ${adjustConfig})" > ${settingsJsonPath}'
+                  'echo "$(cat ${settingsJsonPath} | tee settings.json | python3 ${adjustConfig})" > ${settingsJsonPath}',
+                  'cat settings.json >&2',
+                  'mv ${settingsPath}/repository/*/ ${settingsPath}/repository/${repositoryUuid}/'
               )
               # Add the ssh key
               client.succeed(
@@ -135,28 +140,28 @@ in
                 "install -D ${sshKeys.admin.priv} ${settingsSshKeyPath}/key",
               )
               # Add the hostKey
-              client.succeed("ssh-keyscan -p ${port} -q server  > ${settingsPath}/.ssh/known_hosts")
-              client.succeed("ssh-keyscan -p ${port} -q server  > ~root/.ssh/known_hosts")
+              client.succeed("ssh-keyscan -p ${port} -q server > ${settingsPath}/.ssh/known_hosts")
+              client.succeed("ssh-keyscan -p ${port} -q server > ~root/.ssh/known_hosts")
 
-          # Add the required git remote setup
-          client_send.succeed("${pkgs.writeShellScript "git-remote-setup" ''
+              # Add the required git remote setup
+              client.succeed("${pkgs.writeShellScript "git-remote-setup" ''
           set -xe
 
-          # This also creates the `repository` directory, needed below
-          stride add "Task 1 of client_send"
-
-          cd ${settingsPath}/repository
+          cd ${settingsPath}/repository/${repositoryUuid}/source
           git remote add origin git@server:${strideTasksRepoPath}
-          git push --set-upstream origin main
         ''}")
-          client_receive.succeed("${pkgs.writeShellScript "git-remote-setup" ''
-          set -xe
+          client_send.succeed('git -C ${settingsPath}/repository/${repositoryUuid}/source push --set-upstream origin main')
+          client_receive.succeed(
+                'git config --global user.email "root@client_receive"',
+                'git config --global user.name "root"',
+                'git -C ${settingsPath}/repository/${repositoryUuid}/source pull --rebase --set-upstream origin main'
+            )
 
-          git clone git@server:${strideTasksRepoPath} ${settingsPath}/repository
-        ''}")
+          client_send.succeed('stride add "Task 1 of client_send"')
 
         with subtest("Can sync tasks"):
           client_send.succeed("stride sync")
+          client_receive.succeed("stride sync")
 
         with subtest("Correct tasks were synced"):
           count_before = client_receive.succeed('stride search "" | wc -l')
