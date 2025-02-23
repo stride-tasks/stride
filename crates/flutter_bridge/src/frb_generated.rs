@@ -45,7 +45,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.8.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 340609275;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -490912880;
 
 // Section: executor
 
@@ -267,61 +267,6 @@ fn wire__stride_plugin_manager__manager__PluginManager_disable_impl(
         },
     )
 }
-fn wire__stride_plugin_manager__manager__PluginManager_emit_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "PluginManager_emit",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_that = <RustOpaqueMoi<
-                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>,
-            >>::sse_decode(&mut deserializer);
-            let api_event = <HostEvent>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| {
-                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let mut api_that_guard = None;
-                        let decode_indices_ =
-                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
-                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                    &api_that, 0, true,
-                                )],
-                            );
-                        for i in decode_indices_ {
-                            match i {
-                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
-                                _ => unreachable!(),
-                            }
-                        }
-                        let mut api_that_guard = api_that_guard.unwrap();
-                        let output_ok = stride_plugin_manager::manager::PluginManager::emit(
-                            &mut *api_that_guard,
-                            api_event,
-                        )?;
-                        Ok(output_ok)
-                    })(),
-                )
-            }
-        },
-    )
-}
 fn wire__stride_plugin_manager__manager__PluginManager_load_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -460,6 +405,61 @@ fn wire__stride_plugin_manager__manager__PluginManager_process_event_impl(
                     )?;
                     Ok(output_ok)
                 })())
+            }
+        },
+    )
+}
+fn wire__stride_plugin_manager__manager__PluginManager_remove_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "PluginManager_remove",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>,
+            >>::sse_decode(&mut deserializer);
+            let api_plugin_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, true,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let mut api_that_guard = api_that_guard.unwrap();
+                        let output_ok = stride_plugin_manager::manager::PluginManager::remove(
+                            &mut *api_that_guard,
+                            &api_plugin_name,
+                        )?;
+                        Ok(output_ok)
+                    })(),
+                )
             }
         },
     )
@@ -2776,6 +2776,112 @@ fn wire__crate__api__repository__git__oid_to_string_impl(
         },
     )
 }
+fn wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "plugin_instance_manifest_disabled_reason",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_manifest = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<
+                    PluginManifest<PluginState>,
+                >,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let mut api_manifest_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_manifest,
+                            0,
+                            false,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_manifest_guard = Some(api_manifest.lockable_decode_sync_ref()),
+                        _ => unreachable!(),
+                    }
+                }
+                let api_manifest_guard = api_manifest_guard.unwrap();
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::api::plugin::plugin_instance_manifest_disabled_reason(
+                        &*api_manifest_guard,
+                    ),
+                )?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "plugin_instance_manifest_enabled",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_manifest = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<
+                    PluginManifest<PluginState>,
+                >,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let mut api_manifest_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_manifest,
+                            0,
+                            false,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_manifest_guard = Some(api_manifest.lockable_decode_sync_ref()),
+                        _ => unreachable!(),
+                    }
+                }
+                let api_manifest_guard = api_manifest_guard.unwrap();
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::api::plugin::plugin_instance_manifest_enabled(&*api_manifest_guard),
+                )?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__plugin__plugin_instance_manifest_events_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -2880,6 +2986,124 @@ fn wire__crate__api__plugin__plugin_instance_manifest_name_impl(
         },
     )
 }
+fn wire__crate__api__plugin__plugin_manager_disable_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "plugin_manager_disable",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_plugin_manager = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>,
+            >>::sse_decode(&mut deserializer);
+            let api_plugin_name = <String>::sse_decode(&mut deserializer);
+            let api_reason = <Option<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_plugin_manager_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_plugin_manager,
+                                0,
+                                true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => {
+                                api_plugin_manager_guard =
+                                    Some(api_plugin_manager.lockable_decode_sync_ref_mut())
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_plugin_manager_guard = api_plugin_manager_guard.unwrap();
+                    let output_ok = crate::api::plugin::plugin_manager_disable(
+                        &mut *api_plugin_manager_guard,
+                        api_plugin_name,
+                        api_reason,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__plugin__plugin_manager_emit_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "plugin_manager_emit",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_plugin_manager = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>,
+            >>::sse_decode(&mut deserializer);
+            let api_event = <HostEvent>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_plugin_manager_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_plugin_manager,
+                                0,
+                                true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => {
+                                api_plugin_manager_guard =
+                                    Some(api_plugin_manager.lockable_decode_sync_ref_mut())
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_plugin_manager_guard = api_plugin_manager_guard.unwrap();
+                    let output_ok = crate::api::plugin::plugin_manager_emit(
+                        &mut *api_plugin_manager_guard,
+                        api_event,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__plugin__plugin_manager_import_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -2931,6 +3155,122 @@ fn wire__crate__api__plugin__plugin_manager_import_impl(
                     let output_ok = crate::api::plugin::plugin_manager_import(
                         &mut *api_plugin_manager_guard,
                         api_filepath,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__plugin__plugin_manager_remove_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "plugin_manager_remove",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_plugin_manager = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>,
+            >>::sse_decode(&mut deserializer);
+            let api_plugin_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_plugin_manager_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_plugin_manager,
+                                0,
+                                true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => {
+                                api_plugin_manager_guard =
+                                    Some(api_plugin_manager.lockable_decode_sync_ref_mut())
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_plugin_manager_guard = api_plugin_manager_guard.unwrap();
+                    let output_ok = crate::api::plugin::plugin_manager_remove(
+                        &mut *api_plugin_manager_guard,
+                        api_plugin_name,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__plugin__plugin_manager_toggle_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "plugin_manager_toggle",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_plugin_manager = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>,
+            >>::sse_decode(&mut deserializer);
+            let api_plugin_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_plugin_manager_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_plugin_manager,
+                                0,
+                                true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => {
+                                api_plugin_manager_guard =
+                                    Some(api_plugin_manager.lockable_decode_sync_ref_mut())
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_plugin_manager_guard = api_plugin_manager_guard.unwrap();
+                    let output_ok = crate::api::plugin::plugin_manager_toggle(
+                        &mut *api_plugin_manager_guard,
+                        api_plugin_name,
                     )?;
                     Ok(output_ok)
                 })())
@@ -4665,25 +5005,25 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        7 => wire__stride_plugin_manager__manager__PluginManager_emit_impl(
+        7 => wire__stride_plugin_manager__manager__PluginManager_load_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        8 => wire__stride_plugin_manager__manager__PluginManager_load_impl(
+        8 => wire__stride_plugin_manager__manager__PluginManager_new_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        9 => wire__stride_plugin_manager__manager__PluginManager_new_impl(
+        9 => wire__stride_plugin_manager__manager__PluginManager_process_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        10 => wire__stride_plugin_manager__manager__PluginManager_process_event_impl(
+        10 => wire__stride_plugin_manager__manager__PluginManager_remove_impl(
             port,
             ptr,
             rust_vec_len,
@@ -4890,37 +5230,49 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        82 => {
+        84 => {
+            wire__crate__api__plugin__plugin_manager_disable_impl(port, ptr, rust_vec_len, data_len)
+        }
+        85 => wire__crate__api__plugin__plugin_manager_emit_impl(port, ptr, rust_vec_len, data_len),
+        86 => {
             wire__crate__api__plugin__plugin_manager_import_impl(port, ptr, rust_vec_len, data_len)
         }
-        83 => wire__crate__api__plugin__plugin_manifests_impl(port, ptr, rust_vec_len, data_len),
-        84 => {
+        87 => {
+            wire__crate__api__plugin__plugin_manager_remove_impl(port, ptr, rust_vec_len, data_len)
+        }
+        88 => {
+            wire__crate__api__plugin__plugin_manager_toggle_impl(port, ptr, rust_vec_len, data_len)
+        }
+        89 => wire__crate__api__plugin__plugin_manifests_impl(port, ptr, rust_vec_len, data_len),
+        90 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        85 => wire__crate__api__settings__settings_create_stream_impl(
+        91 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        86 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        87 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
-        88 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        90 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        91 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        92 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
-        93 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
-        94 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
-        96 => wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len),
-        97 => {
+        92 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        93 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
+        94 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        96 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        97 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        98 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
+        99 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
+        100 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
+        102 => {
+            wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len)
+        }
+        103 => {
             wire__stride_core__task__task_priority_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        98 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
-        99 => {
+        104 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
+        105 => {
             wire__stride_core__task__task_status_is_pending_impl(port, ptr, rust_vec_len, data_len)
         }
-        100 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
-        102 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        106 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
+        108 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -4950,19 +5302,29 @@ fn pde_ffi_dispatcher_sync_impl(
         36 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
         64 => wire__crate__api__settings__encryption_key_validate_impl(ptr, rust_vec_len, data_len),
         79 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
-        80 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
+        80 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        81 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
+        81 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        89 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        95 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
-        101 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        82 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        83 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        95 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        101 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
+        107 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

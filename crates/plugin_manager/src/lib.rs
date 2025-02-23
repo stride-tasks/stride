@@ -208,6 +208,10 @@ impl PluginManager {
     #[allow(clippy::too_many_lines)]
     pub fn emit_event(&mut self, event: &HostEvent) -> Result<()> {
         for plugin in &self.plugins {
+            if !plugin.manifest.state.is_enabled() {
+                continue;
+            }
+
             match event {
                 HostEvent::TaskCreate { .. } if !plugin.manifest.events.task.create => continue,
                 HostEvent::TaskModify { .. } if !plugin.manifest.events.task.modify => continue,

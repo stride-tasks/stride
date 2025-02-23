@@ -89,7 +89,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.8.0';
 
   @override
-  int get rustContentHash => 340609275;
+  int get rustContentHash => -490912880;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -115,9 +115,6 @@ abstract class RustLibApi extends BaseApi {
       required String pluginName,
       String? reason});
 
-  Future<void> stridePluginManagerManagerPluginManagerEmit(
-      {required PluginManager that, required HostEvent event});
-
   Future<void> stridePluginManagerManagerPluginManagerLoad(
       {required PluginManager that});
 
@@ -126,6 +123,9 @@ abstract class RustLibApi extends BaseApi {
 
   Future<PluginAction?> stridePluginManagerManagerPluginManagerProcessEvent(
       {required PluginManager that});
+
+  Future<bool> stridePluginManagerManagerPluginManagerRemove(
+      {required PluginManager that, required String pluginName});
 
   Future<PluginState> stridePluginManagerManifestPluginStateDefault();
 
@@ -271,14 +271,34 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiRepositoryGitOidToString({required Oid oid});
 
+  String? crateApiPluginPluginInstanceManifestDisabledReason(
+      {required PluginManifestPluginState manifest});
+
+  bool crateApiPluginPluginInstanceManifestEnabled(
+      {required PluginManifestPluginState manifest});
+
   ManifestEvents crateApiPluginPluginInstanceManifestEvents(
       {required PluginManifestPluginState manifest});
 
   String crateApiPluginPluginInstanceManifestName(
       {required PluginManifestPluginState manifest});
 
+  Future<bool> crateApiPluginPluginManagerDisable(
+      {required PluginManager pluginManager,
+      required String pluginName,
+      String? reason});
+
+  Future<void> crateApiPluginPluginManagerEmit(
+      {required PluginManager pluginManager, required HostEvent event});
+
   Future<void> crateApiPluginPluginManagerImport(
       {required PluginManager pluginManager, required String filepath});
+
+  Future<bool> crateApiPluginPluginManagerRemove(
+      {required PluginManager pluginManager, required String pluginName});
+
+  Future<bool> crateApiPluginPluginManagerToggle(
+      {required PluginManager pluginManager, required String pluginName});
 
   Future<List<PluginManifestPluginState>> crateApiPluginPluginManifests(
       {required PluginManager pluginManager});
@@ -549,35 +569,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> stridePluginManagerManagerPluginManagerEmit(
-      {required PluginManager that, required HostEvent event}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-            that, serializer);
-        sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-            event, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kStridePluginManagerManagerPluginManagerEmitConstMeta,
-      argValues: [that, event],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kStridePluginManagerManagerPluginManagerEmitConstMeta =>
-      const TaskConstMeta(
-        debugName: 'PluginManager_emit',
-        argNames: ['that', 'event'],
-      );
-
-  @override
   Future<void> stridePluginManagerManagerPluginManagerLoad(
       {required PluginManager that}) {
     return handler.executeNormal(NormalTask(
@@ -586,7 +577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
+            funcId: 7, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -612,7 +603,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(pluginsPath, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
+            funcId: 8, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -640,7 +631,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
+            funcId: 9, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_plugin_action,
@@ -658,6 +649,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             debugName: 'PluginManager_process_event',
             argNames: ['that'],
           );
+
+  @override
+  Future<bool> stridePluginManagerManagerPluginManagerRemove(
+      {required PluginManager that, required String pluginName}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
+            that, serializer);
+        sse_encode_String(pluginName, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 10, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_bool,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kStridePluginManagerManagerPluginManagerRemoveConstMeta,
+      argValues: [that, pluginName],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kStridePluginManagerManagerPluginManagerRemoveConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManager_remove',
+        argNames: ['that', 'pluginName'],
+      );
 
   @override
   Future<PluginState> stridePluginManagerManifestPluginStateDefault() {
@@ -2110,7 +2129,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  ManifestEvents crateApiPluginPluginInstanceManifestEvents(
+  String? crateApiPluginPluginInstanceManifestDisabledReason(
       {required PluginManifestPluginState manifest}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
@@ -2118,6 +2137,59 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
         return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 80)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_opt_String,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiPluginPluginInstanceManifestDisabledReasonConstMeta,
+      argValues: [manifest],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta
+      get kCrateApiPluginPluginInstanceManifestDisabledReasonConstMeta =>
+          const TaskConstMeta(
+            debugName: 'plugin_instance_manifest_disabled_reason',
+            argNames: ['manifest'],
+          );
+
+  @override
+  bool crateApiPluginPluginInstanceManifestEnabled(
+      {required PluginManifestPluginState manifest}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+            manifest, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 81)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_bool,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiPluginPluginInstanceManifestEnabledConstMeta,
+      argValues: [manifest],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiPluginPluginInstanceManifestEnabledConstMeta =>
+      const TaskConstMeta(
+        debugName: 'plugin_instance_manifest_enabled',
+        argNames: ['manifest'],
+      );
+
+  @override
+  ManifestEvents crateApiPluginPluginInstanceManifestEvents(
+      {required PluginManifestPluginState manifest}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+            manifest, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 82)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_events,
@@ -2143,7 +2215,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 81)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 83)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -2162,6 +2234,68 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<bool> crateApiPluginPluginManagerDisable(
+      {required PluginManager pluginManager,
+      required String pluginName,
+      String? reason}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
+            pluginManager, serializer);
+        sse_encode_String(pluginName, serializer);
+        sse_encode_opt_String(reason, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 84, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_bool,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiPluginPluginManagerDisableConstMeta,
+      argValues: [pluginManager, pluginName, reason],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiPluginPluginManagerDisableConstMeta =>
+      const TaskConstMeta(
+        debugName: 'plugin_manager_disable',
+        argNames: ['pluginManager', 'pluginName', 'reason'],
+      );
+
+  @override
+  Future<void> crateApiPluginPluginManagerEmit(
+      {required PluginManager pluginManager, required HostEvent event}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
+            pluginManager, serializer);
+        sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
+            event, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 85, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiPluginPluginManagerEmitConstMeta,
+      argValues: [pluginManager, event],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiPluginPluginManagerEmitConstMeta =>
+      const TaskConstMeta(
+        debugName: 'plugin_manager_emit',
+        argNames: ['pluginManager', 'event'],
+      );
+
+  @override
   Future<void> crateApiPluginPluginManagerImport(
       {required PluginManager pluginManager, required String filepath}) {
     return handler.executeNormal(NormalTask(
@@ -2171,7 +2305,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pluginManager, serializer);
         sse_encode_String(filepath, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 82, port: port_);
+            funcId: 86, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2191,6 +2325,64 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<bool> crateApiPluginPluginManagerRemove(
+      {required PluginManager pluginManager, required String pluginName}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
+            pluginManager, serializer);
+        sse_encode_String(pluginName, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 87, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_bool,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiPluginPluginManagerRemoveConstMeta,
+      argValues: [pluginManager, pluginName],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiPluginPluginManagerRemoveConstMeta =>
+      const TaskConstMeta(
+        debugName: 'plugin_manager_remove',
+        argNames: ['pluginManager', 'pluginName'],
+      );
+
+  @override
+  Future<bool> crateApiPluginPluginManagerToggle(
+      {required PluginManager pluginManager, required String pluginName}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
+            pluginManager, serializer);
+        sse_encode_String(pluginName, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 88, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_bool,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiPluginPluginManagerToggleConstMeta,
+      argValues: [pluginManager, pluginName],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiPluginPluginManagerToggleConstMeta =>
+      const TaskConstMeta(
+        debugName: 'plugin_manager_toggle',
+        argNames: ['pluginManager', 'pluginName'],
+      );
+
+  @override
   Future<List<PluginManifestPluginState>> crateApiPluginPluginManifests(
       {required PluginManager pluginManager}) {
     return handler.executeNormal(NormalTask(
@@ -2199,7 +2391,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
             pluginManager, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 83, port: port_);
+            funcId: 89, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -2225,7 +2417,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 84, port: port_);
+            funcId: 90, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_repository,
@@ -2251,7 +2443,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_StreamSink_settings_Sse(streamSink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 85, port: port_);
+            funcId: 91, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2276,7 +2468,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 86, port: port_);
+            funcId: 92, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2300,7 +2492,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 87, port: port_);
+            funcId: 93, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2326,7 +2518,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_application_paths(paths, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 88, port: port_);
+            funcId: 94, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2350,7 +2542,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 89)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2375,7 +2567,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_settings(settings, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 90, port: port_);
+            funcId: 96, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2400,7 +2592,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 91, port: port_);
+            funcId: 97, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -2425,7 +2617,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 92, port: port_);
+            funcId: 98, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -2449,7 +2641,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 93, port: port_);
+            funcId: 99, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_Chrono_Utc,
@@ -2473,7 +2665,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_prim_u_8_loose(input, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 94, port: port_);
+            funcId: 100, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_task,
@@ -2496,7 +2688,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(title, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 101)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -2520,7 +2712,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_task_priority(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 96, port: port_);
+            funcId: 102, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2544,7 +2736,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 97, port: port_);
+            funcId: 103, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task_priority,
@@ -2568,7 +2760,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 98, port: port_);
+            funcId: 104, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task_status,
@@ -2593,7 +2785,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_task_status(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 99, port: port_);
+            funcId: 105, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2618,7 +2810,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 100, port: port_);
+            funcId: 106, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -2641,7 +2833,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 101)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 107)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_f_32,
@@ -2667,7 +2859,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Uuid(uuid, serializer);
         sse_encode_String(title, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 102, port: port_);
+            funcId: 108, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -5576,9 +5768,6 @@ class PluginManagerImpl extends RustOpaque implements PluginManager {
       RustLib.instance.api.stridePluginManagerManagerPluginManagerDisable(
           that: this, pluginName: pluginName, reason: reason);
 
-  Future<void> emit({required HostEvent event}) => RustLib.instance.api
-      .stridePluginManagerManagerPluginManagerEmit(that: this, event: event);
-
   Future<void> load() =>
       RustLib.instance.api.stridePluginManagerManagerPluginManagerLoad(
         that: this,
@@ -5588,6 +5777,10 @@ class PluginManagerImpl extends RustOpaque implements PluginManager {
       RustLib.instance.api.stridePluginManagerManagerPluginManagerProcessEvent(
         that: this,
       );
+
+  Future<bool> remove({required String pluginName}) =>
+      RustLib.instance.api.stridePluginManagerManagerPluginManagerRemove(
+          that: this, pluginName: pluginName);
 }
 
 @sealed

@@ -33,7 +33,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   }
 
   Future<void> emitHostEvent(HostEvent event, TaskBloc bloc) async {
-    await pluginManager.emit(event: event);
+    await pluginManagerEmit(pluginManager: pluginManager, event: event);
 
     while (true) {
       final action = await pluginManager.processEvent();
@@ -58,14 +58,34 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
               isError: true,
             ),
           );
-          pluginManager.disable(pluginName: pluginName, reason: reason);
+          pluginManagerDisable(
+            pluginManager: pluginManager,
+            pluginName: pluginName,
+            reason: reason,
+          );
+          add(PluginManagerFetchEvent());
       }
     }
   }
 
+  Future<void> toggle(String pluginName) async {
+    await pluginManagerToggle(
+      pluginManager: pluginManager,
+      pluginName: pluginName,
+    );
+    add(PluginManagerFetchEvent());
+  }
+
   Future<void> import(String filepath) async {
     await pluginManagerImport(pluginManager: pluginManager, filepath: filepath);
-    // Refresh plugin list.
+    add(PluginManagerFetchEvent());
+  }
+
+  Future<void> remove(String pluginName) async {
+    await pluginManagerRemove(
+      pluginManager: pluginManager,
+      pluginName: pluginName,
+    );
     add(PluginManagerFetchEvent());
   }
 }

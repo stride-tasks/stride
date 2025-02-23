@@ -5,6 +5,8 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/plugin.dart';
+import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class PluginListRoute extends StatelessWidget {
@@ -22,12 +24,8 @@ class PluginListRoute extends StatelessWidget {
       appBar: AppBar(title: const Text('Plugin List')),
       body: BlocBuilder<PluginManagerBloc, PluginManagerState>(
         builder: (context, state) {
-          final plugins = state.plugins.map((plugin) {
-            return SettingsTile(
-              title: Text(pluginInstanceManifestName(manifest: plugin)),
-              leading: const Icon(Icons.task),
-            );
-          }).toList();
+          final plugins =
+              state.plugins.map((plugin) => _plugin(context, plugin)).toList();
           return SettingsList(
             sections: [
               SettingsSection(
@@ -63,6 +61,67 @@ class PluginListRoute extends StatelessWidget {
         },
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  SettingsTile _plugin(BuildContext context, PluginManifestPluginState plugin) {
+    final name = pluginInstanceManifestName(manifest: plugin);
+    final enabled = pluginInstanceManifestEnabled(manifest: plugin);
+    final reason = pluginInstanceManifestDisabledReason(manifest: plugin);
+    return SettingsTile(
+      title: Text(name),
+      leading: enabled
+          ? const Icon(Icons.check_circle)
+          : _deleteButton(context, name),
+      description: !enabled && reason != null
+          ? RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 12),
+                children: [
+                  TextSpan(
+                    text: 'Disable: ',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: reason),
+                ],
+              ),
+            )
+          : null,
+      trailing: Switch.adaptive(
+        value: enabled,
+        onChanged: (value) async {
+          await context.read<PluginManagerBloc>().toggle(name);
+        },
+      ),
+    );
+  }
+
+  IconButton _deleteButton(BuildContext context, String name) {
+    return IconButton(
+      onPressed: () async {
+        await showAlertDialog(
+          context: context,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Are you sure you want to delete $name? (forever)',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          onConfirm: (context) async {
+            context.read<LogBloc>().catch_(
+                  () async => context.read<PluginManagerBloc>().remove(name),
+                );
+            Navigator.of(context).pop();
+            Logger.trace(message: 'Plugin $name deleted');
+            return true;
+          },
+        );
+      },
+      icon: const Icon(Icons.delete_forever),
     );
   }
 }

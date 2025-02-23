@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use stride_core::event::{HostEvent, PluginEvent};
+use stride_core::event::PluginEvent;
 use wasmi::{Config, Engine};
 
 use crate::{
@@ -64,10 +64,6 @@ impl PluginManager {
             let manifest: PluginManifest<PluginState> =
                 toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
 
-            if !manifest.state.is_enabled() {
-                continue;
-            }
-
             plugins.push(Plugin { manifest });
         }
 
@@ -110,8 +106,21 @@ impl PluginManager {
         Ok(true)
     }
 
-    pub fn emit(&mut self, event: HostEvent) -> Result<()> {
-        self.emit_event(&event)
+    pub fn remove(&mut self, plugin_name: &str) -> Result<bool> {
+        let Some(index) = self
+            .plugins
+            .iter_mut()
+            .position(|plugin| plugin.manifest.name == plugin_name)
+        else {
+            return Ok(false);
+        };
+
+        let plugin = self.plugins.remove(index);
+
+        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        std::fs::remove_dir_all(plugin_path)?;
+
+        Ok(true)
     }
 
     #[allow(clippy::missing_panics_doc)]

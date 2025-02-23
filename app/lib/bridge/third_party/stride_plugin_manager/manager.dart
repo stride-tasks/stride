@@ -28,8 +28,6 @@ abstract class PluginManager implements RustOpaqueInterface {
 
   Future<bool> disable({required String pluginName, String? reason});
 
-  Future<void> emit({required HostEvent event});
-
   Future<void> load();
 
   // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
@@ -38,4 +36,6 @@ abstract class PluginManager implements RustOpaqueInterface {
           .stridePluginManagerManagerPluginManagerNew(pluginsPath: pluginsPath);
 
   Future<PluginAction?> processEvent();
+
+  Future<bool> remove({required String pluginName});
 }
