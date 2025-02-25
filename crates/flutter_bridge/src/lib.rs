@@ -27,6 +27,7 @@ pub use api::error::{ErrorKind, RustError};
 #[allow(clippy::cast_possible_wrap)]
 #[allow(clippy::cast_lossless)]
 #[allow(clippy::too_many_lines)]
+#[rustfmt::skip]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 
 pub(crate) fn base64_encode<T: AsRef<[u8]>>(input: T) -> String {

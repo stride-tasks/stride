@@ -37,6 +37,21 @@ nixos-lib.runTest {
     user-dirs-file = pkgs.writeText "user-dirs.dirs" ''
       XDG_DOCUMENTS_DIR="/root/Documents"
     '';
+
+    mkSyncConfig = path: quotes: let
+      q =
+        if quotes
+        then "\""
+        else "";
+    in
+      pkgs.writeShellScript "setup-config-file" ''
+        set -xe
+
+        mkdir --parents "$(dirname "${path}")"
+        echo 'sync.server.origin=${q}http://server:${port}${q}' >> "${path}"
+        echo 'sync.server.client_id=${q}${uuid}${q}' >> "${path}"
+        echo 'sync.encryption_secret=${q}${password}${q}' >> "${path}"
+      '';
   in
     /*
     python
@@ -50,10 +65,7 @@ nixos-lib.runTest {
       with subtest("Setup task syncing"):
           # See man task-sync(5)
           task_client.succeed("mkdir ~/.task")
-          task_client.succeed("touch ~/.taskrc")
-          task_client.succeed("echo sync.server.origin=http://server:${port} >> ~/.taskrc")
-          task_client.succeed("echo sync.server.client_id=${uuid} >> ~/.taskrc")
-          task_client.succeed("echo sync.encryption_secret=${password} >> ~/.taskrc")
+          task_client.succeed("${mkSyncConfig "$HOME/.taskrc" false}")
 
           # The `TaskStorage` needs a document dir, which `stride` reads from the
           # `user-dirs.dirs` file (via the `dirs` crate)
@@ -62,14 +74,7 @@ nixos-lib.runTest {
               "cat ${user-dirs-file} > ~/.config/user-dirs.dirs",
               "mkdir ~/Documents"
           )
-          stride_client.succeed("${pkgs.writeShellScript "configure-stride-sync" ''
-        config_file="$HOME/.config/org.stridetasks.stride/config.toml"
-        mkdir --parents "$(dirname "$config_file")"
-        echo 'sync.server.origin="http://server:${port}"' >> "$config_file"
-        echo 'sync.server.client_id="${uuid}"' >> "$config_file"
-        echo 'sync.encryption_secret="${password}"' >> "$config_file"
-      ''}")
-
+          stride_client.succeed("${mkSyncConfig "$HOME/.config/org.stridetasks.stride/config.toml" true}")
 
       with subtest("Can create tasks"):
           task_client.succeed("task add 'First task -- task_client'")

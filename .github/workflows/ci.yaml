@@ -79,6 +79,49 @@ jobs:
       - name: Generate documentation
         run: cargo doc -v --document-private-items --all-features
 
+  integration-tests:
+    name: NixOS VM integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout flake
+        uses: actions/checkout@v4
+
+      - name: enable KVM
+        env:
+          kvmRules: /etc/udev/rules.d/99-enable-kvm.rules
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee $kvmRules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install nix
+        uses: nixbuild/nix-quick-install-action@v29
+
+      - name: Set up a cache
+        uses: nix-community/cache-nix-action@v6
+        with:
+          # restore and save a cache using this key
+          primary-key:
+            nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1 GB = 1073741824 B
+          gc-max-store-size-linux: 1073741824
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago relative to the start of the `Post Restore` phase
+          purge-created: 0
+          # except the version with the `primary-key`, if it exists
+          purge-primary-key: never
+
+      - name: Run tests
+        run: |
+          nix --print-build-logs flake check
+
   test-flutter:
     name: Flutter Test
     runs-on: ubuntu-latest
