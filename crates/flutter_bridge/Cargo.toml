@@ -15,7 +15,15 @@ publish = false
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
-flutter_rust_bridge = { version = "=2.7.1", default-features = false, features = ["thread-pool", "rust-async", "user-utils", "dart-opaque", "chrono", "uuid", "anyhow"] }
+flutter_rust_bridge = { version = "=2.7.1", default-features = false, features = [
+  "thread-pool",
+  "rust-async",
+  "user-utils",
+  "dart-opaque",
+  "chrono",
+  "uuid",
+  "anyhow",
+] }
 taskchampion = { version = "2.0.2", default-features = false, features = [
   "encryption",
   "server-sync",
