@@ -54,6 +54,9 @@ treefmt-nix.lib.evalModule pkgs (
 
     settings = {
       formatter = {
+        rustfmt = {
+          excludes = ["*/frb_generated.rs"];
+        };
         clang-format = {
           # options = ["--style" "Chromium"];
         };
