@@ -320,8 +320,7 @@ fn main() -> anyhow::Result<()> {
         Mode::Plugin { command } => {
             match command {
                 None => {
-                    let plugins = plugin_manager.list()?;
-                    for plugin in plugins {
+                    for plugin in plugin_manager.list() {
                         println!("{}", plugin.manifest.name);
                     }
                 }

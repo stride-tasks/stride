@@ -72,15 +72,11 @@ pub struct Plugin {
 impl PluginManager {
     #[must_use]
     pub fn plugin(&self, plugin_name: &str) -> Option<&Plugin> {
-        self.plugins
-            .iter()
-            .find(|plugin| plugin.manifest.name == plugin_name)
+        self.plugins.get(plugin_name)
     }
     #[must_use]
     pub fn plugin_mut(&mut self, plugin_name: &str) -> Option<&mut Plugin> {
-        self.plugins
-            .iter_mut()
-            .find(|plugin| plugin.manifest.name == plugin_name)
+        self.plugins.get_mut(plugin_name)
     }
 
     fn validate_wasm_code(&self, _manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
@@ -170,11 +166,7 @@ impl PluginManager {
     }
 
     pub fn toggle(&mut self, plugin_name: &str) -> Result<bool> {
-        let Some(plugin) = self
-            .plugins
-            .iter_mut()
-            .find(|plugin| plugin.manifest.name == plugin_name)
-        else {
+        let Some(plugin) = self.plugins.get_mut(plugin_name) else {
             return Ok(false);
         };
 
@@ -208,9 +200,12 @@ impl PluginManager {
         let code_path = source_path.join("code.wasm");
         std::fs::write(&code_path, &plugin.code)?;
 
-        self.plugins.push(Plugin {
-            manifest: plugin.manifest,
-        });
+        self.plugins.insert(
+            plugin.manifest.name.to_string(),
+            Plugin {
+                manifest: plugin.manifest,
+            },
+        );
         Ok(())
     }
 
@@ -220,7 +215,7 @@ impl PluginManager {
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
     pub fn emit_event(&mut self, event: &HostEvent) -> Result<()> {
-        for plugin in &self.plugins {
+        for plugin in self.plugins.values() {
             if !plugin.manifest.state.is_enabled() {
                 continue;
             }

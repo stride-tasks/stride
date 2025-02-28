@@ -15,8 +15,7 @@ pub fn plugin_manifests(
     plugin_manager: &PluginManager,
 ) -> Result<Vec<PluginInstanceManifest>, RustError> {
     Ok(plugin_manager
-        .list()?
-        .iter()
+        .list()
         .map(|plugin| plugin.manifest.clone())
         .collect::<Vec<_>>())
 }

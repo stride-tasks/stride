@@ -1,5 +1,5 @@
 use std::{
-    collections::VecDeque,
+    collections::{HashMap, VecDeque},
     path::{Path, PathBuf},
 };
 
@@ -15,7 +15,7 @@ use crate::{
 #[derive(Debug, Default)]
 pub struct PluginManager {
     pub(crate) plugins_path: PathBuf,
-    pub(crate) plugins: Vec<Plugin>,
+    pub(crate) plugins: HashMap<String, Plugin>,
 
     pub(crate) engine: Engine,
 
@@ -35,7 +35,7 @@ impl PluginManager {
 
         Ok(Self {
             plugins_path: plugins_path.to_path_buf(),
-            plugins: Vec::new(),
+            plugins: HashMap::new(),
 
             engine,
             plugin_events: VecDeque::new(),
@@ -45,7 +45,7 @@ impl PluginManager {
     pub fn load(&mut self) -> Result<()> {
         let entries = self.plugins_path.read_dir()?;
 
-        let mut plugins = Vec::new();
+        let mut plugins = HashMap::new();
         for entry in entries {
             let Ok(entry) = entry else {
                 continue;
@@ -64,7 +64,7 @@ impl PluginManager {
             let manifest: PluginManifest<PluginState> =
                 toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
 
-            plugins.push(Plugin { manifest });
+            plugins.insert(manifest.name.to_string(), Plugin { manifest });
         }
 
         self.plugins = plugins;
@@ -72,16 +72,12 @@ impl PluginManager {
     }
 
     /// flutter_rust_bridge:ignore
-    pub fn list(&self) -> Result<&[Plugin]> {
-        Ok(&self.plugins)
+    pub fn list(&self) -> impl Iterator<Item = &Plugin> {
+        self.plugins.values()
     }
 
     pub fn disable(&mut self, plugin_name: &str, reason: Option<String>) -> Result<bool> {
-        let Some(plugin) = self
-            .plugins
-            .iter_mut()
-            .find(|plugin| plugin.manifest.name == plugin_name)
-        else {
+        let Some(plugin) = self.plugins.get_mut(plugin_name) else {
             return Ok(false);
         };
 
@@ -107,15 +103,9 @@ impl PluginManager {
     }
 
     pub fn remove(&mut self, plugin_name: &str) -> Result<bool> {
-        let Some(index) = self
-            .plugins
-            .iter_mut()
-            .position(|plugin| plugin.manifest.name == plugin_name)
-        else {
+        let Some(plugin) = self.plugins.remove(plugin_name) else {
             return Ok(false);
         };
-
-        let plugin = self.plugins.remove(index);
 
         let plugin_path = self.plugins_path.join(&plugin.manifest.name);
         std::fs::remove_dir_all(plugin_path)?;
