@@ -69,7 +69,7 @@ flutter_native_splash:
   web: false
 
 flutter_rust_bridge:
-  rust_input: crate::api,stride_core,stride_plugin_manager::manifest,stride_plugin_manager::manager
+  rust_input: crate::api,stride_core,stride_plugin_manager::manifest
   rust_root: ../crates/flutter_bridge/
   dart_output: lib/bridge
   web: false

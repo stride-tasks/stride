@@ -5,6 +5,7 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_bloc.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/plugin.dart';
+import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:stride/routes/plugin_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -41,7 +42,6 @@ class PluginListRoute extends StatelessWidget {
         shape: const CircleBorder(),
         onPressed: () async {
           final logBloc = context.read<LogBloc>();
-          final pluginManagerBloc = context.read<PluginManagerBloc>();
           await logBloc.catch_(message: 'import plugin', () async {
             final result = await FilePicker.platform.pickFiles(
               dialogTitle: 'Import Plugin',
@@ -58,10 +58,7 @@ class PluginListRoute extends StatelessWidget {
             }
 
             final filepath = file.xFile.path;
-            final manifest = await pluginManagerParsePlugin(
-              pluginManager: pluginManagerBloc.pluginManager,
-              filepath: filepath,
-            );
+            final manifest = await pm.parsePlugin(filepath: filepath);
             if (context.mounted) {
               Navigator.of(context).push<void>(
                 MaterialPageRoute(

@@ -12,30 +12,6 @@
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_core/event.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
-import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
-import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
-import 'package:uuid/uuid.dart';
-
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`
-// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `list`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManager>>
-abstract class PluginManager implements RustOpaqueInterface {
-  static Future<PluginManager> default_() =>
-      RustLib.instance.api.stridePluginManagerManagerPluginManagerDefault();
-
-  Future<bool> disable({required String pluginName, String? reason});
-
-  Future<void> load();
-
-  // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
-  static Future<PluginManager> newInstance({required String pluginsPath}) =>
-      RustLib.instance.api
-          .stridePluginManagerManagerPluginManagerNew(pluginsPath: pluginsPath);
-
-  Future<PluginAction?> processEvent();
-
-  Future<bool> remove({required String pluginName});
-}
+abstract class PluginManager implements RustOpaqueInterface {}

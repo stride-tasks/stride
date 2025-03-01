@@ -19,6 +19,7 @@ import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/plugin.dart';
+import 'package:stride/bridge/api/plugin_manager.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/api/settings.dart';
@@ -27,7 +28,6 @@ import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
-import 'package:stride/bridge/third_party/stride_plugin_manager/manager.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:uuid/uuid.dart';
 
@@ -44,10 +44,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_OidPtr => wire
       ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidPtr;
-
-  CrossPlatformFinalizerArg
-      get rust_arc_decrement_strong_count_PluginManagerPtr => wire
-          ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManagerPtr;
 
   CrossPlatformFinalizerArg
       get rust_arc_decrement_strong_count_PluginManifestPluginStatePtr => wire
@@ -80,11 +76,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       dynamic raw);
 
   @protected
-  PluginManager
-      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          dynamic raw);
-
-  @protected
   PluginManifestPluginState
       dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
           dynamic raw);
@@ -110,11 +101,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           dynamic raw);
 
   @protected
-  PluginManager
-      dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          dynamic raw);
-
-  @protected
   TaskStorage
       dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           dynamic raw);
@@ -122,11 +108,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   Oid dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
       dynamic raw);
-
-  @protected
-  PluginManager
-      dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          dynamic raw);
 
   @protected
   PluginManifestPluginState
@@ -167,11 +148,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   Oid dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
       dynamic raw);
-
-  @protected
-  PluginManager
-      dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          dynamic raw);
 
   @protected
   PluginManifestPluginState
@@ -449,11 +425,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
-  PluginManager
-      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          SseDeserializer deserializer);
-
-  @protected
   PluginManifestPluginState
       sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
           SseDeserializer deserializer);
@@ -479,11 +450,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           SseDeserializer deserializer);
 
   @protected
-  PluginManager
-      sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          SseDeserializer deserializer);
-
-  @protected
   TaskStorage
       sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           SseDeserializer deserializer);
@@ -491,11 +457,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   Oid sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
       SseDeserializer deserializer);
-
-  @protected
-  PluginManager
-      sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          SseDeserializer deserializer);
 
   @protected
   PluginManifestPluginState
@@ -537,11 +498,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   Oid sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
       SseDeserializer deserializer);
-
-  @protected
-  PluginManager
-      sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          SseDeserializer deserializer);
 
   @protected
   PluginManifestPluginState
@@ -829,11 +785,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
-      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          PluginManager self, SseSerializer serializer);
-
-  @protected
-  void
       sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
           PluginManifestPluginState self, SseSerializer serializer);
 
@@ -859,11 +810,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
-      sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          PluginManager self, SseSerializer serializer);
-
-  @protected
-  void
       sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
           TaskStorage self, SseSerializer serializer);
 
@@ -871,11 +817,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
       sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
           Oid self, SseSerializer serializer);
-
-  @protected
-  void
-      sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          PluginManager self, SseSerializer serializer);
 
   @protected
   void
@@ -918,11 +859,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
       sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
           Oid self, SseSerializer serializer);
-
-  @protected
-  void
-      sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-          PluginManager self, SseSerializer serializer);
 
   @protected
   void
@@ -1286,38 +1222,6 @@ class RustLibWire implements BaseWire {
           'frbgen_stride_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid');
   late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid =
       _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidPtr
-          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
-
-  void
-      rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-    ffi.Pointer<ffi.Void> ptr,
-  ) {
-    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-      ptr,
-    );
-  }
-
-  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManagerPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-          'frbgen_stride_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager');
-  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager =
-      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManagerPtr
-          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
-
-  void
-      rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-    ffi.Pointer<ffi.Void> ptr,
-  ) {
-    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager(
-      ptr,
-    );
-  }
-
-  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManagerPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
-          'frbgen_stride_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager');
-  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManager =
-      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManagerPtr
           .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   void

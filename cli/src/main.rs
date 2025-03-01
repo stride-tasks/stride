@@ -107,7 +107,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let plugins_path = support_dir.join("plugins");
-    let mut plugin_manager = PluginManager::new(plugins_path.to_string_lossy().to_string())?;
+    let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
     let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
@@ -207,7 +207,8 @@ fn main() -> anyhow::Result<()> {
             };
             repository.borrow_mut().add(task)?;
             plugin_manager.emit_event(&event)?;
-            while let Some(action) = plugin_manager.process_event() {
+            while plugin_manager.process_host_event()? {}
+            while let Some(action) = plugin_manager.process_plugin_event() {
                 let (_plugin_name, event) = match action {
                     PluginAction::Event { plugin_name, event } => (plugin_name, event),
                     PluginAction::Disable {

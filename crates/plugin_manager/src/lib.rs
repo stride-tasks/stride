@@ -229,96 +229,118 @@ impl PluginManager {
                 | HostEvent::TaskSync => {}
             }
 
-            let plugin_path = self.plugins_path.join(&plugin.manifest.name);
-            let source_path = plugin_path.join("source");
-            let code_path = source_path.join("code.wasm");
-            let wasm = std::fs::read(code_path)?;
-            let module = Module::new(&self.engine, &wasm).expect("already validated");
-
-            let wasi_ctx = wasi_context(&plugin.manifest.name);
-            let host_state = HostState {
-                wasi: wasi_ctx,
-                events: VecDeque::default(),
-            };
-            let mut store = Store::new(&self.engine, host_state);
-
-            let mut linker = <Linker<HostState>>::new(&self.engine);
-
-            wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).unwrap();
-
-            let stride_emit = Func::wrap(
-                &mut store,
-                |mut caller: Caller<'_, HostState>, event_data: i32, event_len: i32| {
-                    let Some(memory_export) =
-                        caller.get_export("memory").and_then(Extern::into_memory)
-                    else {
-                        return;
-                    };
-
-                    let data = memory_export.data(&mut caller);
-
-                    let event_data = event_data as usize;
-                    let event_len = event_len as usize;
-                    let data = data.get(event_data..event_data + event_len).unwrap();
-
-                    let event: PluginEvent = serde_json::from_slice(data).unwrap();
-
-                    caller.data_mut().events.push_back(event);
-                },
-            );
-            linker.define("env", "stride__emit", stride_emit).unwrap();
-
-            let instance = linker
-                .instantiate(&mut store, &module)
-                .unwrap()
-                .ensure_no_start(&mut store)
-                .unwrap();
-
-            let stride_allocate = instance
-                .get_typed_func::<i32, i32>(&store, "stride__allocate")
-                .unwrap();
-
-            let stride_deallocate = instance
-                .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
-                .unwrap();
-
-            let stride_init = instance
-                .get_typed_func::<(), ()>(&store, "stride__init")
-                .unwrap();
-
-            let event_handler = instance
-                .get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)
-                .unwrap();
-
-            store.set_fuel(100_000).unwrap();
-            stride_init.call(&mut store, ()).unwrap();
-
-            let event_data = serde_json::to_string(&event).unwrap();
-            store.set_fuel(100_000).unwrap();
-            let ret = stride_allocate
-                .call(&mut store, event_data.len() as i32)
-                .unwrap() as usize;
-
-            let memory = instance.get_memory(&mut store, "memory").unwrap();
-            memory.data_mut(&mut store)[ret..ret + event_data.len()]
-                .copy_from_slice(event_data.as_bytes());
-
-            // And finally we can call the wasm!
-            store.set_fuel(1_000_000).unwrap();
-            event_handler
-                .call(&mut store, (ret as i32, event_data.len() as i32))
-                .unwrap();
-
-            stride_deallocate
-                .call(&mut store, (ret as i32, event_data.len() as i32))
-                .unwrap();
-
-            self.plugin_events.push_back(EventQueue {
-                plugin_name: plugin.manifest.name.clone(),
-                events: std::mem::take(&mut store.data_mut().events),
-            });
+            self.host_events
+                .push_back((plugin.manifest.name.to_string(), event.clone()));
         }
 
         Ok(())
+    }
+
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_possible_wrap)]
+    #[allow(clippy::missing_panics_doc)]
+    pub fn process_host_event(&mut self) -> Result<bool> {
+        let Some((plugin, event)) = self.host_events.pop_front() else {
+            return Ok(false);
+        };
+
+        let Some(plugin) = self.plugins.get(&plugin) else {
+            return Ok(false);
+        };
+
+        if !plugin.manifest.state.is_enabled() {
+            return Ok(false);
+        }
+
+        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let source_path = plugin_path.join("source");
+        let code_path = source_path.join("code.wasm");
+        let wasm = std::fs::read(code_path)?;
+        let module = Module::new(&self.engine, &wasm).expect("already validated");
+
+        let wasi_ctx = wasi_context(&plugin.manifest.name);
+        let host_state = HostState {
+            wasi: wasi_ctx,
+            events: VecDeque::default(),
+        };
+        let mut store = Store::new(&self.engine, host_state);
+
+        let mut linker = <Linker<HostState>>::new(&self.engine);
+
+        wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).unwrap();
+
+        let stride_emit = Func::wrap(
+            &mut store,
+            |mut caller: Caller<'_, HostState>, event_data: i32, event_len: i32| {
+                let Some(memory_export) = caller.get_export("memory").and_then(Extern::into_memory)
+                else {
+                    return;
+                };
+
+                let data = memory_export.data(&mut caller);
+
+                let event_data = event_data as usize;
+                let event_len = event_len as usize;
+                let data = data.get(event_data..event_data + event_len).unwrap();
+
+                let event: PluginEvent = serde_json::from_slice(data).unwrap();
+
+                caller.data_mut().events.push_back(event);
+            },
+        );
+        linker.define("env", "stride__emit", stride_emit).unwrap();
+
+        let instance = linker
+            .instantiate(&mut store, &module)
+            .unwrap()
+            .ensure_no_start(&mut store)
+            .unwrap();
+
+        let stride_allocate = instance
+            .get_typed_func::<i32, i32>(&store, "stride__allocate")
+            .unwrap();
+
+        let stride_deallocate = instance
+            .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
+            .unwrap();
+
+        let stride_init = instance
+            .get_typed_func::<(), ()>(&store, "stride__init")
+            .unwrap();
+
+        let event_handler = instance
+            .get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)
+            .unwrap();
+
+        store.set_fuel(100_000).unwrap();
+        stride_init.call(&mut store, ()).unwrap();
+
+        let event_data = serde_json::to_string(&event).unwrap();
+        store.set_fuel(100_000).unwrap();
+        let ret = stride_allocate
+            .call(&mut store, event_data.len() as i32)
+            .unwrap() as usize;
+
+        let memory = instance.get_memory(&mut store, "memory").unwrap();
+        memory.data_mut(&mut store)[ret..ret + event_data.len()]
+            .copy_from_slice(event_data.as_bytes());
+
+        // And finally we can call the wasm!
+        store.set_fuel(1_000_000).unwrap();
+        event_handler
+            .call(&mut store, (ret as i32, event_data.len() as i32))
+            .unwrap();
+
+        stride_deallocate
+            .call(&mut store, (ret as i32, event_data.len() as i32))
+            .unwrap();
+
+        self.plugin_events.push_back(EventQueue {
+            plugin_name: plugin.manifest.name.clone(),
+            events: std::mem::take(&mut store.data_mut().events),
+        });
+
+        Ok(true)
     }
 }

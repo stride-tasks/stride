@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use stride_core::event::PluginEvent;
+use stride_core::event::{HostEvent, PluginEvent};
 use wasmi::{Config, Engine};
 
 use crate::{
@@ -19,12 +19,12 @@ pub struct PluginManager {
 
     pub(crate) engine: Engine,
 
+    pub(crate) host_events: VecDeque<(String, HostEvent)>,
     pub(crate) plugin_events: VecDeque<EventQueue>,
 }
 
 impl PluginManager {
-    pub fn new(plugins_path: String) -> Result<Self> {
-        let plugins_path = Path::new(&plugins_path);
+    pub fn new(plugins_path: &Path) -> Result<Self> {
         if !plugins_path.exists() {
             std::fs::create_dir_all(plugins_path)?;
         }
@@ -38,6 +38,7 @@ impl PluginManager {
             plugins: HashMap::new(),
 
             engine,
+            host_events: VecDeque::new(),
             plugin_events: VecDeque::new(),
         })
     }
@@ -114,7 +115,7 @@ impl PluginManager {
     }
 
     #[allow(clippy::missing_panics_doc)]
-    pub fn process_event(&mut self) -> Option<PluginAction> {
+    pub fn process_plugin_event(&mut self) -> Option<PluginAction> {
         let mut events = self.plugin_events.pop_front()?;
         let event = events.events.pop_front();
 

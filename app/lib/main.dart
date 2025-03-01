@@ -7,7 +7,7 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/plugin.dart';
+import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manager.dart';
@@ -35,18 +35,13 @@ Future<void> main() async {
   );
 
   final pluginPath = path.join(supportPath.path, 'plugins');
-  final pluginManager = await PluginManager.newInstance(
-    pluginsPath: pluginPath,
-  );
-
-  await pluginManager.load();
-  final plugins = await pluginManifests(pluginManager: pluginManager);
+  await pm.load(pluginPath: pluginPath);
+  final plugins = await pm.pluginManifests();
   final pluginManagerState = PluginManagerState(plugins: plugins);
 
   runApp(
     MyApp(
       settings: settings,
-      pluginManager: pluginManager,
       pluginManagerState: pluginManagerState,
     ),
   );
@@ -54,12 +49,10 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   final Settings settings;
-  final PluginManager pluginManager;
   final PluginManagerState pluginManagerState;
   const MyApp({
     super.key,
     required this.settings,
-    required this.pluginManager,
     required this.pluginManagerState,
   });
 
@@ -78,7 +71,6 @@ class MyApp extends StatelessWidget {
         BlocProvider<PluginManagerBloc>(
           create: (context) => PluginManagerBloc(
             logBloc: context.read<LogBloc>(),
-            pluginManager: pluginManager,
             state: pluginManagerState,
           ),
         ),
