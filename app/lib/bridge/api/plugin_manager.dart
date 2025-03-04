@@ -19,11 +19,18 @@ import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:uuid/uuid.dart';
 
+Stream<void> createStream() =>
+    RustLib.instance.api.crateApiPluginManagerCreateStream();
+
 Future<void> load({required String pluginPath}) =>
     RustLib.instance.api.crateApiPluginManagerLoad(pluginPath: pluginPath);
 
-Future<void> emit({required HostEvent event}) =>
-    RustLib.instance.api.crateApiPluginManagerEmit(event: event);
+Future<void> emit({required HostEvent event, required String pluginName}) =>
+    RustLib.instance.api
+        .crateApiPluginManagerEmit(event: event, pluginName: pluginName);
+
+Future<void> emitBroadcast({required HostEvent event}) =>
+    RustLib.instance.api.crateApiPluginManagerEmitBroadcast(event: event);
 
 Future<bool> processHostEvent() =>
     RustLib.instance.api.crateApiPluginManagerProcessHostEvent();

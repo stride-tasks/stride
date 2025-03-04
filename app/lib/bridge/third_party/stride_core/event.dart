@@ -19,10 +19,16 @@ import 'package:uuid/uuid.dart';
 
 part 'event.freezed.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<HostEvent>>
 abstract class HostEvent implements RustOpaqueInterface {
+  /// flutter_rust_bridge:sync
+  static HostEvent networkResponse(
+          {required String host, required List<int> content}) =>
+      RustLib.instance.api.strideCoreEventHostEventNetworkResponse(
+          host: host, content: content);
+
   /// flutter_rust_bridge:sync
   static HostEvent taskCreate({Task? task}) =>
       RustLib.instance.api.strideCoreEventHostEventTaskCreate(task: task);
@@ -37,6 +43,12 @@ abstract class HostEvent implements RustOpaqueInterface {
       RustLib.instance.api.strideCoreEventHostEventTaskSync();
 }
 
+/// flutter_rust_bridge:non_opaque
+enum NetworkRequestType {
+  get_,
+  ;
+}
+
 @freezed
 sealed class PluginEvent with _$PluginEvent {
   const PluginEvent._();
@@ -48,4 +60,8 @@ sealed class PluginEvent with _$PluginEvent {
     required Task task,
   }) = PluginEvent_TaskModify;
   const factory PluginEvent.taskSync() = PluginEvent_TaskSync;
+  const factory PluginEvent.networkRequest({
+    required NetworkRequestType ty,
+    required String host,
+  }) = PluginEvent_NetworkRequest;
 }

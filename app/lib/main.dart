@@ -4,13 +4,12 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/plugin_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_plugin_manager/manager.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
@@ -68,18 +67,18 @@ class MyApp extends StatelessWidget {
             logBloc: context.read<LogBloc>(),
           ),
         ),
-        BlocProvider<PluginManagerBloc>(
-          create: (context) => PluginManagerBloc(
-            logBloc: context.read<LogBloc>(),
-            state: pluginManagerState,
-          ),
-        ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
             settingsBloc: context.read<SettingsBloc>(),
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),
-            pluginManagerBloc: context.read<PluginManagerBloc>(),
+          ),
+        ),
+        BlocProvider<PluginManagerBloc>(
+          create: (context) => PluginManagerBloc(
+            logBloc: context.read<LogBloc>(),
+            state: pluginManagerState,
+            taskBloc: context.read<TaskBloc>(),
           ),
         ),
       ],

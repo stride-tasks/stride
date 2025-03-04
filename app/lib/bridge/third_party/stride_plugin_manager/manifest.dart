@@ -21,7 +21,7 @@ import 'package:uuid/uuid.dart';
 part 'manifest.freezed.dart';
 
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `PluginApi`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
 // These functions are ignored (category: IgnoreBecauseNotAllowedOwner): `skip_serializing`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `events`, `name`
 
@@ -91,6 +91,27 @@ class ManifestEvents {
           task == other.task;
 }
 
+class ManifestPermissionNetwork {
+  final List<String> urls;
+
+  const ManifestPermissionNetwork({
+    required this.urls,
+  });
+
+  static Future<ManifestPermissionNetwork> default_() => RustLib.instance.api
+      .stridePluginManagerManifestManifestPermissionNetworkDefault();
+
+  @override
+  int get hashCode => urls.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ManifestPermissionNetwork &&
+          runtimeType == other.runtimeType &&
+          urls == other.urls;
+}
+
 class ManifestPermissionTask {
   final bool create;
   final bool modify;
@@ -120,23 +141,26 @@ class ManifestPermissionTask {
 
 class ManifestPermissions {
   final ManifestPermissionTask task;
+  final ManifestPermissionNetwork? network;
 
   const ManifestPermissions({
     required this.task,
+    this.network,
   });
 
   static Future<ManifestPermissions> default_() => RustLib.instance.api
       .stridePluginManagerManifestManifestPermissionsDefault();
 
   @override
-  int get hashCode => task.hashCode;
+  int get hashCode => task.hashCode ^ network.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ManifestPermissions &&
           runtimeType == other.runtimeType &&
-          task == other.task;
+          task == other.task &&
+          network == other.network;
 }
 
 @freezed

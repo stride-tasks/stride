@@ -28,7 +28,7 @@ pub fn plugin_instance_manifest_disabled_reason(
 pub fn plugin_instance_manifest_permissions(
     manifest: &PluginInstanceManifest,
 ) -> ManifestPermissions {
-    manifest.permissions
+    manifest.permissions.clone()
 }
 #[frb(sync)]
 #[must_use]

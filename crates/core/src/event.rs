@@ -13,6 +13,10 @@ pub enum HostEvent {
         previous: Option<Box<Task>>,
     },
     TaskSync,
+    NetworkResponse {
+        host: String,
+        content: Box<[u8]>,
+    },
 }
 
 impl HostEvent {
@@ -38,12 +42,36 @@ impl HostEvent {
     pub fn task_sync() -> Self {
         HostEvent::TaskSync
     }
+
+    /// flutter_rust_bridge:sync
+    #[must_use]
+    pub fn network_response(host: String, content: Vec<u8>) -> Self {
+        HostEvent::NetworkResponse {
+            host,
+            content: content.into_boxed_slice(),
+        }
+    }
+}
+
+/// flutter_rust_bridge:non_opaque
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+pub enum NetworkRequestType {
+    Get,
 }
 
 /// flutter_rust_bridge:non_opaque
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum PluginEvent {
-    TaskCreate { task: Task },
-    TaskModify { task: Task },
+    TaskCreate {
+        task: Task,
+    },
+    TaskModify {
+        task: Task,
+    },
     TaskSync,
+    NetworkRequest {
+        #[serde(rename = "type")]
+        ty: NetworkRequestType,
+        host: String,
+    },
 }

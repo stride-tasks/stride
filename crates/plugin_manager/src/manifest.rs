@@ -41,6 +41,12 @@ pub struct ManifestPermissionTask {
     pub sync: bool,
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct ManifestPermissionNetwork {
+    pub urls: Vec<String>,
+}
+
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
@@ -49,12 +55,13 @@ pub struct ManifestEvents {
     pub task: ManifestEventTask,
 }
 
-#[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
-)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ManifestPermissions {
     pub task: ManifestPermissionTask,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub network: Option<ManifestPermissionNetwork>,
 }
 
 /// flutter_rust_bridge:ignore

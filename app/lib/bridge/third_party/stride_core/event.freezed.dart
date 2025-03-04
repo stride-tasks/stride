@@ -21,6 +21,8 @@ mixin _$PluginEvent {
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
     required TResult Function() taskSync,
+    required TResult Function(NetworkRequestType ty, String host)
+        networkRequest,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -28,6 +30,7 @@ mixin _$PluginEvent {
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
     TResult? Function()? taskSync,
+    TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -35,6 +38,7 @@ mixin _$PluginEvent {
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
     TResult Function()? taskSync,
+    TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -43,6 +47,7 @@ mixin _$PluginEvent {
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
+    required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -50,6 +55,7 @@ mixin _$PluginEvent {
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
+    TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -57,6 +63,7 @@ mixin _$PluginEvent {
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
+    TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -169,6 +176,8 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
     required TResult Function() taskSync,
+    required TResult Function(NetworkRequestType ty, String host)
+        networkRequest,
   }) {
     return taskCreate(task);
   }
@@ -179,6 +188,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
     TResult? Function()? taskSync,
+    TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
     return taskCreate?.call(task);
   }
@@ -189,6 +199,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
     TResult Function()? taskSync,
+    TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
   }) {
     if (taskCreate != null) {
@@ -203,6 +214,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
+    required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
     return taskCreate(this);
   }
@@ -213,6 +225,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
+    TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
     return taskCreate?.call(this);
   }
@@ -223,6 +236,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
+    TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
   }) {
     if (taskCreate != null) {
@@ -332,6 +346,8 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
     required TResult Function() taskSync,
+    required TResult Function(NetworkRequestType ty, String host)
+        networkRequest,
   }) {
     return taskModify(task);
   }
@@ -342,6 +358,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
     TResult? Function()? taskSync,
+    TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
     return taskModify?.call(task);
   }
@@ -352,6 +369,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
     TResult Function()? taskSync,
+    TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
   }) {
     if (taskModify != null) {
@@ -366,6 +384,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
+    required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
     return taskModify(this);
   }
@@ -376,6 +395,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
+    TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
     return taskModify?.call(this);
   }
@@ -386,6 +406,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
+    TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
   }) {
     if (taskModify != null) {
@@ -454,6 +475,8 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
     required TResult Function() taskSync,
+    required TResult Function(NetworkRequestType ty, String host)
+        networkRequest,
   }) {
     return taskSync();
   }
@@ -464,6 +487,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
     TResult? Function()? taskSync,
+    TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
     return taskSync?.call();
   }
@@ -474,6 +498,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
     TResult Function()? taskSync,
+    TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
   }) {
     if (taskSync != null) {
@@ -488,6 +513,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
+    required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
     return taskSync(this);
   }
@@ -498,6 +524,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
+    TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
     return taskSync?.call(this);
   }
@@ -508,6 +535,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
+    TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
   }) {
     if (taskSync != null) {
@@ -520,4 +548,173 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
 abstract class PluginEvent_TaskSync extends PluginEvent {
   const factory PluginEvent_TaskSync() = _$PluginEvent_TaskSyncImpl;
   const PluginEvent_TaskSync._() : super._();
+}
+
+/// @nodoc
+abstract class _$$PluginEvent_NetworkRequestImplCopyWith<$Res> {
+  factory _$$PluginEvent_NetworkRequestImplCopyWith(
+          _$PluginEvent_NetworkRequestImpl value,
+          $Res Function(_$PluginEvent_NetworkRequestImpl) then) =
+      __$$PluginEvent_NetworkRequestImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({NetworkRequestType ty, String host});
+}
+
+/// @nodoc
+class __$$PluginEvent_NetworkRequestImplCopyWithImpl<$Res>
+    extends _$PluginEventCopyWithImpl<$Res, _$PluginEvent_NetworkRequestImpl>
+    implements _$$PluginEvent_NetworkRequestImplCopyWith<$Res> {
+  __$$PluginEvent_NetworkRequestImplCopyWithImpl(
+      _$PluginEvent_NetworkRequestImpl _value,
+      $Res Function(_$PluginEvent_NetworkRequestImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? ty = null,
+    Object? host = null,
+  }) {
+    return _then(_$PluginEvent_NetworkRequestImpl(
+      ty: null == ty
+          ? _value.ty
+          : ty // ignore: cast_nullable_to_non_nullable
+              as NetworkRequestType,
+      host: null == host
+          ? _value.host
+          : host // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
+  const _$PluginEvent_NetworkRequestImpl({required this.ty, required this.host})
+      : super._();
+
+  @override
+  final NetworkRequestType ty;
+  @override
+  final String host;
+
+  @override
+  String toString() {
+    return 'PluginEvent.networkRequest(ty: $ty, host: $host)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PluginEvent_NetworkRequestImpl &&
+            (identical(other.ty, ty) || other.ty == ty) &&
+            (identical(other.host, host) || other.host == host));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, ty, host);
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PluginEvent_NetworkRequestImplCopyWith<_$PluginEvent_NetworkRequestImpl>
+      get copyWith => __$$PluginEvent_NetworkRequestImplCopyWithImpl<
+          _$PluginEvent_NetworkRequestImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(Task task) taskCreate,
+    required TResult Function(Task task) taskModify,
+    required TResult Function() taskSync,
+    required TResult Function(NetworkRequestType ty, String host)
+        networkRequest,
+  }) {
+    return networkRequest(ty, host);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(Task task)? taskCreate,
+    TResult? Function(Task task)? taskModify,
+    TResult? Function()? taskSync,
+    TResult? Function(NetworkRequestType ty, String host)? networkRequest,
+  }) {
+    return networkRequest?.call(ty, host);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(Task task)? taskCreate,
+    TResult Function(Task task)? taskModify,
+    TResult Function()? taskSync,
+    TResult Function(NetworkRequestType ty, String host)? networkRequest,
+    required TResult orElse(),
+  }) {
+    if (networkRequest != null) {
+      return networkRequest(ty, host);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(PluginEvent_TaskCreate value) taskCreate,
+    required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskSync value) taskSync,
+    required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
+  }) {
+    return networkRequest(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
+    TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskSync value)? taskSync,
+    TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
+  }) {
+    return networkRequest?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(PluginEvent_TaskCreate value)? taskCreate,
+    TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskSync value)? taskSync,
+    TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
+    required TResult orElse(),
+  }) {
+    if (networkRequest != null) {
+      return networkRequest(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class PluginEvent_NetworkRequest extends PluginEvent {
+  const factory PluginEvent_NetworkRequest(
+      {required final NetworkRequestType ty,
+      required final String host}) = _$PluginEvent_NetworkRequestImpl;
+  const PluginEvent_NetworkRequest._() : super._();
+
+  NetworkRequestType get ty;
+  String get host;
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$PluginEvent_NetworkRequestImplCopyWith<_$PluginEvent_NetworkRequestImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }

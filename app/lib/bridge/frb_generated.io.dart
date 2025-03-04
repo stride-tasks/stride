@@ -181,6 +181,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<Settings> dco_decode_StreamSink_settings_Sse(dynamic raw);
 
   @protected
+  RustStreamSink<void> dco_decode_StreamSink_unit_Sse(dynamic raw);
+
+  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
@@ -228,6 +231,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   KnownHosts dco_decode_box_autoadd_known_hosts(dynamic raw);
+
+  @protected
+  ManifestPermissionNetwork dco_decode_box_autoadd_manifest_permission_network(
+      dynamic raw);
 
   @protected
   PluginAction dco_decode_box_autoadd_plugin_action(dynamic raw);
@@ -288,6 +295,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           dynamic raw);
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
   List<UuidValue> dco_decode_list_Uuid(dynamic raw);
 
   @protected
@@ -333,10 +343,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ManifestEvents dco_decode_manifest_events(dynamic raw);
 
   @protected
+  ManifestPermissionNetwork dco_decode_manifest_permission_network(dynamic raw);
+
+  @protected
   ManifestPermissionTask dco_decode_manifest_permission_task(dynamic raw);
 
   @protected
   ManifestPermissions dco_decode_manifest_permissions(dynamic raw);
+
+  @protected
+  NetworkRequestType dco_decode_network_request_type(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -360,6 +376,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Host? dco_decode_opt_box_autoadd_host(dynamic raw);
+
+  @protected
+  ManifestPermissionNetwork?
+      dco_decode_opt_box_autoadd_manifest_permission_network(dynamic raw);
 
   @protected
   PluginAction? dco_decode_opt_box_autoadd_plugin_action(dynamic raw);
@@ -532,6 +552,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  RustStreamSink<void> sse_decode_StreamSink_unit_Sse(
+      SseDeserializer deserializer);
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
@@ -573,6 +597,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   KnownHosts sse_decode_box_autoadd_known_hosts(SseDeserializer deserializer);
+
+  @protected
+  ManifestPermissionNetwork sse_decode_box_autoadd_manifest_permission_network(
+      SseDeserializer deserializer);
 
   @protected
   PluginAction sse_decode_box_autoadd_plugin_action(
@@ -635,6 +663,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           SseDeserializer deserializer);
 
   @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
   List<UuidValue> sse_decode_list_Uuid(SseDeserializer deserializer);
 
   @protected
@@ -682,11 +713,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ManifestEvents sse_decode_manifest_events(SseDeserializer deserializer);
 
   @protected
+  ManifestPermissionNetwork sse_decode_manifest_permission_network(
+      SseDeserializer deserializer);
+
+  @protected
   ManifestPermissionTask sse_decode_manifest_permission_task(
       SseDeserializer deserializer);
 
   @protected
   ManifestPermissions sse_decode_manifest_permissions(
+      SseDeserializer deserializer);
+
+  @protected
+  NetworkRequestType sse_decode_network_request_type(
       SseDeserializer deserializer);
 
   @protected
@@ -713,6 +752,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Host? sse_decode_opt_box_autoadd_host(SseDeserializer deserializer);
+
+  @protected
+  ManifestPermissionNetwork?
+      sse_decode_opt_box_autoadd_manifest_permission_network(
+          SseDeserializer deserializer);
 
   @protected
   PluginAction? sse_decode_opt_box_autoadd_plugin_action(
@@ -894,6 +938,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       RustStreamSink<Settings> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_StreamSink_unit_Sse(
+      RustStreamSink<void> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
@@ -939,6 +987,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_known_hosts(
       KnownHosts self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_manifest_permission_network(
+      ManifestPermissionNetwork self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_plugin_action(
@@ -1003,6 +1055,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
           List<SshKey> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_Uuid(List<UuidValue> self, SseSerializer serializer);
 
   @protected
@@ -1057,12 +1112,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ManifestEvents self, SseSerializer serializer);
 
   @protected
+  void sse_encode_manifest_permission_network(
+      ManifestPermissionNetwork self, SseSerializer serializer);
+
+  @protected
   void sse_encode_manifest_permission_task(
       ManifestPermissionTask self, SseSerializer serializer);
 
   @protected
   void sse_encode_manifest_permissions(
       ManifestPermissions self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_network_request_type(
+      NetworkRequestType self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -1089,6 +1152,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_host(Host? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_manifest_permission_network(
+      ManifestPermissionNetwork? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_plugin_action(

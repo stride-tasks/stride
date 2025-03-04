@@ -69,6 +69,30 @@ pub struct Plugin {
     pub manifest: PluginManifest<PluginState>,
 }
 
+impl Plugin {
+    fn can_accept_event(&self, event: &HostEvent) -> bool {
+        if !self.manifest.state.is_enabled() {
+            return false;
+        }
+        match event {
+            HostEvent::TaskCreate { .. } if !self.manifest.events.task.create => return false,
+            HostEvent::TaskModify { .. } if !self.manifest.events.task.modify => return false,
+            HostEvent::TaskSync if !self.manifest.events.task.sync => return false,
+            HostEvent::TaskCreate { .. } | HostEvent::TaskModify { .. } | HostEvent::TaskSync => {}
+            HostEvent::NetworkResponse { host, .. } => {
+                let Some(network) = &self.manifest.permissions.network else {
+                    return false;
+                };
+
+                if !network.urls.contains(host) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
+
 impl PluginManager {
     #[must_use]
     pub fn plugin(&self, plugin_name: &str) -> Option<&Plugin> {
@@ -214,19 +238,18 @@ impl PluginManager {
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn emit_event(&mut self, event: &HostEvent) -> Result<()> {
-        for plugin in self.plugins.values() {
-            if !plugin.manifest.state.is_enabled() {
-                continue;
+    pub fn emit_event(&mut self, plugin_name: Option<&str>, event: &HostEvent) -> Result<()> {
+        if let Some(plugin_name) = plugin_name {
+            let plugin = self.plugin(plugin_name).ok_or("plugin not found").unwrap();
+            if plugin.can_accept_event(event) {
+                self.host_events
+                    .push_back((plugin.manifest.name.to_string(), event.clone()));
             }
-
-            match event {
-                HostEvent::TaskCreate { .. } if !plugin.manifest.events.task.create => continue,
-                HostEvent::TaskModify { .. } if !plugin.manifest.events.task.modify => continue,
-                HostEvent::TaskSync if !plugin.manifest.events.task.sync => continue,
-                HostEvent::TaskCreate { .. }
-                | HostEvent::TaskModify { .. }
-                | HostEvent::TaskSync => {}
+            return Ok(());
+        }
+        for plugin in self.plugins.values() {
+            if !plugin.can_accept_event(event) {
+                continue;
             }
 
             self.host_events
@@ -326,8 +349,8 @@ impl PluginManager {
         memory.data_mut(&mut store)[ret..ret + event_data.len()]
             .copy_from_slice(event_data.as_bytes());
 
-        // And finally we can call the wasm!
-        store.set_fuel(1_000_000).unwrap();
+        // TODO: Add computation limit.
+        store.set_fuel(100_000_000_000).unwrap();
         event_handler
             .call(&mut store, (ret as i32, event_data.len() as i32))
             .unwrap();

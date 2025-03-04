@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/plugin_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -43,17 +43,18 @@ class PluginRoute extends StatelessWidget {
           SettingsSection(
             title: Text('Events', style: headingStyle),
             tiles: [
-              _manifestField('task.create', events.task.create),
-              _manifestField('task.modify', events.task.modify),
-              _manifestField('task.sync', events.task.sync_),
+              _manifestBoolField('task.create', events.task.create),
+              _manifestBoolField('task.modify', events.task.modify),
+              _manifestBoolField('task.sync', events.task.sync_),
             ],
           ),
           SettingsSection(
             title: Text('Permissions', style: headingStyle),
             tiles: [
-              _manifestField('task.create', permissions.task.create),
-              _manifestField('task.modify', permissions.task.modify),
-              _manifestField('task.sync', permissions.task.sync_),
+              _manifestBoolField('task.create', permissions.task.create),
+              _manifestBoolField('task.modify', permissions.task.modify),
+              _manifestBoolField('task.sync', permissions.task.sync_),
+              _manifestNetworkField('network', permissions.network),
             ],
           ),
         ],
@@ -75,7 +76,7 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestField(String name, bool value) {
+  SettingsTile _manifestBoolField(String name, bool value) {
     final spans = name
         .split('.')
         .map(
@@ -98,6 +99,43 @@ class PluginRoute extends StatelessWidget {
         activeColor: Colors.redAccent,
         onChanged: (value) {},
       ),
+    );
+  }
+
+  SettingsTile _manifestNetworkField(
+      String name, ManifestPermissionNetwork? network) {
+    if (network == null) {
+      return SettingsTile(
+        title: Text(
+          'Network (empty)',
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+        ),
+        trailing: const SizedBox(),
+      );
+    }
+    final urls = network.urls
+        .map(
+          (url) => ListTile(
+            title: RichText(
+              text: TextSpan(
+                text: 'GET $url',
+                style:
+                    const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+              ),
+            ),
+          ),
+        )
+        .toList();
+    return SettingsTile(
+      title: ExpansionTile(
+        tilePadding: EdgeInsets.all(0),
+        title: Text(
+          'Network (${network.urls.length})',
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+        ),
+        children: urls,
+      ),
+      trailing: const SizedBox(),
     );
   }
 }

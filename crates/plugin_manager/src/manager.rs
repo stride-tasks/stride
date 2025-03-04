@@ -127,25 +127,46 @@ impl PluginManager {
 
         let event = event?;
 
-        let action = match event {
-            PluginEvent::TaskCreate { .. } if !permissions.task.create => PluginAction::Disable {
-                plugin_name: manifest.name,
-                reason: "missing 'task.create' permission".to_string(),
-            },
-            PluginEvent::TaskModify { .. } if !permissions.task.modify => PluginAction::Disable {
-                plugin_name: manifest.name,
-                reason: "missing 'task.modify' permission".to_string(),
-            },
-            PluginEvent::TaskSync if !permissions.task.sync => PluginAction::Disable {
-                plugin_name: manifest.name,
-                reason: "missing 'task.sync' permission".to_string(),
-            },
-            _ => PluginAction::Event {
-                plugin_name: manifest.name,
-                event,
-            },
+        match &event {
+            PluginEvent::TaskCreate { .. } if !permissions.task.create => {
+                return Some(PluginAction::Disable {
+                    plugin_name: manifest.name,
+                    reason: "missing 'task.create' permission".to_string(),
+                })
+            }
+            PluginEvent::TaskModify { .. } if !permissions.task.modify => {
+                return Some(PluginAction::Disable {
+                    plugin_name: manifest.name,
+                    reason: "missing 'task.modify' permission".to_string(),
+                })
+            }
+            PluginEvent::TaskSync if !permissions.task.sync => {
+                return Some(PluginAction::Disable {
+                    plugin_name: manifest.name,
+                    reason: "missing 'task.sync' permission".to_string(),
+                })
+            }
+            PluginEvent::NetworkRequest { host, .. } => {
+                let Some(network) = permissions.network else {
+                    return Some(PluginAction::Disable {
+                        plugin_name: manifest.name,
+                        reason: "missing 'network' permission".to_string(),
+                    });
+                };
+
+                if !network.urls.contains(host) {
+                    return Some(PluginAction::Disable {
+                        plugin_name: manifest.name,
+                        reason: format!("missing requested url in 'network.url': {host}"),
+                    });
+                }
+            }
+            _ => {}
         };
 
-        Some(action)
+        Some(PluginAction::Event {
+            plugin_name: manifest.name,
+            event,
+        })
     }
 }

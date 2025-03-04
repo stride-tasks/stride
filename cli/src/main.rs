@@ -206,7 +206,7 @@ fn main() -> anyhow::Result<()> {
                 task: Some(Box::new(task.clone())),
             };
             repository.borrow_mut().add(task)?;
-            plugin_manager.emit_event(&event)?;
+            plugin_manager.emit_event(None, &event)?;
             while plugin_manager.process_host_event()? {}
             while let Some(action) = plugin_manager.process_plugin_event() {
                 let (_plugin_name, event) = match action {
@@ -229,6 +229,9 @@ fn main() -> anyhow::Result<()> {
                     }
                     PluginEvent::TaskSync => {
                         repository.borrow_mut().sync()?;
+                    }
+                    PluginEvent::NetworkRequest { ty, host } => {
+                        todo!("{:?}: {}", ty, host)
                     }
                 }
             }
