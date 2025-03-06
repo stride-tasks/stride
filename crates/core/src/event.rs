@@ -17,6 +17,9 @@ pub enum HostEvent {
         host: String,
         content: Box<[u8]>,
     },
+    Timer {
+        interval: u32,
+    },
 }
 
 impl HostEvent {
@@ -50,6 +53,12 @@ impl HostEvent {
             host,
             content: content.into_boxed_slice(),
         }
+    }
+
+    /// flutter_rust_bridge:sync
+    #[must_use]
+    pub fn timer(interval: u32) -> Self {
+        HostEvent::Timer { interval }
     }
 }
 

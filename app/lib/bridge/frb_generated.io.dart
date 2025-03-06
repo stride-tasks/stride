@@ -233,6 +233,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnownHosts dco_decode_box_autoadd_known_hosts(dynamic raw);
 
   @protected
+  ManifestEventTimer dco_decode_box_autoadd_manifest_event_timer(dynamic raw);
+
+  @protected
   ManifestPermissionNetwork dco_decode_box_autoadd_manifest_permission_network(
       dynamic raw);
 
@@ -340,6 +343,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ManifestEventTask dco_decode_manifest_event_task(dynamic raw);
 
   @protected
+  ManifestEventTimer dco_decode_manifest_event_timer(dynamic raw);
+
+  @protected
   ManifestEvents dco_decode_manifest_events(dynamic raw);
 
   @protected
@@ -376,6 +382,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Host? dco_decode_opt_box_autoadd_host(dynamic raw);
+
+  @protected
+  ManifestEventTimer? dco_decode_opt_box_autoadd_manifest_event_timer(
+      dynamic raw);
 
   @protected
   ManifestPermissionNetwork?
@@ -599,6 +609,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnownHosts sse_decode_box_autoadd_known_hosts(SseDeserializer deserializer);
 
   @protected
+  ManifestEventTimer sse_decode_box_autoadd_manifest_event_timer(
+      SseDeserializer deserializer);
+
+  @protected
   ManifestPermissionNetwork sse_decode_box_autoadd_manifest_permission_network(
       SseDeserializer deserializer);
 
@@ -710,6 +724,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  ManifestEventTimer sse_decode_manifest_event_timer(
+      SseDeserializer deserializer);
+
+  @protected
   ManifestEvents sse_decode_manifest_events(SseDeserializer deserializer);
 
   @protected
@@ -752,6 +770,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Host? sse_decode_opt_box_autoadd_host(SseDeserializer deserializer);
+
+  @protected
+  ManifestEventTimer? sse_decode_opt_box_autoadd_manifest_event_timer(
+      SseDeserializer deserializer);
 
   @protected
   ManifestPermissionNetwork?
@@ -989,6 +1011,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       KnownHosts self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_manifest_event_timer(
+      ManifestEventTimer self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_manifest_permission_network(
       ManifestPermissionNetwork self, SseSerializer serializer);
 
@@ -1108,6 +1134,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ManifestEventTask self, SseSerializer serializer);
 
   @protected
+  void sse_encode_manifest_event_timer(
+      ManifestEventTimer self, SseSerializer serializer);
+
+  @protected
   void sse_encode_manifest_events(
       ManifestEvents self, SseSerializer serializer);
 
@@ -1152,6 +1182,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_host(Host? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_manifest_event_timer(
+      ManifestEventTimer? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_manifest_permission_network(

@@ -80,6 +80,7 @@ class MyApp extends StatelessWidget {
             state: pluginManagerState,
             taskBloc: context.read<TaskBloc>(),
           ),
+          lazy: false,
         ),
       ],
       child: BlocListener<TaskBloc, TaskState>(

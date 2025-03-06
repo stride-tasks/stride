@@ -29,6 +29,14 @@ pub struct ManifestEventTask {
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
 #[serde(rename_all = "kebab-case")]
+pub struct ManifestEventTimer {
+    pub interval: u32,
+}
+
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[serde(rename_all = "kebab-case")]
 pub struct ManifestPermissionTask {
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
@@ -53,6 +61,7 @@ pub struct ManifestPermissionNetwork {
 #[serde(rename_all = "kebab-case")]
 pub struct ManifestEvents {
     pub task: ManifestEventTask,
+    pub timer: Option<ManifestEventTimer>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]

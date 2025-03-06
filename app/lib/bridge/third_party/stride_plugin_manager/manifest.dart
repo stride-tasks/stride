@@ -21,7 +21,7 @@ import 'package:uuid/uuid.dart';
 part 'manifest.freezed.dart';
 
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `PluginApi`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
 // These functions are ignored (category: IgnoreBecauseNotAllowedOwner): `skip_serializing`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `events`, `name`
 
@@ -70,25 +70,49 @@ class ManifestEventTask {
           sync_ == other.sync_;
 }
 
+class ManifestEventTimer {
+  final int interval;
+
+  const ManifestEventTimer({
+    required this.interval,
+  });
+
+  static Future<ManifestEventTimer> default_() => RustLib.instance.api
+      .stridePluginManagerManifestManifestEventTimerDefault();
+
+  @override
+  int get hashCode => interval.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ManifestEventTimer &&
+          runtimeType == other.runtimeType &&
+          interval == other.interval;
+}
+
 class ManifestEvents {
   final ManifestEventTask task;
+  final ManifestEventTimer? timer;
 
   const ManifestEvents({
     required this.task,
+    this.timer,
   });
 
   static Future<ManifestEvents> default_() =>
       RustLib.instance.api.stridePluginManagerManifestManifestEventsDefault();
 
   @override
-  int get hashCode => task.hashCode;
+  int get hashCode => task.hashCode ^ timer.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ManifestEvents &&
           runtimeType == other.runtimeType &&
-          task == other.task;
+          task == other.task &&
+          timer == other.timer;
 }
 
 class ManifestPermissionNetwork {

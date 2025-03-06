@@ -41,6 +41,10 @@ abstract class HostEvent implements RustOpaqueInterface {
   /// flutter_rust_bridge:sync
   static HostEvent taskSync() =>
       RustLib.instance.api.strideCoreEventHostEventTaskSync();
+
+  /// flutter_rust_bridge:sync
+  static HostEvent timer({required int interval}) =>
+      RustLib.instance.api.strideCoreEventHostEventTimer(interval: interval);
 }
 
 /// flutter_rust_bridge:non_opaque

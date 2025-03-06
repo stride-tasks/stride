@@ -79,6 +79,12 @@ impl Plugin {
             HostEvent::TaskModify { .. } if !self.manifest.events.task.modify => return false,
             HostEvent::TaskSync if !self.manifest.events.task.sync => return false,
             HostEvent::TaskCreate { .. } | HostEvent::TaskModify { .. } | HostEvent::TaskSync => {}
+            HostEvent::Timer { interval } => {
+                let Some(timer) = &self.manifest.events.timer else {
+                    return false;
+                };
+                return timer.interval == *interval;
+            }
             HostEvent::NetworkResponse { host, .. } => {
                 let Some(network) = &self.manifest.permissions.network else {
                     return false;
