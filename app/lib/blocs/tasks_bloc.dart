@@ -4,7 +4,6 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
@@ -219,6 +218,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final tasks = await repository()?.tasksWithFilter(filter: filter!);
       return tasks ?? [];
     }
+  }
+
+  Future<List<Task>> query(TaskQuery query) async {
+    final tasks = await repository()?.query(query: query);
+    return tasks ?? [];
   }
 
   @override

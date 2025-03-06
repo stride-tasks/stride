@@ -1,5 +1,8 @@
-use crate::task::Task;
+use std::collections::HashSet;
+
+use crate::task::{Task, TaskStatus};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /// flutter_rust_bridge:unignore
 #[allow(clippy::doc_markdown)]
@@ -11,6 +14,9 @@ pub enum HostEvent {
     TaskModify {
         current: Option<Box<Task>>,
         previous: Option<Box<Task>>,
+    },
+    TaskQuery {
+        tasks: Vec<Task>,
     },
     TaskSync,
     NetworkResponse {
@@ -38,6 +44,12 @@ impl HostEvent {
             current: current.map(Box::new),
             previous: previous.map(Box::new),
         }
+    }
+
+    /// flutter_rust_bridge:sync
+    #[must_use]
+    pub fn task_query(tasks: Vec<Task>) -> Self {
+        HostEvent::TaskQuery { tasks }
     }
 
     /// flutter_rust_bridge:sync
@@ -70,12 +82,28 @@ pub enum NetworkRequestType {
 
 /// flutter_rust_bridge:non_opaque
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum TaskQuery {
+    Uuid {
+        uuid: Uuid,
+    },
+    Title {
+        title: String,
+        status: HashSet<TaskStatus>,
+        limit: Option<u32>,
+    },
+}
+
+/// flutter_rust_bridge:non_opaque
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum PluginEvent {
     TaskCreate {
         task: Task,
     },
     TaskModify {
         task: Task,
+    },
+    TaskQuery {
+        query: TaskQuery,
     },
     TaskSync,
     NetworkRequest {

@@ -230,6 +230,9 @@ fn main() -> anyhow::Result<()> {
                     PluginEvent::TaskSync => {
                         repository.borrow_mut().sync()?;
                     }
+                    PluginEvent::TaskQuery { .. } => {
+                        todo!()
+                    }
                     PluginEvent::NetworkRequest { ty, host } => {
                         todo!("{:?}: {}", ty, host)
                     }

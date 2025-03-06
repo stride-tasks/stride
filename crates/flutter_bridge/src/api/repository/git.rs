@@ -10,6 +10,7 @@ use std::{
 use base64::Engine;
 use chrono::Utc;
 use flutter_rust_bridge::frb;
+use stride_core::event::TaskQuery;
 use stride_crypto::crypter::Crypter;
 use uuid::Uuid;
 
@@ -183,6 +184,39 @@ impl Storage {
             result.push(task.clone());
         }
 
+        Ok(())
+    }
+    fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<(), RustError> {
+        match query {
+            TaskQuery::Uuid { uuid } => {
+                if let Some(task) = self.get_by_id(uuid)? {
+                    result.push(task.clone());
+                }
+            }
+            TaskQuery::Title {
+                title,
+                status,
+                limit,
+            } => {
+                if !status.is_empty() && !status.contains(&self.kind) {
+                    return Ok(());
+                }
+
+                let search = title.to_lowercase();
+
+                self.load()?;
+                for DecryptedTask { task, .. } in
+                    self.tasks.iter().filter(|DecryptedTask { task, .. }| {
+                        task.title.to_lowercase().contains(&search)
+                    })
+                {
+                    if Some(result.len() as u32) == *limit {
+                        break;
+                    }
+                    result.push(task.clone());
+                }
+            }
+        }
         Ok(())
     }
 
@@ -1152,6 +1186,14 @@ impl StrideRepository for TaskStorage {
         }
 
         Ok(())
+    }
+
+    fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError> {
+        let mut result = Vec::new();
+        for storage in self.storage_mut() {
+            storage.query(query, &mut result)?;
+        }
+        Ok(result)
     }
 }
 

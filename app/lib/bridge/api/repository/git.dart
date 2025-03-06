@@ -16,11 +16,12 @@ import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:uuid/uuid.dart';
 
-// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `generate_iv`, `get_by_id`, `get_index`, `init_repository_if_needed`, `init_repotitory`, `load`, `new`, `rebase`, `remove_task2`, `remove`, `resolve_conflicts`, `save`, `ssh_key`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
+// These functions are ignored because they are not marked as `pub`: `append`, `clear`, `do_merge`, `fast_forward`, `filter`, `generate_iv`, `get_by_id`, `get_index`, `init_repository_if_needed`, `init_repotitory`, `load`, `new`, `query`, `rebase`, `remove_task2`, `remove`, `resolve_conflicts`, `save`, `ssh_key`, `storage_mut`, `unload`, `update2`, `update`, `with_authentication`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `DecryptedTask`, `LogIter`, `Storage`, `TaskDiff`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `pull`
@@ -77,6 +78,9 @@ abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
           repositoryUuid: repositoryUuid, path: path, settings: settings);
 
   Future<void> push({required bool force});
+
+  @override
+  Future<List<Task>> query({required TaskQuery query});
 
   @override
   Future<bool> removeByTask({required Task task});

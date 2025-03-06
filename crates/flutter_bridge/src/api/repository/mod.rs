@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use flutter_rust_bridge::frb;
+use stride_core::event::TaskQuery;
 use uuid::Uuid;
 
 use crate::{
@@ -45,6 +46,8 @@ pub trait StrideRepository {
 
     fn export(&mut self) -> Result<String, RustError>;
     fn import(&mut self, content: &str) -> Result<(), RustError>;
+
+    fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError>;
 }
 
 #[frb(ignore)]

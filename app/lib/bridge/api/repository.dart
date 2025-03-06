@@ -14,6 +14,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -32,6 +33,8 @@ abstract class StrideRepository {
   Future<String> export_();
 
   Future<void> import_({required String content});
+
+  Future<List<Task>> query({required TaskQuery query});
 
   /// Remove an existing [`Task`], returning [`true`] if it was previously added
   Future<bool> removeByTask({required Task task});

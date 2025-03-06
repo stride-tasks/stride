@@ -30,6 +30,7 @@ pub use stride_plugin_manager as plugin;
 #[allow(clippy::cast_lossless)]
 #[allow(clippy::too_many_lines)]
 #[allow(let_underscore_drop)]
+#[allow(clippy::match_same_arms)]
 #[rustfmt::skip]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 

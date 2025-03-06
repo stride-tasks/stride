@@ -139,11 +139,13 @@ class ManifestPermissionNetwork {
 class ManifestPermissionTask {
   final bool create;
   final bool modify;
+  final bool query;
   final bool sync_;
 
   const ManifestPermissionTask({
     required this.create,
     required this.modify,
+    required this.query,
     required this.sync_,
   });
 
@@ -151,7 +153,8 @@ class ManifestPermissionTask {
       .stridePluginManagerManifestManifestPermissionTaskDefault();
 
   @override
-  int get hashCode => create.hashCode ^ modify.hashCode ^ sync_.hashCode;
+  int get hashCode =>
+      create.hashCode ^ modify.hashCode ^ query.hashCode ^ sync_.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -160,6 +163,7 @@ class ManifestPermissionTask {
           runtimeType == other.runtimeType &&
           create == other.create &&
           modify == other.modify &&
+          query == other.query &&
           sync_ == other.sync_;
 }
 

@@ -44,7 +44,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.8.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1143479836;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -452850573;
 
 // Section: executor
 
@@ -145,6 +145,37 @@ fn wire__stride_core__event__HostEvent_task_modify_impl(
                     api_current,
                     api_previous,
                 ))?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__stride_core__event__HostEvent_task_query_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "HostEvent_task_query",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_tasks = <Vec<stride_core::task::Task>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok =
+                    Result::<_, ()>::Ok(stride_core::event::HostEvent::task_query(api_tasks))?;
                 Ok(output_ok)
             })())
         },
@@ -1490,6 +1521,59 @@ fn wire__crate__api__repository__git__TaskStorage_push_impl(
                     let output_ok = crate::api::repository::git::TaskStorage::push(
                         &*api_that_guard,
                         api_force,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__repository__git__TaskStorage_query_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "TaskStorage_query",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>,
+            >>::sse_decode(&mut deserializer);
+            let api_query = <stride_core::event::TaskQuery>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, RustError>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok = crate::api::repository::git::TaskStorage::query(
+                        &mut *api_that_guard,
+                        &api_query,
                     )?;
                     Ok(output_ok)
                 })())
@@ -3943,6 +4027,7 @@ const _: fn() = || {
             None::<stride_plugin_manager::manifest::ManifestPermissionTask>.unwrap();
         let _: bool = ManifestPermissionTask.create;
         let _: bool = ManifestPermissionTask.modify;
+        let _: bool = ManifestPermissionTask.query;
         let _: bool = ManifestPermissionTask.sync;
     }
     {
@@ -3972,6 +4057,9 @@ const _: fn() = || {
         stride_core::event::PluginEvent::TaskModify { task } => {
             let _: stride_core::task::Task = task;
         }
+        stride_core::event::PluginEvent::TaskQuery { query } => {
+            let _: stride_core::event::TaskQuery = query;
+        }
         stride_core::event::PluginEvent::TaskSync => {}
         stride_core::event::PluginEvent::NetworkRequest { ty, host } => {
             let _: stride_core::event::NetworkRequestType = ty;
@@ -3993,6 +4081,20 @@ const _: fn() = || {
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.wait;
         let _: Vec<uuid::Uuid> = Task.depends;
         let _: std::collections::HashMap<String, String> = Task.uda;
+    }
+    match None::<stride_core::event::TaskQuery>.unwrap() {
+        stride_core::event::TaskQuery::Uuid { uuid } => {
+            let _: uuid::Uuid = uuid;
+        }
+        stride_core::event::TaskQuery::Title {
+            title,
+            status,
+            limit,
+        } => {
+            let _: String = title;
+            let _: std::collections::HashSet<stride_core::task::TaskStatus> = status;
+            let _: Option<u32> = limit;
+        }
     }
 };
 
@@ -4616,10 +4718,12 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestPermissionTask {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_create = <bool>::sse_decode(deserializer);
         let mut var_modify = <bool>::sse_decode(deserializer);
+        let mut var_query = <bool>::sse_decode(deserializer);
         let mut var_sync_ = <bool>::sse_decode(deserializer);
         return stride_plugin_manager::manifest::ManifestPermissionTask {
             create: var_create,
             modify: var_modify,
+            query: var_query,
             sync: var_sync_,
         };
     }
@@ -4862,9 +4966,13 @@ impl SseDecode for stride_core::event::PluginEvent {
                 return stride_core::event::PluginEvent::TaskModify { task: var_task };
             }
             2 => {
-                return stride_core::event::PluginEvent::TaskSync;
+                let mut var_query = <stride_core::event::TaskQuery>::sse_decode(deserializer);
+                return stride_core::event::PluginEvent::TaskQuery { query: var_query };
             }
             3 => {
+                return stride_core::event::PluginEvent::TaskSync;
+            }
+            4 => {
                 let mut var_ty = <stride_core::event::NetworkRequestType>::sse_decode(deserializer);
                 let mut var_host = <String>::sse_decode(deserializer);
                 return stride_core::event::PluginEvent::NetworkRequest {
@@ -4983,6 +5091,35 @@ impl SseDecode for stride_core::task::TaskPriority {
     }
 }
 
+impl SseDecode for stride_core::event::TaskQuery {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
+                return stride_core::event::TaskQuery::Uuid { uuid: var_uuid };
+            }
+            1 => {
+                let mut var_title = <String>::sse_decode(deserializer);
+                let mut var_status =
+                    <std::collections::HashSet<stride_core::task::TaskStatus>>::sse_decode(
+                        deserializer,
+                    );
+                let mut var_limit = <Option<u32>>::sse_decode(deserializer);
+                return stride_core::event::TaskQuery::Title {
+                    title: var_title,
+                    status: var_status,
+                    limit: var_limit,
+                };
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
 impl SseDecode for stride_core::task::TaskStatus {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -5033,281 +5170,287 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        7 => wire__stride_plugin_manager__manifest__PluginState_default_impl(
+        8 => wire__stride_plugin_manager__manifest__PluginState_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        8 => wire__stride_plugin_manager__manifest__PluginState_is_enabled_impl(
+        9 => wire__stride_plugin_manager__manifest__PluginState_is_enabled_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        9 => wire__stride_plugin_manager__manifest__PluginState_skip_serializing_impl(
+        10 => wire__stride_plugin_manager__manifest__PluginState_skip_serializing_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        13 => wire__crate__api__settings__SshKey_generate_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__settings__SshKey_remove_key_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__settings__SshKey_save_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__settings__SshKey_update_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__repository__git__TaskStorage_add_impl(
+        14 => wire__crate__api__settings__SshKey_generate_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__settings__SshKey_remove_key_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__settings__SshKey_save_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__settings__SshKey_update_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__repository__git__TaskStorage_add_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        20 => wire__crate__api__repository__git__TaskStorage_add_and_commit_impl(
+        21 => wire__crate__api__repository__git__TaskStorage_add_and_commit_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        21 => wire__crate__api__repository__git__TaskStorage_change_category_impl(
+        22 => wire__crate__api__repository__git__TaskStorage_change_category_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        22 => wire__crate__api__repository__git__TaskStorage_checkout_impl(
+        23 => wire__crate__api__repository__git__TaskStorage_checkout_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        23 => wire__crate__api__repository__git__TaskStorage_clear_impl(
+        24 => wire__crate__api__repository__git__TaskStorage_clear_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        24 => wire__crate__api__repository__git__TaskStorage_clone_repository_impl(
+        25 => wire__crate__api__repository__git__TaskStorage_clone_repository_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        25 => wire__crate__api__repository__git__TaskStorage_commit_impl(
+        26 => wire__crate__api__repository__git__TaskStorage_commit_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        26 => wire__crate__api__repository__git__TaskStorage_delete_all_impl(
+        27 => wire__crate__api__repository__git__TaskStorage_delete_all_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        27 => wire__crate__api__repository__git__TaskStorage_export_impl(
+        28 => wire__crate__api__repository__git__TaskStorage_export_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        28 => wire__crate__api__repository__git__TaskStorage_force_hard_reset_impl(
+        29 => wire__crate__api__repository__git__TaskStorage_force_hard_reset_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        29 => wire__crate__api__repository__git__TaskStorage_import_impl(
+        30 => wire__crate__api__repository__git__TaskStorage_import_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        31 => wire__crate__api__repository__git__TaskStorage_log_impl(
+        32 => wire__crate__api__repository__git__TaskStorage_log_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        33 => wire__crate__api__repository__git__TaskStorage_push_impl(
+        34 => wire__crate__api__repository__git__TaskStorage_push_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        34 => wire__crate__api__repository__git__TaskStorage_remove_by_task_impl(
+        35 => wire__crate__api__repository__git__TaskStorage_query_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        35 => wire__crate__api__repository__git__TaskStorage_remove_by_uuid_impl(
+        36 => wire__crate__api__repository__git__TaskStorage_remove_by_task_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        36 => wire__crate__api__repository__git__TaskStorage_sync_impl(
+        37 => wire__crate__api__repository__git__TaskStorage_remove_by_uuid_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        37 => wire__crate__api__repository__git__TaskStorage_task_by_uuid_impl(
+        38 => wire__crate__api__repository__git__TaskStorage_sync_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        38 => wire__crate__api__repository__git__TaskStorage_tasks_with_filter_impl(
+        39 => wire__crate__api__repository__git__TaskStorage_task_by_uuid_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        39 => wire__crate__api__repository__git__TaskStorage_unload_impl(
+        40 => wire__crate__api__repository__git__TaskStorage_tasks_with_filter_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        40 => wire__crate__api__repository__git__TaskStorage_update_impl(
+        41 => wire__crate__api__repository__git__TaskStorage_unload_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        56 => wire__crate__api__settings__application_paths_default_impl(
+        42 => wire__crate__api__repository__git__TaskStorage_update_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        57 => {
+        59 => wire__crate__api__settings__application_paths_default_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        60 => {
             wire__crate__api__plugin_manager__create_stream_impl(port, ptr, rust_vec_len, data_len)
         }
-        58 => wire__crate__api__plugin_manager__disable_impl(port, ptr, rust_vec_len, data_len),
-        59 => wire__crate__api__plugin_manager__emit_impl(port, ptr, rust_vec_len, data_len),
-        60 => {
+        61 => wire__crate__api__plugin_manager__disable_impl(port, ptr, rust_vec_len, data_len),
+        62 => wire__crate__api__plugin_manager__emit_impl(port, ptr, rust_vec_len, data_len),
+        63 => {
             wire__crate__api__plugin_manager__emit_broadcast_impl(port, ptr, rust_vec_len, data_len)
         }
-        61 => wire__crate__api__settings__encryption_key_generate_impl(
+        64 => wire__crate__api__settings__encryption_key_generate_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        62 => wire__crate__api__settings__encryption_key_remove_key_impl(
+        65 => wire__crate__api__settings__encryption_key_remove_key_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        63 => {
+        66 => {
             wire__crate__api__settings__encryption_key_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        65 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
-        66 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
-        67 => wire__crate__api__plugin_manager__import_impl(port, ptr, rust_vec_len, data_len),
-        68 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
-        69 => {
+        68 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
+        69 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
+        70 => wire__crate__api__plugin_manager__import_impl(port, ptr, rust_vec_len, data_len),
+        71 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
+        72 => {
             wire__crate__git__known_hosts__known_hosts_load_impl(port, ptr, rust_vec_len, data_len)
         }
-        70 => {
+        73 => {
             wire__crate__git__known_hosts__known_hosts_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        71 => wire__crate__api__plugin_manager__load_impl(port, ptr, rust_vec_len, data_len),
-        72 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
-        73 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
-        74 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
-        75 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
-        77 => wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
+        74 => wire__crate__api__plugin_manager__load_impl(port, ptr, rust_vec_len, data_len),
+        75 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
+        76 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
+        77 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
+        80 => wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        78 => wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
+        81 => wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        79 => wire__stride_plugin_manager__manifest__manifest_events_default_impl(
+        82 => wire__stride_plugin_manager__manifest__manifest_events_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        80 => wire__stride_plugin_manager__manifest__manifest_permission_network_default_impl(
+        83 => wire__stride_plugin_manager__manifest__manifest_permission_network_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        81 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
+        84 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        82 => wire__stride_plugin_manager__manifest__manifest_permissions_default_impl(
+        85 => wire__stride_plugin_manager__manifest__manifest_permissions_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        84 => {
+        87 => {
             wire__crate__api__plugin_manager__parse_plugin_impl(port, ptr, rust_vec_len, data_len)
         }
-        90 => wire__crate__api__plugin_manager__plugin_manifests_impl(
+        93 => wire__crate__api__plugin_manager__plugin_manifests_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        91 => wire__crate__api__plugin_manager__process_host_event_impl(
+        94 => wire__crate__api__plugin_manager__process_host_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        92 => wire__crate__api__plugin_manager__process_plugin_event_impl(
+        95 => wire__crate__api__plugin_manager__process_plugin_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        93 => wire__crate__api__plugin_manager__remove_impl(port, ptr, rust_vec_len, data_len),
-        94 => {
+        96 => wire__crate__api__plugin_manager__remove_impl(port, ptr, rust_vec_len, data_len),
+        97 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        95 => wire__crate__api__settings__settings_create_stream_impl(
+        98 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        96 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        97 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
-        98 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        100 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        101 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        102 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
-        103 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
-        104 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
-        106 => {
+        99 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        100 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
+        101 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        103 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        104 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        105 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
+        106 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
+        107 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
+        109 => {
             wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len)
         }
-        107 => {
+        110 => {
             wire__stride_core__task__task_priority_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        108 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
-        109 => {
+        111 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
+        112 => {
             wire__stride_core__task__task_status_is_pending_impl(port, ptr, rust_vec_len, data_len)
         }
-        110 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
-        112 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
-        113 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
+        113 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
+        115 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        116 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5323,50 +5466,51 @@ fn pde_ffi_dispatcher_sync_impl(
         1 => wire__stride_core__event__HostEvent_network_response_impl(ptr, rust_vec_len, data_len),
         2 => wire__stride_core__event__HostEvent_task_create_impl(ptr, rust_vec_len, data_len),
         3 => wire__stride_core__event__HostEvent_task_modify_impl(ptr, rust_vec_len, data_len),
-        4 => wire__stride_core__event__HostEvent_task_sync_impl(ptr, rust_vec_len, data_len),
-        5 => wire__stride_core__event__HostEvent_timer_impl(ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__repository__git__IV_LEN_impl(ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__error__RustError_as_unknown_host_impl(ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__error__RustError_is_key_store_verification_impl(
+        4 => wire__stride_core__event__HostEvent_task_query_impl(ptr, rust_vec_len, data_len),
+        5 => wire__stride_core__event__HostEvent_task_sync_impl(ptr, rust_vec_len, data_len),
+        6 => wire__stride_core__event__HostEvent_timer_impl(ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__repository__git__IV_LEN_impl(ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__error__RustError_as_unknown_host_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__error__RustError_is_key_store_verification_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        12 => wire__crate__api__error__RustError_to_error_string_impl(ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
-        64 => wire__crate__api__settings__encryption_key_validate_impl(ptr, rust_vec_len, data_len),
-        83 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
-        85 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
+        13 => wire__crate__api__error__RustError_to_error_string_impl(ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
+        67 => wire__crate__api__settings__encryption_key_validate_impl(ptr, rust_vec_len, data_len),
+        86 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
+        88 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        86 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
+        89 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        87 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
+        90 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        88 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
+        91 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        89 => wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
+        92 => wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        99 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        105 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
-        111 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        102 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        108 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
+        114 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5787,6 +5931,7 @@ impl flutter_rust_bridge::IntoDart
         [
             self.0.create.into_into_dart().into_dart(),
             self.0.modify.into_into_dart().into_dart(),
+            self.0.query.into_into_dart().into_dart(),
             self.0.sync.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -5896,9 +6041,12 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::event::PluginEven
             stride_core::event::PluginEvent::TaskModify { task } => {
                 [1.into_dart(), task.into_into_dart().into_dart()].into_dart()
             }
-            stride_core::event::PluginEvent::TaskSync => [2.into_dart()].into_dart(),
+            stride_core::event::PluginEvent::TaskQuery { query } => {
+                [2.into_dart(), query.into_into_dart().into_dart()].into_dart()
+            }
+            stride_core::event::PluginEvent::TaskSync => [3.into_dart()].into_dart(),
             stride_core::event::PluginEvent::NetworkRequest { ty, host } => [
-                3.into_dart(),
+                4.into_dart(),
                 ty.into_into_dart().into_dart(),
                 host.into_into_dart().into_dart(),
             ]
@@ -6023,6 +6171,41 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_core::task::TaskPriorit
     for stride_core::task::TaskPriority
 {
     fn into_into_dart(self) -> FrbWrapper<stride_core::task::TaskPriority> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::event::TaskQuery> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            stride_core::event::TaskQuery::Uuid { uuid } => {
+                [0.into_dart(), uuid.into_into_dart().into_dart()].into_dart()
+            }
+            stride_core::event::TaskQuery::Title {
+                title,
+                status,
+                limit,
+            } => [
+                1.into_dart(),
+                title.into_into_dart().into_dart(),
+                status.into_into_dart().into_dart(),
+                limit.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<stride_core::event::TaskQuery>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_core::event::TaskQuery>>
+    for stride_core::event::TaskQuery
+{
+    fn into_into_dart(self) -> FrbWrapper<stride_core::event::TaskQuery> {
         self.into()
     }
 }
@@ -6556,6 +6739,7 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestPermissionTask {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.create, serializer);
         <bool>::sse_encode(self.modify, serializer);
+        <bool>::sse_encode(self.query, serializer);
         <bool>::sse_encode(self.sync, serializer);
     }
 }
@@ -6766,11 +6950,15 @@ impl SseEncode for stride_core::event::PluginEvent {
                 <i32>::sse_encode(1, serializer);
                 <stride_core::task::Task>::sse_encode(task, serializer);
             }
-            stride_core::event::PluginEvent::TaskSync => {
+            stride_core::event::PluginEvent::TaskQuery { query } => {
                 <i32>::sse_encode(2, serializer);
+                <stride_core::event::TaskQuery>::sse_encode(query, serializer);
+            }
+            stride_core::event::PluginEvent::TaskSync => {
+                <i32>::sse_encode(3, serializer);
             }
             stride_core::event::PluginEvent::NetworkRequest { ty, host } => {
-                <i32>::sse_encode(3, serializer);
+                <i32>::sse_encode(4, serializer);
                 <stride_core::event::NetworkRequestType>::sse_encode(ty, serializer);
                 <String>::sse_encode(host, serializer);
             }
@@ -6848,6 +7036,33 @@ impl SseEncode for stride_core::task::TaskPriority {
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for stride_core::event::TaskQuery {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            stride_core::event::TaskQuery::Uuid { uuid } => {
+                <i32>::sse_encode(0, serializer);
+                <uuid::Uuid>::sse_encode(uuid, serializer);
+            }
+            stride_core::event::TaskQuery::Title {
+                title,
+                status,
+                limit,
+            } => {
+                <i32>::sse_encode(1, serializer);
+                <String>::sse_encode(title, serializer);
+                <std::collections::HashSet<stride_core::task::TaskStatus>>::sse_encode(
+                    status, serializer,
+                );
+                <Option<u32>>::sse_encode(limit, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 

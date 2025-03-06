@@ -255,6 +255,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TaskPriority dco_decode_box_autoadd_task_priority(dynamic raw);
 
   @protected
+  TaskQuery dco_decode_box_autoadd_task_query(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
@@ -426,6 +429,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaskPriority dco_decode_task_priority(dynamic raw);
+
+  @protected
+  TaskQuery dco_decode_task_query(dynamic raw);
 
   @protected
   TaskStatus dco_decode_task_status(dynamic raw);
@@ -634,6 +640,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  TaskQuery sse_decode_box_autoadd_task_query(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
@@ -819,6 +828,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaskPriority sse_decode_task_priority(SseDeserializer deserializer);
+
+  @protected
+  TaskQuery sse_decode_task_query(SseDeserializer deserializer);
 
   @protected
   TaskStatus sse_decode_task_status(SseDeserializer deserializer);
@@ -1037,6 +1049,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       TaskPriority self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_task_query(
+      TaskQuery self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
@@ -1230,6 +1246,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_task_priority(TaskPriority self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_task_query(TaskQuery self, SseSerializer serializer);
 
   @protected
   void sse_encode_task_status(TaskStatus self, SseSerializer serializer);

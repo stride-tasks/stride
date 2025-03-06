@@ -37,6 +37,7 @@ pub struct ManifestEventTimer {
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
 #[serde(rename_all = "kebab-case")]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ManifestPermissionTask {
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
@@ -44,6 +45,9 @@ pub struct ManifestPermissionTask {
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub modify: bool,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub query: bool,
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub sync: bool,

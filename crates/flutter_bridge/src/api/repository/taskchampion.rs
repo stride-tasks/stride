@@ -2,6 +2,10 @@ use std::{mem, path::Path};
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
+use stride_core::{
+    event::TaskQuery,
+    task::{Task, TaskStatus},
+};
 use taskchampion::{Operations, StorageConfig};
 
 use super::StrideRepository;
@@ -50,7 +54,7 @@ impl StrideRepository for Replica {
         todo!()
     }
 
-    fn add(&mut self, task: crate::task::Task) -> Result<(), crate::RustError> {
+    fn add(&mut self, task: Task) -> Result<(), crate::RustError> {
         // Theoretically we need to set all the keys below:
         // add_annotation
         // add_dependency
@@ -77,28 +81,22 @@ impl StrideRepository for Replica {
         Ok(())
     }
 
-    fn remove_by_uuid(
-        &mut self,
-        _uuid: &uuid::Uuid,
-    ) -> Result<Option<crate::task::Task>, crate::RustError> {
+    fn remove_by_uuid(&mut self, _uuid: &uuid::Uuid) -> Result<Option<Task>, crate::RustError> {
         todo!()
     }
 
-    fn remove_by_task(&mut self, _task: &crate::task::Task) -> Result<bool, crate::RustError> {
+    fn remove_by_task(&mut self, _task: &Task) -> Result<bool, crate::RustError> {
         todo!()
     }
 
-    fn task_by_uuid(
-        &mut self,
-        _uuid: &uuid::Uuid,
-    ) -> Result<Option<crate::task::Task>, crate::RustError> {
+    fn task_by_uuid(&mut self, _uuid: &uuid::Uuid) -> Result<Option<Task>, crate::RustError> {
         todo!()
     }
 
     fn tasks_with_filter(
         &mut self,
         filter: &crate::api::filter::Filter,
-    ) -> Result<Vec<crate::task::Task>, crate::RustError> {
+    ) -> Result<Vec<Task>, crate::RustError> {
         let search = filter.search.to_lowercase();
         let mut result = Vec::new();
 
@@ -109,24 +107,24 @@ impl StrideRepository for Replica {
             .filter(|task| {
                 filter
                     .status
-                    .contains(&Into::<crate::task::TaskStatus>::into(task.get_status()))
+                    .contains(&Into::<TaskStatus>::into(task.get_status()))
             })
             .filter(|task| task.get_description().to_lowercase().contains(&search))
         {
-            result.push(Into::<crate::task::Task>::into(task));
+            result.push(Into::<Task>::into(task));
         }
 
         Ok(result)
     }
 
-    fn update(&mut self, _task: &crate::task::Task) -> Result<bool, crate::RustError> {
+    fn update(&mut self, _task: &Task) -> Result<bool, crate::RustError> {
         todo!()
     }
 
     fn change_category(
         &mut self,
-        _task: &crate::task::Task,
-        _status: crate::task::TaskStatus,
+        _task: &Task,
+        _status: TaskStatus,
     ) -> Result<bool, crate::RustError> {
         todo!()
     }
@@ -173,5 +171,8 @@ impl StrideRepository for Replica {
         );
 
         Ok(())
+    }
+    fn query(&mut self, _query: &TaskQuery) -> Result<Vec<Task>, crate::RustError> {
+        todo!()
     }
 }

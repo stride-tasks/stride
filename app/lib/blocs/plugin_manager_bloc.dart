@@ -103,6 +103,12 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
               taskBloc.add(TaskAddEvent(task: task));
             case PluginEvent_TaskModify(:final task):
               taskBloc.add(TaskUpdateEvent(current: task));
+            case PluginEvent_TaskQuery(:final query):
+              final tasks = await taskBloc.query(query);
+              pm.emit(
+                event: HostEvent.taskQuery(tasks: tasks),
+                pluginName: pluginName,
+              );
             case PluginEvent_TaskSync():
               taskBloc.add(TaskSyncEvent());
             case PluginEvent_NetworkRequest(:final ty, :final host):

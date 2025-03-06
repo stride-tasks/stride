@@ -20,6 +20,7 @@ mixin _$PluginEvent {
   TResult when<TResult extends Object?>({
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
+    required TResult Function(TaskQuery query) taskQuery,
     required TResult Function() taskSync,
     required TResult Function(NetworkRequestType ty, String host)
         networkRequest,
@@ -29,6 +30,7 @@ mixin _$PluginEvent {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
+    TResult? Function(TaskQuery query)? taskQuery,
     TResult? Function()? taskSync,
     TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) =>
@@ -37,6 +39,7 @@ mixin _$PluginEvent {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
+    TResult Function(TaskQuery query)? taskQuery,
     TResult Function()? taskSync,
     TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
@@ -46,6 +49,7 @@ mixin _$PluginEvent {
   TResult map<TResult extends Object?>({
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskQuery value) taskQuery,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
     required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) =>
@@ -54,6 +58,7 @@ mixin _$PluginEvent {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
     TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) =>
@@ -62,6 +67,7 @@ mixin _$PluginEvent {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
     TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
@@ -175,6 +181,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
   TResult when<TResult extends Object?>({
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
+    required TResult Function(TaskQuery query) taskQuery,
     required TResult Function() taskSync,
     required TResult Function(NetworkRequestType ty, String host)
         networkRequest,
@@ -187,6 +194,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
+    TResult? Function(TaskQuery query)? taskQuery,
     TResult? Function()? taskSync,
     TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
@@ -198,6 +206,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
+    TResult Function(TaskQuery query)? taskQuery,
     TResult Function()? taskSync,
     TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
@@ -213,6 +222,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
   TResult map<TResult extends Object?>({
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskQuery value) taskQuery,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
     required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
@@ -224,6 +234,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
     TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
@@ -235,6 +246,7 @@ class _$PluginEvent_TaskCreateImpl extends PluginEvent_TaskCreate {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
     TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
@@ -345,6 +357,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
   TResult when<TResult extends Object?>({
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
+    required TResult Function(TaskQuery query) taskQuery,
     required TResult Function() taskSync,
     required TResult Function(NetworkRequestType ty, String host)
         networkRequest,
@@ -357,6 +370,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
+    TResult? Function(TaskQuery query)? taskQuery,
     TResult? Function()? taskSync,
     TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
@@ -368,6 +382,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
+    TResult Function(TaskQuery query)? taskQuery,
     TResult Function()? taskSync,
     TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
@@ -383,6 +398,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
   TResult map<TResult extends Object?>({
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskQuery value) taskQuery,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
     required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
@@ -394,6 +410,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
     TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
@@ -405,6 +422,7 @@ class _$PluginEvent_TaskModifyImpl extends PluginEvent_TaskModify {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
     TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
@@ -427,6 +445,181 @@ abstract class PluginEvent_TaskModify extends PluginEvent {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$PluginEvent_TaskModifyImplCopyWith<_$PluginEvent_TaskModifyImpl>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$PluginEvent_TaskQueryImplCopyWith<$Res> {
+  factory _$$PluginEvent_TaskQueryImplCopyWith(
+          _$PluginEvent_TaskQueryImpl value,
+          $Res Function(_$PluginEvent_TaskQueryImpl) then) =
+      __$$PluginEvent_TaskQueryImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({TaskQuery query});
+
+  $TaskQueryCopyWith<$Res> get query;
+}
+
+/// @nodoc
+class __$$PluginEvent_TaskQueryImplCopyWithImpl<$Res>
+    extends _$PluginEventCopyWithImpl<$Res, _$PluginEvent_TaskQueryImpl>
+    implements _$$PluginEvent_TaskQueryImplCopyWith<$Res> {
+  __$$PluginEvent_TaskQueryImplCopyWithImpl(_$PluginEvent_TaskQueryImpl _value,
+      $Res Function(_$PluginEvent_TaskQueryImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? query = null,
+  }) {
+    return _then(_$PluginEvent_TaskQueryImpl(
+      query: null == query
+          ? _value.query
+          : query // ignore: cast_nullable_to_non_nullable
+              as TaskQuery,
+    ));
+  }
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $TaskQueryCopyWith<$Res> get query {
+    return $TaskQueryCopyWith<$Res>(_value.query, (value) {
+      return _then(_value.copyWith(query: value));
+    });
+  }
+}
+
+/// @nodoc
+
+class _$PluginEvent_TaskQueryImpl extends PluginEvent_TaskQuery {
+  const _$PluginEvent_TaskQueryImpl({required this.query}) : super._();
+
+  @override
+  final TaskQuery query;
+
+  @override
+  String toString() {
+    return 'PluginEvent.taskQuery(query: $query)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$PluginEvent_TaskQueryImpl &&
+            (identical(other.query, query) || other.query == query));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, query);
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$PluginEvent_TaskQueryImplCopyWith<_$PluginEvent_TaskQueryImpl>
+      get copyWith => __$$PluginEvent_TaskQueryImplCopyWithImpl<
+          _$PluginEvent_TaskQueryImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(Task task) taskCreate,
+    required TResult Function(Task task) taskModify,
+    required TResult Function(TaskQuery query) taskQuery,
+    required TResult Function() taskSync,
+    required TResult Function(NetworkRequestType ty, String host)
+        networkRequest,
+  }) {
+    return taskQuery(query);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(Task task)? taskCreate,
+    TResult? Function(Task task)? taskModify,
+    TResult? Function(TaskQuery query)? taskQuery,
+    TResult? Function()? taskSync,
+    TResult? Function(NetworkRequestType ty, String host)? networkRequest,
+  }) {
+    return taskQuery?.call(query);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(Task task)? taskCreate,
+    TResult Function(Task task)? taskModify,
+    TResult Function(TaskQuery query)? taskQuery,
+    TResult Function()? taskSync,
+    TResult Function(NetworkRequestType ty, String host)? networkRequest,
+    required TResult orElse(),
+  }) {
+    if (taskQuery != null) {
+      return taskQuery(query);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(PluginEvent_TaskCreate value) taskCreate,
+    required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskQuery value) taskQuery,
+    required TResult Function(PluginEvent_TaskSync value) taskSync,
+    required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
+  }) {
+    return taskQuery(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
+    TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskQuery value)? taskQuery,
+    TResult? Function(PluginEvent_TaskSync value)? taskSync,
+    TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
+  }) {
+    return taskQuery?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(PluginEvent_TaskCreate value)? taskCreate,
+    TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskQuery value)? taskQuery,
+    TResult Function(PluginEvent_TaskSync value)? taskSync,
+    TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
+    required TResult orElse(),
+  }) {
+    if (taskQuery != null) {
+      return taskQuery(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class PluginEvent_TaskQuery extends PluginEvent {
+  const factory PluginEvent_TaskQuery({required final TaskQuery query}) =
+      _$PluginEvent_TaskQueryImpl;
+  const PluginEvent_TaskQuery._() : super._();
+
+  TaskQuery get query;
+
+  /// Create a copy of PluginEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$PluginEvent_TaskQueryImplCopyWith<_$PluginEvent_TaskQueryImpl>
       get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -474,6 +667,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
   TResult when<TResult extends Object?>({
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
+    required TResult Function(TaskQuery query) taskQuery,
     required TResult Function() taskSync,
     required TResult Function(NetworkRequestType ty, String host)
         networkRequest,
@@ -486,6 +680,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
+    TResult? Function(TaskQuery query)? taskQuery,
     TResult? Function()? taskSync,
     TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
@@ -497,6 +692,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
+    TResult Function(TaskQuery query)? taskQuery,
     TResult Function()? taskSync,
     TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
@@ -512,6 +708,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
   TResult map<TResult extends Object?>({
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskQuery value) taskQuery,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
     required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
@@ -523,6 +720,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
     TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
@@ -534,6 +732,7 @@ class _$PluginEvent_TaskSyncImpl extends PluginEvent_TaskSync {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
     TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
@@ -632,6 +831,7 @@ class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
   TResult when<TResult extends Object?>({
     required TResult Function(Task task) taskCreate,
     required TResult Function(Task task) taskModify,
+    required TResult Function(TaskQuery query) taskQuery,
     required TResult Function() taskSync,
     required TResult Function(NetworkRequestType ty, String host)
         networkRequest,
@@ -644,6 +844,7 @@ class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(Task task)? taskCreate,
     TResult? Function(Task task)? taskModify,
+    TResult? Function(TaskQuery query)? taskQuery,
     TResult? Function()? taskSync,
     TResult? Function(NetworkRequestType ty, String host)? networkRequest,
   }) {
@@ -655,6 +856,7 @@ class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(Task task)? taskCreate,
     TResult Function(Task task)? taskModify,
+    TResult Function(TaskQuery query)? taskQuery,
     TResult Function()? taskSync,
     TResult Function(NetworkRequestType ty, String host)? networkRequest,
     required TResult orElse(),
@@ -670,6 +872,7 @@ class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
   TResult map<TResult extends Object?>({
     required TResult Function(PluginEvent_TaskCreate value) taskCreate,
     required TResult Function(PluginEvent_TaskModify value) taskModify,
+    required TResult Function(PluginEvent_TaskQuery value) taskQuery,
     required TResult Function(PluginEvent_TaskSync value) taskSync,
     required TResult Function(PluginEvent_NetworkRequest value) networkRequest,
   }) {
@@ -681,6 +884,7 @@ class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult? Function(PluginEvent_TaskModify value)? taskModify,
+    TResult? Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult? Function(PluginEvent_TaskSync value)? taskSync,
     TResult? Function(PluginEvent_NetworkRequest value)? networkRequest,
   }) {
@@ -692,6 +896,7 @@ class _$PluginEvent_NetworkRequestImpl extends PluginEvent_NetworkRequest {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(PluginEvent_TaskCreate value)? taskCreate,
     TResult Function(PluginEvent_TaskModify value)? taskModify,
+    TResult Function(PluginEvent_TaskQuery value)? taskQuery,
     TResult Function(PluginEvent_TaskSync value)? taskSync,
     TResult Function(PluginEvent_NetworkRequest value)? networkRequest,
     required TResult orElse(),
@@ -717,4 +922,385 @@ abstract class PluginEvent_NetworkRequest extends PluginEvent {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$PluginEvent_NetworkRequestImplCopyWith<_$PluginEvent_NetworkRequestImpl>
       get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$TaskQuery {
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(UuidValue uuid) uuid,
+    required TResult Function(String title, Set<TaskStatus> status, int? limit)
+        title,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(UuidValue uuid)? uuid,
+    TResult? Function(String title, Set<TaskStatus> status, int? limit)? title,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(UuidValue uuid)? uuid,
+    TResult Function(String title, Set<TaskStatus> status, int? limit)? title,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(TaskQuery_Uuid value) uuid,
+    required TResult Function(TaskQuery_Title value) title,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(TaskQuery_Uuid value)? uuid,
+    TResult? Function(TaskQuery_Title value)? title,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(TaskQuery_Uuid value)? uuid,
+    TResult Function(TaskQuery_Title value)? title,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TaskQueryCopyWith<$Res> {
+  factory $TaskQueryCopyWith(TaskQuery value, $Res Function(TaskQuery) then) =
+      _$TaskQueryCopyWithImpl<$Res, TaskQuery>;
+}
+
+/// @nodoc
+class _$TaskQueryCopyWithImpl<$Res, $Val extends TaskQuery>
+    implements $TaskQueryCopyWith<$Res> {
+  _$TaskQueryCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+abstract class _$$TaskQuery_UuidImplCopyWith<$Res> {
+  factory _$$TaskQuery_UuidImplCopyWith(_$TaskQuery_UuidImpl value,
+          $Res Function(_$TaskQuery_UuidImpl) then) =
+      __$$TaskQuery_UuidImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({UuidValue uuid});
+}
+
+/// @nodoc
+class __$$TaskQuery_UuidImplCopyWithImpl<$Res>
+    extends _$TaskQueryCopyWithImpl<$Res, _$TaskQuery_UuidImpl>
+    implements _$$TaskQuery_UuidImplCopyWith<$Res> {
+  __$$TaskQuery_UuidImplCopyWithImpl(
+      _$TaskQuery_UuidImpl _value, $Res Function(_$TaskQuery_UuidImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? uuid = null,
+  }) {
+    return _then(_$TaskQuery_UuidImpl(
+      uuid: null == uuid
+          ? _value.uuid
+          : uuid // ignore: cast_nullable_to_non_nullable
+              as UuidValue,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$TaskQuery_UuidImpl extends TaskQuery_Uuid {
+  const _$TaskQuery_UuidImpl({required this.uuid}) : super._();
+
+  @override
+  final UuidValue uuid;
+
+  @override
+  String toString() {
+    return 'TaskQuery.uuid(uuid: $uuid)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TaskQuery_UuidImpl &&
+            (identical(other.uuid, uuid) || other.uuid == uuid));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, uuid);
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TaskQuery_UuidImplCopyWith<_$TaskQuery_UuidImpl> get copyWith =>
+      __$$TaskQuery_UuidImplCopyWithImpl<_$TaskQuery_UuidImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(UuidValue uuid) uuid,
+    required TResult Function(String title, Set<TaskStatus> status, int? limit)
+        title,
+  }) {
+    return uuid(this.uuid);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(UuidValue uuid)? uuid,
+    TResult? Function(String title, Set<TaskStatus> status, int? limit)? title,
+  }) {
+    return uuid?.call(this.uuid);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(UuidValue uuid)? uuid,
+    TResult Function(String title, Set<TaskStatus> status, int? limit)? title,
+    required TResult orElse(),
+  }) {
+    if (uuid != null) {
+      return uuid(this.uuid);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(TaskQuery_Uuid value) uuid,
+    required TResult Function(TaskQuery_Title value) title,
+  }) {
+    return uuid(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(TaskQuery_Uuid value)? uuid,
+    TResult? Function(TaskQuery_Title value)? title,
+  }) {
+    return uuid?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(TaskQuery_Uuid value)? uuid,
+    TResult Function(TaskQuery_Title value)? title,
+    required TResult orElse(),
+  }) {
+    if (uuid != null) {
+      return uuid(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class TaskQuery_Uuid extends TaskQuery {
+  const factory TaskQuery_Uuid({required final UuidValue uuid}) =
+      _$TaskQuery_UuidImpl;
+  const TaskQuery_Uuid._() : super._();
+
+  UuidValue get uuid;
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TaskQuery_UuidImplCopyWith<_$TaskQuery_UuidImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$TaskQuery_TitleImplCopyWith<$Res> {
+  factory _$$TaskQuery_TitleImplCopyWith(_$TaskQuery_TitleImpl value,
+          $Res Function(_$TaskQuery_TitleImpl) then) =
+      __$$TaskQuery_TitleImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String title, Set<TaskStatus> status, int? limit});
+}
+
+/// @nodoc
+class __$$TaskQuery_TitleImplCopyWithImpl<$Res>
+    extends _$TaskQueryCopyWithImpl<$Res, _$TaskQuery_TitleImpl>
+    implements _$$TaskQuery_TitleImplCopyWith<$Res> {
+  __$$TaskQuery_TitleImplCopyWithImpl(
+      _$TaskQuery_TitleImpl _value, $Res Function(_$TaskQuery_TitleImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? title = null,
+    Object? status = null,
+    Object? limit = freezed,
+  }) {
+    return _then(_$TaskQuery_TitleImpl(
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      status: null == status
+          ? _value._status
+          : status // ignore: cast_nullable_to_non_nullable
+              as Set<TaskStatus>,
+      limit: freezed == limit
+          ? _value.limit
+          : limit // ignore: cast_nullable_to_non_nullable
+              as int?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$TaskQuery_TitleImpl extends TaskQuery_Title {
+  const _$TaskQuery_TitleImpl(
+      {required this.title, required final Set<TaskStatus> status, this.limit})
+      : _status = status,
+        super._();
+
+  @override
+  final String title;
+  final Set<TaskStatus> _status;
+  @override
+  Set<TaskStatus> get status {
+    if (_status is EqualUnmodifiableSetView) return _status;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_status);
+  }
+
+  @override
+  final int? limit;
+
+  @override
+  String toString() {
+    return 'TaskQuery.title(title: $title, status: $status, limit: $limit)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TaskQuery_TitleImpl &&
+            (identical(other.title, title) || other.title == title) &&
+            const DeepCollectionEquality().equals(other._status, _status) &&
+            (identical(other.limit, limit) || other.limit == limit));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, title, const DeepCollectionEquality().hash(_status), limit);
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TaskQuery_TitleImplCopyWith<_$TaskQuery_TitleImpl> get copyWith =>
+      __$$TaskQuery_TitleImplCopyWithImpl<_$TaskQuery_TitleImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(UuidValue uuid) uuid,
+    required TResult Function(String title, Set<TaskStatus> status, int? limit)
+        title,
+  }) {
+    return title(this.title, status, limit);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(UuidValue uuid)? uuid,
+    TResult? Function(String title, Set<TaskStatus> status, int? limit)? title,
+  }) {
+    return title?.call(this.title, status, limit);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(UuidValue uuid)? uuid,
+    TResult Function(String title, Set<TaskStatus> status, int? limit)? title,
+    required TResult orElse(),
+  }) {
+    if (title != null) {
+      return title(this.title, status, limit);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(TaskQuery_Uuid value) uuid,
+    required TResult Function(TaskQuery_Title value) title,
+  }) {
+    return title(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(TaskQuery_Uuid value)? uuid,
+    TResult? Function(TaskQuery_Title value)? title,
+  }) {
+    return title?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(TaskQuery_Uuid value)? uuid,
+    TResult Function(TaskQuery_Title value)? title,
+    required TResult orElse(),
+  }) {
+    if (title != null) {
+      return title(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class TaskQuery_Title extends TaskQuery {
+  const factory TaskQuery_Title(
+      {required final String title,
+      required final Set<TaskStatus> status,
+      final int? limit}) = _$TaskQuery_TitleImpl;
+  const TaskQuery_Title._() : super._();
+
+  String get title;
+  Set<TaskStatus> get status;
+  int? get limit;
+
+  /// Create a copy of TaskQuery
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TaskQuery_TitleImplCopyWith<_$TaskQuery_TitleImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
