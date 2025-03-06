@@ -3,11 +3,11 @@ use stride_core::event::{HostEvent, PluginEvent};
 pub use stride_core::event;
 pub use stride_core::task;
 
-fn default_event_handler(_event: &HostEvent) -> bool {
+fn default_event_handler(_event: HostEvent) -> bool {
     false
 }
 
-pub type EventHandler = fn(event: &HostEvent) -> bool;
+pub type EventHandler = fn(event: HostEvent) -> bool;
 
 pub static mut EVENT_HANDLER: EventHandler = default_event_handler;
 
@@ -35,7 +35,7 @@ pub unsafe extern "C" fn stride__event_handler(event: *const u8, event_len: usiz
     let event: HostEvent =
         serde_json::from_slice(event_data).expect("data passed from host should be valid");
 
-    unsafe { EVENT_HANDLER(&event) }
+    unsafe { EVENT_HANDLER(event) }
 }
 
 extern "C" {
@@ -44,7 +44,7 @@ extern "C" {
 
 pub trait Plugin {
     fn init() -> Self;
-    fn event(&mut self, event: &HostEvent) -> bool;
+    fn event(&mut self, event: HostEvent) -> bool;
 }
 
 #[macro_export]
@@ -58,7 +58,7 @@ macro_rules! plugin {
                 std::sync::LazyLock::new(|| std::sync::Mutex::new(<$plugin>::init()));
 
             unsafe {
-                $crate::EVENT_HANDLER = |event| {
+                $crate::EVENT_HANDLER = |event: $crate::event::HostEvent| {
                     PLUGIN_INSTANCE
                         .lock()
                         .expect("couldn't lock plugin instance")
