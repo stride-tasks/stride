@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/third_party/stride_core/event.dart';
@@ -88,7 +89,17 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   }
 
   Future<void> _processHostEvents(void _) async {
-    await pm.processHostEvent();
+    try {
+      await pm.processHostEvent();
+    } on RustError catch (error, stackTrace) {
+      logBloc.add(
+        LogErrorEvent(
+          error: error,
+          stackTrace: stackTrace,
+          message: 'plugin manager',
+        ),
+      );
+    }
 
     while (true) {
       final action = await pm.processPluginEvent();
@@ -171,5 +182,17 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
       timer.timer.cancel();
     }
     return super.close();
+  }
+
+  @override
+  void onError(Object error, StackTrace stackTrace) {
+    super.onError(error, stackTrace);
+    logBloc.add(
+      LogErrorEvent(
+        error: error,
+        stackTrace: stackTrace,
+        message: 'plugin manager',
+      ),
+    );
   }
 }

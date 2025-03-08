@@ -240,6 +240,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       dynamic raw);
 
   @protected
+  ManifestPermissionStorage dco_decode_box_autoadd_manifest_permission_storage(
+      dynamic raw);
+
+  @protected
   PluginAction dco_decode_box_autoadd_plugin_action(dynamic raw);
 
   @protected
@@ -355,6 +359,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ManifestPermissionNetwork dco_decode_manifest_permission_network(dynamic raw);
 
   @protected
+  ManifestPermissionStorage dco_decode_manifest_permission_storage(dynamic raw);
+
+  @protected
   ManifestPermissionTask dco_decode_manifest_permission_task(dynamic raw);
 
   @protected
@@ -393,6 +400,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   ManifestPermissionNetwork?
       dco_decode_opt_box_autoadd_manifest_permission_network(dynamic raw);
+
+  @protected
+  ManifestPermissionStorage?
+      dco_decode_opt_box_autoadd_manifest_permission_storage(dynamic raw);
 
   @protected
   PluginAction? dco_decode_opt_box_autoadd_plugin_action(dynamic raw);
@@ -623,6 +634,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  ManifestPermissionStorage sse_decode_box_autoadd_manifest_permission_storage(
+      SseDeserializer deserializer);
+
+  @protected
   PluginAction sse_decode_box_autoadd_plugin_action(
       SseDeserializer deserializer);
 
@@ -744,6 +759,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  ManifestPermissionStorage sse_decode_manifest_permission_storage(
+      SseDeserializer deserializer);
+
+  @protected
   ManifestPermissionTask sse_decode_manifest_permission_task(
       SseDeserializer deserializer);
 
@@ -787,6 +806,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   ManifestPermissionNetwork?
       sse_decode_opt_box_autoadd_manifest_permission_network(
+          SseDeserializer deserializer);
+
+  @protected
+  ManifestPermissionStorage?
+      sse_decode_opt_box_autoadd_manifest_permission_storage(
           SseDeserializer deserializer);
 
   @protected
@@ -1031,6 +1055,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ManifestPermissionNetwork self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_manifest_permission_storage(
+      ManifestPermissionStorage self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_plugin_action(
       PluginAction self, SseSerializer serializer);
 
@@ -1162,6 +1190,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ManifestPermissionNetwork self, SseSerializer serializer);
 
   @protected
+  void sse_encode_manifest_permission_storage(
+      ManifestPermissionStorage self, SseSerializer serializer);
+
+  @protected
   void sse_encode_manifest_permission_task(
       ManifestPermissionTask self, SseSerializer serializer);
 
@@ -1206,6 +1238,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_manifest_permission_network(
       ManifestPermissionNetwork? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_manifest_permission_storage(
+      ManifestPermissionStorage? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_plugin_action(

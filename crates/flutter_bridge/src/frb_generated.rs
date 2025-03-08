@@ -44,7 +44,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.8.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -452850573;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 563970905;
 
 // Section: executor
 
@@ -2793,6 +2793,40 @@ fn wire__stride_plugin_manager__manifest__manifest_permission_network_default_im
         },
     )
 }
+fn wire__stride_plugin_manager__manifest__manifest_permission_storage_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "manifest_permission_storage_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        stride_plugin_manager::manifest::ManifestPermissionStorage::default(),
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -4023,6 +4057,11 @@ const _: fn() = || {
         let _: Vec<String> = ManifestPermissionNetwork.urls;
     }
     {
+        let ManifestPermissionStorage =
+            None::<stride_plugin_manager::manifest::ManifestPermissionStorage>.unwrap();
+        let _: u32 = ManifestPermissionStorage.max_size;
+    }
+    {
         let ManifestPermissionTask =
             None::<stride_plugin_manager::manifest::ManifestPermissionTask>.unwrap();
         let _: bool = ManifestPermissionTask.create;
@@ -4036,6 +4075,8 @@ const _: fn() = || {
         let _: stride_plugin_manager::manifest::ManifestPermissionTask = ManifestPermissions.task;
         let _: Option<stride_plugin_manager::manifest::ManifestPermissionNetwork> =
             ManifestPermissions.network;
+        let _: Option<stride_plugin_manager::manifest::ManifestPermissionStorage> =
+            ManifestPermissions.storage;
     }
     match None::<stride_plugin_manager::manifest::PluginAction>.unwrap() {
         stride_plugin_manager::manifest::PluginAction::Event { plugin_name, event } => {
@@ -4713,6 +4754,16 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestPermissionNetwork {
     }
 }
 
+impl SseDecode for stride_plugin_manager::manifest::ManifestPermissionStorage {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_maxSize = <u32>::sse_decode(deserializer);
+        return stride_plugin_manager::manifest::ManifestPermissionStorage {
+            max_size: var_maxSize,
+        };
+    }
+}
+
 impl SseDecode for stride_plugin_manager::manifest::ManifestPermissionTask {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4738,9 +4789,14 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestPermissions {
             <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_decode(
                 deserializer,
             );
+        let mut var_storage =
+            <Option<stride_plugin_manager::manifest::ManifestPermissionStorage>>::sse_decode(
+                deserializer,
+            );
         return stride_plugin_manager::manifest::ManifestPermissions {
             task: var_task,
             network: var_network,
+            storage: var_storage,
         };
     }
 }
@@ -4856,6 +4912,21 @@ impl SseDecode for Option<stride_plugin_manager::manifest::ManifestPermissionNet
         if (<bool>::sse_decode(deserializer)) {
             return Some(
                 <stride_plugin_manager::manifest::ManifestPermissionNetwork>::sse_decode(
+                    deserializer,
+                ),
+            );
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<stride_plugin_manager::manifest::ManifestPermissionStorage> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(
+                <stride_plugin_manager::manifest::ManifestPermissionStorage>::sse_decode(
                     deserializer,
                 ),
             );
@@ -5387,70 +5458,76 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        84 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
+        84 => wire__stride_plugin_manager__manifest__manifest_permission_storage_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        85 => wire__stride_plugin_manager__manifest__manifest_permissions_default_impl(
+        85 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        87 => {
+        86 => wire__stride_plugin_manager__manifest__manifest_permissions_default_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        88 => {
             wire__crate__api__plugin_manager__parse_plugin_impl(port, ptr, rust_vec_len, data_len)
         }
-        93 => wire__crate__api__plugin_manager__plugin_manifests_impl(
+        94 => wire__crate__api__plugin_manager__plugin_manifests_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        94 => wire__crate__api__plugin_manager__process_host_event_impl(
+        95 => wire__crate__api__plugin_manager__process_host_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        95 => wire__crate__api__plugin_manager__process_plugin_event_impl(
+        96 => wire__crate__api__plugin_manager__process_plugin_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        96 => wire__crate__api__plugin_manager__remove_impl(port, ptr, rust_vec_len, data_len),
-        97 => {
+        97 => wire__crate__api__plugin_manager__remove_impl(port, ptr, rust_vec_len, data_len),
+        98 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        98 => wire__crate__api__settings__settings_create_stream_impl(
+        99 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        99 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        100 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
-        101 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        103 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        104 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        105 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
-        106 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
-        107 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
-        109 => {
+        100 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        101 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
+        102 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        104 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        105 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        106 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
+        107 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
+        108 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
+        110 => {
             wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len)
         }
-        110 => {
+        111 => {
             wire__stride_core__task__task_priority_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        111 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
-        112 => {
+        112 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
+        113 => {
             wire__stride_core__task__task_status_is_pending_impl(port, ptr, rust_vec_len, data_len)
         }
-        113 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
-        115 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
-        116 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
+        114 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
+        116 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        117 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5482,35 +5559,35 @@ fn pde_ffi_dispatcher_sync_impl(
         31 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
         33 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
         67 => wire__crate__api__settings__encryption_key_validate_impl(ptr, rust_vec_len, data_len),
-        86 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
-        88 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
+        87 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
+        89 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        89 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
+        90 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        90 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
+        91 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        91 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
+        92 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        92 => wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
+        93 => wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        102 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        108 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
-        114 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        103 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        109 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
+        115 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5925,6 +6002,29 @@ impl
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart
+    for FrbWrapper<stride_plugin_manager::manifest::ManifestPermissionStorage>
+{
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.0.max_size.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<stride_plugin_manager::manifest::ManifestPermissionStorage>
+{
+}
+impl
+    flutter_rust_bridge::IntoIntoDart<
+        FrbWrapper<stride_plugin_manager::manifest::ManifestPermissionStorage>,
+    > for stride_plugin_manager::manifest::ManifestPermissionStorage
+{
+    fn into_into_dart(
+        self,
+    ) -> FrbWrapper<stride_plugin_manager::manifest::ManifestPermissionStorage> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart
     for FrbWrapper<stride_plugin_manager::manifest::ManifestPermissionTask>
 {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
@@ -5958,6 +6058,7 @@ impl flutter_rust_bridge::IntoDart
         [
             self.0.task.into_into_dart().into_dart(),
             self.0.network.into_into_dart().into_dart(),
+            self.0.storage.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -6734,6 +6835,13 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestPermissionNetwork {
     }
 }
 
+impl SseEncode for stride_plugin_manager::manifest::ManifestPermissionStorage {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.max_size, serializer);
+    }
+}
+
 impl SseEncode for stride_plugin_manager::manifest::ManifestPermissionTask {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -6752,6 +6860,10 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestPermissions {
         );
         <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_encode(
             self.network,
+            serializer,
+        );
+        <Option<stride_plugin_manager::manifest::ManifestPermissionStorage>>::sse_encode(
+            self.storage,
             serializer,
         );
     }
@@ -6858,6 +6970,18 @@ impl SseEncode for Option<stride_plugin_manager::manifest::ManifestPermissionNet
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <stride_plugin_manager::manifest::ManifestPermissionNetwork>::sse_encode(
+                value, serializer,
+            );
+        }
+    }
+}
+
+impl SseEncode for Option<stride_plugin_manager::manifest::ManifestPermissionStorage> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <stride_plugin_manager::manifest::ManifestPermissionStorage>::sse_encode(
                 value, serializer,
             );
         }

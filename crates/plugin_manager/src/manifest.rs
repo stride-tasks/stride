@@ -63,6 +63,14 @@ pub struct ManifestPermissionNetwork {
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
 #[serde(rename_all = "kebab-case")]
+pub struct ManifestPermissionStorage {
+    pub max_size: u32,
+}
+
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[serde(rename_all = "kebab-case")]
 pub struct ManifestEvents {
     pub task: ManifestEventTask,
     pub timer: Option<ManifestEventTimer>,
@@ -75,6 +83,9 @@ pub struct ManifestPermissions {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub network: Option<ManifestPermissionNetwork>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub storage: Option<ManifestPermissionStorage>,
 }
 
 /// flutter_rust_bridge:ignore

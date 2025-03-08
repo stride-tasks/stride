@@ -21,7 +21,7 @@ import 'package:uuid/uuid.dart';
 part 'manifest.freezed.dart';
 
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `PluginApi`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
 // These functions are ignored (category: IgnoreBecauseNotAllowedOwner): `skip_serializing`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `events`, `name`
 
@@ -136,6 +136,27 @@ class ManifestPermissionNetwork {
           urls == other.urls;
 }
 
+class ManifestPermissionStorage {
+  final int maxSize;
+
+  const ManifestPermissionStorage({
+    required this.maxSize,
+  });
+
+  static Future<ManifestPermissionStorage> default_() => RustLib.instance.api
+      .stridePluginManagerManifestManifestPermissionStorageDefault();
+
+  @override
+  int get hashCode => maxSize.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ManifestPermissionStorage &&
+          runtimeType == other.runtimeType &&
+          maxSize == other.maxSize;
+}
+
 class ManifestPermissionTask {
   final bool create;
   final bool modify;
@@ -170,17 +191,19 @@ class ManifestPermissionTask {
 class ManifestPermissions {
   final ManifestPermissionTask task;
   final ManifestPermissionNetwork? network;
+  final ManifestPermissionStorage? storage;
 
   const ManifestPermissions({
     required this.task,
     this.network,
+    this.storage,
   });
 
   static Future<ManifestPermissions> default_() => RustLib.instance.api
       .stridePluginManagerManifestManifestPermissionsDefault();
 
   @override
-  int get hashCode => task.hashCode ^ network.hashCode;
+  int get hashCode => task.hashCode ^ network.hashCode ^ storage.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -188,7 +211,8 @@ class ManifestPermissions {
       other is ManifestPermissions &&
           runtimeType == other.runtimeType &&
           task == other.task &&
-          network == other.network;
+          network == other.network &&
+          storage == other.storage;
 }
 
 @freezed

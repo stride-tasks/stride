@@ -54,7 +54,11 @@ class PluginRoute extends StatelessWidget {
               _manifestBoolField('task.create', permissions.task.create),
               _manifestBoolField('task.modify', permissions.task.modify),
               _manifestBoolField('task.sync', permissions.task.sync_),
-              _manifestNetworkField('network', permissions.network),
+              _manifestBoolField('task.query', permissions.task.query),
+              if (permissions.storage != null)
+                _manifestStorageField(permissions.storage!),
+              if (permissions.network != null)
+                _manifestNetworkField(permissions.network!),
             ],
           ),
         ],
@@ -102,17 +106,39 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestNetworkField(
-      String name, ManifestPermissionNetwork? network) {
-    if (network == null) {
-      return SettingsTile(
-        title: Text(
-          'Network (empty)',
-          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
-        ),
-        trailing: const SizedBox(),
-      );
+  SettingsTile _manifestStorageField(ManifestPermissionStorage storage) {
+    var size = storage.maxSize.toString();
+    var unit = 'KB';
+    if (storage.maxSize > 1024) {
+      size = (storage.maxSize / 1024).toStringAsFixed(2);
+      unit = 'MB';
     }
+    final children = [
+      ListTile(
+        title: RichText(
+          text: TextSpan(
+            text: 'max-size',
+            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 18),
+          ),
+        ),
+        subtitle: Text('$size $unit'),
+      ),
+    ];
+    return SettingsTile(
+      title: ExpansionTile(
+        initiallyExpanded: true,
+        tilePadding: EdgeInsets.all(0),
+        title: Text(
+          'Storage',
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 18),
+        ),
+        children: children,
+      ),
+      trailing: const SizedBox(),
+    );
+  }
+
+  SettingsTile _manifestNetworkField(ManifestPermissionNetwork network) {
     final urls = network.urls
         .map(
           (url) => ListTile(
@@ -128,10 +154,11 @@ class PluginRoute extends StatelessWidget {
         .toList();
     return SettingsTile(
       title: ExpansionTile(
+        initiallyExpanded: true,
         tilePadding: EdgeInsets.all(0),
         title: Text(
           'Network (${network.urls.length})',
-          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 18),
         ),
         children: urls,
       ),
