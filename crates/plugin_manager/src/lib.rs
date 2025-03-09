@@ -164,14 +164,19 @@ impl PluginManager {
     }
 
     fn validate_wasm_code(&self, _manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
-        let module = Module::new(&self.engine, wasm).map_err(Error::InvalidCode)?;
+        let module = Module::new(&self.engine, wasm)?;
 
+        let mut has_memory_export = false;
         for export in module.exports() {
+            let name = export.name();
+
+            if export.ty().memory().is_some() && name == "memory" {
+                has_memory_export = true;
+            }
             let Some(func) = export.ty().func() else {
                 continue;
             };
 
-            let name = export.name();
             if name == EVENT_HANDLER_NAME {
                 check_signature_match(name, func, &[ValType::I32, ValType::I32], &[ValType::I32])?;
             }
@@ -194,6 +199,9 @@ impl PluginManager {
             if name == STORAGE_REMOVE_NAME {
                 check_signature_match(name, func, &[ValType::I32, ValType::I32], &[ValType::I32])?;
             }
+        }
+        if !has_memory_export {
+            return Err(Error::MissingMemoryExport);
         }
         Ok(())
     }
@@ -404,7 +412,7 @@ impl PluginManager {
 
         let mut linker = <Linker<HostState>>::new(&self.engine);
 
-        wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).unwrap();
+        wasmi_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).map_err(Error::Wasi)?;
 
         let stride_emit = Func::wrap(
             &mut store,
@@ -425,7 +433,7 @@ impl PluginManager {
                 caller.data_mut().events.push_back(event);
             },
         );
-        linker.define("env", "stride__emit", stride_emit).unwrap();
+        linker.define("env", "stride__emit", stride_emit)?;
 
         let stride_storage_get = Func::wrap(
             &mut store,
@@ -464,9 +472,7 @@ impl PluginManager {
                 StorageErrorCode::NotFound as i32
             },
         );
-        linker
-            .define("env", "stride__storage_get", stride_storage_get)
-            .unwrap();
+        linker.define("env", "stride__storage_get", stride_storage_get)?;
 
         let stride_storage_set = Func::wrap(
             &mut store,
@@ -518,9 +524,7 @@ impl PluginManager {
                 0
             },
         );
-        linker
-            .define("env", "stride__storage_set", stride_storage_set)
-            .unwrap();
+        linker.define("env", "stride__storage_set", stride_storage_set)?;
 
         let stride_storage_remove = Func::wrap(
             &mut store,
@@ -553,54 +557,40 @@ impl PluginManager {
                 i32::from(value.is_some())
             },
         );
-        linker
-            .define("env", "stride__storage_remove", stride_storage_remove)
-            .unwrap();
+        linker.define("env", "stride__storage_remove", stride_storage_remove)?;
 
         let instance = linker
-            .instantiate(&mut store, &module)
-            .unwrap()
-            .ensure_no_start(&mut store)
-            .unwrap();
+            .instantiate(&mut store, &module)?
+            .ensure_no_start(&mut store)?;
 
-        let stride_allocate = instance
-            .get_typed_func::<i32, i32>(&store, "stride__allocate")
-            .unwrap();
+        let stride_allocate = instance.get_typed_func::<i32, i32>(&store, "stride__allocate")?;
 
-        let stride_deallocate = instance
-            .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
-            .unwrap();
+        let stride_deallocate =
+            instance.get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")?;
 
-        let stride_init = instance
-            .get_typed_func::<(), ()>(&store, "stride__init")
-            .unwrap();
+        let stride_init = instance.get_typed_func::<(), ()>(&store, "stride__init")?;
 
-        let event_handler = instance
-            .get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)
-            .unwrap();
+        let event_handler =
+            instance.get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)?;
 
-        store.set_fuel(100_000).unwrap();
-        stride_init.call(&mut store, ()).unwrap();
+        store.set_fuel(100_000)?;
+        stride_init.call(&mut store, ())?;
 
-        let event_data = serde_json::to_string(&event).unwrap();
-        store.set_fuel(100_000).unwrap();
-        let ret = stride_allocate
-            .call(&mut store, event_data.len() as i32)
-            .unwrap() as usize;
+        let event_data = serde_json::to_string(&event).expect("shouldn't fail");
+        store.set_fuel(100_000)?;
+        let ret = stride_allocate.call(&mut store, event_data.len() as i32)? as usize;
 
-        let memory = instance.get_memory(&mut store, "memory").unwrap();
+        let memory = instance
+            .get_memory(&mut store, "memory")
+            .expect("already checked in validation");
         memory.data_mut(&mut store)[ret..ret + event_data.len()]
             .copy_from_slice(event_data.as_bytes());
 
         // TODO: Add computation limit.
-        store.set_fuel(100_000_000_000).unwrap();
-        event_handler
-            .call(&mut store, (ret as i32, event_data.len() as i32))
-            .unwrap();
+        store.set_fuel(100_000_000_000)?;
+        event_handler.call(&mut store, (ret as i32, event_data.len() as i32))?;
 
-        stride_deallocate
-            .call(&mut store, (ret as i32, event_data.len() as i32))
-            .unwrap();
+        stride_deallocate.call(&mut store, (ret as i32, event_data.len() as i32))?;
 
         if let Some(storage) = store.data_mut().storage.take() {
             if storage.needs_save {

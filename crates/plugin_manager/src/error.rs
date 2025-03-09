@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use wasmi::core::ValType;
+use wasmi_wasi::wasi_common;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -18,8 +19,8 @@ pub enum Error {
     InvalidName {
         name: String,
     },
-    InvalidCode(wasmi::Error),
     InvalidEventHandlerName(String),
+    MissingMemoryExport,
     MissingEventHandler(String),
     ExportFunctionSignature {
         function_name: String,
@@ -28,6 +29,10 @@ pub enum Error {
         actual_params: Box<[ValType]>,
         actual_return: Box<[ValType]>,
     },
+    Linker(wasmi::errors::LinkerError),
+    Instantiation(wasmi::errors::InstantiationError),
+    Wasmi(wasmi::Error),
+    Wasi(wasi_common::Error),
 }
 
 fn wasmi_valtype_to_rust_type(ty: &ValType) -> &str {
@@ -92,10 +97,10 @@ impl std::fmt::Display for Error {
             Self::MissingManifest => write!(f, "missing manifest.toml"),
             Self::MissingCode => write!(f, "missing code.wasm"),
             Self::InvalidName { name } => write!(f, "invalid name error: {name}"),
-            Self::InvalidCode(error) => write!(f, "invalid code error: {error}"),
             Self::InvalidEventHandlerName(name) => {
                 write!(f, "invalid event handler name error: {name}")
             }
+            Self::MissingMemoryExport => write!(f, "missing `memory` export"),
             Self::MissingEventHandler(name) => {
                 write!(
                     f,
@@ -119,6 +124,10 @@ impl std::fmt::Display for Error {
                     "Exported '{function_name}' function wrong signature, expected: ({expected_params}) -> {expected_return}, got ({actual_params}) -> {actual_return}"
                 )
             }
+            Self::Linker(error) => write!(f, "linker error: {error}"),
+            Self::Instantiation(error) => write!(f, "instantiation error: {error}"),
+            Self::Wasmi(error) => write!(f, "wasmi error: {error}"),
+            Self::Wasi(error) => write!(f, "wasi error: {error}"),
         }
     }
 }
@@ -130,5 +139,20 @@ impl From<zip::result::ZipError> for Error {
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Self::Io(error)
+    }
+}
+impl From<wasmi::errors::LinkerError> for Error {
+    fn from(error: wasmi::errors::LinkerError) -> Self {
+        Self::Linker(error)
+    }
+}
+impl From<wasmi::errors::InstantiationError> for Error {
+    fn from(error: wasmi::errors::InstantiationError) -> Self {
+        Self::Instantiation(error)
+    }
+}
+impl From<wasmi::Error> for Error {
+    fn from(error: wasmi::Error) -> Self {
+        Self::Wasmi(error)
     }
 }
