@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Utc};
 
-use crate::task::{Task, TaskPriority, TaskStatus};
+use crate::task::{Annotation, Task, TaskPriority, TaskStatus};
 
 #[test]
 fn conversion_task_status() -> anyhow::Result<()> {
@@ -341,6 +341,67 @@ fn deserialize_task_with_depends() {
     assert_eq!(task, expected);
 }
 
+#[test]
+fn serialize_task_with_annotations() {
+    let title = "Hello there!";
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    task.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("Hello"),
+    });
+    task.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("World"),
+    });
+
+    assert_eq!(
+        task.to_data(),
+        concat(&[
+            CONSTANT_UUID.as_bytes(),
+            (title.len() as u32).to_be_bytes().as_slice(),
+            title.as_bytes(),
+            b"a",
+            &2u32.to_be_bytes(),
+            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            &5u32.to_be_bytes(),
+            b"Hello",
+            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            &5u32.to_be_bytes(),
+            b"World",
+        ])
+    );
+}
+
+#[test]
+fn deserialize_task_with_annotations() {
+    let title = "Hello there!";
+    let task = Task::from_data(&concat(&[
+        CONSTANT_UUID.as_bytes(),
+        (title.len() as u32).to_be_bytes().as_slice(),
+        title.as_bytes(),
+        b"a",
+        &2u32.to_be_bytes(),
+        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        &5u32.to_be_bytes(),
+        b"Hello",
+        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        &5u32.to_be_bytes(),
+        b"World",
+    ]))
+    .unwrap();
+
+    let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    expected.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("Hello"),
+    });
+    expected.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("World"),
+    });
+    assert_eq!(task, expected);
+}
+
 // TODO: Add the rest of the attributes
 #[test]
 fn serialize_task_with_all_attributes() {
@@ -355,6 +416,14 @@ fn serialize_task_with_all_attributes() {
     task.tags = vec![0, 1, 2];
     task.project = Some(30);
     task.priority = Some(TaskPriority::L);
+    task.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("Hello"),
+    });
+    task.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("World"),
+    });
     assert_eq!(
         task.to_data(),
         concat(&[
@@ -381,6 +450,14 @@ fn serialize_task_with_all_attributes() {
             CONSTANT_UUID.as_bytes(),
             b"n",
             CONSTANT_UUID.as_bytes(),
+            b"a",
+            &2u32.to_be_bytes(),
+            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            &5u32.to_be_bytes(),
+            b"Hello",
+            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            &5u32.to_be_bytes(),
+            b"World",
         ])
     );
 }
@@ -413,6 +490,14 @@ fn deserialize_task_with_all_attributes() {
         CONSTANT_UUID.as_bytes(),
         b"n",
         CONSTANT_UUID.as_bytes(),
+        b"a",
+        &2u32.to_be_bytes(),
+        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        &5u32.to_be_bytes(),
+        b"Hello",
+        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        &5u32.to_be_bytes(),
+        b"World",
     ]))
     .unwrap();
 
@@ -426,5 +511,13 @@ fn deserialize_task_with_all_attributes() {
     expected.tags = vec![0, 1, 2];
     expected.project = Some(30);
     expected.priority = Some(TaskPriority::H);
+    expected.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("Hello"),
+    });
+    expected.annotations.push(Annotation {
+        entry: CONSTANT_DATETIME,
+        description: String::from("World"),
+    });
     assert_eq!(task, expected);
 }

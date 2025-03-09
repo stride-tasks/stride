@@ -187,8 +187,15 @@ impl Task {
             result.push(b'n');
             result.extend_from_slice(depend.as_bytes());
         }
+        // TODO: Consider adding external annoations (separate files for annotations).
         if !self.annotations.is_empty() {
-            todo!("Annotation not implemented")
+            result.push(b'a');
+            result.extend_from_slice(&(self.annotations.len() as u32).to_be_bytes());
+            for annotation in &self.annotations {
+                result.extend(&annotation.entry.timestamp_micros().to_be_bytes());
+                result.extend_from_slice(&(annotation.description.len() as u32).to_be_bytes());
+                result.extend_from_slice(annotation.description.as_bytes());
+            }
         }
         if !self.uda.is_empty() {
             todo!("UDA not implemented")
@@ -220,6 +227,7 @@ impl Task {
         let mut wait = None;
         let mut depends = Vec::new();
         let mut tags = Vec::new();
+        let mut annotations = Vec::new();
         let mut i = 0;
         while i < input.len() {
             let Some(typ) = input.get(i).copied() else {
@@ -272,6 +280,35 @@ impl Task {
                     i += 1;
                     priority = Some(value);
                 }
+                b'a' => {
+                    let len =
+                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
+                    i += size_of::<u32>();
+
+                    annotations = Vec::with_capacity(len as usize);
+
+                    for _ in 0..len {
+                        let timestamp = input.get(i..(i + size_of::<i64>()))?;
+                        let timestamp = i64::from_be_bytes(timestamp.try_into().ok()?);
+                        let datetime = DateTime::from_timestamp_micros(timestamp)?;
+                        i += size_of::<i64>();
+
+                        let title_len = u32::from_be_bytes(
+                            input.get(i..i + size_of::<u32>())?.try_into().ok()?,
+                        ) as usize;
+                        i += size_of::<u32>();
+
+                        let title_bytes = input.get(i..i + title_len)?;
+                        i += title_len;
+
+                        let title = std::str::from_utf8(title_bytes).ok()?;
+
+                        annotations.push(Annotation {
+                            entry: datetime,
+                            description: title.to_string(),
+                        });
+                    }
+                }
                 _ => return None,
             }
         }
@@ -285,7 +322,7 @@ impl Task {
             due,
             project,
             tags,
-            annotations: Vec::default(),
+            annotations,
             priority,
             wait,
             depends,
