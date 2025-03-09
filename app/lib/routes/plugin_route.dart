@@ -43,18 +43,25 @@ class PluginRoute extends StatelessWidget {
           SettingsSection(
             title: Text('Event', style: headingStyle),
             tiles: [
-              _manifestBoolField('task.create', event.task?.create),
-              _manifestBoolField('task.modify', event.task?.modify),
-              _manifestBoolField('task.sync', event.task?.sync_),
+              if (event.task?.create ?? false)
+                _manifestBoolField('task.create', event.task?.create),
+              if (event.task?.modify ?? false)
+                _manifestBoolField('task.modify', event.task?.modify),
+              if (event.task?.sync_ ?? false)
+                _manifestBoolField('task.sync', event.task?.sync_),
             ],
           ),
           SettingsSection(
             title: Text('Permission', style: headingStyle),
             tiles: [
-              _manifestBoolField('task.create', permission.task?.create),
-              _manifestBoolField('task.modify', permission.task?.modify),
-              _manifestBoolField('task.sync', permission.task?.sync_),
-              _manifestBoolField('task.query', permission.task?.query),
+              if (permission.task?.create ?? false)
+                _manifestBoolField('task.create', permission.task?.create),
+              if (permission.task?.modify ?? false)
+                _manifestBoolField('task.modify', permission.task?.modify),
+              if (permission.task?.sync_ ?? false)
+                _manifestBoolField('task.sync', permission.task?.sync_),
+              if (permission.task?.query ?? false)
+                _manifestBoolField('task.query', permission.task?.query),
               if (permission.storage != null)
                 _manifestStorageField(permission.storage!),
               if (permission.network != null)
