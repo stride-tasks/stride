@@ -44,7 +44,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.8.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 939418137;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2007740105;
 
 // Section: executor
 
@@ -1885,6 +1885,41 @@ fn wire__crate__api__repository__git__TaskStorage_update_impl(
                     let output_ok = crate::api::repository::git::TaskStorage::update(
                         &mut *api_that_guard,
                         &api_task,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__stride_core__task__annotation__annotation_now_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "annotation_now",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_description = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        stride_core::task::annotation::Annotation::now(api_description),
                     )?;
                     Ok(output_ok)
                 })())
@@ -5357,145 +5392,151 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        57 => wire__crate__api__settings__application_paths_default_impl(
+        57 => wire__stride_core__task__annotation__annotation_now_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        58 => {
+        58 => wire__crate__api__settings__application_paths_default_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        59 => {
             wire__crate__api__plugin_manager__create_stream_impl(port, ptr, rust_vec_len, data_len)
         }
-        59 => wire__crate__api__plugin_manager__disable_impl(port, ptr, rust_vec_len, data_len),
-        60 => wire__crate__api__plugin_manager__emit_impl(port, ptr, rust_vec_len, data_len),
-        61 => {
+        60 => wire__crate__api__plugin_manager__disable_impl(port, ptr, rust_vec_len, data_len),
+        61 => wire__crate__api__plugin_manager__emit_impl(port, ptr, rust_vec_len, data_len),
+        62 => {
             wire__crate__api__plugin_manager__emit_broadcast_impl(port, ptr, rust_vec_len, data_len)
         }
-        62 => wire__crate__api__settings__encryption_key_generate_impl(
+        63 => wire__crate__api__settings__encryption_key_generate_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        63 => wire__crate__api__settings__encryption_key_remove_key_impl(
+        64 => wire__crate__api__settings__encryption_key_remove_key_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        64 => {
+        65 => {
             wire__crate__api__settings__encryption_key_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        66 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
-        67 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
-        68 => wire__crate__api__plugin_manager__import_impl(port, ptr, rust_vec_len, data_len),
-        69 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
-        70 => {
+        67 => wire__crate__api__filter__filter_default_impl(port, ptr, rust_vec_len, data_len),
+        68 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
+        69 => wire__crate__api__plugin_manager__import_impl(port, ptr, rust_vec_len, data_len),
+        70 => wire__crate__api__repository__git__init_app_impl(port, ptr, rust_vec_len, data_len),
+        71 => {
             wire__crate__git__known_hosts__known_hosts_load_impl(port, ptr, rust_vec_len, data_len)
         }
-        71 => {
+        72 => {
             wire__crate__git__known_hosts__known_hosts_save_impl(port, ptr, rust_vec_len, data_len)
         }
-        72 => wire__crate__api__plugin_manager__load_impl(port, ptr, rust_vec_len, data_len),
-        73 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
-        74 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
-        75 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
-        77 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
-        78 => wire__stride_plugin_manager__manifest__manifest_event_default_impl(
+        73 => wire__crate__api__plugin_manager__load_impl(port, ptr, rust_vec_len, data_len),
+        74 => wire__crate__api__logging__logger_debug_impl(port, ptr, rust_vec_len, data_len),
+        75 => wire__crate__api__logging__logger_error_impl(port, ptr, rust_vec_len, data_len),
+        76 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
+        77 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__stride_plugin_manager__manifest__manifest_event_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        79 => wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
+        80 => wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        80 => wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
+        81 => wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        81 => wire__stride_plugin_manager__manifest__manifest_permission_default_impl(
+        82 => wire__stride_plugin_manager__manifest__manifest_permission_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        82 => wire__stride_plugin_manager__manifest__manifest_permission_network_default_impl(
+        83 => wire__stride_plugin_manager__manifest__manifest_permission_network_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        83 => wire__stride_plugin_manager__manifest__manifest_permission_storage_default_impl(
+        84 => wire__stride_plugin_manager__manifest__manifest_permission_storage_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        84 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
+        85 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        86 => {
+        87 => {
             wire__crate__api__plugin_manager__parse_plugin_impl(port, ptr, rust_vec_len, data_len)
         }
-        92 => wire__crate__api__plugin_manager__plugin_manifests_impl(
+        93 => wire__crate__api__plugin_manager__plugin_manifests_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        93 => wire__crate__api__plugin_manager__process_host_event_impl(
+        94 => wire__crate__api__plugin_manager__process_host_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        94 => wire__crate__api__plugin_manager__process_plugin_event_impl(
+        95 => wire__crate__api__plugin_manager__process_plugin_event_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        95 => wire__crate__api__plugin_manager__remove_impl(port, ptr, rust_vec_len, data_len),
-        96 => {
+        96 => wire__crate__api__plugin_manager__remove_impl(port, ptr, rust_vec_len, data_len),
+        97 => {
             wire__crate__api__settings__repository_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        97 => wire__crate__api__settings__settings_create_stream_impl(
+        98 => wire__crate__api__settings__settings_create_stream_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        98 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
-        99 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
-        100 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
-        102 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
-        103 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
-        104 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
-        105 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
-        106 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
-        108 => {
+        99 => wire__crate__api__settings__settings_default_impl(port, ptr, rust_vec_len, data_len),
+        100 => wire__crate__api__settings__settings_get_impl(port, ptr, rust_vec_len, data_len),
+        101 => wire__crate__api__settings__settings_load_impl(port, ptr, rust_vec_len, data_len),
+        103 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
+        104 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
+        105 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
+        106 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
+        107 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
+        109 => {
             wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len)
         }
-        109 => {
+        110 => {
             wire__stride_core__task__task_priority_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        110 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
-        111 => {
+        111 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
+        112 => {
             wire__stride_core__task__task_status_is_pending_impl(port, ptr, rust_vec_len, data_len)
         }
-        112 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
-        114 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
-        115 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
+        113 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
+        115 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        116 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5526,36 +5567,36 @@ fn pde_ffi_dispatcher_sync_impl(
         19 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
         30 => wire__crate__api__repository__git__TaskStorage_load_impl(ptr, rust_vec_len, data_len),
         32 => wire__crate__api__repository__git__TaskStorage_new_impl(ptr, rust_vec_len, data_len),
-        65 => wire__crate__api__settings__encryption_key_validate_impl(ptr, rust_vec_len, data_len),
-        85 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
-        87 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
+        66 => wire__crate__api__settings__encryption_key_validate_impl(ptr, rust_vec_len, data_len),
+        86 => wire__crate__api__repository__git__oid_to_string_impl(ptr, rust_vec_len, data_len),
+        88 => wire__crate__api__plugin__plugin_instance_manifest_disabled_reason_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        88 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
+        89 => wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        89 => wire__crate__api__plugin__plugin_instance_manifest_event_impl(
+        90 => wire__crate__api__plugin__plugin_instance_manifest_event_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        90 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
+        91 => wire__crate__api__plugin__plugin_instance_manifest_name_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        91 => wire__crate__api__plugin__plugin_instance_manifest_permission_impl(
+        92 => wire__crate__api__plugin__plugin_instance_manifest_permission_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        101 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        107 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
-        113 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        102 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
+        108 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
+        114 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

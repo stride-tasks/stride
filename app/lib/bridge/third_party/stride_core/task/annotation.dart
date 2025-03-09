@@ -24,6 +24,11 @@ class Annotation {
     required this.description,
   });
 
+  /// Construct annotation with now as the entry date.
+  static Future<Annotation> now({required String description}) =>
+      RustLib.instance.api
+          .strideCoreTaskAnnotationAnnotationNow(description: description);
+
   @override
   int get hashCode => entry.hashCode ^ description.hashCode;
 
