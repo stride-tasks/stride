@@ -104,6 +104,30 @@ class TaskItem extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
     );
 
+    if (task.annotations.isNotEmpty) {
+      final children = task.annotations.map(
+        (annotation) => ListTile(
+          title: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: annotation.entry.toHumanString(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: ' '),
+                TextSpan(text: annotation.description),
+              ],
+            ),
+          ),
+        ),
+      );
+      widget = ExpansionTile(
+        tilePadding: EdgeInsets.all(0),
+        title: widget,
+        children: children.toList(),
+      );
+    }
+
     if (task.priority != null) {
       const borderWidth = 4.0;
       const borderRadius = BorderRadius.all(Radius.circular(5));

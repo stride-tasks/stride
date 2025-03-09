@@ -27,7 +27,7 @@ class _TaskRouteState extends State<TaskRoute> {
   String title = '';
   DateTime? due;
   List<int> tags = [];
-  List<Annotation> annotations = [];
+  List<(DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
   bool active = false;
@@ -42,7 +42,15 @@ class _TaskRouteState extends State<TaskRoute> {
     title = widget.task?.title ?? title;
     due = widget.task?.due;
     tags = widget.task?.tags.toList() ?? tags;
-    annotations = widget.task?.annotations.toList() ?? annotations;
+    annotations = widget.task?.annotations
+            .map(
+              (annotation) => (
+                annotation.entry,
+                TextEditingController(text: annotation.description),
+              ),
+            )
+            .toList() ??
+        annotations;
     depends = widget.task?.depends.toList() ?? depends;
     priority = widget.task?.priority;
     active = widget.task?.active ?? false;
@@ -137,7 +145,8 @@ class _TaskRouteState extends State<TaskRoute> {
                 //     _tags = tags;
                 //   },
                 // ),
-                // const SizedBox(height: 20),
+                const SizedBox(height: 20),
+                _annotations(),
               ],
             ),
           ),
@@ -161,7 +170,14 @@ class _TaskRouteState extends State<TaskRoute> {
               tags: Uint32List.fromList(tags),
               due: due,
               status: TaskStatus.pending,
-              annotations: annotations,
+              annotations: annotations
+                  .map<Annotation>(
+                    (annotation) => Annotation(
+                      entry: annotation.$1,
+                      description: annotation.$2.text,
+                    ),
+                  )
+                  .toList(),
               depends: depends,
               priority: priority,
               uda: {},
@@ -201,6 +217,44 @@ class _TaskRouteState extends State<TaskRoute> {
         },
         child: const Icon(Icons.add_task_sharp, size: 50),
       ),
+    );
+  }
+
+  Widget _annotations() {
+    final children = annotations
+        .map<Widget>(
+      (annotation) => ListTile(
+        title: TextField(
+          controller: annotation.$2,
+          maxLines: null,
+        ),
+        trailing: IconButton(
+          onPressed: () => setState(() {
+            annotations.remove(annotation);
+          }),
+          icon: const Icon(Icons.remove),
+        ),
+        subtitle: Text(
+          annotation.$1.toHumanString(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+    )
+        .followedBy(
+      [
+        ListTile(
+          trailing: IconButton(
+            onPressed: () => setState(() {
+              annotations.add((DateTime.now(), TextEditingController()));
+            }),
+            icon: const Icon(Icons.add),
+          ),
+        ),
+      ],
+    ).map((widget) => Card(child: widget));
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: children.toList(),
     );
   }
 }
