@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/utils/extensions.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TaskItem extends StatelessWidget {
   final Task task;
@@ -79,13 +80,30 @@ class TaskItem extends StatelessWidget {
       );
     }
 
+    void Function()? onTap;
+    if (task.annotations.isNotEmpty) {
+      final description = task.annotations.first.description;
+      try {
+        final uri = Uri.parse(description);
+        // TODO: Maybe allow other link types, example: email?
+        if (uri.isScheme('HTTP') || uri.isScheme('HTTPS')) {
+          onTap = () async {
+            launchUrl(uri);
+          };
+        }
+        // ignore: avoid_catches_without_on_clauses, empty_catches
+      } catch (_) {}
+    }
+
     Widget widget = ListTile(
       title: Text(task.title),
       selected: task.active,
       onLongPress: onLongPress,
       subtitle: subtitle,
+      onTap: onTap,
       trailing: Text(task.urgency().toStringAsFixed(2)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
+      leading: onTap == null ? null : const Icon(Icons.open_in_new),
     );
 
     if (task.annotations.isNotEmpty) {
