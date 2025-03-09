@@ -121,14 +121,6 @@ impl StrideRepository for Replica {
         todo!()
     }
 
-    fn change_category(
-        &mut self,
-        _task: &Task,
-        _status: TaskStatus,
-    ) -> Result<bool, crate::RustError> {
-        todo!()
-    }
-
     fn sync(&mut self) -> Result<(), crate::RustError> {
         /* PERF(@bpeetz): We should probably not always force a commit. <2024-10-26> */
         self.commit()?;

@@ -38,8 +38,6 @@ pub trait StrideRepository {
 
     fn update(&mut self, task: &Task) -> Result<bool, RustError>;
 
-    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError>;
-
     fn sync(&mut self) -> Result<(), RustError>;
     fn clear(&mut self) -> Result<(), RustError>;
 

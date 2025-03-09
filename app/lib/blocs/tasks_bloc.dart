@@ -148,9 +148,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       if (event.task.status == TaskStatus.deleted) {
         await repository()?.removeByTask(task: event.task);
       } else {
-        await repository()?.changeCategory(
-          task: event.task,
-          status: TaskStatus.deleted,
+        await repository()?.update(
+          task: event.task.copyWith(status: TaskStatus.deleted),
         );
       }
 
@@ -172,9 +171,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
-      await repository()?.changeCategory(
-        task: event.task,
-        status: event.status,
+      await repository()?.update(
+        task: event.task.copyWith(status: event.status),
       );
       emit(TaskState(tasks: await _tasks()));
     });

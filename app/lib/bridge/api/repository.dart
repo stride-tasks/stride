@@ -23,8 +23,6 @@ abstract class StrideRepository {
   /// Add a [`Task`] to the Repository
   Future<void> add({required Task task});
 
-  Future<bool> changeCategory({required Task task, required TaskStatus status});
-
   Future<void> clear();
 
   /// Ensure that all previous operations are written to disk.

@@ -404,6 +404,51 @@ impl TaskStorage {
         Ok(found_task.map(|DecryptedTask { task, .. }| task))
     }
 
+    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
+        self.init_repository_if_needed()?;
+
+        if task.status == status {
+            return Ok(true);
+        }
+
+        let mut found_task = None;
+        for storage in self.storage_mut() {
+            if task.status != storage.kind {
+                continue;
+            }
+
+            let index = storage.get_index(&task.uuid)?;
+            let Some(index) = index else {
+                break;
+            };
+
+            found_task = Some(storage.tasks.remove(index));
+
+            storage.save()?;
+        }
+
+        let Some(mut found_task) = found_task else {
+            return Ok(false);
+        };
+
+        found_task.task.active = false;
+        found_task.task.status = status;
+        found_task.task.modified = Some(Utc::now());
+
+        let transition = match status {
+            TaskStatus::Pending => "PEND",
+            TaskStatus::Waiting => "WAIT",
+            TaskStatus::Recurring => "RECUR",
+            TaskStatus::Deleted => "DELETE",
+            TaskStatus::Complete => "DONE",
+        };
+
+        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
+        self.storage_mut()[status as usize].append(found_task.task)?;
+        self.add_and_commit(&message)?;
+        Ok(false)
+    }
+
     pub fn clone_repository(&mut self) -> Result<(), RustError> {
         let mut settings = Settings::get();
         let ssh_key = self.ssh_key(&settings)?;
@@ -1025,56 +1070,15 @@ impl StrideRepository for TaskStorage {
     fn update(&mut self, task: &Task) -> Result<bool, RustError> {
         self.init_repository_if_needed()?;
 
+        if let Some(found_task) = self.task_by_uuid(&task.uuid)? {
+            self.change_category(&found_task, task.status)?;
+        };
+
         let updated = self.update2(task)?;
         if updated {
             self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
         }
         Ok(updated)
-    }
-
-    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
-        self.init_repository_if_needed()?;
-
-        if task.status == status {
-            return Ok(true);
-        }
-
-        let mut found_task = None;
-        for storage in self.storage_mut() {
-            if task.status != storage.kind {
-                continue;
-            }
-
-            let index = storage.get_index(&task.uuid)?;
-            let Some(index) = index else {
-                break;
-            };
-
-            found_task = Some(storage.tasks.remove(index));
-
-            storage.save()?;
-        }
-
-        let Some(mut found_task) = found_task else {
-            return Ok(false);
-        };
-
-        found_task.task.active = false;
-        found_task.task.status = status;
-        found_task.task.modified = Some(Utc::now());
-
-        let transition = match status {
-            TaskStatus::Pending => "PEND",
-            TaskStatus::Waiting => "WAIT",
-            TaskStatus::Recurring => "RECUR",
-            TaskStatus::Deleted => "DELETE",
-            TaskStatus::Complete => "DONE",
-        };
-
-        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
-        self.storage_mut()[status as usize].append(found_task.task)?;
-        self.add_and_commit(&message)?;
-        Ok(false)
     }
 
     fn sync(&mut self) -> Result<(), RustError> {
