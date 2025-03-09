@@ -89,7 +89,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.8.0';
 
   @override
-  int get rustContentHash => 563970905;
+  int get rustContentHash => -1060632022;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -263,13 +263,16 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLoggingLoggerWarn({required String message});
 
+  Future<ManifestEvent> stridePluginManagerManifestManifestEventDefault();
+
   Future<ManifestEventTask>
       stridePluginManagerManifestManifestEventTaskDefault();
 
   Future<ManifestEventTimer>
       stridePluginManagerManifestManifestEventTimerDefault();
 
-  Future<ManifestEvents> stridePluginManagerManifestManifestEventsDefault();
+  Future<ManifestPermission>
+      stridePluginManagerManifestManifestPermissionDefault();
 
   Future<ManifestPermissionNetwork>
       stridePluginManagerManifestManifestPermissionNetworkDefault();
@@ -279,9 +282,6 @@ abstract class RustLibApi extends BaseApi {
 
   Future<ManifestPermissionTask>
       stridePluginManagerManifestManifestPermissionTaskDefault();
-
-  Future<ManifestPermissions>
-      stridePluginManagerManifestManifestPermissionsDefault();
 
   String crateApiRepositoryGitOidToString({required Oid oid});
 
@@ -294,13 +294,13 @@ abstract class RustLibApi extends BaseApi {
   bool crateApiPluginPluginInstanceManifestEnabled(
       {required PluginManifestPluginState manifest});
 
-  ManifestEvents crateApiPluginPluginInstanceManifestEvents(
+  ManifestEvent crateApiPluginPluginInstanceManifestEvent(
       {required PluginManifestPluginState manifest});
 
   String crateApiPluginPluginInstanceManifestName(
       {required PluginManifestPluginState manifest});
 
-  ManifestPermissions crateApiPluginPluginInstanceManifestPermissions(
+  ManifestPermission crateApiPluginPluginInstanceManifestPermission(
       {required PluginManifestPluginState manifest});
 
   Future<List<PluginManifestPluginState>>
@@ -2102,13 +2102,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<ManifestEvent> stridePluginManagerManifestManifestEventDefault() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 80, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_manifest_event,
+        decodeErrorData: null,
+      ),
+      constMeta: kStridePluginManagerManifestManifestEventDefaultConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kStridePluginManagerManifestManifestEventDefaultConstMeta =>
+      const TaskConstMeta(
+        debugName: 'manifest_event_default',
+        argNames: [],
+      );
+
+  @override
   Future<ManifestEventTask>
       stridePluginManagerManifestManifestEventTaskDefault() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 80, port: port_);
+            funcId: 81, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_event_task,
@@ -2134,7 +2158,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 81, port: port_);
+            funcId: 82, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_event_timer,
@@ -2154,27 +2178,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
 
   @override
-  Future<ManifestEvents> stridePluginManagerManifestManifestEventsDefault() {
+  Future<ManifestPermission>
+      stridePluginManagerManifestManifestPermissionDefault() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 82, port: port_);
+            funcId: 83, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_manifest_events,
+        decodeSuccessData: sse_decode_manifest_permission,
         decodeErrorData: null,
       ),
-      constMeta: kStridePluginManagerManifestManifestEventsDefaultConstMeta,
+      constMeta: kStridePluginManagerManifestManifestPermissionDefaultConstMeta,
       argValues: [],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta
-      get kStridePluginManagerManifestManifestEventsDefaultConstMeta =>
+      get kStridePluginManagerManifestManifestPermissionDefaultConstMeta =>
           const TaskConstMeta(
-            debugName: 'manifest_events_default',
+            debugName: 'manifest_permission_default',
             argNames: [],
           );
 
@@ -2185,7 +2210,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 83, port: port_);
+            funcId: 84, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission_network,
@@ -2212,7 +2237,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 84, port: port_);
+            funcId: 85, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission_storage,
@@ -2239,7 +2264,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 85, port: port_);
+            funcId: 86, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission_task,
@@ -2256,33 +2281,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       get kStridePluginManagerManifestManifestPermissionTaskDefaultConstMeta =>
           const TaskConstMeta(
             debugName: 'manifest_permission_task_default',
-            argNames: [],
-          );
-
-  @override
-  Future<ManifestPermissions>
-      stridePluginManagerManifestManifestPermissionsDefault() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 86, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_manifest_permissions,
-        decodeErrorData: null,
-      ),
-      constMeta:
-          kStridePluginManagerManifestManifestPermissionsDefaultConstMeta,
-      argValues: [],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta
-      get kStridePluginManagerManifestManifestPermissionsDefaultConstMeta =>
-          const TaskConstMeta(
-            debugName: 'manifest_permissions_default',
             argNames: [],
           );
 
@@ -2393,7 +2391,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  ManifestEvents crateApiPluginPluginInstanceManifestEvents(
+  ManifestEvent crateApiPluginPluginInstanceManifestEvent(
       {required PluginManifestPluginState manifest}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
@@ -2403,18 +2401,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 91)!;
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_manifest_events,
+        decodeSuccessData: sse_decode_manifest_event,
         decodeErrorData: null,
       ),
-      constMeta: kCrateApiPluginPluginInstanceManifestEventsConstMeta,
+      constMeta: kCrateApiPluginPluginInstanceManifestEventConstMeta,
       argValues: [manifest],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiPluginPluginInstanceManifestEventsConstMeta =>
+  TaskConstMeta get kCrateApiPluginPluginInstanceManifestEventConstMeta =>
       const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_events',
+        debugName: 'plugin_instance_manifest_event',
         argNames: ['manifest'],
       );
 
@@ -2445,7 +2443,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  ManifestPermissions crateApiPluginPluginInstanceManifestPermissions(
+  ManifestPermission crateApiPluginPluginInstanceManifestPermission(
       {required PluginManifestPluginState manifest}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
@@ -2455,18 +2453,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 93)!;
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_manifest_permissions,
+        decodeSuccessData: sse_decode_manifest_permission,
         decodeErrorData: null,
       ),
-      constMeta: kCrateApiPluginPluginInstanceManifestPermissionsConstMeta,
+      constMeta: kCrateApiPluginPluginInstanceManifestPermissionConstMeta,
       argValues: [manifest],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiPluginPluginInstanceManifestPermissionsConstMeta =>
+  TaskConstMeta get kCrateApiPluginPluginInstanceManifestPermissionConstMeta =>
       const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_permissions',
+        debugName: 'plugin_instance_manifest_permission',
         argNames: ['manifest'],
       );
 
@@ -3736,6 +3734,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ManifestEvent dco_decode_manifest_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ManifestEvent(
+      task: dco_decode_opt_box_autoadd_manifest_event_task(arr[0]),
+      timer: dco_decode_opt_box_autoadd_manifest_event_timer(arr[1]),
+    );
+  }
+
+  @protected
   ManifestEventTask dco_decode_manifest_event_task(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -3760,14 +3770,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  ManifestEvents dco_decode_manifest_events(dynamic raw) {
+  ManifestPermission dco_decode_manifest_permission(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return ManifestEvents(
-      task: dco_decode_opt_box_autoadd_manifest_event_task(arr[0]),
-      timer: dco_decode_opt_box_autoadd_manifest_event_timer(arr[1]),
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ManifestPermission(
+      task: dco_decode_opt_box_autoadd_manifest_permission_task(arr[0]),
+      network: dco_decode_opt_box_autoadd_manifest_permission_network(arr[1]),
+      storage: dco_decode_opt_box_autoadd_manifest_permission_storage(arr[2]),
     );
   }
 
@@ -3806,19 +3817,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       modify: dco_decode_bool(arr[1]),
       query: dco_decode_bool(arr[2]),
       sync_: dco_decode_bool(arr[3]),
-    );
-  }
-
-  @protected
-  ManifestPermissions dco_decode_manifest_permissions(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return ManifestPermissions(
-      task: dco_decode_opt_box_autoadd_manifest_permission_task(arr[0]),
-      network: dco_decode_opt_box_autoadd_manifest_permission_network(arr[1]),
-      storage: dco_decode_opt_box_autoadd_manifest_permission_storage(arr[2]),
     );
   }
 
@@ -4801,6 +4799,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ManifestEvent sse_decode_manifest_event(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_task =
+        sse_decode_opt_box_autoadd_manifest_event_task(deserializer);
+    final var_timer =
+        sse_decode_opt_box_autoadd_manifest_event_timer(deserializer);
+    return ManifestEvent(task: var_task, timer: var_timer);
+  }
+
+  @protected
   ManifestEventTask sse_decode_manifest_event_task(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -4820,13 +4828,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  ManifestEvents sse_decode_manifest_events(SseDeserializer deserializer) {
+  ManifestPermission sse_decode_manifest_permission(
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_task =
-        sse_decode_opt_box_autoadd_manifest_event_task(deserializer);
-    final var_timer =
-        sse_decode_opt_box_autoadd_manifest_event_timer(deserializer);
-    return ManifestEvents(task: var_task, timer: var_timer);
+        sse_decode_opt_box_autoadd_manifest_permission_task(deserializer);
+    final var_network =
+        sse_decode_opt_box_autoadd_manifest_permission_network(deserializer);
+    final var_storage =
+        sse_decode_opt_box_autoadd_manifest_permission_storage(deserializer);
+    return ManifestPermission(
+        task: var_task, network: var_network, storage: var_storage);
   }
 
   @protected
@@ -4858,20 +4870,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         modify: var_modify,
         query: var_query,
         sync_: var_sync_);
-  }
-
-  @protected
-  ManifestPermissions sse_decode_manifest_permissions(
-      SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_task =
-        sse_decode_opt_box_autoadd_manifest_permission_task(deserializer);
-    final var_network =
-        sse_decode_opt_box_autoadd_manifest_permission_network(deserializer);
-    final var_storage =
-        sse_decode_opt_box_autoadd_manifest_permission_storage(deserializer);
-    return ManifestPermissions(
-        task: var_task, network: var_network, storage: var_storage);
   }
 
   @protected
@@ -5923,6 +5921,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_manifest_event(ManifestEvent self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_manifest_event_task(self.task, serializer);
+    sse_encode_opt_box_autoadd_manifest_event_timer(self.timer, serializer);
+  }
+
+  @protected
   void sse_encode_manifest_event_task(
       ManifestEventTask self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -5939,11 +5944,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_manifest_events(
-      ManifestEvents self, SseSerializer serializer) {
+  void sse_encode_manifest_permission(
+      ManifestPermission self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_opt_box_autoadd_manifest_event_task(self.task, serializer);
-    sse_encode_opt_box_autoadd_manifest_event_timer(self.timer, serializer);
+    sse_encode_opt_box_autoadd_manifest_permission_task(self.task, serializer);
+    sse_encode_opt_box_autoadd_manifest_permission_network(
+        self.network, serializer);
+    sse_encode_opt_box_autoadd_manifest_permission_storage(
+        self.storage, serializer);
   }
 
   @protected
@@ -5968,17 +5976,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.modify, serializer);
     sse_encode_bool(self.query, serializer);
     sse_encode_bool(self.sync_, serializer);
-  }
-
-  @protected
-  void sse_encode_manifest_permissions(
-      ManifestPermissions self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_opt_box_autoadd_manifest_permission_task(self.task, serializer);
-    sse_encode_opt_box_autoadd_manifest_permission_network(
-        self.network, serializer);
-    sse_encode_opt_box_autoadd_manifest_permission_storage(
-        self.storage, serializer);
   }
 
   @protected

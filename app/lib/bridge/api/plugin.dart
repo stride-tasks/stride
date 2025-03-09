@@ -29,12 +29,12 @@ String? pluginInstanceManifestDisabledReason(
     RustLib.instance.api
         .crateApiPluginPluginInstanceManifestDisabledReason(manifest: manifest);
 
-ManifestPermissions pluginInstanceManifestPermissions(
+ManifestPermission pluginInstanceManifestPermission(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
-        .crateApiPluginPluginInstanceManifestPermissions(manifest: manifest);
+        .crateApiPluginPluginInstanceManifestPermission(manifest: manifest);
 
-ManifestEvents pluginInstanceManifestEvents(
+ManifestEvent pluginInstanceManifestEvent(
         {required PluginManifestPluginState manifest}) =>
     RustLib.instance.api
-        .crateApiPluginPluginInstanceManifestEvents(manifest: manifest);
+        .crateApiPluginPluginInstanceManifestEvent(manifest: manifest);

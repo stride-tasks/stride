@@ -44,7 +44,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.8.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 563970905;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1060632022;
 
 // Section: executor
 
@@ -2657,6 +2657,40 @@ fn wire__crate__api__logging__logger_warn_impl(
         },
     )
 }
+fn wire__stride_plugin_manager__manifest__manifest_event_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "manifest_event_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(
+                        stride_plugin_manager::manifest::ManifestEvent::default(),
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -2725,7 +2759,7 @@ fn wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
         },
     )
 }
-fn wire__stride_plugin_manager__manifest__manifest_events_default_impl(
+fn wire__stride_plugin_manager__manifest__manifest_permission_default_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -2733,7 +2767,7 @@ fn wire__stride_plugin_manager__manifest__manifest_events_default_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "manifest_events_default",
+            debug_name: "manifest_permission_default",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -2751,7 +2785,7 @@ fn wire__stride_plugin_manager__manifest__manifest_events_default_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(
-                        stride_plugin_manager::manifest::ManifestEvents::default(),
+                        stride_plugin_manager::manifest::ManifestPermission::default(),
                     )?;
                     Ok(output_ok)
                 })())
@@ -2854,40 +2888,6 @@ fn wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(
                         stride_plugin_manager::manifest::ManifestPermissionTask::default(),
-                    )?;
-                    Ok(output_ok)
-                })())
-            }
-        },
-    )
-}
-fn wire__stride_plugin_manager__manifest__manifest_permissions_default_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "manifest_permissions_default",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-            move |context| {
-                transform_result_sse::<_, ()>((move || {
-                    let output_ok = Result::<_, ()>::Ok(
-                        stride_plugin_manager::manifest::ManifestPermissions::default(),
                     )?;
                     Ok(output_ok)
                 })())
@@ -3082,14 +3082,14 @@ fn wire__crate__api__plugin__plugin_instance_manifest_enabled_impl(
         },
     )
 }
-fn wire__crate__api__plugin__plugin_instance_manifest_events_impl(
+fn wire__crate__api__plugin__plugin_instance_manifest_event_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "plugin_instance_manifest_events",
+            debug_name: "plugin_instance_manifest_event",
             port: None,
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
@@ -3127,7 +3127,7 @@ fn wire__crate__api__plugin__plugin_instance_manifest_events_impl(
                 }
                 let api_manifest_guard = api_manifest_guard.unwrap();
                 let output_ok = Result::<_, ()>::Ok(
-                    crate::api::plugin::plugin_instance_manifest_events(&*api_manifest_guard),
+                    crate::api::plugin::plugin_instance_manifest_event(&*api_manifest_guard),
                 )?;
                 Ok(output_ok)
             })())
@@ -3186,14 +3186,14 @@ fn wire__crate__api__plugin__plugin_instance_manifest_name_impl(
         },
     )
 }
-fn wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
+fn wire__crate__api__plugin__plugin_instance_manifest_permission_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "plugin_instance_manifest_permissions",
+            debug_name: "plugin_instance_manifest_permission",
             port: None,
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
         },
@@ -3231,7 +3231,7 @@ fn wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
                 }
                 let api_manifest_guard = api_manifest_guard.unwrap();
                 let output_ok = Result::<_, ()>::Ok(
-                    crate::api::plugin::plugin_instance_manifest_permissions(&*api_manifest_guard),
+                    crate::api::plugin::plugin_instance_manifest_permission(&*api_manifest_guard),
                 )?;
                 Ok(output_ok)
             })())
@@ -4036,6 +4036,11 @@ const _: fn() = || {
         let _: String = Annotation.description;
     }
     {
+        let ManifestEvent = None::<stride_plugin_manager::manifest::ManifestEvent>.unwrap();
+        let _: Option<stride_plugin_manager::manifest::ManifestEventTask> = ManifestEvent.task;
+        let _: Option<stride_plugin_manager::manifest::ManifestEventTimer> = ManifestEvent.timer;
+    }
+    {
         let ManifestEventTask = None::<stride_plugin_manager::manifest::ManifestEventTask>.unwrap();
         let _: bool = ManifestEventTask.create;
         let _: bool = ManifestEventTask.modify;
@@ -4047,9 +4052,14 @@ const _: fn() = || {
         let _: u32 = ManifestEventTimer.interval;
     }
     {
-        let ManifestEvents = None::<stride_plugin_manager::manifest::ManifestEvents>.unwrap();
-        let _: Option<stride_plugin_manager::manifest::ManifestEventTask> = ManifestEvents.task;
-        let _: Option<stride_plugin_manager::manifest::ManifestEventTimer> = ManifestEvents.timer;
+        let ManifestPermission =
+            None::<stride_plugin_manager::manifest::ManifestPermission>.unwrap();
+        let _: Option<stride_plugin_manager::manifest::ManifestPermissionTask> =
+            ManifestPermission.task;
+        let _: Option<stride_plugin_manager::manifest::ManifestPermissionNetwork> =
+            ManifestPermission.network;
+        let _: Option<stride_plugin_manager::manifest::ManifestPermissionStorage> =
+            ManifestPermission.storage;
     }
     {
         let ManifestPermissionNetwork =
@@ -4068,16 +4078,6 @@ const _: fn() = || {
         let _: bool = ManifestPermissionTask.modify;
         let _: bool = ManifestPermissionTask.query;
         let _: bool = ManifestPermissionTask.sync;
-    }
-    {
-        let ManifestPermissions =
-            None::<stride_plugin_manager::manifest::ManifestPermissions>.unwrap();
-        let _: Option<stride_plugin_manager::manifest::ManifestPermissionTask> =
-            ManifestPermissions.task;
-        let _: Option<stride_plugin_manager::manifest::ManifestPermissionNetwork> =
-            ManifestPermissions.network;
-        let _: Option<stride_plugin_manager::manifest::ManifestPermissionStorage> =
-            ManifestPermissions.storage;
     }
     match None::<stride_plugin_manager::manifest::PluginAction>.unwrap() {
         stride_plugin_manager::manifest::PluginAction::Event { plugin_name, event } => {
@@ -4709,6 +4709,20 @@ impl SseDecode for crate::api::logging::Logger {
     }
 }
 
+impl SseDecode for stride_plugin_manager::manifest::ManifestEvent {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_task =
+            <Option<stride_plugin_manager::manifest::ManifestEventTask>>::sse_decode(deserializer);
+        let mut var_timer =
+            <Option<stride_plugin_manager::manifest::ManifestEventTimer>>::sse_decode(deserializer);
+        return stride_plugin_manager::manifest::ManifestEvent {
+            task: var_task,
+            timer: var_timer,
+        };
+    }
+}
+
 impl SseDecode for stride_plugin_manager::manifest::ManifestEventTask {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4733,16 +4747,25 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestEventTimer {
     }
 }
 
-impl SseDecode for stride_plugin_manager::manifest::ManifestEvents {
+impl SseDecode for stride_plugin_manager::manifest::ManifestPermission {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_task =
-            <Option<stride_plugin_manager::manifest::ManifestEventTask>>::sse_decode(deserializer);
-        let mut var_timer =
-            <Option<stride_plugin_manager::manifest::ManifestEventTimer>>::sse_decode(deserializer);
-        return stride_plugin_manager::manifest::ManifestEvents {
+            <Option<stride_plugin_manager::manifest::ManifestPermissionTask>>::sse_decode(
+                deserializer,
+            );
+        let mut var_network =
+            <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_decode(
+                deserializer,
+            );
+        let mut var_storage =
+            <Option<stride_plugin_manager::manifest::ManifestPermissionStorage>>::sse_decode(
+                deserializer,
+            );
+        return stride_plugin_manager::manifest::ManifestPermission {
             task: var_task,
-            timer: var_timer,
+            network: var_network,
+            storage: var_storage,
         };
     }
 }
@@ -4777,29 +4800,6 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestPermissionTask {
             modify: var_modify,
             query: var_query,
             sync: var_sync_,
-        };
-    }
-}
-
-impl SseDecode for stride_plugin_manager::manifest::ManifestPermissions {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_task =
-            <Option<stride_plugin_manager::manifest::ManifestPermissionTask>>::sse_decode(
-                deserializer,
-            );
-        let mut var_network =
-            <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_decode(
-                deserializer,
-            );
-        let mut var_storage =
-            <Option<stride_plugin_manager::manifest::ManifestPermissionStorage>>::sse_decode(
-                deserializer,
-            );
-        return stride_plugin_manager::manifest::ManifestPermissions {
-            task: var_task,
-            network: var_network,
-            storage: var_storage,
         };
     }
 }
@@ -5463,43 +5463,43 @@ fn pde_ffi_dispatcher_primary_impl(
         77 => wire__crate__api__logging__logger_info_impl(port, ptr, rust_vec_len, data_len),
         78 => wire__crate__api__logging__logger_trace_impl(port, ptr, rust_vec_len, data_len),
         79 => wire__crate__api__logging__logger_warn_impl(port, ptr, rust_vec_len, data_len),
-        80 => wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
+        80 => wire__stride_plugin_manager__manifest__manifest_event_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        81 => wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
+        81 => wire__stride_plugin_manager__manifest__manifest_event_task_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        82 => wire__stride_plugin_manager__manifest__manifest_events_default_impl(
+        82 => wire__stride_plugin_manager__manifest__manifest_event_timer_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        83 => wire__stride_plugin_manager__manifest__manifest_permission_network_default_impl(
+        83 => wire__stride_plugin_manager__manifest__manifest_permission_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        84 => wire__stride_plugin_manager__manifest__manifest_permission_storage_default_impl(
+        84 => wire__stride_plugin_manager__manifest__manifest_permission_network_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        85 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
+        85 => wire__stride_plugin_manager__manifest__manifest_permission_storage_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        86 => wire__stride_plugin_manager__manifest__manifest_permissions_default_impl(
+        86 => wire__stride_plugin_manager__manifest__manifest_permission_task_default_impl(
             port,
             ptr,
             rust_vec_len,
@@ -5599,7 +5599,7 @@ fn pde_ffi_dispatcher_sync_impl(
             rust_vec_len,
             data_len,
         ),
-        91 => wire__crate__api__plugin__plugin_instance_manifest_events_impl(
+        91 => wire__crate__api__plugin__plugin_instance_manifest_event_impl(
             ptr,
             rust_vec_len,
             data_len,
@@ -5609,7 +5609,7 @@ fn pde_ffi_dispatcher_sync_impl(
             rust_vec_len,
             data_len,
         ),
-        93 => wire__crate__api__plugin__plugin_instance_manifest_permissions_impl(
+        93 => wire__crate__api__plugin__plugin_instance_manifest_permission_impl(
             ptr,
             rust_vec_len,
             data_len,
@@ -5939,6 +5939,27 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::logging::Logger>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_plugin_manager::manifest::ManifestEvent> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.task.into_into_dart().into_dart(),
+            self.0.timer.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<stride_plugin_manager::manifest::ManifestEvent>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_plugin_manager::manifest::ManifestEvent>>
+    for stride_plugin_manager::manifest::ManifestEvent
+{
+    fn into_into_dart(self) -> FrbWrapper<stride_plugin_manager::manifest::ManifestEvent> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart
     for FrbWrapper<stride_plugin_manager::manifest::ManifestEventTask>
 {
@@ -5986,23 +6007,28 @@ impl
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_plugin_manager::manifest::ManifestEvents> {
+impl flutter_rust_bridge::IntoDart
+    for FrbWrapper<stride_plugin_manager::manifest::ManifestPermission>
+{
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.0.task.into_into_dart().into_dart(),
-            self.0.timer.into_into_dart().into_dart(),
+            self.0.network.into_into_dart().into_dart(),
+            self.0.storage.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for FrbWrapper<stride_plugin_manager::manifest::ManifestEvents>
+    for FrbWrapper<stride_plugin_manager::manifest::ManifestPermission>
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_plugin_manager::manifest::ManifestEvents>>
-    for stride_plugin_manager::manifest::ManifestEvents
+impl
+    flutter_rust_bridge::IntoIntoDart<
+        FrbWrapper<stride_plugin_manager::manifest::ManifestPermission>,
+    > for stride_plugin_manager::manifest::ManifestPermission
 {
-    fn into_into_dart(self) -> FrbWrapper<stride_plugin_manager::manifest::ManifestEvents> {
+    fn into_into_dart(self) -> FrbWrapper<stride_plugin_manager::manifest::ManifestPermission> {
         self.into()
     }
 }
@@ -6076,32 +6102,6 @@ impl
     > for stride_plugin_manager::manifest::ManifestPermissionTask
 {
     fn into_into_dart(self) -> FrbWrapper<stride_plugin_manager::manifest::ManifestPermissionTask> {
-        self.into()
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart
-    for FrbWrapper<stride_plugin_manager::manifest::ManifestPermissions>
-{
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.0.task.into_into_dart().into_dart(),
-            self.0.network.into_into_dart().into_dart(),
-            self.0.storage.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for FrbWrapper<stride_plugin_manager::manifest::ManifestPermissions>
-{
-}
-impl
-    flutter_rust_bridge::IntoIntoDart<
-        FrbWrapper<stride_plugin_manager::manifest::ManifestPermissions>,
-    > for stride_plugin_manager::manifest::ManifestPermissions
-{
-    fn into_into_dart(self) -> FrbWrapper<stride_plugin_manager::manifest::ManifestPermissions> {
         self.into()
     }
 }
@@ -6831,6 +6831,18 @@ impl SseEncode for crate::api::logging::Logger {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
 }
 
+impl SseEncode for stride_plugin_manager::manifest::ManifestEvent {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Option<stride_plugin_manager::manifest::ManifestEventTask>>::sse_encode(
+            self.task, serializer,
+        );
+        <Option<stride_plugin_manager::manifest::ManifestEventTimer>>::sse_encode(
+            self.timer, serializer,
+        );
+    }
+}
+
 impl SseEncode for stride_plugin_manager::manifest::ManifestEventTask {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -6847,14 +6859,19 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestEventTimer {
     }
 }
 
-impl SseEncode for stride_plugin_manager::manifest::ManifestEvents {
+impl SseEncode for stride_plugin_manager::manifest::ManifestPermission {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Option<stride_plugin_manager::manifest::ManifestEventTask>>::sse_encode(
+        <Option<stride_plugin_manager::manifest::ManifestPermissionTask>>::sse_encode(
             self.task, serializer,
         );
-        <Option<stride_plugin_manager::manifest::ManifestEventTimer>>::sse_encode(
-            self.timer, serializer,
+        <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_encode(
+            self.network,
+            serializer,
+        );
+        <Option<stride_plugin_manager::manifest::ManifestPermissionStorage>>::sse_encode(
+            self.storage,
+            serializer,
         );
     }
 }
@@ -6880,23 +6897,6 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestPermissionTask {
         <bool>::sse_encode(self.modify, serializer);
         <bool>::sse_encode(self.query, serializer);
         <bool>::sse_encode(self.sync, serializer);
-    }
-}
-
-impl SseEncode for stride_plugin_manager::manifest::ManifestPermissions {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Option<stride_plugin_manager::manifest::ManifestPermissionTask>>::sse_encode(
-            self.task, serializer,
-        );
-        <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_encode(
-            self.network,
-            serializer,
-        );
-        <Option<stride_plugin_manager::manifest::ManifestPermissionStorage>>::sse_encode(
-            self.storage,
-            serializer,
-        );
     }
 }
 

@@ -22,8 +22,8 @@ class PluginRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = pluginInstanceManifestName(manifest: plugin);
-    final events = pluginInstanceManifestEvents(manifest: plugin);
-    final permissions = pluginInstanceManifestPermissions(manifest: plugin);
+    final event = pluginInstanceManifestEvent(manifest: plugin);
+    final permission = pluginInstanceManifestPermission(manifest: plugin);
     return Scaffold(
       appBar: AppBar(title: const Text('Plugin')),
       body: SettingsList(
@@ -41,24 +41,24 @@ class PluginRoute extends StatelessWidget {
             ],
           ),
           SettingsSection(
-            title: Text('Events', style: headingStyle),
+            title: Text('Event', style: headingStyle),
             tiles: [
-              _manifestBoolField('task.create', events.task?.create),
-              _manifestBoolField('task.modify', events.task?.modify),
-              _manifestBoolField('task.sync', events.task?.sync_),
+              _manifestBoolField('task.create', event.task?.create),
+              _manifestBoolField('task.modify', event.task?.modify),
+              _manifestBoolField('task.sync', event.task?.sync_),
             ],
           ),
           SettingsSection(
-            title: Text('Permissions', style: headingStyle),
+            title: Text('Permission', style: headingStyle),
             tiles: [
-              _manifestBoolField('task.create', permissions.task?.create),
-              _manifestBoolField('task.modify', permissions.task?.modify),
-              _manifestBoolField('task.sync', permissions.task?.sync_),
-              _manifestBoolField('task.query', permissions.task?.query),
-              if (permissions.storage != null)
-                _manifestStorageField(permissions.storage!),
-              if (permissions.network != null)
-                _manifestNetworkField(permissions.network!),
+              _manifestBoolField('task.create', permission.task?.create),
+              _manifestBoolField('task.modify', permission.task?.modify),
+              _manifestBoolField('task.sync', permission.task?.sync_),
+              _manifestBoolField('task.query', permission.task?.query),
+              if (permission.storage != null)
+                _manifestStorageField(permission.storage!),
+              if (permission.network != null)
+                _manifestNetworkField(permission.network!),
             ],
           ),
         ],

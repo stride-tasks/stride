@@ -43,6 +43,30 @@ abstract class ManifestState {
   Future<bool> skipSerializing();
 }
 
+class ManifestEvent {
+  final ManifestEventTask? task;
+  final ManifestEventTimer? timer;
+
+  const ManifestEvent({
+    this.task,
+    this.timer,
+  });
+
+  static Future<ManifestEvent> default_() =>
+      RustLib.instance.api.stridePluginManagerManifestManifestEventDefault();
+
+  @override
+  int get hashCode => task.hashCode ^ timer.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ManifestEvent &&
+          runtimeType == other.runtimeType &&
+          task == other.task &&
+          timer == other.timer;
+}
+
 class ManifestEventTask {
   final bool create;
   final bool modify;
@@ -91,28 +115,31 @@ class ManifestEventTimer {
           interval == other.interval;
 }
 
-class ManifestEvents {
-  final ManifestEventTask? task;
-  final ManifestEventTimer? timer;
+class ManifestPermission {
+  final ManifestPermissionTask? task;
+  final ManifestPermissionNetwork? network;
+  final ManifestPermissionStorage? storage;
 
-  const ManifestEvents({
+  const ManifestPermission({
     this.task,
-    this.timer,
+    this.network,
+    this.storage,
   });
 
-  static Future<ManifestEvents> default_() =>
-      RustLib.instance.api.stridePluginManagerManifestManifestEventsDefault();
+  static Future<ManifestPermission> default_() => RustLib.instance.api
+      .stridePluginManagerManifestManifestPermissionDefault();
 
   @override
-  int get hashCode => task.hashCode ^ timer.hashCode;
+  int get hashCode => task.hashCode ^ network.hashCode ^ storage.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ManifestEvents &&
+      other is ManifestPermission &&
           runtimeType == other.runtimeType &&
           task == other.task &&
-          timer == other.timer;
+          network == other.network &&
+          storage == other.storage;
 }
 
 class ManifestPermissionNetwork {
@@ -186,33 +213,6 @@ class ManifestPermissionTask {
           modify == other.modify &&
           query == other.query &&
           sync_ == other.sync_;
-}
-
-class ManifestPermissions {
-  final ManifestPermissionTask? task;
-  final ManifestPermissionNetwork? network;
-  final ManifestPermissionStorage? storage;
-
-  const ManifestPermissions({
-    this.task,
-    this.network,
-    this.storage,
-  });
-
-  static Future<ManifestPermissions> default_() => RustLib.instance.api
-      .stridePluginManagerManifestManifestPermissionsDefault();
-
-  @override
-  int get hashCode => task.hashCode ^ network.hashCode ^ storage.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ManifestPermissions &&
-          runtimeType == other.runtimeType &&
-          task == other.task &&
-          network == other.network &&
-          storage == other.storage;
 }
 
 @freezed

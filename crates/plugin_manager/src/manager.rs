@@ -120,7 +120,7 @@ impl PluginManager {
         let event = events.events.pop_front();
 
         let manifest = self.plugin(&events.plugin_name).unwrap().manifest.clone();
-        let permissions = manifest.permissions;
+        let permissions = manifest.permission;
         if !events.events.is_empty() {
             self.plugin_events.push_back(events);
         }

@@ -354,13 +354,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Logger dco_decode_logger(dynamic raw);
 
   @protected
+  ManifestEvent dco_decode_manifest_event(dynamic raw);
+
+  @protected
   ManifestEventTask dco_decode_manifest_event_task(dynamic raw);
 
   @protected
   ManifestEventTimer dco_decode_manifest_event_timer(dynamic raw);
 
   @protected
-  ManifestEvents dco_decode_manifest_events(dynamic raw);
+  ManifestPermission dco_decode_manifest_permission(dynamic raw);
 
   @protected
   ManifestPermissionNetwork dco_decode_manifest_permission_network(dynamic raw);
@@ -370,9 +373,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ManifestPermissionTask dco_decode_manifest_permission_task(dynamic raw);
-
-  @protected
-  ManifestPermissions dco_decode_manifest_permissions(dynamic raw);
 
   @protected
   NetworkRequestType dco_decode_network_request_type(dynamic raw);
@@ -767,6 +767,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Logger sse_decode_logger(SseDeserializer deserializer);
 
   @protected
+  ManifestEvent sse_decode_manifest_event(SseDeserializer deserializer);
+
+  @protected
   ManifestEventTask sse_decode_manifest_event_task(
       SseDeserializer deserializer);
 
@@ -775,7 +778,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
-  ManifestEvents sse_decode_manifest_events(SseDeserializer deserializer);
+  ManifestPermission sse_decode_manifest_permission(
+      SseDeserializer deserializer);
 
   @protected
   ManifestPermissionNetwork sse_decode_manifest_permission_network(
@@ -787,10 +791,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ManifestPermissionTask sse_decode_manifest_permission_task(
-      SseDeserializer deserializer);
-
-  @protected
-  ManifestPermissions sse_decode_manifest_permissions(
       SseDeserializer deserializer);
 
   @protected
@@ -1213,6 +1213,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_logger(Logger self, SseSerializer serializer);
 
   @protected
+  void sse_encode_manifest_event(ManifestEvent self, SseSerializer serializer);
+
+  @protected
   void sse_encode_manifest_event_task(
       ManifestEventTask self, SseSerializer serializer);
 
@@ -1221,8 +1224,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ManifestEventTimer self, SseSerializer serializer);
 
   @protected
-  void sse_encode_manifest_events(
-      ManifestEvents self, SseSerializer serializer);
+  void sse_encode_manifest_permission(
+      ManifestPermission self, SseSerializer serializer);
 
   @protected
   void sse_encode_manifest_permission_network(
@@ -1235,10 +1238,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_manifest_permission_task(
       ManifestPermissionTask self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_manifest_permissions(
-      ManifestPermissions self, SseSerializer serializer);
 
   @protected
   void sse_encode_network_request_type(

@@ -71,7 +71,7 @@ pub struct ManifestPermissionStorage {
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
 #[serde(rename_all = "kebab-case")]
-pub struct ManifestEvents {
+pub struct ManifestEvent {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task: Option<ManifestEventTask>,
@@ -82,7 +82,7 @@ pub struct ManifestEvents {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct ManifestPermissions {
+pub struct ManifestPermission {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task: Option<ManifestPermissionTask>,
@@ -135,10 +135,10 @@ pub struct PluginManifest<T: ManifestState = ()> {
     pub name: PluginName,
 
     #[serde(default)]
-    pub events: ManifestEvents,
+    pub event: ManifestEvent,
 
     #[serde(default)]
-    pub permissions: ManifestPermissions,
+    pub permission: ManifestPermission,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "ManifestState::skip_serializing")]
@@ -155,8 +155,8 @@ impl PluginInstanceManifest {
     }
     /// flutter_rust_bridge:sync
     #[must_use]
-    pub fn events(&self) -> &ManifestEvents {
-        &self.events
+    pub fn events(&self) -> &ManifestEvent {
+        &self.event
     }
 }
 

@@ -96,35 +96,31 @@ impl Plugin {
         }
         match event {
             HostEvent::TaskCreate { .. }
-                if !self.manifest.events.task.is_some_and(|task| task.create) =>
+                if !self.manifest.event.task.is_some_and(|task| task.create) =>
             {
                 return false
             }
             HostEvent::TaskModify { .. }
-                if !self.manifest.events.task.is_some_and(|task| task.modify) =>
+                if !self.manifest.event.task.is_some_and(|task| task.modify) =>
             {
                 return false
             }
-            HostEvent::TaskSync if !self.manifest.events.task.is_some_and(|task| task.sync) => {
+            HostEvent::TaskSync if !self.manifest.event.task.is_some_and(|task| task.sync) => {
                 return false
             }
             HostEvent::Timer { interval } => {
-                let Some(timer) = &self.manifest.events.timer else {
+                let Some(timer) = &self.manifest.event.timer else {
                     return false;
                 };
                 return timer.interval == *interval;
             }
             HostEvent::TaskQuery { .. }
-                if !self
-                    .manifest
-                    .permissions
-                    .task
-                    .is_some_and(|task| task.query) =>
+                if !self.manifest.permission.task.is_some_and(|task| task.query) =>
             {
                 return false
             }
             HostEvent::NetworkResponse { host, .. } => {
-                let Some(network) = &self.manifest.permissions.network else {
+                let Some(network) = &self.manifest.permission.network else {
                     return false;
                 };
 
@@ -269,8 +265,8 @@ impl PluginManager {
             manifest: PluginManifest::<PluginState> {
                 api: manifest.api,
                 name: manifest.name,
-                events: manifest.events,
-                permissions: manifest.permissions,
+                event: manifest.event,
+                permission: manifest.permission,
                 state: PluginState::default(),
             },
             code: code_content.into_boxed_slice(),
@@ -378,7 +374,7 @@ impl PluginManager {
         let wasm = std::fs::read(code_path)?;
         let module = Module::new(&self.engine, &wasm).expect("already validated");
 
-        let has_storage_permission = plugin.manifest.permissions.storage.is_some();
+        let has_storage_permission = plugin.manifest.permission.storage.is_some();
 
         let storage_filepath = plugin_path.join("store");
 
@@ -419,7 +415,7 @@ impl PluginManager {
                 size: storage_size,
                 max: plugin
                     .manifest
-                    .permissions
+                    .permission
                     .storage
                     .map_or(0, |storage| storage.max_size as usize)
                     * 1024,
