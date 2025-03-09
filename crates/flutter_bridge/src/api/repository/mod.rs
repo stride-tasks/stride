@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use flutter_rust_bridge::frb;
+use stride_core::event::TaskQuery;
 use uuid::Uuid;
 
 use crate::{
@@ -13,7 +14,6 @@ use super::filter::Filter;
 pub mod git;
 pub mod taskchampion;
 
-#[warn(missing_docs)]
 /// This is the main trait, defining a "Repository".
 /// A repository holds tasks and governs how they are synced.
 /// This trait unites their interface.
@@ -38,13 +38,13 @@ pub trait StrideRepository {
 
     fn update(&mut self, task: &Task) -> Result<bool, RustError>;
 
-    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError>;
-
     fn sync(&mut self) -> Result<(), RustError>;
     fn clear(&mut self) -> Result<(), RustError>;
 
     fn export(&mut self) -> Result<String, RustError>;
     fn import(&mut self, content: &str) -> Result<(), RustError>;
+
+    fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError>;
 }
 
 #[frb(ignore)]

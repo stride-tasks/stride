@@ -2,6 +2,10 @@ use std::{mem, path::Path};
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
+use stride_core::{
+    event::TaskQuery,
+    task::{Task, TaskStatus},
+};
 use taskchampion::{Operations, StorageConfig};
 
 use super::StrideRepository;
@@ -45,71 +49,12 @@ impl Replica {
     }
 }
 
-impl From<taskchampion::Task> for crate::task::Task {
-    fn from(v: taskchampion::Task) -> Self {
-        /* TODO(@bpeetz): Remove the `None`s and `Vec`s with their actually conversion <2024-10-26> */
-        Self {
-            uuid: v.get_uuid(),
-            status: v.get_status().into(),
-            title: v.get_description().to_owned(),
-            active: v.get_status() == taskchampion::Status::Pending,
-            modified: v.get_modified(),
-            due: v.get_due(),
-            project: None,
-            tags: vec![],
-            annotations: v.get_annotations().map(Into::into).collect(),
-            priority: None,
-            wait: v.get_wait(),
-            depends: v.get_dependencies().collect(),
-            uda: v
-                .get_udas()
-                .map(|((namespace, key), value)| (format!("{namespace}.{key}"), value.to_owned()))
-                .collect(),
-        }
-    }
-}
-impl From<taskchampion::Annotation> for crate::task::Annotation {
-    fn from(value: taskchampion::Annotation) -> Self {
-        Self {
-            entry: value.entry,
-            description: value.description,
-        }
-    }
-}
-impl From<taskchampion::Status> for crate::task::TaskStatus {
-    fn from(value: taskchampion::Status) -> Self {
-        match value {
-            taskchampion::Status::Pending => Self::Pending,
-            taskchampion::Status::Completed => Self::Complete,
-            taskchampion::Status::Deleted => Self::Deleted,
-            taskchampion::Status::Recurring => Self::Recurring,
-            taskchampion::Status::Unknown(other) => {
-                todo!("No implementation for unknown status: {other}")
-            }
-        }
-    }
-}
-impl From<crate::task::TaskStatus> for taskchampion::Status {
-    fn from(value: crate::task::TaskStatus) -> Self {
-        match value {
-            crate::task::TaskStatus::Pending => Self::Pending,
-
-            /* FIXME(@bpeetz): This can't be correct <2024-10-26> */
-            crate::task::TaskStatus::Waiting => Self::Unknown("Waiting".to_owned()),
-
-            crate::task::TaskStatus::Recurring => Self::Recurring,
-            crate::task::TaskStatus::Deleted => Self::Deleted,
-            crate::task::TaskStatus::Complete => Self::Completed,
-        }
-    }
-}
-
 impl StrideRepository for Replica {
     fn unload(&mut self) {
         todo!()
     }
 
-    fn add(&mut self, task: crate::task::Task) -> Result<(), crate::RustError> {
+    fn add(&mut self, task: Task) -> Result<(), crate::RustError> {
         // Theoretically we need to set all the keys below:
         // add_annotation
         // add_dependency
@@ -136,28 +81,22 @@ impl StrideRepository for Replica {
         Ok(())
     }
 
-    fn remove_by_uuid(
-        &mut self,
-        _uuid: &uuid::Uuid,
-    ) -> Result<Option<crate::task::Task>, crate::RustError> {
+    fn remove_by_uuid(&mut self, _uuid: &uuid::Uuid) -> Result<Option<Task>, crate::RustError> {
         todo!()
     }
 
-    fn remove_by_task(&mut self, _task: &crate::task::Task) -> Result<bool, crate::RustError> {
+    fn remove_by_task(&mut self, _task: &Task) -> Result<bool, crate::RustError> {
         todo!()
     }
 
-    fn task_by_uuid(
-        &mut self,
-        _uuid: &uuid::Uuid,
-    ) -> Result<Option<crate::task::Task>, crate::RustError> {
+    fn task_by_uuid(&mut self, _uuid: &uuid::Uuid) -> Result<Option<Task>, crate::RustError> {
         todo!()
     }
 
     fn tasks_with_filter(
         &mut self,
         filter: &crate::api::filter::Filter,
-    ) -> Result<Vec<crate::task::Task>, crate::RustError> {
+    ) -> Result<Vec<Task>, crate::RustError> {
         let search = filter.search.to_lowercase();
         let mut result = Vec::new();
 
@@ -168,25 +107,17 @@ impl StrideRepository for Replica {
             .filter(|task| {
                 filter
                     .status
-                    .contains(&Into::<crate::task::TaskStatus>::into(task.get_status()))
+                    .contains(&Into::<TaskStatus>::into(task.get_status()))
             })
             .filter(|task| task.get_description().to_lowercase().contains(&search))
         {
-            result.push(Into::<crate::task::Task>::into(task));
+            result.push(Into::<Task>::into(task));
         }
 
         Ok(result)
     }
 
-    fn update(&mut self, _task: &crate::task::Task) -> Result<bool, crate::RustError> {
-        todo!()
-    }
-
-    fn change_category(
-        &mut self,
-        _task: &crate::task::Task,
-        _status: crate::task::TaskStatus,
-    ) -> Result<bool, crate::RustError> {
+    fn update(&mut self, _task: &Task) -> Result<bool, crate::RustError> {
         todo!()
     }
 
@@ -232,5 +163,8 @@ impl StrideRepository for Replica {
         );
 
         Ok(())
+    }
+    fn query(&mut self, _query: &TaskQuery) -> Result<Vec<Task>, crate::RustError> {
+        todo!()
     }
 }

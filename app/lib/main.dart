@@ -4,8 +4,10 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -31,12 +33,27 @@ Future<void> main() async {
     ),
   );
 
-  runApp(MyApp(settings: settings));
+  final pluginPath = path.join(supportPath.path, 'plugins');
+  await pm.load(pluginPath: pluginPath);
+  final plugins = await pm.pluginManifests();
+  final pluginManagerState = PluginManagerState(plugins: plugins);
+
+  runApp(
+    MyApp(
+      settings: settings,
+      pluginManagerState: pluginManagerState,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   final Settings settings;
-  const MyApp({super.key, required this.settings});
+  final PluginManagerState pluginManagerState;
+  const MyApp({
+    super.key,
+    required this.settings,
+    required this.pluginManagerState,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +73,14 @@ class MyApp extends StatelessWidget {
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),
           ),
+        ),
+        BlocProvider<PluginManagerBloc>(
+          create: (context) => PluginManagerBloc(
+            logBloc: context.read<LogBloc>(),
+            state: pluginManagerState,
+            taskBloc: context.read<TaskBloc>(),
+          ),
+          lazy: false,
         ),
       ],
       child: BlocListener<TaskBloc, TaskState>(

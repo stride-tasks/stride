@@ -9,7 +9,8 @@ import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
-import 'package:stride/bridge/task.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
+import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:uuid/uuid.dart';
 
@@ -44,8 +45,9 @@ final class TaskChangeStatusEvent extends TaskEvent {
 }
 
 final class TaskUpdateEvent extends TaskEvent {
-  final Task task;
-  TaskUpdateEvent({required this.task});
+  final Task current;
+  final Task? previous;
+  TaskUpdateEvent({required this.current, this.previous});
 }
 
 final class TaskSyncEvent extends TaskEvent {
@@ -146,9 +148,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       if (event.task.status == TaskStatus.deleted) {
         await repository()?.removeByTask(task: event.task);
       } else {
-        await repository()?.changeCategory(
-          task: event.task,
-          status: TaskStatus.deleted,
+        await repository()?.update(
+          task: event.task.copyWith(status: TaskStatus.deleted),
         );
       }
 
@@ -170,15 +171,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
-      await repository()?.changeCategory(
-        task: event.task,
-        status: event.status,
+      await repository()?.update(
+        task: event.task.copyWith(status: event.status),
       );
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskUpdateEvent>((event, emit) async {
-      await repository()?.update(task: event.task);
+      await repository()?.update(task: event.current);
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -216,6 +216,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final tasks = await repository()?.tasksWithFilter(filter: filter!);
       return tasks ?? [];
     }
+  }
+
+  Future<List<Task>> query(TaskQuery query) async {
+    final tasks = await repository()?.query(query: query);
+    return tasks ?? [];
   }
 
   @override

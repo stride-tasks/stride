@@ -2,9 +2,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/task.dart';
-import 'package:stride/bridge/task/annotation.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
+import 'package:stride/bridge/third_party/stride_core/task.dart';
+import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/icon_text_button.dart';
@@ -167,8 +169,22 @@ class _TaskRouteState extends State<TaskRoute> {
 
             if (widget.task == null) {
               context.read<TaskBloc>().add(TaskAddEvent(task: task));
+              context
+                  .read<PluginManagerBloc>()
+                  .emitHostEvent(HostEvent.taskCreate(task: task));
             } else {
-              context.read<TaskBloc>().add(TaskUpdateEvent(task: task));
+              context.read<TaskBloc>().add(
+                    TaskUpdateEvent(
+                      current: task,
+                      previous: widget.task,
+                    ),
+                  );
+              context.read<PluginManagerBloc>().emitHostEvent(
+                    HostEvent.taskModify(
+                      current: task,
+                      previous: widget.task,
+                    ),
+                  );
             }
 
             final text =

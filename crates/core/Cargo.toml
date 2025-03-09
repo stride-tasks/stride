@@ -1,0 +1,32 @@
+[package]
+name = "stride_core"
+description = "Stride's core types"
+keywords = ["stride"]
+categories = []
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+serde.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+taskchampion = { workspace = true, optional = true }
+
+[dev-dependencies]
+anyhow.workspace = true
+serde_json.workspace = true
+
+[features]
+default = ["taskchampion"]
+taskchampion = ["dep:taskchampion"]
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

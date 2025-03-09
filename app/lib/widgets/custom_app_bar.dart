@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/widgets/infinite_rotation_animation.dart';
@@ -69,6 +71,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 onPressed: () {
                   context.read<TaskBloc>().add(TaskSyncEvent());
+                  context
+                      .read<PluginManagerBloc>()
+                      .emitHostEvent(HostEvent.taskSync());
                 },
               ),
             IconButton(

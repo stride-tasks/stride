@@ -78,4 +78,26 @@ pub enum Mode {
         /// The UUID of the repository.
         uuid: Uuid,
     },
+
+    /// Manage plugins.
+    Plugin {
+        #[command(subcommand)]
+        /// Plugin command to apply.
+        command: Option<PluginCommand>,
+    },
+}
+
+/// Plugin command/action to apply.
+#[derive(Debug, Clone, Subcommand)]
+pub enum PluginCommand {
+    /// Import plugin.
+    Import {
+        /// Filepath to the .zip plugin archive.
+        filepath: PathBuf,
+    },
+    /// Enable/Disable plugin.
+    Toggle {
+        /// Plugin to toggle.
+        plugin_name: String,
+    },
 }

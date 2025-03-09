@@ -10,6 +10,7 @@ use std::{
 use base64::Engine;
 use chrono::Utc;
 use flutter_rust_bridge::frb;
+use stride_core::event::TaskQuery;
 use stride_crypto::crypter::Crypter;
 use uuid::Uuid;
 
@@ -21,7 +22,7 @@ use crate::{
     base64_decode,
     git::known_hosts::{Host, HostKeyType, KnownHosts},
     key_store::KeyStore,
-    task::{Task, TaskPriority, TaskStatus},
+    task::{Task, TaskStatus},
     ErrorKind, RustError, ToBase64,
 };
 
@@ -42,58 +43,10 @@ pub fn init_app() {
     flutter_rust_bridge::setup_default_user_utils();
 }
 
-impl Task {
-    #[frb(sync)]
-    pub fn new(title: String) -> Self {
-        Task {
-            title,
-            ..Default::default()
-        }
-    }
+#[frb(ignore)]
+pub const IV_LEN: usize = 12;
 
-    #[must_use]
-    pub fn with_uuid(uuid: Uuid, title: String) -> Self {
-        Task {
-            uuid,
-            title,
-            ..Default::default()
-        }
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    #[must_use]
-    #[frb(sync)]
-    pub fn urgency(&self) -> f32 {
-        const THREE_DAYS: i64 = 3 * 24 * 60 * 60;
-
-        let mut urgency = 0.0;
-        urgency += f32::from(self.active) * 15.0;
-        if let Some(due) = self.due {
-            let today = Utc::now();
-            let delta = due - today;
-
-            urgency += 1.0;
-
-            let seconds = delta.num_seconds();
-            if seconds < 0 {
-                urgency += 11.0;
-            } else if seconds <= THREE_DAYS {
-                urgency += (seconds as f32 / THREE_DAYS as f32) * 11.0;
-            }
-        }
-        if let Some(priority) = self.priority {
-            match priority {
-                TaskPriority::H => urgency += 6.0,
-                TaskPriority::M => urgency += 3.0,
-                TaskPriority::L => urgency += -3.0,
-            }
-        }
-        urgency
-    }
-}
-
-const IV_LEN: usize = 12;
-
+#[frb(ignore)]
 pub(crate) fn generate_iv() -> [u8; IV_LEN] {
     let mut iv = [0u8; IV_LEN];
     getrandom::fill(&mut iv).unwrap();
@@ -231,6 +184,40 @@ impl Storage {
             result.push(task.clone());
         }
 
+        Ok(())
+    }
+    fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<(), RustError> {
+        match query {
+            TaskQuery::Uuid { uuid } => {
+                if let Some(task) = self.get_by_id(uuid)? {
+                    result.push(task.clone());
+                }
+            }
+            TaskQuery::Title {
+                title,
+                status,
+                limit,
+            } => {
+                if !status.is_empty() && !status.contains(&self.kind) {
+                    return Ok(());
+                }
+
+                let search = title.to_lowercase();
+
+                self.load()?;
+                for DecryptedTask { task, .. } in
+                    self.tasks.iter().filter(|DecryptedTask { task, .. }| {
+                        task.title.to_lowercase().contains(&search)
+                    })
+                {
+                    #[allow(clippy::cast_possible_truncation)]
+                    if Some(result.len() as u32) == *limit {
+                        break;
+                    }
+                    result.push(task.clone());
+                }
+            }
+        }
         Ok(())
     }
 
@@ -415,6 +402,51 @@ impl TaskStorage {
             storage.save()?;
         }
         Ok(found_task.map(|DecryptedTask { task, .. }| task))
+    }
+
+    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
+        self.init_repository_if_needed()?;
+
+        if task.status == status {
+            return Ok(true);
+        }
+
+        let mut found_task = None;
+        for storage in self.storage_mut() {
+            if task.status != storage.kind {
+                continue;
+            }
+
+            let index = storage.get_index(&task.uuid)?;
+            let Some(index) = index else {
+                break;
+            };
+
+            found_task = Some(storage.tasks.remove(index));
+
+            storage.save()?;
+        }
+
+        let Some(mut found_task) = found_task else {
+            return Ok(false);
+        };
+
+        found_task.task.active = false;
+        found_task.task.status = status;
+        found_task.task.modified = Some(Utc::now());
+
+        let transition = match status {
+            TaskStatus::Pending => "PEND",
+            TaskStatus::Waiting => "WAIT",
+            TaskStatus::Recurring => "RECUR",
+            TaskStatus::Deleted => "DELETE",
+            TaskStatus::Complete => "DONE",
+        };
+
+        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
+        self.storage_mut()[status as usize].append(found_task.task)?;
+        self.add_and_commit(&message)?;
+        Ok(false)
     }
 
     pub fn clone_repository(&mut self) -> Result<(), RustError> {
@@ -1038,56 +1070,15 @@ impl StrideRepository for TaskStorage {
     fn update(&mut self, task: &Task) -> Result<bool, RustError> {
         self.init_repository_if_needed()?;
 
+        if let Some(found_task) = self.task_by_uuid(&task.uuid)? {
+            self.change_category(&found_task, task.status)?;
+        };
+
         let updated = self.update2(task)?;
         if updated {
             self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
         }
         Ok(updated)
-    }
-
-    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
-        self.init_repository_if_needed()?;
-
-        if task.status == status {
-            return Ok(true);
-        }
-
-        let mut found_task = None;
-        for storage in self.storage_mut() {
-            if task.status != storage.kind {
-                continue;
-            }
-
-            let index = storage.get_index(&task.uuid)?;
-            let Some(index) = index else {
-                break;
-            };
-
-            found_task = Some(storage.tasks.remove(index));
-
-            storage.save()?;
-        }
-
-        let Some(mut found_task) = found_task else {
-            return Ok(false);
-        };
-
-        found_task.task.active = false;
-        found_task.task.status = status;
-        found_task.task.modified = Some(Utc::now());
-
-        let transition = match status {
-            TaskStatus::Pending => "PEND",
-            TaskStatus::Waiting => "WAIT",
-            TaskStatus::Recurring => "RECUR",
-            TaskStatus::Deleted => "DELETE",
-            TaskStatus::Complete => "DONE",
-        };
-
-        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
-        self.storage_mut()[status as usize].append(found_task.task)?;
-        self.add_and_commit(&message)?;
-        Ok(false)
     }
 
     fn sync(&mut self) -> Result<(), RustError> {
@@ -1200,6 +1191,14 @@ impl StrideRepository for TaskStorage {
         }
 
         Ok(())
+    }
+
+    fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError> {
+        let mut result = Vec::new();
+        for storage in self.storage_mut() {
+            storage.query(query, &mut result)?;
+        }
+        Ok(result)
     }
 }
 

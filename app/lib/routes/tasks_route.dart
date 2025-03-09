@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/filter.dart';
-import 'package:stride/bridge/task.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
+import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/repository_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
@@ -82,6 +84,7 @@ class _TasksRouteState extends State<TasksRoute> {
   Future<void> _onRefresh() async {
     final stream = context.read<TaskBloc>().stream.asBroadcastStream();
     context.read<TaskBloc>().add(TaskSyncEvent());
+    context.read<PluginManagerBloc>().emitHostEvent(HostEvent.taskSync());
     await for (final state in stream) {
       if (!state.syncing) {
         break;
@@ -99,6 +102,12 @@ class _TasksRouteState extends State<TasksRoute> {
       context
           .read<TaskBloc>()
           .add(TaskChangeStatusEvent(task: task, status: status));
+      context.read<PluginManagerBloc>().emitHostEvent(
+            HostEvent.taskModify(
+              current: task.copyWith(status: status),
+              previous: task,
+            ),
+          );
       return true;
     }
 

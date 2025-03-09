@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
@@ -152,6 +154,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
       ),
     );
     context.read<TaskBloc>().add(TaskSyncEvent());
+    context.read<PluginManagerBloc>().emitHostEvent(HostEvent.taskSync());
   }
 
   void _onStepTapped(int value) => setState(() => _currentStep = value);

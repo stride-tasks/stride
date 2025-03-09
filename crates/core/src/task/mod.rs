@@ -1,3 +1,5 @@
+#![allow(clippy::doc_markdown)]
+
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
@@ -7,7 +9,6 @@ pub mod annotation;
 pub type Date = DateTime<Utc>;
 
 pub use annotation::Annotation;
-use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -34,6 +35,13 @@ pub enum TaskStatus {
     Complete,
 }
 
+impl TaskStatus {
+    #[must_use]
+    pub fn is_pending(&self) -> bool {
+        *self == TaskStatus::Pending
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum TaskPriority {
@@ -47,7 +55,8 @@ pub enum TaskPriority {
 }
 
 impl TaskPriority {
-    fn as_str(self) -> &'static str {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
         match self {
             TaskPriority::H => "H",
             TaskPriority::M => "M",
@@ -56,10 +65,12 @@ impl TaskPriority {
     }
 }
 
-#[frb(dart_metadata=("freezed"))]
+/// flutter_rust_bridge:dart_metadata=("freezed")
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "TaskStatus::is_pending")]
     pub status: TaskStatus,
     pub title: String,
 
@@ -125,6 +136,7 @@ impl Default for Task {
 }
 
 impl Task {
+    #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn entry(&self) -> Date {
         let timestamp = self
@@ -138,7 +150,8 @@ impl Task {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    pub(crate) fn to_data(&self) -> Vec<u8> {
+    #[must_use]
+    pub fn to_data(&self) -> Vec<u8> {
         let mut result = Vec::new();
         result.extend_from_slice(self.uuid.as_bytes());
         result.extend_from_slice(&(self.title.len() as u32).to_be_bytes());
@@ -184,7 +197,8 @@ impl Task {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub(crate) fn from_data(input: &[u8]) -> Option<Task> {
+    #[must_use]
+    pub fn from_data(input: &[u8]) -> Option<Task> {
         let (uuid_bytes, input) = input.split_at_checked(16)?;
         let uuid = Uuid::from_bytes(uuid_bytes.try_into().ok()?);
         let timestamp = uuid.get_timestamp()?;
@@ -277,5 +291,117 @@ impl Task {
             depends,
             uda: HashMap::default(),
         })
+    }
+
+    /// flutter_rust_bridge:sync
+    #[must_use]
+    pub fn new(title: String) -> Self {
+        Task {
+            title,
+            ..Default::default()
+        }
+    }
+
+    #[must_use]
+    pub fn with_uuid(uuid: Uuid, title: String) -> Self {
+        Task {
+            uuid,
+            title,
+            ..Default::default()
+        }
+    }
+
+    /// flutter_rust_bridge:sync
+    #[allow(clippy::cast_precision_loss)]
+    #[must_use]
+    pub fn urgency(&self) -> f32 {
+        const THREE_DAYS: i64 = 3 * 24 * 60 * 60;
+
+        let mut urgency = 0.0;
+        urgency += f32::from(self.active) * 15.0;
+        if let Some(due) = self.due {
+            let today = Utc::now();
+            let delta = due - today;
+
+            urgency += 1.0;
+
+            let seconds = delta.num_seconds();
+            if seconds < 0 {
+                urgency += 11.0;
+            } else if seconds <= THREE_DAYS {
+                urgency += (seconds as f32 / THREE_DAYS as f32) * 11.0;
+            }
+        }
+        if let Some(priority) = self.priority {
+            match priority {
+                TaskPriority::H => urgency += 6.0,
+                TaskPriority::M => urgency += 3.0,
+                TaskPriority::L => urgency += -3.0,
+            }
+        }
+        urgency
+    }
+}
+
+#[cfg(feature = "taskchampion")]
+impl From<taskchampion::Task> for Task {
+    fn from(v: taskchampion::Task) -> Self {
+        /* TODO(@bpeetz): Remove the `None`s and `Vec`s with their actually conversion <2024-10-26> */
+        Self {
+            uuid: v.get_uuid(),
+            status: v.get_status().into(),
+            title: v.get_description().to_owned(),
+            active: v.get_status() == taskchampion::Status::Pending,
+            modified: v.get_modified(),
+            due: v.get_due(),
+            project: None,
+            tags: vec![],
+            annotations: v.get_annotations().map(Into::into).collect(),
+            priority: None,
+            wait: v.get_wait(),
+            depends: v.get_dependencies().collect(),
+            uda: v
+                .get_udas()
+                .map(|((namespace, key), value)| (format!("{namespace}.{key}"), value.to_owned()))
+                .collect(),
+        }
+    }
+}
+#[cfg(feature = "taskchampion")]
+impl From<taskchampion::Annotation> for Annotation {
+    fn from(value: taskchampion::Annotation) -> Self {
+        Self {
+            entry: value.entry,
+            description: value.description,
+        }
+    }
+}
+#[cfg(feature = "taskchampion")]
+impl From<taskchampion::Status> for TaskStatus {
+    fn from(value: taskchampion::Status) -> Self {
+        match value {
+            taskchampion::Status::Pending => Self::Pending,
+            taskchampion::Status::Completed => Self::Complete,
+            taskchampion::Status::Deleted => Self::Deleted,
+            taskchampion::Status::Recurring => Self::Recurring,
+            taskchampion::Status::Unknown(other) => {
+                todo!("No implementation for unknown status: {other}")
+            }
+        }
+    }
+}
+#[cfg(feature = "taskchampion")]
+impl From<TaskStatus> for taskchampion::Status {
+    fn from(value: TaskStatus) -> Self {
+        match value {
+            TaskStatus::Pending => Self::Pending,
+
+            /* FIXME(@bpeetz): This can't be correct <2024-10-26> */
+            TaskStatus::Waiting => Self::Unknown("Waiting".to_owned()),
+
+            TaskStatus::Recurring => Self::Recurring,
+            TaskStatus::Deleted => Self::Deleted,
+            TaskStatus::Complete => Self::Completed,
+        }
     }
 }

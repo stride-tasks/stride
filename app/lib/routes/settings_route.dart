@@ -5,6 +5,7 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
+import 'package:stride/routes/plugin_list_route.dart';
 import 'package:stride/routes/repository_list_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -60,6 +61,11 @@ class SettingsRoute extends StatelessWidget {
                     leading: const Icon(Icons.storage),
                     title: const Text('Repositories'),
                     builder: (context) => const RepositoryListRoute(),
+                  ),
+                  SettingsTileNavigation(
+                    leading: const Icon(Icons.electrical_services),
+                    title: const Text('Plugins'),
+                    builder: (context) => const PluginListRoute(),
                   ),
                 ],
               ),
