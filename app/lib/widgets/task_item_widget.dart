@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/utils/extensions.dart';
 
@@ -87,18 +83,6 @@ class TaskItem extends StatelessWidget {
       title: Text(task.title),
       selected: task.active,
       onLongPress: onLongPress,
-      onTap: () {
-        final current = task.copyWith(active: !task.active);
-        context
-            .read<TaskBloc>()
-            .add(TaskUpdateEvent(current: current, previous: task));
-        context.read<PluginManagerBloc>().emitHostEvent(
-              HostEvent.taskModify(
-                current: current,
-                previous: task,
-              ),
-            );
-      },
       subtitle: subtitle,
       trailing: Text(task.urgency().toStringAsFixed(2)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
