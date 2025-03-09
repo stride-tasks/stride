@@ -136,7 +136,6 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
                       content: value.bodyBytes,
                     ),
                   );
-                  // print(value.body);
                 },
                 onError: (error) {
                   print(error);

@@ -4048,7 +4048,7 @@ const _: fn() = || {
     }
     {
         let ManifestEvents = None::<stride_plugin_manager::manifest::ManifestEvents>.unwrap();
-        let _: stride_plugin_manager::manifest::ManifestEventTask = ManifestEvents.task;
+        let _: Option<stride_plugin_manager::manifest::ManifestEventTask> = ManifestEvents.task;
         let _: Option<stride_plugin_manager::manifest::ManifestEventTimer> = ManifestEvents.timer;
     }
     {
@@ -4072,7 +4072,8 @@ const _: fn() = || {
     {
         let ManifestPermissions =
             None::<stride_plugin_manager::manifest::ManifestPermissions>.unwrap();
-        let _: stride_plugin_manager::manifest::ManifestPermissionTask = ManifestPermissions.task;
+        let _: Option<stride_plugin_manager::manifest::ManifestPermissionTask> =
+            ManifestPermissions.task;
         let _: Option<stride_plugin_manager::manifest::ManifestPermissionNetwork> =
             ManifestPermissions.network;
         let _: Option<stride_plugin_manager::manifest::ManifestPermissionStorage> =
@@ -4736,7 +4737,7 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestEvents {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_task =
-            <stride_plugin_manager::manifest::ManifestEventTask>::sse_decode(deserializer);
+            <Option<stride_plugin_manager::manifest::ManifestEventTask>>::sse_decode(deserializer);
         let mut var_timer =
             <Option<stride_plugin_manager::manifest::ManifestEventTimer>>::sse_decode(deserializer);
         return stride_plugin_manager::manifest::ManifestEvents {
@@ -4784,7 +4785,9 @@ impl SseDecode for stride_plugin_manager::manifest::ManifestPermissions {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_task =
-            <stride_plugin_manager::manifest::ManifestPermissionTask>::sse_decode(deserializer);
+            <Option<stride_plugin_manager::manifest::ManifestPermissionTask>>::sse_decode(
+                deserializer,
+            );
         let mut var_network =
             <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_decode(
                 deserializer,
@@ -4893,6 +4896,19 @@ impl SseDecode for Option<crate::git::known_hosts::Host> {
     }
 }
 
+impl SseDecode for Option<stride_plugin_manager::manifest::ManifestEventTask> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(
+                <stride_plugin_manager::manifest::ManifestEventTask>::sse_decode(deserializer),
+            );
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<stride_plugin_manager::manifest::ManifestEventTimer> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4929,6 +4945,19 @@ impl SseDecode for Option<stride_plugin_manager::manifest::ManifestPermissionSto
                 <stride_plugin_manager::manifest::ManifestPermissionStorage>::sse_decode(
                     deserializer,
                 ),
+            );
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<stride_plugin_manager::manifest::ManifestPermissionTask> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(
+                <stride_plugin_manager::manifest::ManifestPermissionTask>::sse_decode(deserializer),
             );
         } else {
             return None;
@@ -6821,7 +6850,9 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestEventTimer {
 impl SseEncode for stride_plugin_manager::manifest::ManifestEvents {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <stride_plugin_manager::manifest::ManifestEventTask>::sse_encode(self.task, serializer);
+        <Option<stride_plugin_manager::manifest::ManifestEventTask>>::sse_encode(
+            self.task, serializer,
+        );
         <Option<stride_plugin_manager::manifest::ManifestEventTimer>>::sse_encode(
             self.timer, serializer,
         );
@@ -6855,7 +6886,7 @@ impl SseEncode for stride_plugin_manager::manifest::ManifestPermissionTask {
 impl SseEncode for stride_plugin_manager::manifest::ManifestPermissions {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <stride_plugin_manager::manifest::ManifestPermissionTask>::sse_encode(
+        <Option<stride_plugin_manager::manifest::ManifestPermissionTask>>::sse_encode(
             self.task, serializer,
         );
         <Option<stride_plugin_manager::manifest::ManifestPermissionNetwork>>::sse_encode(
@@ -6954,6 +6985,16 @@ impl SseEncode for Option<crate::git::known_hosts::Host> {
     }
 }
 
+impl SseEncode for Option<stride_plugin_manager::manifest::ManifestEventTask> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <stride_plugin_manager::manifest::ManifestEventTask>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<stride_plugin_manager::manifest::ManifestEventTimer> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -6982,6 +7023,18 @@ impl SseEncode for Option<stride_plugin_manager::manifest::ManifestPermissionSto
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <stride_plugin_manager::manifest::ManifestPermissionStorage>::sse_encode(
+                value, serializer,
+            );
+        }
+    }
+}
+
+impl SseEncode for Option<stride_plugin_manager::manifest::ManifestPermissionTask> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <stride_plugin_manager::manifest::ManifestPermissionTask>::sse_encode(
                 value, serializer,
             );
         }

@@ -95,16 +95,34 @@ impl Plugin {
             return false;
         }
         match event {
-            HostEvent::TaskCreate { .. } if !self.manifest.events.task.create => return false,
-            HostEvent::TaskModify { .. } if !self.manifest.events.task.modify => return false,
-            HostEvent::TaskSync if !self.manifest.events.task.sync => return false,
+            HostEvent::TaskCreate { .. }
+                if !self.manifest.events.task.is_some_and(|task| task.create) =>
+            {
+                return false
+            }
+            HostEvent::TaskModify { .. }
+                if !self.manifest.events.task.is_some_and(|task| task.modify) =>
+            {
+                return false
+            }
+            HostEvent::TaskSync if !self.manifest.events.task.is_some_and(|task| task.sync) => {
+                return false
+            }
             HostEvent::Timer { interval } => {
                 let Some(timer) = &self.manifest.events.timer else {
                     return false;
                 };
                 return timer.interval == *interval;
             }
-            HostEvent::TaskQuery { .. } if !self.manifest.permissions.task.query => return false,
+            HostEvent::TaskQuery { .. }
+                if !self
+                    .manifest
+                    .permissions
+                    .task
+                    .is_some_and(|task| task.query) =>
+            {
+                return false
+            }
             HostEvent::NetworkResponse { host, .. } => {
                 let Some(network) = &self.manifest.permissions.network else {
                     return false;

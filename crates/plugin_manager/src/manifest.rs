@@ -72,14 +72,20 @@ pub struct ManifestPermissionStorage {
 )]
 #[serde(rename_all = "kebab-case")]
 pub struct ManifestEvents {
-    pub task: ManifestEventTask,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub task: Option<ManifestEventTask>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timer: Option<ManifestEventTimer>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ManifestPermissions {
-    pub task: ManifestPermissionTask,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub task: Option<ManifestPermissionTask>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub network: Option<ManifestPermissionNetwork>,

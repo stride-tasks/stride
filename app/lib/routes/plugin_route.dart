@@ -43,18 +43,18 @@ class PluginRoute extends StatelessWidget {
           SettingsSection(
             title: Text('Events', style: headingStyle),
             tiles: [
-              _manifestBoolField('task.create', events.task.create),
-              _manifestBoolField('task.modify', events.task.modify),
-              _manifestBoolField('task.sync', events.task.sync_),
+              _manifestBoolField('task.create', events.task?.create),
+              _manifestBoolField('task.modify', events.task?.modify),
+              _manifestBoolField('task.sync', events.task?.sync_),
             ],
           ),
           SettingsSection(
             title: Text('Permissions', style: headingStyle),
             tiles: [
-              _manifestBoolField('task.create', permissions.task.create),
-              _manifestBoolField('task.modify', permissions.task.modify),
-              _manifestBoolField('task.sync', permissions.task.sync_),
-              _manifestBoolField('task.query', permissions.task.query),
+              _manifestBoolField('task.create', permissions.task?.create),
+              _manifestBoolField('task.modify', permissions.task?.modify),
+              _manifestBoolField('task.sync', permissions.task?.sync_),
+              _manifestBoolField('task.query', permissions.task?.query),
               if (permissions.storage != null)
                 _manifestStorageField(permissions.storage!),
               if (permissions.network != null)
@@ -80,7 +80,7 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestBoolField(String name, bool value) {
+  SettingsTile _manifestBoolField(String name, bool? value) {
     final spans = name
         .split('.')
         .map(
@@ -99,7 +99,7 @@ class PluginRoute extends StatelessWidget {
     return SettingsTile(
       title: RichText(text: TextSpan(children: spans)),
       trailing: Switch.adaptive(
-        value: value,
+        value: value ?? false,
         activeColor: Colors.redAccent,
         onChanged: (value) {},
       ),

@@ -210,6 +210,7 @@ impl Storage {
                         task.title.to_lowercase().contains(&search)
                     })
                 {
+                    #[allow(clippy::cast_possible_truncation)]
                     if Some(result.len() as u32) == *limit {
                         break;
                     }

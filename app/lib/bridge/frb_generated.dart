@@ -3436,6 +3436,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ManifestEventTask dco_decode_box_autoadd_manifest_event_task(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_manifest_event_task(raw);
+  }
+
+  @protected
   ManifestEventTimer dco_decode_box_autoadd_manifest_event_timer(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_manifest_event_timer(raw);
@@ -3453,6 +3459,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_manifest_permission_storage(raw);
+  }
+
+  @protected
+  ManifestPermissionTask dco_decode_box_autoadd_manifest_permission_task(
+      dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_manifest_permission_task(raw);
   }
 
   @protected
@@ -3753,7 +3766,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return ManifestEvents(
-      task: dco_decode_manifest_event_task(arr[0]),
+      task: dco_decode_opt_box_autoadd_manifest_event_task(arr[0]),
       timer: dco_decode_opt_box_autoadd_manifest_event_timer(arr[1]),
     );
   }
@@ -3803,7 +3816,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (arr.length != 3)
       throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return ManifestPermissions(
-      task: dco_decode_manifest_permission_task(arr[0]),
+      task: dco_decode_opt_box_autoadd_manifest_permission_task(arr[0]),
       network: dco_decode_opt_box_autoadd_manifest_permission_network(arr[1]),
       storage: dco_decode_opt_box_autoadd_manifest_permission_storage(arr[2]),
     );
@@ -3863,6 +3876,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ManifestEventTask? dco_decode_opt_box_autoadd_manifest_event_task(
+      dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_manifest_event_task(raw);
+  }
+
+  @protected
   ManifestEventTimer? dco_decode_opt_box_autoadd_manifest_event_timer(
       dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -3887,6 +3907,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return raw == null
         ? null
         : dco_decode_box_autoadd_manifest_permission_storage(raw);
+  }
+
+  @protected
+  ManifestPermissionTask? dco_decode_opt_box_autoadd_manifest_permission_task(
+      dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_manifest_permission_task(raw);
   }
 
   @protected
@@ -4416,6 +4445,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ManifestEventTask sse_decode_box_autoadd_manifest_event_task(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_manifest_event_task(deserializer);
+  }
+
+  @protected
   ManifestEventTimer sse_decode_box_autoadd_manifest_event_timer(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -4434,6 +4470,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_manifest_permission_storage(deserializer);
+  }
+
+  @protected
+  ManifestPermissionTask sse_decode_box_autoadd_manifest_permission_task(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_manifest_permission_task(deserializer);
   }
 
   @protected
@@ -4779,7 +4822,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ManifestEvents sse_decode_manifest_events(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_task = sse_decode_manifest_event_task(deserializer);
+    final var_task =
+        sse_decode_opt_box_autoadd_manifest_event_task(deserializer);
     final var_timer =
         sse_decode_opt_box_autoadd_manifest_event_timer(deserializer);
     return ManifestEvents(task: var_task, timer: var_timer);
@@ -4820,7 +4864,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ManifestPermissions sse_decode_manifest_permissions(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_task = sse_decode_manifest_permission_task(deserializer);
+    final var_task =
+        sse_decode_opt_box_autoadd_manifest_permission_task(deserializer);
     final var_network =
         sse_decode_opt_box_autoadd_manifest_permission_network(deserializer);
     final var_storage =
@@ -4921,6 +4966,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ManifestEventTask? sse_decode_opt_box_autoadd_manifest_event_task(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_manifest_event_task(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   ManifestEventTimer? sse_decode_opt_box_autoadd_manifest_event_timer(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -4953,6 +5010,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return sse_decode_box_autoadd_manifest_permission_storage(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  ManifestPermissionTask? sse_decode_opt_box_autoadd_manifest_permission_task(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_manifest_permission_task(deserializer);
     } else {
       return null;
     }
@@ -5544,6 +5613,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_manifest_event_task(
+      ManifestEventTask self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_manifest_event_task(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_manifest_event_timer(
       ManifestEventTimer self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -5562,6 +5638,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ManifestPermissionStorage self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_manifest_permission_storage(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_manifest_permission_task(
+      ManifestPermissionTask self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_manifest_permission_task(self, serializer);
   }
 
   @protected
@@ -5859,7 +5942,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_manifest_events(
       ManifestEvents self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_event_task(self.task, serializer);
+    sse_encode_opt_box_autoadd_manifest_event_task(self.task, serializer);
     sse_encode_opt_box_autoadd_manifest_event_timer(self.timer, serializer);
   }
 
@@ -5891,7 +5974,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_manifest_permissions(
       ManifestPermissions self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_permission_task(self.task, serializer);
+    sse_encode_opt_box_autoadd_manifest_permission_task(self.task, serializer);
     sse_encode_opt_box_autoadd_manifest_permission_network(
         self.network, serializer);
     sse_encode_opt_box_autoadd_manifest_permission_storage(
@@ -5982,6 +6065,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_manifest_event_task(
+      ManifestEventTask? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_manifest_event_task(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_manifest_event_timer(
       ManifestEventTimer? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -6011,6 +6105,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_manifest_permission_storage(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_manifest_permission_task(
+      ManifestPermissionTask? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_manifest_permission_task(self, serializer);
     }
   }
 

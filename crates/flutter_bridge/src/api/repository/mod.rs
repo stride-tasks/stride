@@ -14,7 +14,6 @@ use super::filter::Filter;
 pub mod git;
 pub mod taskchampion;
 
-#[warn(missing_docs)]
 /// This is the main trait, defining a "Repository".
 /// A repository holds tasks and governs how they are synced.
 /// This trait unites their interface.

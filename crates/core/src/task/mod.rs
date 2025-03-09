@@ -136,6 +136,7 @@ impl Default for Task {
 }
 
 impl Task {
+    #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn entry(&self) -> Date {
         let timestamp = self

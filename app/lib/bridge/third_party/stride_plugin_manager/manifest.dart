@@ -92,11 +92,11 @@ class ManifestEventTimer {
 }
 
 class ManifestEvents {
-  final ManifestEventTask task;
+  final ManifestEventTask? task;
   final ManifestEventTimer? timer;
 
   const ManifestEvents({
-    required this.task,
+    this.task,
     this.timer,
   });
 
@@ -189,12 +189,12 @@ class ManifestPermissionTask {
 }
 
 class ManifestPermissions {
-  final ManifestPermissionTask task;
+  final ManifestPermissionTask? task;
   final ManifestPermissionNetwork? network;
   final ManifestPermissionStorage? storage;
 
   const ManifestPermissions({
-    required this.task,
+    this.task,
     this.network,
     this.storage,
   });
