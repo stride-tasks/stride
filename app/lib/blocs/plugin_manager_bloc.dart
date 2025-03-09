@@ -10,6 +10,7 @@ import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
+import 'package:uuid/uuid.dart';
 
 @immutable
 abstract class PluginManagerEvent {}
@@ -111,7 +112,14 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
         case PluginAction_Event(:final pluginName, :final event):
           switch (event) {
             case PluginEvent_TaskCreate(:final task):
-              taskBloc.add(TaskAddEvent(task: task));
+              taskBloc.add(
+                TaskAddEvent(
+                  task: task.copyWith(
+                    // Make sure to give a new UUID that what the plugin provided.
+                    uuid: UuidValue.fromString(const Uuid().v7()),
+                  ),
+                ),
+              );
             case PluginEvent_TaskModify(:final task):
               taskBloc.add(TaskUpdateEvent(current: task));
             case PluginEvent_TaskQuery(:final query):
