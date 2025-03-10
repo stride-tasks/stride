@@ -331,7 +331,9 @@ impl PluginManager {
     #[allow(clippy::too_many_lines)]
     pub fn emit_event(&mut self, plugin_name: Option<&str>, event: &HostEvent) -> Result<()> {
         if let Some(plugin_name) = plugin_name {
-            let plugin = self.plugin(plugin_name).ok_or("plugin not found").unwrap();
+            let Some(plugin) = self.plugin(plugin_name) else {
+                return Ok(());
+            };
             if plugin.can_accept_event(event) {
                 self.host_events
                     .push_back((plugin.manifest.name.to_string(), event.clone()));
