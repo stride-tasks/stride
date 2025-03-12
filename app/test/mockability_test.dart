@@ -1,6 +1,6 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:test/test.dart';
 
 // Surely, you can use Mockito or whatever other mocking packages
 // ignore: unreachable_from_main
