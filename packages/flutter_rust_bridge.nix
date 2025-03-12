@@ -11,15 +11,18 @@ rustPlatform.buildRustPackage rec {
   pname = "flutter-rust-bridge";
   version = "2.9.0";
 
+  # See: https://nixos.org/manual/nixos/unstable/release-notes.html#sec-nixpkgs-release-25.05
+  useFetchCargoVendor = true;
+
   src = fetchFromGitHub {
     owner = "fzyzcjy";
     repo = "flutter_rust_bridge";
     rev = "v${version}";
-    hash = "sha256-SGbl1l2jtANO9QMNz9GDXI794RY/K+ldpmDxLkqAa+Y=";
+    hash = "sha256-pvKCiv7hUgetTXXp+NCs04Qo9xWaLUE2T1yHENhTGl4=";
     fetchSubmodules = true;
   };
 
-  cargoHash = "sha256-W6iHdLkQ/d6xqpQLf63I+97MXn3blLZw1IDxk4S1uTo=";
+  cargoHash = "sha256-efMA8VJaQlqClAmjJ3zIYLUfnuj62vEIBKsz0l3CWxA=";
 
   buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
     darwin.apple_sdk.frameworks.CoreFoundation

@@ -11,6 +11,9 @@ in
     version = "0.1.0";
     inherit pname;
 
+    # See: https://nixos.org/manual/nixos/unstable/release-notes.html#sec-nixpkgs-release-25.05
+    useFetchCargoVendor = true;
+
     # Nix needs to rebuild a package every time its source changes.
     # Thus we filter out all the files in this repository that are not relevant for the
     # `stride` cli, to avoid having to rebuild it, when a irrelevant file has been
