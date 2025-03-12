@@ -9,7 +9,10 @@ treefmt-nix.lib.evalModule pkgs (
 
     programs = {
       alejandra.enable = true;
-      rustfmt.enable = true;
+      # rustfmt = {
+      #   enable = true;
+      #   edition = "2024";
+      # };
       clang-format.enable = true;
       mdformat.enable = true;
       shfmt = {
@@ -54,9 +57,9 @@ treefmt-nix.lib.evalModule pkgs (
 
     settings = {
       formatter = {
-        rustfmt = {
-          excludes = ["*/frb_generated.rs"];
-        };
+        # rustfmt = {
+        #   excludes = ["*/frb_generated.rs"];
+        # };
         clang-format = {
           # options = ["--style" "Chromium"];
         };
