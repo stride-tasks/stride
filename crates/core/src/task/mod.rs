@@ -397,6 +397,8 @@ impl From<taskchampion::Task> for Task {
             priority: None,
             wait: v.get_wait(),
             depends: v.get_dependencies().collect(),
+            // TODO: Remove use of deprecated function.
+            #[allow(deprecated)]
             uda: v
                 .get_udas()
                 .map(|((namespace, key), value)| (format!("{namespace}.{key}"), value.to_owned()))

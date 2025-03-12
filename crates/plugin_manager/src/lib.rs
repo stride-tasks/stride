@@ -17,7 +17,7 @@ use stride_core::{
     constant::StorageErrorCode,
     event::{HostEvent, PluginEvent},
 };
-use wasmi::{core::ValType, Caller, Extern, Func, FuncType, Linker, Module, Store};
+use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, core::ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
@@ -98,15 +98,15 @@ impl Plugin {
             HostEvent::TaskCreate { .. }
                 if !self.manifest.event.task.is_some_and(|task| task.create) =>
             {
-                return false
+                return false;
             }
             HostEvent::TaskModify { .. }
                 if !self.manifest.event.task.is_some_and(|task| task.modify) =>
             {
-                return false
+                return false;
             }
             HostEvent::TaskSync if !self.manifest.event.task.is_some_and(|task| task.sync) => {
-                return false
+                return false;
             }
             HostEvent::Timer { interval } => {
                 let Some(timer) = &self.manifest.event.timer else {
@@ -117,7 +117,7 @@ impl Plugin {
             HostEvent::TaskQuery { .. }
                 if !self.manifest.permission.task.is_some_and(|task| task.query) =>
             {
-                return false
+                return false;
             }
             HostEvent::NetworkResponse { host, .. } => {
                 let Some(network) = &self.manifest.permission.network else {

@@ -7,8 +7,8 @@ use std::{
 use uuid::Uuid;
 
 use crate::{
-    api::error::KeyStoreError, base64_decode, frb_generated::StreamSink,
-    git::known_hosts::KnownHosts, ErrorKind, RustError,
+    ErrorKind, RustError, api::error::KeyStoreError, base64_decode, frb_generated::StreamSink,
+    git::known_hosts::KnownHosts,
 };
 
 use super::{

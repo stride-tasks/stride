@@ -3,16 +3,16 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
-    sync::{atomic::AtomicBool, Arc, Mutex},
+    sync::{Arc, Mutex, atomic::AtomicBool},
 };
 use stride_crypto::crypter::{Aes256Ocb, AesMode, Crypter};
 use uuid::Uuid;
 
 use crate::{
+    ErrorKind, RustError,
     api::{error::KeyStoreError, repository::git::generate_iv},
     base64_decode, base64_encode,
     task::{Task, TaskStatus},
-    ErrorKind, RustError,
 };
 
 pub(crate) struct KeyStore {

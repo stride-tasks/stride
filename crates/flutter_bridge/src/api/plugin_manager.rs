@@ -7,11 +7,11 @@ use std::{
 
 use stride_core::event::HostEvent;
 use stride_plugin_manager::{
-    manifest::{PluginAction, PluginInstanceManifest},
     PluginManager,
+    manifest::{PluginAction, PluginInstanceManifest},
 };
 
-use crate::{frb_generated::StreamSink, ErrorKind, RustError};
+use crate::{ErrorKind, RustError, frb_generated::StreamSink};
 
 pub(crate) static STATE: LazyLock<Mutex<PluginManager>> = LazyLock::new(Mutex::default);
 pub(crate) static STREAM: LazyLock<Mutex<Option<StreamSink<()>>>> = LazyLock::new(Mutex::default);

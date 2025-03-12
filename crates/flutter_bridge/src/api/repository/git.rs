@@ -15,26 +15,26 @@ use stride_crypto::crypter::Crypter;
 use uuid::Uuid;
 
 use crate::{
+    ErrorKind, RustError, ToBase64,
     api::{
         error::{ExportError, ImportError},
-        settings::{application_support_path, Settings},
+        settings::{Settings, application_support_path},
     },
     base64_decode,
     git::known_hosts::{Host, HostKeyType, KnownHosts},
     key_store::KeyStore,
     task::{Task, TaskStatus},
-    ErrorKind, RustError, ToBase64,
 };
 
 use git2::{
-    build::CheckoutBuilder, AnnotatedCommit, CertificateCheckStatus, Cred, ErrorClass, ErrorCode,
-    FetchOptions, RebaseOptions, RemoteCallbacks, Repository, Signature,
+    AnnotatedCommit, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
+    RebaseOptions, RemoteCallbacks, Repository, Signature, build::CheckoutBuilder,
 };
 
 use crate::api::{
     filter::Filter,
     logging::Logger,
-    settings::{ssh_key, EncryptionKey, SshKey},
+    settings::{EncryptionKey, SshKey, ssh_key},
 };
 
 #[frb(init)]
@@ -947,7 +947,7 @@ impl TaskStorage {
                     }
                     .into()),
                     _ => Err(error.into()),
-                }
+                };
             }
         };
 

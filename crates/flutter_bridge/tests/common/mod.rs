@@ -52,6 +52,7 @@ impl DerefMut for TestFixtureScoped {
     }
 }
 
+#[allow(unused)]
 pub(crate) fn setup(test_name: &str) -> Result<TestFixture, std::io::Error> {
     let test_dir = std::env::temp_dir().join("stride_tests").join(test_name);
     if test_dir.exists() {

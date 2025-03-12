@@ -7,8 +7,8 @@ use stride_core::event::{HostEvent, PluginEvent};
 use wasmi::{Config, Engine};
 
 use crate::{
-    manifest::{PluginAction, PluginManifest, PluginState},
     Error, EventQueue, Plugin, Result,
+    manifest::{PluginAction, PluginManifest, PluginState},
 };
 
 /// flutter_rust_bridge:unignore
@@ -132,25 +132,25 @@ impl PluginManager {
                 return Some(PluginAction::Disable {
                     plugin_name: manifest.name,
                     reason: "missing 'task.create' permission".to_string(),
-                })
+                });
             }
             PluginEvent::TaskModify { .. } if !permissions.task.is_some_and(|task| task.modify) => {
                 return Some(PluginAction::Disable {
                     plugin_name: manifest.name,
                     reason: "missing 'task.modify' permission".to_string(),
-                })
+                });
             }
             PluginEvent::TaskSync if !permissions.task.is_some_and(|task| task.sync) => {
                 return Some(PluginAction::Disable {
                     plugin_name: manifest.name,
                     reason: "missing 'task.sync' permission".to_string(),
-                })
+                });
             }
             PluginEvent::TaskQuery { .. } if !permissions.task.is_some_and(|task| task.query) => {
                 return Some(PluginAction::Disable {
                     plugin_name: manifest.name,
                     reason: "missing 'task.query' permission".to_string(),
-                })
+                });
             }
             PluginEvent::NetworkRequest { host, .. } => {
                 let Some(network) = permissions.network else {

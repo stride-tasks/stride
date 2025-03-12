@@ -1,4 +1,4 @@
-use anyhow::{bail, Context};
+use anyhow::{Context, bail};
 use clap::Parser;
 use cli::{CliArgs, Mode, RepositoryType};
 use serde::Deserialize;
@@ -15,13 +15,13 @@ use stride_flutter_bridge::{
         filter::Filter,
         logging::Logger,
         repository::{
+            StrideRepository,
             git::TaskStorage,
             taskchampion::{self, Replica},
-            StrideRepository,
         },
         settings::{ApplicationPaths, Repository, Settings},
     },
-    plugin::{manifest::PluginAction, PluginManager},
+    plugin::{PluginManager, manifest::PluginAction},
     task::{Task, TaskStatus},
 };
 use url::Url;

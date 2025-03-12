@@ -5,8 +5,8 @@ use stride_core::event::TaskQuery;
 use uuid::Uuid;
 
 use crate::{
-    task::{Task, TaskStatus},
     RustError,
+    task::{Task, TaskStatus},
 };
 
 use super::filter::Filter;
