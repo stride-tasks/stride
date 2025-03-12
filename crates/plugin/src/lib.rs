@@ -14,7 +14,7 @@ pub type EventHandler = fn(event: HostEvent) -> bool;
 
 pub static mut EVENT_HANDLER: EventHandler = default_event_handler;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn stride__allocate(size: usize) -> *mut core::ffi::c_void {
     let mut buffer = Vec::with_capacity(size);
     let pointer = buffer.as_mut_ptr();
@@ -23,7 +23,7 @@ pub extern "C" fn stride__allocate(size: usize) -> *mut core::ffi::c_void {
 }
 
 /// # Safety
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn stride__deallocate(pointer: *mut core::ffi::c_void, capacity: usize) {
     unsafe {
         drop(Vec::from_raw_parts(pointer, 0, capacity));
@@ -31,7 +31,7 @@ pub unsafe extern "C" fn stride__deallocate(pointer: *mut core::ffi::c_void, cap
 }
 
 /// # Safety
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(clippy::missing_panics_doc)]
 pub unsafe extern "C" fn stride__event_handler(event: *const u8, event_len: usize) -> bool {
     let event_data = unsafe { core::slice::from_raw_parts(event, event_len) };
