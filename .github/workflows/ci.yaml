@@ -77,7 +77,7 @@ jobs:
         with:
           key: docs
       - name: Generate documentation
-        run: cargo doc -v --document-private-items --all-features
+        run: cargo doc --document-private-items --all-features
 
   integration-tests:
     name: NixOS VM integration tests
@@ -101,8 +101,7 @@ jobs:
         uses: nix-community/cache-nix-action@v6
         with:
           # restore and save a cache using this key
-          primary-key:
-            nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           # if there's no cache hit, restore a cache by this prefix
           restore-prefixes-first-match: nix-${{ runner.os }}-
           # collect garbage until Nix store size (in bytes) is at most this number
