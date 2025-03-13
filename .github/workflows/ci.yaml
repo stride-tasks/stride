@@ -95,7 +95,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Install nix
-        uses: nixbuild/nix-quick-install-action@v29
+        uses: nixbuild/nix-quick-install-action@v30
 
       - name: Set up a cache
         uses: nix-community/cache-nix-action@v6
