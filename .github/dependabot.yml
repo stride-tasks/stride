@@ -1,0 +1,51 @@
+version: 2
+enable-beta-ecosystems: true
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      ci-dependencies:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      rust-dependencies:
+        applies-to: version-updates
+        patterns: ["*"]
+        # This requires manual intevention!
+        exclude-patterns: ["flutter_rust_bridge"]
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: pub
+    directory: "/app"
+    schedule:
+      interval: weekly
+    groups:
+      flutter-dependencies:
+        applies-to: version-updates
+        patterns: ["*"]
+        # This requires manual intevention!
+        exclude-patterns: ["flutter_rust_bridge"]
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: gradle
+    directory: "/app/android"
+    schedule:
+      interval: weekly
+    groups:
+      gradle-dependencies:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
