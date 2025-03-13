@@ -1,0 +1,107 @@
+#!/bin/sh
+
+# Get location of the script
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+APPNAME=stride-desktop
+FLUTTER_DIR="$SCRIPTS_DIR/.."
+PROJECT_DIR="$FLUTTER_DIR/.."
+FLUTTER="$FLUTTER_DIR/flutter"
+BUILD_DIR="$FLUTTER_DIR/build/$APPNAME.AppDir"
+
+extract_field() {
+  grep -oP "^$1:\s*\K.*" "$FLUTTER_DIR/pubspec.yaml" | sed 's/\s\+$//'
+}
+
+VERSION=$(extract_field version | sed 's/+/-/g')
+HOMEPAGE_URL=$(extract_field homepage)
+DESCRIPTION=$(extract_field description)
+APPLICATION_ID=org.stridetasks.stride
+
+# Display commands and stop script at first fail.
+set -xe
+
+"$FLUTTER" build linux --release
+
+rm -rf "$BUILD_DIR"
+
+mkdir -p "$BUILD_DIR"
+
+cp -r build/linux/x64/release/bundle/* "$BUILD_DIR"
+
+mv "$BUILD_DIR/stride" "$BUILD_DIR/$APPNAME"
+
+ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" "$FLUTTER_DIR/assets/icon/logo.svg" "$BUILD_DIR/logo.png"
+
+cat > $BUILD_DIR/AppRun <<EOF
+#!/bin/sh
+
+SELF=\$(readlink -f "\$0")
+HERE=\${SELF%/*}
+export PATH="\${HERE}/usr/bin/:\${HERE}/usr/sbin/:\${HERE}/usr/games/:\${HERE}/bin/:\${HERE}/sbin/\${PATH:+:\$PATH}"
+export LD_LIBRARY_PATH="\${HERE}/usr/lib/:\${HERE}/usr/lib/i386-linux-gnu/:\${HERE}/usr/lib/x86_64-linux-gnu/:\${HERE}/usr/lib32/:\${HERE}/usr/lib64/:\${HERE}/lib/:\${HERE}/lib/i386-linux-gnu/:\${HERE}/lib/x86_64-linux-gnu/:\${HERE}/lib32/:\${HERE}/lib64/\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}"
+export PYTHONPATH="\${HERE}/usr/share/pyshared/\${PYTHONPATH:+:\$PYTHONPATH}"
+export XDG_DATA_DIRS="\${HERE}/usr/share/\${XDG_DATA_DIRS:+:\$XDG_DATA_DIRS}"
+export PERLLIB="\${HERE}/usr/share/perl5/:\${HERE}/usr/lib/perl5/\${PERLLIB:+:\$PERLLIB}"
+export GSETTINGS_SCHEMA_DIR="\${HERE}/usr/share/glib-2.0/schemas/\${GSETTINGS_SCHEMA_DIR:+:\$GSETTINGS_SCHEMA_DIR}"
+export QT_PLUGIN_PATH="\${HERE}/usr/lib/qt4/plugins/:\${HERE}/usr/lib/i386-linux-gnu/qt4/plugins/:\${HERE}/usr/lib/x86_64-linux-gnu/qt4/plugins/:\${HERE}/usr/lib32/qt4/plugins/:\${HERE}/usr/lib64/qt4/plugins/:\${HERE}/usr/lib/qt5/plugins/:\${HERE}/usr/lib/i386-linux-gnu/qt5/plugins/:\${HERE}/usr/lib/x86_64-linux-gnu/qt5/plugins/:\${HERE}/usr/lib32/qt5/plugins/:\${HERE}/usr/lib64/qt5/plugins/\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}"
+exec "\${HERE}/$APPNAME" "\$@"
+EOF
+
+chmod +x "$BUILD_DIR/AppRun"
+
+# Desktop Entry Specification: https://specifications.freedesktop.org/desktop-entry-spec/1.0/recognized-keys.html
+cat > "$BUILD_DIR/$APPNAME.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Terminal=false
+Name=Stride
+GenericName=Task Management
+Exec=$APPNAME %u
+Icon=logo
+Categories=Utility;
+EOF
+
+# TODO: Add AppStream metainfo file:
+#       <https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html>
+#       <https://www.freedesktop.org/software/appstream/metainfocreator>
+#
+# mkdir -p "$BUILD_DIR/usr/share/metainfo"
+# cat > "$BUILD_DIR/usr/share/metainfo/${APPNAME}.appdata.xml" <<EOF
+# <?xml version="1.0" encoding="UTF-8"?>
+# <component type="desktop-application">
+#   <id>$APPNAME</id>
+#   <metadata_license>MIT</metadata_license>
+#   <project_license>AGPL-3.0</project_license>
+#
+#   <name>Stride Tasks</name>
+#   <summary>$DESCRIPTION</summary>
+#
+#   <description>
+#     <!-- TODO: Expand this paragraph -->
+#     <p>
+#         $DESCRIPTION
+#     </p>
+#
+#     <!-- TODO: Add feature list.
+#         <p>Features:</p>
+#         <ul>
+#             <li>First item</li>
+#             <li>Second item</li>
+#         </ul>
+#     -->
+#   </description>
+#
+#   <launchable type="desktop-id">$APPNAME.desktop</launchable>
+#
+#   <url type="homepage">$HOMEPAGE_URL</url>
+#
+#   <!--
+#     <provides>
+#       <binary>$APPNAME</binary>
+#     </provides>
+#   -->
+# </component>
+# EOF
+
+export ARCH=x86_64
+appimagetool "$BUILD_DIR" "build/${APPNAME}_${VERSION}_${ARCH}.AppImage"

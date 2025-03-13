@@ -1,0 +1,129 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  # Allow one run at a time for PRs, but multiple for other invocations
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  RUSTFLAGS: -Dwarnings
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-lint:
+    name: Rust Format & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: format-and-lint
+
+      - name: Check rustfmt
+        run: cargo fmt --all -- --check
+
+      - name: Check clippy
+        run: cargo clippy --all-targets --all-features
+
+  rust-test:
+    name: Rust Test (${{ matrix.rust.name }}, ${{ matrix.os }})
+    strategy:
+      matrix:
+        rust:
+          # possibly add the MSRV here
+          - { version: stable, name: stable }
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust.version }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: build-test
+
+      - name: Cargo build
+        run: cargo build --quiet
+
+      - name: Install latest nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run Test
+        run: cargo test
+
+  rust-docs:
+    name: Rust Documentation
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: docs
+      - name: Generate documentation
+        run: cargo doc --document-private-items --all-features
+
+  integration-tests:
+    name: NixOS VM integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout flake
+        uses: actions/checkout@v4
+
+      - name: enable KVM
+        env:
+          kvmRules: /etc/udev/rules.d/99-enable-kvm.rules
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee $kvmRules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install nix
+        uses: nixbuild/nix-quick-install-action@v29
+
+      - name: Set up a cache
+        uses: nix-community/cache-nix-action@v6
+        with:
+          # restore and save a cache using this key
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1 GB = 1073741824 B
+          gc-max-store-size-linux: 1073741824
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago relative to the start of the `Post Restore` phase
+          purge-created: 0
+          # except the version with the `primary-key`, if it exists
+          purge-primary-key: never
+
+      - name: Run tests
+        run: |
+          nix --print-build-logs flake check
+
+  test-flutter:
+    name: Flutter Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: ./app/flutter test

@@ -1,0 +1,25 @@
+BasedOnStyle: Google
+AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: All
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+BinPackParameters: false
+BinPackArguments: false
+ContinuationIndentWidth: 2
+Cpp11BracedListStyle: true
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: All
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 1
+PointerAlignment: Left
+SortIncludes: false
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterFunctionDefinitionName: false
+SpacesInContainerLiterals: false
+Standard: Cpp11

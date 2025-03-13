@@ -1,0 +1,68 @@
+#!/bin/sh
+
+if [ -z "$(command -v ffmpeg)" ]; then
+  echo "ERROR: Missing ffmpeg program, please install it!"
+fi
+
+# Get location of the script
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+FLUTTER_DIR="$SCRIPTS_DIR/.."
+PROJECT_DIR="$FLUTTER_DIR/.."
+
+FLUTTER="$FLUTTER_DIR/flutter"
+
+# Display commands and stop script at first fail.
+set -xe
+
+# Go to icons directory
+cd "$FLUTTER_DIR/assets/icon"
+
+# Some icons are 1024 like on iOS.
+export ICON_SIZE=1024
+
+"$SCRIPTS_DIR/rasterize-image" logo.svg logo.png
+
+# Padding which is used for adaptive launcher foreground icon.
+PADDING=0.30
+
+# "pad=iw*(1+2*$PADDING):ih*(1+2*$PADDING)": Scales the width and height by
+#     adding the padding on both sides. Since the padding is a percentage,
+#     1+2*$PADDING accounts for the padding on both sides (left and right,
+#     or top and bottom).
+# "(ow-iw)/2:(oh-ih)/2": Centers the original image within the new, larger image.
+# "color=0x00000000": Sets the padding color to transparent.
+ffmpeg \
+    -y \
+    -i \
+    logo.png \
+    -vf "pad=iw*(1+2*$PADDING):ih*(1+2*$PADDING):(ow-iw)/2:(oh-ih)/2:color=0x00000000" \
+    logo_foreground.png
+
+# Put icon in fastlane
+ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" logo.svg "$PROJECT_DIR/fastlane/metadata/android/en-US/images/icon.png"
+
+# Generate rounded icon for README.md
+ffmpeg \
+    -y \
+    -i logo.png \
+    -vf "format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(pow(X-W/2,2)+pow(Y-H/2,2),pow(min(W,H)/2,2)),255,0)'" \
+    "$PROJECT_DIR/assets/logo_circle.png"
+
+# Go to pubspec.yaml directory
+cd "$FLUTTER_DIR"
+
+# Get dependencies if not already available and call flutter_launcher_icons
+"$FLUTTER" pub get
+"$FLUTTER" pub run flutter_launcher_icons
+
+# Generate splash image (for Android and iOS).
+# See: https://github.com/jonbhanson/flutter_native_splash
+"$FLUTTER" pub run flutter_native_splash:create
+
+# Delete temp icons
+rm -v "$FLUTTER_DIR/assets/icon/logo.png"
+rm -v "$FLUTTER_DIR/assets/icon/logo_foreground.png"
+
+# Optimize images
+echo -e "\nOptimize images:\n"
+"$PROJECT_DIR"/scripts/optimize-images

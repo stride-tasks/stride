@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -x
+
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+PROJECT_DIR="$SCRIPTS_DIR/.."
+
+APPLICATION_ID="org.stridetasks.stride"
+BUILD_DIR="/tmp/$APPLICATION_ID"
+
+cd "$PROJECT_DIR"
+
+# Remove non-reproducable part of path strings.
+SEP=$(echo -e "\x1f")
+export CARGO_ENCODED_RUSTFLAGS="--remap-path-prefix=${HOME}/.cargo=/cargo/"
+if [ ! -z "$CARGO_HOME" ]; then
+    export CARGO_ENCODED_RUSTFLAGS="$CARGO_ENCODED_RUSTFLAGS${SEP}--remap-path-prefix=${CARGO_HOME}=/cargo/"
+fi
+
+export SOURCE_DATE_EPOCH=1
+export ZERO_AR_DATE=1
+
+set -xe
+
+# In CI reuse the same build folder, since we are building the same commit
+# this should be fine.
+if [ -z "$REUSE_BUILD" ]; then
+    rm -rf "$BUILD_DIR"
+else
+    echo "INFO: Reusing existing build directory $BUILD_DIR"
+fi
+
+if [ ! -e "$BUILD_DIR" ]; then
+    COMMIT="$(git rev-parse HEAD)"
+    ORIGIN="$(git remote get-url origin)"
+    git clone --filter=blob:none --reference-if-able "$PROJECT_DIR" "$ORIGIN" "$BUILD_DIR"
+    git -C "$BUILD_DIR" reset --hard "$COMMIT"
+fi
+
+cd "$BUILD_DIR"
+
+./scripts/rustup-setup
+./app/flutter build $@
+
+rm -rf "$PROJECT_DIR"/app/reproducible/apks
+mkdir -p "$PROJECT_DIR"/app/build/reproducible
+cp -r app/build/app/outputs/* "$PROJECT_DIR"/app/build/reproducible

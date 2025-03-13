@@ -1,0 +1,133 @@
+[workspace]
+resolver = "3"
+members = [
+  "crates/flutter_bridge",
+  "crates/crypto",
+  "crates/plugin",
+  "crates/plugin_manager",
+  "cli",
+]
+
+exclude = ["app"]
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+rust-version = "1.85.0"
+authors = ["Haled Odat <haledodat@gmail.com>"]
+repository = "https://github.com/HalidOdat/stride"
+license = "AGPL-3.0-or-later"
+description = "An extensible task menagment application that uses git as it's data store."
+
+[workspace.dependencies]
+# Repository Crates
+stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
+stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
+stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
+stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
+stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
+
+# Shared Dependencies
+flutter_rust_bridge = { version = "=2.9.0", default-features = false, features = [
+  "thread-pool",
+  "rust-async",
+  "user-utils",
+  "dart-opaque",
+  "chrono",
+  "uuid",
+  "anyhow",
+] }
+taskchampion = { version = "2.0.2", default-features = false, features = [
+  "encryption",
+  "server-sync",
+  "bundled",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+uuid = { version = "1.7", features = ["v7", "serde"] }
+chrono = { version = "0.4", features = ["serde", "now"] }
+anyhow = "1.0"
+git2 = { version = "0.20", default-features = false, features = [
+  "ssh",
+  "vendored-libgit2",
+  "vendored-openssl",
+] }
+base64 = "0.22"
+openssl = { version = "0.10", features = ["vendored"] }
+log = { version = "0.4" }
+env_logger = { version = "0.11", default-features = false }
+getrandom = "0.3"
+zeroize = { version = "1.0", features = ["zeroize_derive"] }
+dirs = "6.0"
+toml = "0.8"
+zip = { version = "2.2" }
+wasmi = "0.42.0"
+wasmi_wasi = "0.42.0"
+reqwest = { version = "0.12.12", features = ["blocking"] }
+
+[profile.release]
+# strip = "debug"
+opt-level = "z"
+lto = true
+codegen-units = 1
+
+[profile.release-debug]
+inherits = "release"
+debug = true
+strip = "none"
+
+[workspace.lints.rust]
+# rustc lint groups https://doc.rust-lang.org/rustc/lints/groups.html
+warnings = "warn"
+future_incompatible = { level = "warn", priority = -1 }
+let_underscore = { level = "warn", priority = -1 }
+nonstandard_style = { level = "warn", priority = -1 }
+rust_2018_compatibility = { level = "warn", priority = -1 }
+rust_2018_idioms = { level = "warn", priority = -1 }
+rust_2021_compatibility = { level = "warn", priority = -1 }
+unused = { level = "warn", priority = -1 }
+
+# rustc allowed-by-default lints https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html
+# missing_docs = "warn"
+macro_use_extern_crate = "warn"
+meta_variable_misuse = "warn"
+missing_abi = "warn"
+missing_copy_implementations = "warn"
+missing_debug_implementations = "warn"
+non_ascii_idents = "warn"
+noop_method_call = "warn"
+single_use_lifetimes = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_crate_dependencies = "warn"
+unused_import_braces = "warn"
+unused_lifetimes = "warn"
+unused_qualifications = "warn"
+variant_size_differences = "warn"
+
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(frb_expand)'] }
+
+[workspace.lints.rustdoc]
+# rustdoc lints https://doc.rust-lang.org/rustdoc/lints.html
+broken_intra_doc_links = "warn"
+private_intra_doc_links = "warn"
+missing_crate_level_docs = "warn"
+private_doc_tests = "warn"
+invalid_codeblock_attributes = "warn"
+invalid_rust_codeblocks = "warn"
+bare_urls = "warn"
+
+[workspace.lints.clippy]
+# clippy allowed by default
+dbg_macro = "warn"
+
+# clippy categories https://doc.rust-lang.org/clippy/
+all = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }

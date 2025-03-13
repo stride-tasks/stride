@@ -1,0 +1,118 @@
+name: Publish Release
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: 17
+  # https://github.com/android-actions/setup-android?tab=readme-ov-file#sdk-version-selection
+  CMDLINE_TOOLS_VERSION: 10406996 # 11.0
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Disable rustup auto-self-update
+        run: rustup set auto-self-update disable
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: ${{ env.CMDLINE_TOOLS_VERSION }}
+
+      # Workaround: https://github.com/android-actions/setup-android/issues/461
+      - name: Access Android SDK build-tools
+        run:
+          echo "$ANDROID_HOME/build-tools"/*/ | awk -F' ' '{ print $1 }' >>
+          $GITHUB_PATH
+
+      - name: Build APKs
+        run: |
+          # Use the same build dir, this speeds up the build process
+          export REUSE_BUILD=1
+          ./scripts/reproducible apk --release --split-per-abi
+          ./scripts/reproducible apk --release
+
+      - name: Archive mappings
+        run: |
+          mv app/build/reproducible/mapping/{release,mapping}
+          tar -czvf mapping.tar.gz --directory=app/build/reproducible/mapping mapping
+
+      - name: Sign APKs
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYALIAS: ${{ secrets.KEYALIAS }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          KEYPASS: ${{ secrets.KEYPASS }}
+        run: |
+          echo "$KEYSTORE" | base64 -d - > keystore.p12
+          for name in armeabi-v7a-release arm64-v8a-release x86_64-release release; do
+            apksigner sign \
+              --ks ./keystore.p12 \
+              --ks-key-alias "$KEYALIAS" \
+              --ks-pass env:KEYSTORE_PASS \
+              --key-pass env:KEYPASS \
+              --v1-signing-enabled true \
+              --v2-signing-enabled true \
+              --v3-signing-enabled true \
+              --out "app-${name}.apk" \
+              "app/build/reproducible/flutter-apk/app-${name}.apk"
+          done
+          rm keystore.p12
+
+      - name: Upload Arifact armeabi-v7a
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "app-armeabi-v7a-release.apk"
+          asset_name: stride-armeabi-v7a.apk
+          tag: ${{ github.ref }}
+
+      - name: Upload Arifact arm64-v8a
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "app-arm64-v8a-release.apk"
+          asset_name: stride-arm64-v8a.apk
+          tag: ${{ github.ref }}
+
+      - name: Upload Arifact x86_64
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "app-x86_64-release.apk"
+          asset_name: stride-x86_64.apk
+          tag: ${{ github.ref }}
+
+      - name: Upload Arifact Universal
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "app-release.apk"
+          asset_name: stride.apk
+          tag: ${{ github.ref }}
+
+      - name: Upload Arifact Mapping
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "mapping.tar.gz"
+          asset_name: mapping.tar.gz
+          tag: ${{ github.ref }}

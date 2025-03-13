@@ -1,0 +1,3 @@
+It allows creating and syncing tasks with any git provider (i.e. GitHub, GitLab, SourceHut, etc) or self-hosted server.
+
+WARNING: This is currently alpha, so <b>everything</b> is subject to change.

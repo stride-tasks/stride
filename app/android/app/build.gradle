@@ -1,0 +1,100 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+android {
+    namespace "org.stridetasks.stride"
+    compileSdk flutter.compileSdkVersion
+
+    // TODO: Comment out the line below when issue is fixed.
+    // ISSUE: https://github.com/flutter/flutter/issues/139427
+    //
+    // ndkVersion flutter.ndkVersion
+    ndkVersion "27.0.12077973"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // Unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId "org.stridetasks.stride"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {}
+
+// See: https://developer.android.com/build/configure-apk-splits
+import com.android.build.OutputFile
+
+// Map for the version code that gives each ABI a value.
+ext.abiCodes = ['armeabi-v7a': 1, 'arm64-v8a': 2, 'x86_64': 3]
+
+android.applicationVariants.all { variant ->
+  // Assigns a different version code for each output APK
+  // other than the universal APK.
+  variant.outputs.each { output ->
+    // Determines the ABI for this variant and returns the mapped value.
+    def baseAbiVersionCode = project.ext.abiCodes.get(output.getFilter(OutputFile.ABI))
+
+    // Because abiCodes.get() returns null for ABIs that are not mapped by ext.abiCodes,
+    // the following code doesn't override the version code for universal APKs.
+    // However, because you want universal APKs to have the lowest version code,
+    // this outcome is desirable.
+    if (baseAbiVersionCode != null) {
+
+      // Assigns the new version code to versionCodeOverride, which changes the
+      // version code for only the output APK, not for the variant itself. Skipping
+      // this step causes Gradle to use the value of variant.versionCode for the APK.
+      output.versionCodeOverride =
+            variant.versionCode * 10 + baseAbiVersionCode
+    }
+  }
+}

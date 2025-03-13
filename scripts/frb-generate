@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+set -x
+
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+PROJECT_DIR="$SCRIPTS_DIR/.."
+
+APPLICATION_DIR="$PROJECT_DIR/app"
+
+cd "$APPLICATION_DIR"
+
+# Regenerate frb bindings
+flutter_rust_bridge_codegen generate

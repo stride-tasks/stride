@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# Get location of the script
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+PROJECT_DIR="$SCRIPTS_DIR/.."
+
+cd "$PROJECT_DIR"
+
+if [ -z "$(command -v optipng)" ]; then
+  echo "ERROR: Missing optipng program, please install it!"
+fi
+
+if [ -z "$(command -v jpegoptim)" ]; then
+  echo "ERROR: Missing optipng program, please install it!"
+fi
+
+# -o4 (max -o7) is a good compromise between coputational time and space.
+# Further optimization gives diminishing returns.
+PNG_OPITMIZE_COMMAND='optipng --quiet -o4 -preserve'
+JPG_OPITMIZE_COMMAND='jpegoptim --quiet --strip-all -m76'
+
+# https://unix.stackexchange.com/questions/358270/find-files-that-are-not-in-gitignore
+find_files() {
+  INLINE_PROGRAM='
+    for f do
+      git check-ignore -q "$f" || echo "$f"
+    done
+  '
+  find . -type f -name "$1"  \
+        -a -not -path '*.git*'  \
+        -exec sh -c "$INLINE_PROGRAM" find-sh {} +
+}
+
+size_of() {
+  du -b "$1" | cut -f1
+}
+
+# https://stackoverflow.com/questions/44695878/how-to-calculate-percentage-in-shell-script
+# Native Posix solution using string manipulation (assumes integer inputs):
+percent() {
+  DP="$1"
+  SDC="$2"
+
+  # Special case when DP is zero.
+  [ "$DP" = "0" ] && echo "0.00" && return
+
+  #                                    # e.g. round down   e.g. round up
+  #                                    # DP=1 SDC=3        DP=2 SDC=3
+  Percent=$(( DP * 100000 / SDC + 5))  # Percent=33338     Percent=66671
+  Whole=${Percent%???}                 # Whole=33          Whole=66
+  Percent=${Percent#$Whole}            # Percent=338       Percent=671
+  Percent=$Whole.${Percent%?}          # Percent=33.33     Percent=66.67
+  echo "$Percent"
+}
+
+TOTAL=0
+TOTAL_SAVED=0
+
+optimize_files() {
+  FILTER="$1"
+  PROGRAM="$2"
+
+  echo -n "Processing $FILTER files:"
+
+  FILES="$(find_files "$FILTER")"
+  COUNT=$(echo "$FILES" | wc -l)
+
+  if [ "$COUNT" -eq 1 ]; then
+    echo " no files found!"
+    return
+  fi
+
+  echo ""
+
+  I=1
+
+  TOTAL_INNER=0
+  TOTAL_SAVED_INNER=0
+
+  for f in $FILES; do
+    printf "${COUNT}/%-2s $f ... " "$I"
+
+    SIZE="$(size_of "$f")"
+
+    $PROGRAM "$f"
+
+    NEW_SIZE="$(size_of "$f")"
+    DIFF=$(( $SIZE - $NEW_SIZE ))
+
+    echo "saved: $DIFF bytes ($(percent $DIFF $SIZE)%)"
+
+    TOTAL_INNER=$(( $TOTAL_INNER + $SIZE ))
+    TOTAL_SAVED_INNER=$(( $TOTAL_SAVED_INNER + $DIFF ))
+
+    I=$(( $I + 1 ))
+  done
+
+  echo "Total saved for $FILTER: $TOTAL_SAVED_INNER bytes ($(percent $TOTAL_SAVED_INNER $TOTAL_INNER)%)"
+  echo ""
+
+  TOTAL=$(( $TOTAL + $TOTAL_INNER ))
+  TOTAL_SAVED=$(( $TOTAL_SAVED + $TOTAL_SAVED_INNER ))
+}
+
+optimize_files '*.png'  "$PNG_OPITMIZE_COMMAND"
+optimize_files '*.jpg'  "$JPG_OPITMIZE_COMMAND"
+optimize_files '*.jpeg' "$JPG_OPITMIZE_COMMAND"
+
+echo "Total saved: $TOTAL_SAVED bytes ($(percent $TOTAL_SAVED $TOTAL)%)"
