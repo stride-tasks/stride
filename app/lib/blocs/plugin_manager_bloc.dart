@@ -56,10 +56,11 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   void _initTimers(List<PluginManifestPluginState> plugins) {
     for (final plugin in plugins) {
       final name = pluginInstanceManifestName(manifest: plugin);
+      final enabled = pluginInstanceManifestEnabled(manifest: plugin);
       final event = pluginInstanceManifestEvent(manifest: plugin);
       final timer = event.timer;
 
-      if (timer == null) {
+      if (!enabled || timer == null) {
         final record = _timers.remove(name);
         record?.timer.cancel();
         continue;
