@@ -48,7 +48,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
 
     on<PluginManagerFetchEvent>((event, emit) async {
       final plugins = await pm.pluginManifests();
-      _initTimers(state.plugins);
+      _initTimers(plugins);
       emit(PluginManagerState(plugins: plugins));
     });
   }
