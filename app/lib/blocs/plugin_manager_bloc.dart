@@ -54,11 +54,14 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   }
 
   void _initTimers(List<PluginManifestPluginState> plugins) {
+    final pluginNames = <String>[];
     for (final plugin in plugins) {
       final name = pluginInstanceManifestName(manifest: plugin);
       final enabled = pluginInstanceManifestEnabled(manifest: plugin);
       final event = pluginInstanceManifestEvent(manifest: plugin);
       final timer = event.timer;
+
+      pluginNames.add(name);
 
       if (!enabled || timer == null) {
         final record = _timers.remove(name);
@@ -81,12 +84,21 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
         duration: duration,
         timer: Timer.periodic(
           duration,
-          (timer) => pm.emit(
+          (timer) async => pm.emit(
             event: HostEvent.timer(interval: interval),
             pluginName: name,
           ),
         ),
       );
+    }
+
+    for (final name in _timers.keys.toList()) {
+      if (pluginNames.contains(name)) {
+        continue;
+      }
+
+      final record = _timers.remove(name);
+      record?.timer.cancel();
     }
   }
 
