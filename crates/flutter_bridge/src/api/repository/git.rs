@@ -1283,7 +1283,7 @@ fn with_authentication(
             ));
         };
 
-        if host.key.as_ref() != host_key {
+        if host.key != host_key {
             *certificate_error.borrow_mut() = Some(
                 ErrorKind::MissmatchRemoteKey {
                     expected: host.key.clone().into_boxed_str(),
