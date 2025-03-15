@@ -1,3 +1,5 @@
+//! Core component library of a stride plugin.
+
 use std::marker::PhantomData;
 
 use stride_core::constant::StorageErrorCode;
