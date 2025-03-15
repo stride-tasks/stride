@@ -16,6 +16,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 stride_core = { workspace = true, features = ["taskchampion"] }
+stride_logging.workspace = true
 stride_crypto.workspace = true
 stride_plugin_manager.workspace = true
 
@@ -28,7 +29,6 @@ chrono.workspace = true
 git2.workspace = true
 base64.workspace = true
 log.workspace = true
-env_logger.workspace = true
 getrandom.workspace = true
 
 [dev-dependencies]

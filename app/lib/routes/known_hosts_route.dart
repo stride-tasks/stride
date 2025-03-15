@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/utils/functions.dart';
 
@@ -97,7 +97,7 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
                           ),
                         );
                     Navigator.of(context).pop();
-                    Logger.trace(message: 'Known host deleted');
+                    logging.trace(message: 'Known host deleted');
                     return true;
                   },
                 );

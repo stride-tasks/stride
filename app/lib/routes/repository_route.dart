@@ -7,7 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -328,7 +328,7 @@ class RepositoryRoute extends StatelessWidget {
 
       final file = result.files.firstOrNull;
       if (file == null) {
-        Logger.error(message: 'import file not selected.');
+        logging.error(message: 'import file not selected.');
         return;
       }
 

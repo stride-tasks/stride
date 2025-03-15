@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
@@ -53,7 +53,7 @@ class PluginListRoute extends StatelessWidget {
 
             final file = result.files.firstOrNull;
             if (file == null) {
-              Logger.error(message: 'plugin file not selected.');
+              logging.error(message: 'plugin file not selected.');
               return;
             }
 
@@ -136,7 +136,7 @@ class PluginListRoute extends StatelessWidget {
                   () async => context.read<PluginManagerBloc>().remove(name),
                 );
             Navigator.of(context).pop();
-            Logger.trace(message: 'Plugin $name deleted');
+            logging.trace(message: 'Plugin $name deleted');
             return true;
           },
         );

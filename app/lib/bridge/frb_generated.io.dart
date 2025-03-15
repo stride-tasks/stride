@@ -351,9 +351,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TaskStatus> dco_decode_list_task_status(dynamic raw);
 
   @protected
-  Logger dco_decode_logger(dynamic raw);
-
-  @protected
   ManifestEvent dco_decode_manifest_event(dynamic raw);
 
   @protected
@@ -762,9 +759,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TaskStatus> sse_decode_list_task_status(SseDeserializer deserializer);
-
-  @protected
-  Logger sse_decode_logger(SseDeserializer deserializer);
 
   @protected
   ManifestEvent sse_decode_manifest_event(SseDeserializer deserializer);
@@ -1208,9 +1202,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_task_status(
       List<TaskStatus> self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_logger(Logger self, SseSerializer serializer);
 
   @protected
   void sse_encode_manifest_event(ManifestEvent self, SseSerializer serializer);

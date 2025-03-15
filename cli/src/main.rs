@@ -13,7 +13,6 @@ use stride_core::event::{HostEvent, PluginEvent};
 use stride_flutter_bridge::{
     api::{
         filter::Filter,
-        logging::Logger,
         repository::{
             StrideRepository,
             git::TaskStorage,
@@ -215,7 +214,7 @@ fn main() -> anyhow::Result<()> {
                         plugin_name,
                         reason,
                     } => {
-                        Logger::error(&format!("Disabling plugin {plugin_name}: {reason}"));
+                        log::error!("Disabling plugin {plugin_name}: {reason}");
                         plugin_manager.disable(&plugin_name, Some(reason))?;
                         continue;
                     }

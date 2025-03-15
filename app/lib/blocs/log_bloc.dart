@@ -2,7 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/utils/classes.dart';
 
 @immutable
@@ -61,7 +61,7 @@ class LogBloc extends Bloc<LogEvent, LogState> {
         event.stackTrace,
         message: event.message,
       );
-      Logger.error(message: message);
+      logging.error(message: message);
       emit(
         LogState(
           message: message,

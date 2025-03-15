@@ -13,38 +13,22 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `init_logger`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `LogOutput`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `flush`, `fmt`, `write`
-
 /// # Panics
 ///
 /// If the logger file cannot be read.
 Future<String> getLogs() => RustLib.instance.api.crateApiLoggingGetLogs();
 
-class Logger {
-  const Logger();
+Future<void> debug({required String message}) =>
+    RustLib.instance.api.crateApiLoggingDebug(message: message);
 
-  static Future<void> debug({required String message}) =>
-      RustLib.instance.api.crateApiLoggingLoggerDebug(message: message);
+Future<void> trace({required String message}) =>
+    RustLib.instance.api.crateApiLoggingTrace(message: message);
 
-  static Future<void> error({required String message}) =>
-      RustLib.instance.api.crateApiLoggingLoggerError(message: message);
+Future<void> info({required String message}) =>
+    RustLib.instance.api.crateApiLoggingInfo(message: message);
 
-  static Future<void> info({required String message}) =>
-      RustLib.instance.api.crateApiLoggingLoggerInfo(message: message);
+Future<void> warn({required String message}) =>
+    RustLib.instance.api.crateApiLoggingWarn(message: message);
 
-  static Future<void> trace({required String message}) =>
-      RustLib.instance.api.crateApiLoggingLoggerTrace(message: message);
-
-  static Future<void> warn({required String message}) =>
-      RustLib.instance.api.crateApiLoggingLoggerWarn(message: message);
-
-  @override
-  int get hashCode => 0;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Logger && runtimeType == other.runtimeType;
-}
+Future<void> error({required String message}) =>
+    RustLib.instance.api.crateApiLoggingError(message: message);

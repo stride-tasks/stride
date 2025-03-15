@@ -18,6 +18,7 @@ use crate::{
     ErrorKind, RustError, ToBase64,
     api::{
         error::{ExportError, ImportError},
+        logging,
         settings::{Settings, application_support_path},
     },
     base64_decode,
@@ -33,7 +34,6 @@ use git2::{
 
 use crate::api::{
     filter::Filter,
-    logging::Logger,
     settings::{EncryptionKey, SshKey, ssh_key},
 };
 
@@ -321,7 +321,7 @@ impl TaskStorage {
             let key = EncryptionKey::generate();
             repository.encryption = Some(key.clone());
             Settings::save(settings.clone())?;
-            Logger::info("repository does not have encryption key, generating new encryption key");
+            log::info!("repository does not have encryption key, generating new encryption key");
             key
         };
 
@@ -958,7 +958,7 @@ impl TaskStorage {
         // https://github.com/libgit2/libgit2/issues/4286
         // The '+' means force push.
         if force {
-            Logger::info(&format!("Force pushing: {branch_ref_name}"));
+            logging::info(&format!("Force pushing: {branch_ref_name}"));
             branch_ref_name = format!("+{branch_ref_name}");
         }
 

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -49,13 +49,13 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
           builder: (context, snapshot) {
             if (snapshot.error is RustError) {
               final error = snapshot.error! as RustError;
-              Logger.error(
+              logging.error(
                 message:
                     'could not load the SSH keys: ${error.toErrorString()}',
               );
               Navigator.of(context).pop();
             } else if (snapshot.hasError) {
-              Logger.error(
+              logging.error(
                 message: 'could not load the SSH keys: ${snapshot.error!}',
               );
               Navigator.of(context).pop();
@@ -75,7 +75,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   label: const Text('Generate Key'),
                   onPressed: () async {
                     final sshKey = await SshKey.generate();
-                    Logger.trace(
+                    logging.trace(
                       message: 'SSH Key generated with UUID: ${sshKey.uuid}',
                     );
                     setState(_reset);
@@ -167,7 +167,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                           () async => SshKey.removeKey(uuid: key.uuid),
                         );
                     if (context.mounted) Navigator.of(context).pop();
-                    Logger.trace(
+                    logging.trace(
                       message: 'SSH Key deleted with UUID: ${key.uuid}',
                     );
                     setState(_reset);

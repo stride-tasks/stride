@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:uuid/uuid.dart';
 
@@ -48,7 +48,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     _streamSubscription = _stream.listen(
       (event) => add(SettingsRefreshEvent(settings: event)),
       onError: (Object error, StackTrace stackTrace) {
-        Logger.error(
+        logging.error(
           message:
               'ERROR: settings stream error: $error\n\nDart Backtrace:\n$stackTrace',
         );

@@ -16,8 +16,6 @@ use super::{
     filter::{Filter, FilterSelection},
 };
 
-use super::logging::init_logger;
-
 pub(crate) static APPLICATION_STATE_INSTANCE: LazyLock<Mutex<State>> =
     LazyLock::new(Mutex::default);
 
@@ -387,7 +385,7 @@ impl Settings {
 
         std::fs::create_dir_all(&ssh_path)?;
 
-        init_logger(Path::new(&paths.log_path));
+        stride_logging::init(Path::new(&paths.log_path));
 
         let filepath = Path::new(&paths.support_path).join("settings.json");
 
