@@ -106,6 +106,26 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
     try {
       await pm.processHostEvent();
     } on RustError catch (error, stackTrace) {
+      if (error.isOutOfFuelTrapCode()) {
+        final pluginName = error.pluginName();
+        if (pluginName != null) {
+          disable(
+            pluginName,
+            reason: 'plugin exceeded computation limit',
+          );
+
+          logBloc.add(
+            LogErrorEvent(
+              error: error,
+              stackTrace: stackTrace,
+              message: 'plugin ($pluginName)',
+            ),
+          );
+
+          return;
+        }
+      }
+
       logBloc.add(
         LogErrorEvent(
           error: error,
