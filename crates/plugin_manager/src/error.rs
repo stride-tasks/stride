@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use wasmi::core::ValType;
+use wasmi::core::{TrapCode, ValType};
 use wasmi_wasi::wasi_common;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -31,8 +31,35 @@ pub enum Error {
     },
     Linker(wasmi::errors::LinkerError),
     Instantiation(wasmi::errors::InstantiationError),
-    Wasmi(wasmi::Error),
+    Wasmi {
+        plugin_name: Box<str>,
+        error: wasmi::Error,
+    },
     Wasi(wasi_common::Error),
+}
+
+impl Error {
+    #[must_use]
+    pub fn as_trap_code(&self) -> Option<TrapCode> {
+        let Error::Wasmi { error, .. } = self else {
+            return None;
+        };
+        error.as_trap_code()
+    }
+
+    #[must_use]
+    pub fn is_out_of_fuel_trap_code(&self) -> bool {
+        self.as_trap_code()
+            .is_some_and(|trap| matches!(trap, TrapCode::OutOfFuel))
+    }
+
+    #[must_use]
+    pub fn plugin_name(&self) -> Option<&str> {
+        let Error::Wasmi { plugin_name, .. } = self else {
+            return None;
+        };
+        Some(plugin_name.as_ref())
+    }
 }
 
 fn wasmi_valtype_to_rust_type(ty: &ValType) -> &str {
@@ -126,7 +153,9 @@ impl std::fmt::Display for Error {
             }
             Self::Linker(error) => write!(f, "linker error: {error}"),
             Self::Instantiation(error) => write!(f, "instantiation error: {error}"),
-            Self::Wasmi(error) => write!(f, "wasmi error: {error}"),
+            Self::Wasmi { plugin_name, error } => {
+                write!(f, "wasmi error in {plugin_name}: {error}")
+            }
             Self::Wasi(error) => write!(f, "wasi error: {error}"),
         }
     }
@@ -151,8 +180,16 @@ impl From<wasmi::errors::InstantiationError> for Error {
         Self::Instantiation(error)
     }
 }
-impl From<wasmi::Error> for Error {
-    fn from(error: wasmi::Error) -> Self {
-        Self::Wasmi(error)
+
+pub(crate) trait ToPluginError<T>: Sized {
+    fn to_error(self, plugin_name: &str) -> Result<T>;
+}
+
+impl<T> ToPluginError<T> for std::result::Result<T, wasmi::Error> {
+    fn to_error(self, plugin_name: &str) -> Result<T> {
+        self.map_err(|error| Error::Wasmi {
+            plugin_name: plugin_name.into(),
+            error,
+        })
     }
 }

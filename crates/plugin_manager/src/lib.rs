@@ -11,6 +11,7 @@ use std::{
     path::Path,
 };
 
+use error::ToPluginError;
 use logging::PluginLogger;
 use manifest::{PluginManifest, PluginState};
 use stride_core::{
@@ -177,8 +178,8 @@ impl PluginManager {
         self.plugins.get_mut(plugin_name)
     }
 
-    fn validate_wasm_code(&self, _manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
-        let module = Module::new(&self.engine, wasm)?;
+    fn validate_wasm_code(&self, manifest: &PluginManifest, wasm: &[u8]) -> Result<()> {
+        let module = Module::new(&self.engine, wasm).to_error(&manifest.name)?;
 
         let mut has_memory_export = false;
         for export in module.exports() {
@@ -576,25 +577,36 @@ impl PluginManager {
         linker.define("env", "stride__storage_remove", stride_storage_remove)?;
 
         let instance = linker
-            .instantiate(&mut store, &module)?
+            .instantiate(&mut store, &module)
+            .to_error(&plugin.manifest.name)?
             .ensure_no_start(&mut store)?;
 
-        let stride_allocate = instance.get_typed_func::<i32, i32>(&store, "stride__allocate")?;
+        let stride_allocate = instance
+            .get_typed_func::<i32, i32>(&store, "stride__allocate")
+            .to_error(&plugin.manifest.name)?;
 
-        let stride_deallocate =
-            instance.get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")?;
+        let stride_deallocate = instance
+            .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
+            .to_error(&plugin.manifest.name)?;
 
-        let stride_init = instance.get_typed_func::<(), ()>(&store, "stride__init")?;
+        let stride_init = instance
+            .get_typed_func::<(), ()>(&store, "stride__init")
+            .to_error(&plugin.manifest.name)?;
 
-        let event_handler =
-            instance.get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)?;
+        let event_handler = instance
+            .get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)
+            .to_error(&plugin.manifest.name)?;
 
-        store.set_fuel(100_000)?;
-        stride_init.call(&mut store, ())?;
+        store.set_fuel(100_000).to_error(&plugin.manifest.name)?;
+        stride_init
+            .call(&mut store, ())
+            .to_error(&plugin.manifest.name)?;
 
         let event_data = serde_json::to_string(&event).expect("shouldn't fail");
-        store.set_fuel(100_000)?;
-        let ret = stride_allocate.call(&mut store, event_data.len() as i32)? as usize;
+        store.set_fuel(100_000).to_error(&plugin.manifest.name)?;
+        let ret = stride_allocate
+            .call(&mut store, event_data.len() as i32)
+            .to_error(&plugin.manifest.name)? as usize;
 
         let memory = instance
             .get_memory(&mut store, "memory")
@@ -603,10 +615,16 @@ impl PluginManager {
             .copy_from_slice(event_data.as_bytes());
 
         // TODO: Add computation limit.
-        store.set_fuel(100_000_000_000)?;
-        event_handler.call(&mut store, (ret as i32, event_data.len() as i32))?;
+        store
+            .set_fuel(100_000_000_000)
+            .to_error(&plugin.manifest.name)?;
+        event_handler
+            .call(&mut store, (ret as i32, event_data.len() as i32))
+            .to_error(&plugin.manifest.name)?;
 
-        stride_deallocate.call(&mut store, (ret as i32, event_data.len() as i32))?;
+        stride_deallocate
+            .call(&mut store, (ret as i32, event_data.len() as i32))
+            .to_error(&plugin.manifest.name)?;
 
         if let Some(storage) = store.data_mut().storage.take() {
             if storage.needs_save {

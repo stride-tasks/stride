@@ -23,5 +23,9 @@ abstract class RustError implements RustOpaqueInterface {
 
   bool isKeyStoreVerification();
 
+  bool isOutOfFuelTrapCode();
+
+  String? pluginName();
+
   String toErrorString();
 }

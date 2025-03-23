@@ -265,6 +265,26 @@ impl RustError {
     pub fn to_error_string(&self) -> String {
         self.to_string()
     }
+
+    #[frb(sync)]
+    #[must_use]
+    pub fn is_out_of_fuel_trap_code(&self) -> bool {
+        let ErrorKind::Plugin(error) = self.repr.as_ref() else {
+            return false;
+        };
+
+        error.is_out_of_fuel_trap_code()
+    }
+
+    #[frb(sync)]
+    #[must_use]
+    pub fn plugin_name(&self) -> Option<String> {
+        let ErrorKind::Plugin(error) = self.repr.as_ref() else {
+            return None;
+        };
+
+        error.plugin_name().map(Into::into)
+    }
 }
 
 impl<T: Into<ErrorKind>> From<T> for RustError {
