@@ -180,6 +180,11 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
     await pm.emitBroadcast(event: event);
   }
 
+  Future<void> disable(String pluginName, {String? reason}) async {
+    await pm.disable(pluginName: pluginName, reason: reason);
+    add(PluginManagerFetchEvent());
+  }
+
   Future<void> toggle(String pluginName) async {
     await pm.toggle(pluginName: pluginName);
     add(PluginManagerFetchEvent());
