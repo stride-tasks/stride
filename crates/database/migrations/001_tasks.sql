@@ -53,6 +53,15 @@ CREATE TABLE annotation_table (
     ON DELETE CASCADE
 ) STRICT;
 
+CREATE TABLE uda_table (
+    uda_id INTEGER PRIMARY KEY,
+    uda_task_id INTEGER NOT NULL,
+    uda_key TEXT NOT NULL,
+    uda_value TEXT NOT NULL DEFAULT '',
+
+    FOREIGN KEY (uda_task_id) REFERENCES task_table (task_id) ON DELETE CASCADE
+) STRICT;
+
 CREATE TABLE tag_table (
     tag_id INTEGER PRIMARY KEY,
     tag_name TEXT NOT NULL,
@@ -85,6 +94,7 @@ VALUES
 
 -- SQL: down
 
+DROP TABLE IF EXISTS uda_table;
 DROP TABLE IF EXISTS annotation_table;
 DROP TABLE IF EXISTS task_tag_table;
 DROP TABLE IF EXISTS tag_table;
