@@ -56,6 +56,7 @@ CREATE TABLE annotation_table (
 CREATE TABLE uda_table (
     uda_id INTEGER PRIMARY KEY,
     uda_task_id INTEGER NOT NULL,
+    uda_namespace TEXT NOT NULL DEFAULT '',
     uda_key TEXT NOT NULL,
     uda_value TEXT NOT NULL DEFAULT '',
 
