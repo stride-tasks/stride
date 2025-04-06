@@ -18,8 +18,7 @@ CREATE TABLE project_table (
 ) STRICT;
 
 CREATE TABLE task_table (
-    task_id INTEGER PRIMARY KEY,
-    task_uuid BLOB NOT NULL UNIQUE CHECK (length(task_uuid) = 16),
+    task_id BLOB PRIMARY KEY CHECK (length(task_id) = 16),
     task_title TEXT NOT NULL,
     task_entry INTEGER NOT NULL DEFAULT (unixepoch('now')),
     task_status_id INTEGER NOT NULL DEFAULT 0,
@@ -28,7 +27,7 @@ CREATE TABLE task_table (
     task_modified INTEGER,
     task_due INTEGER,
     task_wait INTEGER,
-    task_parent_id INTEGER,
+    task_parent_task_id BLOB,
 
     FOREIGN KEY (task_status_id) REFERENCES status_table (status_id)
     ON DELETE SET NULL,
@@ -39,13 +38,13 @@ CREATE TABLE task_table (
     FOREIGN KEY (task_project_id) REFERENCES project_table (project_id)
     ON DELETE SET NULL,
 
-    FOREIGN KEY (task_parent_id) REFERENCES task_table (task_id)
+    FOREIGN KEY (task_parent_task_id) REFERENCES task_table (task_id)
     ON DELETE SET NULL
 ) STRICT;
 
 CREATE TABLE annotation_table (
     annotation_id INTEGER PRIMARY KEY,
-    annotation_task_id INTEGER NOT NULL,
+    annotation_task_id BLOB NOT NULL,
     annotation_entry INTEGER NOT NULL DEFAULT (unixepoch('now')),
     annotation_text TEXT NOT NULL,
 
@@ -55,7 +54,7 @@ CREATE TABLE annotation_table (
 
 CREATE TABLE uda_table (
     uda_id INTEGER PRIMARY KEY,
-    uda_task_id INTEGER NOT NULL,
+    uda_task_id BLOB NOT NULL,
     uda_namespace TEXT NOT NULL DEFAULT '',
     uda_key TEXT NOT NULL,
     uda_value TEXT NOT NULL DEFAULT '',
@@ -70,7 +69,7 @@ CREATE TABLE tag_table (
 ) STRICT;
 
 CREATE TABLE task_tag_table (
-    task_id INTEGER NOT NULL,
+    task_id BLOB NOT NULL,
     tag_id INTEGER NOT NULL,
 
     PRIMARY KEY (task_id, tag_id),
