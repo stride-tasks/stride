@@ -1,13 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/routes/encryption_key_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -283,60 +278,60 @@ class RepositoryRoute extends StatelessWidget {
     );
   }
 
-  Future<void> _exportTasks(BuildContext context) async {
-    final taskBloc = context.read<TaskBloc>();
-    final logBloc = context.read<LogBloc>();
+  // Future<void> _exportTasks(BuildContext context) async {
+  //   final taskBloc = context.read<TaskBloc>();
+  //   final logBloc = context.read<LogBloc>();
 
-    await logBloc.catch_(message: 'export tasks', () async {
-      final contents = await taskBloc.repository()?.export_() ?? '';
-      final filepath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export Tasks',
-        fileName: 'tasks.json',
-        bytes: const Utf8Encoder().convert(contents),
-      );
+  //   await logBloc.catch_(message: 'export tasks', () async {
+  //     final contents = await taskBloc.repository()?.export_() ?? '';
+  //     final filepath = await FilePicker.platform.saveFile(
+  //       dialogTitle: 'Export Tasks',
+  //       fileName: 'tasks.json',
+  //       bytes: const Utf8Encoder().convert(contents),
+  //     );
 
-      // On mobile `bytes` saves the file, and doing a write later can error,
-      // due to permission errors. So return early.
-      if (Platform.isAndroid || Platform.isIOS) {
-        return;
-      }
+  //     // On mobile `bytes` saves the file, and doing a write later can error,
+  //     // due to permission errors. So return early.
+  //     if (Platform.isAndroid || Platform.isIOS) {
+  //       return;
+  //     }
 
-      // Canceled.
-      if (filepath == null) {
-        return;
-      }
+  //     // Canceled.
+  //     if (filepath == null) {
+  //       return;
+  //     }
 
-      // On Desktop `bytes` does not write, it only gives the path to the
-      // non-existant file. So we have to write to it directly.
-      await File(filepath).writeAsString(contents, flush: true);
-    });
-  }
+  //     // On Desktop `bytes` does not write, it only gives the path to the
+  //     // non-existant file. So we have to write to it directly.
+  //     await File(filepath).writeAsString(contents, flush: true);
+  //   });
+  // }
 
-  Future<void> _importTasks(BuildContext context) async {
-    final taskBloc = context.read<TaskBloc>();
-    final logBloc = context.read<LogBloc>();
+  // Future<void> _importTasks(BuildContext context) async {
+  //   final taskBloc = context.read<TaskBloc>();
+  //   final logBloc = context.read<LogBloc>();
 
-    await logBloc.catch_(message: 'import tasks', () async {
-      // TODO: Maybe allow importing multiple files.
-      final result = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Import tasks',
-      );
+  //   await logBloc.catch_(message: 'import tasks', () async {
+  //     // TODO: Maybe allow importing multiple files.
+  //     final result = await FilePicker.platform.pickFiles(
+  //       dialogTitle: 'Import tasks',
+  //     );
 
-      if (result == null) {
-        return;
-      }
+  //     if (result == null) {
+  //       return;
+  //     }
 
-      final file = result.files.firstOrNull;
-      if (file == null) {
-        logging.error(message: 'import file not selected.');
-        return;
-      }
+  //     final file = result.files.firstOrNull;
+  //     if (file == null) {
+  //       logging.error(message: 'import file not selected.');
+  //       return;
+  //     }
 
-      final content = await file.xFile.readAsString();
+  //     final content = await file.xFile.readAsString();
 
-      taskBloc.repository()?.import_(content: content);
-      taskBloc.repository()?.addAndCommit(message: r'$IMPORT');
-      taskBloc.add(TaskFetchEvent());
-    });
-  }
+  //     taskBloc.repository()?.import_(content: content);
+  //     taskBloc.repository()?.addAndCommit(message: r'$IMPORT');
+  //     taskBloc.add(TaskFetchEvent());
+  //   });
+  // }
 }

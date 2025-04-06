@@ -293,7 +293,7 @@ fn default_repository_name() -> String {
 
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Repository {
+pub struct RepositorySpecification {
     #[serde(default = "Uuid::now_v7")]
     pub uuid: Uuid,
 
@@ -316,7 +316,7 @@ pub struct Repository {
     pub encryption: Option<EncryptionKey>,
 }
 
-impl Default for Repository {
+impl Default for RepositorySpecification {
     fn default() -> Self {
         Self {
             uuid: Uuid::now_v7(),
@@ -350,7 +350,7 @@ pub struct Settings {
     pub current_repository: Option<Uuid>,
 
     #[serde(default)]
-    pub repositories: Vec<Repository>,
+    pub repositories: Vec<RepositorySpecification>,
 }
 
 impl Default for Settings {
@@ -434,14 +434,17 @@ impl Settings {
         *stream = Some(stream_sink);
     }
 
-    pub(crate) fn repository(&self, uuid: Uuid) -> Result<&Repository, RustError> {
+    pub(crate) fn repository(&self, uuid: Uuid) -> Result<&RepositorySpecification, RustError> {
         Ok(self
             .repositories
             .iter()
             .find(|repository| repository.uuid == uuid)
             .ok_or(ErrorKind::RepositoryNotFound)?)
     }
-    pub(crate) fn repository_mut(&mut self, uuid: Uuid) -> Result<&mut Repository, RustError> {
+    pub(crate) fn repository_mut(
+        &mut self,
+        uuid: Uuid,
+    ) -> Result<&mut RepositorySpecification, RustError> {
         Ok(self
             .repositories
             .iter_mut()

@@ -121,8 +121,8 @@ class EncryptionKey {
 }
 
 @freezed
-class Repository with _$Repository {
-  const factory Repository({
+class RepositorySpecification with _$RepositorySpecification {
+  const factory RepositorySpecification({
     required UuidValue uuid,
     required String name,
     required String origin,
@@ -131,10 +131,10 @@ class Repository with _$Repository {
     required String branch,
     UuidValue? sshKeyUuid,
     EncryptionKey? encryption,
-  }) = _Repository;
-  const Repository._();
-  static Future<Repository> default_() =>
-      RustLib.instance.api.crateApiSettingsRepositoryDefault();
+  }) = _RepositorySpecification;
+  const RepositorySpecification._();
+  static Future<RepositorySpecification> default_() =>
+      RustLib.instance.api.crateApiSettingsRepositorySpecificationDefault();
 }
 
 @freezed
@@ -147,7 +147,7 @@ class Settings with _$Settings {
     required List<Filter> filters,
     FilterSelection? selectedFilter,
     UuidValue? currentRepository,
-    required List<Repository> repositories,
+    required List<RepositorySpecification> repositories,
   }) = _Settings;
   static Stream<Settings> createStream() =>
       RustLib.instance.api.crateApiSettingsSettingsCreateStream();

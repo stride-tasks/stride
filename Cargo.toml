@@ -3,10 +3,11 @@ resolver = "3"
 members = [
   "crates/core",
   "crates/logging",
-  "crates/flutter_bridge",
+  "crates/database",
   "crates/crypto",
   "crates/plugin",
   "crates/plugin_manager",
+  "crates/flutter_bridge",
   "cli",
 ]
 
@@ -24,11 +25,12 @@ description = "An extensible task menagment application that uses git as it's da
 [workspace.dependencies]
 # Repository Crates
 stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
-stride_logging = { version = "~0.1.0", path = "crates/logging", default-features = false }
-stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
+stride_logging = { version = "~0.1.0", path = "crates/logging" }
+stride_database = { version = "~0.1.0", path = "crates/database" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
 stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
 stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
+stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 
 # Shared Dependencies
 flutter_rust_bridge = { version = "=2.9.0", default-features = false, features = [
@@ -40,11 +42,12 @@ flutter_rust_bridge = { version = "=2.9.0", default-features = false, features =
   "uuid",
   "anyhow",
 ] }
-taskchampion = { version = "2.0.2", default-features = false, features = [
+taskchampion = { version = "2.0.3", default-features = false, features = [
   "encryption",
   "server-sync",
   "bundled",
 ] }
+rusqlite = { version = "0.32.1", features = ["bundled", "uuid", "array"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 uuid = { version = "1.16", features = ["v7", "serde"] }

@@ -1650,6 +1650,7 @@ dependencies = [
  "hashlink",
  "libsqlite3-sys",
  "smallvec",
+ "uuid",
 ]
 
 [[package]]
@@ -1869,6 +1870,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_database"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+ "stride_core",
+ "uuid",
+]
+
+[[package]]
 name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
@@ -1883,6 +1893,7 @@ dependencies = [
  "serde_json",
  "stride_core",
  "stride_crypto",
+ "stride_database",
  "stride_logging",
  "stride_plugin_manager",
  "taskchampion",

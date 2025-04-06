@@ -131,7 +131,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
             settings: settings.copyWith(
               repositories: settings.repositories.toList()
                 ..add(
-                  Repository(
+                  RepositorySpecification(
                     uuid: repositoryUuid,
                     name: _nameController.text,
                     origin: _originController.text,

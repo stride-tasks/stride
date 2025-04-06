@@ -14,13 +14,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:stride/bridge/api/backend.dart';
+import 'package:stride/bridge/api/backend/git.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/logging.dart';
 import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/api/plugin_manager.dart';
 import 'package:stride/bridge/api/repository.dart';
-import 'package:stride/bridge/api/repository/git.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/frb_generated.io.dart'
@@ -78,7 +79,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   @override
   Future<void> executeRustInitializers() async {
-    await api.crateApiRepositoryGitInitApp();
+    await api.crateApiBackendGitInitApp();
   }
 
   @override
@@ -89,7 +90,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.9.0';
 
   @override
-  int get rustContentHash => -652290644;
+  int get rustContentHash => -323355314;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -112,6 +113,29 @@ abstract class RustLibApi extends BaseApi {
   HostEvent strideCoreEventHostEventTaskSync();
 
   HostEvent strideCoreEventHostEventTimer({required int interval});
+
+  Future<List<Task>> crateApiRepositoryRepositoryAllTasks(
+      {required Repository that, required Filter filter});
+
+  Future<void> crateApiRepositoryRepositoryInsertTask(
+      {required Repository that, required Task task});
+
+  Repository crateApiRepositoryRepositoryOpen({required UuidValue uuid});
+
+  Future<Task?> crateApiRepositoryRepositoryPurgeTaskById(
+      {required Repository that, required UuidValue id});
+
+  Future<Task?> crateApiRepositoryRepositoryTaskById(
+      {required Repository that, required UuidValue id});
+
+  Future<List<Task>> crateApiRepositoryRepositoryTaskQuery(
+      {required Repository that, required TaskQuery query});
+
+  Future<List<Task>> crateApiRepositoryRepositoryTasksByStatus(
+      {required Repository that, required Set<TaskStatus> status});
+
+  Future<void> crateApiRepositoryRepositoryUpdateTask(
+      {required Repository that, required Task task});
 
   Host? crateApiErrorRustErrorAsUnknownHost({required RustError that});
 
@@ -139,71 +163,67 @@ abstract class RustLibApi extends BaseApi {
 
   UuidValue crateApiSettingsSshKeyUuid({required SshKey that});
 
-  Future<void> crateApiRepositoryGitTaskStorageAdd(
+  Future<void> crateApiBackendGitTaskStorageAdd(
       {required TaskStorage that, required Task task});
 
-  Future<bool> crateApiRepositoryGitTaskStorageAddAndCommit(
+  Future<bool> crateApiBackendGitTaskStorageAddAndCommit(
       {required TaskStorage that, required String message});
 
-  Future<void> crateApiRepositoryGitTaskStorageCheckout(
+  Future<void> crateApiBackendGitTaskStorageCheckout(
       {required TaskStorage that});
 
-  Future<void> crateApiRepositoryGitTaskStorageClear(
+  Future<void> crateApiBackendGitTaskStorageClear({required TaskStorage that});
+
+  Future<void> crateApiBackendGitTaskStorageCloneRepository(
       {required TaskStorage that});
 
-  Future<void> crateApiRepositoryGitTaskStorageCloneRepository(
+  Future<void> crateApiBackendGitTaskStorageCommit({required TaskStorage that});
+
+  Future<void> crateApiBackendGitTaskStorageDeleteAll(
       {required TaskStorage that});
 
-  Future<void> crateApiRepositoryGitTaskStorageCommit(
+  Future<String> crateApiBackendGitTaskStorageExport(
       {required TaskStorage that});
 
-  Future<void> crateApiRepositoryGitTaskStorageDeleteAll(
-      {required TaskStorage that});
-
-  Future<String> crateApiRepositoryGitTaskStorageExport(
-      {required TaskStorage that});
-
-  Future<void> crateApiRepositoryGitTaskStorageForceHardReset(
+  Future<void> crateApiBackendGitTaskStorageForceHardReset(
       {required TaskStorage that, required Oid commit});
 
-  Future<void> crateApiRepositoryGitTaskStorageImport(
+  Future<void> crateApiBackendGitTaskStorageImport(
       {required TaskStorage that, required String content});
 
-  TaskStorage crateApiRepositoryGitTaskStorageLoad({required UuidValue uuid});
+  TaskStorage crateApiBackendGitTaskStorageLoad({required UuidValue uuid});
 
-  Future<List<CommitItem>?> crateApiRepositoryGitTaskStorageLog(
+  Future<List<CommitItem>?> crateApiBackendGitTaskStorageLog(
       {required TaskStorage that, Oid? oid, int? n});
 
-  TaskStorage crateApiRepositoryGitTaskStorageNew(
+  TaskStorage crateApiBackendGitTaskStorageNew(
       {required UuidValue repositoryUuid,
       required String path,
       required Settings settings});
 
-  Future<void> crateApiRepositoryGitTaskStoragePush(
+  Future<void> crateApiBackendGitTaskStoragePush(
       {required TaskStorage that, required bool force});
 
-  Future<List<Task>> crateApiRepositoryGitTaskStorageQuery(
+  Future<List<Task>> crateApiBackendGitTaskStorageQuery(
       {required TaskStorage that, required TaskQuery query});
 
-  Future<bool> crateApiRepositoryGitTaskStorageRemoveByTask(
+  Future<bool> crateApiBackendGitTaskStorageRemoveByTask(
       {required TaskStorage that, required Task task});
 
-  Future<Task?> crateApiRepositoryGitTaskStorageRemoveByUuid(
+  Future<Task?> crateApiBackendGitTaskStorageRemoveByUuid(
       {required TaskStorage that, required UuidValue uuid});
 
-  Future<void> crateApiRepositoryGitTaskStorageSync(
-      {required TaskStorage that});
+  Future<void> crateApiBackendGitTaskStorageSync({required TaskStorage that});
 
-  Future<Task?> crateApiRepositoryGitTaskStorageTaskByUuid(
+  Future<Task?> crateApiBackendGitTaskStorageTaskByUuid(
       {required TaskStorage that, required UuidValue uuid});
 
-  Future<List<Task>> crateApiRepositoryGitTaskStorageTasksWithFilter(
+  Future<List<Task>> crateApiBackendGitTaskStorageTasksWithFilter(
       {required TaskStorage that, required Filter filter});
 
-  Future<void> crateApiRepositoryGitTaskStorageUnload(
-      {required TaskStorage that});
+  Future<void> crateApiBackendGitTaskStorageUnload({required TaskStorage that});
 
-  Future<bool> crateApiRepositoryGitTaskStorageUpdate(
+  Future<bool> crateApiBackendGitTaskStorageUpdate(
       {required TaskStorage that, required Task task});
 
   Future<Annotation> strideCoreTaskAnnotationAnnotationNow(
@@ -243,7 +263,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLoggingInfo({required String message});
 
-  Future<void> crateApiRepositoryGitInitApp();
+  Future<void> crateApiBackendGitInitApp();
 
   Future<KnownHosts> crateGitKnownHostsKnownHostsLoad();
 
@@ -271,7 +291,7 @@ abstract class RustLibApi extends BaseApi {
   Future<ManifestPermissionTask>
       stridePluginManagerManifestManifestPermissionTaskDefault();
 
-  String crateApiRepositoryGitOidToString({required Oid oid});
+  String crateApiBackendGitOidToString({required Oid oid});
 
   Future<PluginManifestPluginState> crateApiPluginManagerParsePlugin(
       {required String filepath});
@@ -300,7 +320,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<bool> crateApiPluginManagerRemove({required String pluginName});
 
-  Future<Repository> crateApiSettingsRepositoryDefault();
+  Future<RepositorySpecification>
+      crateApiSettingsRepositorySpecificationDefault();
 
   Stream<Settings> crateApiSettingsSettingsCreateStream();
 
@@ -368,6 +389,14 @@ abstract class RustLibApi extends BaseApi {
 
   CrossPlatformFinalizerArg
       get rust_arc_decrement_strong_count_PluginManifestPluginStatePtr;
+
+  RustArcIncrementStrongCountFnType
+      get rust_arc_increment_strong_count_Repository;
+
+  RustArcDecrementStrongCountFnType
+      get rust_arc_decrement_strong_count_Repository;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RepositoryPtr;
 
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_RustError;
@@ -554,13 +583,242 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<List<Task>> crateApiRepositoryRepositoryAllTasks(
+      {required Repository that, required Filter filter}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_box_autoadd_filter(filter, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_task,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryAllTasksConstMeta,
+      argValues: [that, filter],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryAllTasksConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_all_tasks',
+        argNames: ['that', 'filter'],
+      );
+
+  @override
+  Future<void> crateApiRepositoryRepositoryInsertTask(
+      {required Repository that, required Task task}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_box_autoadd_task(task, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 8, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryInsertTaskConstMeta,
+      argValues: [that, task],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryInsertTaskConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_insert_task',
+        argNames: ['that', 'task'],
+      );
+
+  @override
+  Repository crateApiRepositoryRepositoryOpen({required UuidValue uuid}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Uuid(uuid, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryOpenConstMeta,
+      argValues: [uuid],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryOpenConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_open',
+        argNames: ['uuid'],
+      );
+
+  @override
+  Future<Task?> crateApiRepositoryRepositoryPurgeTaskById(
+      {required Repository that, required UuidValue id}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_Uuid(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 10, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_opt_box_autoadd_task,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryPurgeTaskByIdConstMeta,
+      argValues: [that, id],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryPurgeTaskByIdConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_purge_task_by_id',
+        argNames: ['that', 'id'],
+      );
+
+  @override
+  Future<Task?> crateApiRepositoryRepositoryTaskById(
+      {required Repository that, required UuidValue id}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_Uuid(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 11, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_opt_box_autoadd_task,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryTaskByIdConstMeta,
+      argValues: [that, id],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryTaskByIdConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_task_by_id',
+        argNames: ['that', 'id'],
+      );
+
+  @override
+  Future<List<Task>> crateApiRepositoryRepositoryTaskQuery(
+      {required Repository that, required TaskQuery query}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_box_autoadd_task_query(query, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 12, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_task,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryTaskQueryConstMeta,
+      argValues: [that, query],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryTaskQueryConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_task_query',
+        argNames: ['that', 'query'],
+      );
+
+  @override
+  Future<List<Task>> crateApiRepositoryRepositoryTasksByStatus(
+      {required Repository that, required Set<TaskStatus> status}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_Set_task_status_None(status, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 13, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_task,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryTasksByStatusConstMeta,
+      argValues: [that, status],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryTasksByStatusConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_tasks_by_status',
+        argNames: ['that', 'status'],
+      );
+
+  @override
+  Future<void> crateApiRepositoryRepositoryUpdateTask(
+      {required Repository that, required Task task}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+            that, serializer);
+        sse_encode_box_autoadd_task(task, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 14, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
+      ),
+      constMeta: kCrateApiRepositoryRepositoryUpdateTaskConstMeta,
+      argValues: [that, task],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRepositoryRepositoryUpdateTaskConstMeta =>
+      const TaskConstMeta(
+        debugName: 'Repository_update_task',
+        argNames: ['that', 'task'],
+      );
+
+  @override
   Host? crateApiErrorRustErrorAsUnknownHost({required RustError that}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_host,
@@ -585,7 +843,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -610,7 +868,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -635,7 +893,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,
@@ -660,7 +918,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -684,7 +942,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
+            funcId: 20, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -711,7 +969,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -736,7 +994,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Uuid(uuid, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 14, port: port_);
+            funcId: 22, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -764,7 +1022,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(publicKey, serializer);
         sse_encode_String(privateKey, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 15, port: port_);
+            funcId: 23, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -795,7 +1053,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(publicKey, serializer);
         sse_encode_String(privateKey, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 16, port: port_);
+            funcId: 24, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -822,7 +1080,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
             that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_Uuid,
@@ -840,7 +1098,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageAdd(
+  Future<void> crateApiBackendGitTaskStorageAdd(
       {required TaskStorage that, required Task task}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -849,27 +1107,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_box_autoadd_task(task, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 18, port: port_);
+            funcId: 26, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageAddConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageAddConstMeta,
       argValues: [that, task],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageAddConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageAddConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_add',
         argNames: ['that', 'task'],
       );
 
   @override
-  Future<bool> crateApiRepositoryGitTaskStorageAddAndCommit(
+  Future<bool> crateApiBackendGitTaskStorageAddAndCommit(
       {required TaskStorage that, required String message}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -878,27 +1136,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 19, port: port_);
+            funcId: 27, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageAddAndCommitConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageAddAndCommitConstMeta,
       argValues: [that, message],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageAddAndCommitConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageAddAndCommitConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_add_and_commit',
         argNames: ['that', 'message'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageCheckout(
+  Future<void> crateApiBackendGitTaskStorageCheckout(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -906,55 +1164,54 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 20, port: port_);
+            funcId: 28, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageCheckoutConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageCheckoutConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageCheckoutConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageCheckoutConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_checkout',
         argNames: ['that'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageClear(
-      {required TaskStorage that}) {
+  Future<void> crateApiBackendGitTaskStorageClear({required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 21, port: port_);
+            funcId: 29, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageClearConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageClearConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageClearConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageClearConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_clear',
         argNames: ['that'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageCloneRepository(
+  Future<void> crateApiBackendGitTaskStorageCloneRepository(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -962,27 +1219,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 22, port: port_);
+            funcId: 30, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageCloneRepositoryConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageCloneRepositoryConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageCloneRepositoryConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageCloneRepositoryConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_clone_repository',
         argNames: ['that'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageCommit(
+  Future<void> crateApiBackendGitTaskStorageCommit(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -990,27 +1247,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 23, port: port_);
+            funcId: 31, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageCommitConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageCommitConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageCommitConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageCommitConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_commit',
         argNames: ['that'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageDeleteAll(
+  Future<void> crateApiBackendGitTaskStorageDeleteAll(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1018,27 +1275,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 24, port: port_);
+            funcId: 32, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageDeleteAllConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageDeleteAllConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageDeleteAllConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageDeleteAllConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_delete_all',
         argNames: ['that'],
       );
 
   @override
-  Future<String> crateApiRepositoryGitTaskStorageExport(
+  Future<String> crateApiBackendGitTaskStorageExport(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1046,27 +1303,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 25, port: port_);
+            funcId: 33, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageExportConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageExportConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageExportConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageExportConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_export',
         argNames: ['that'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageForceHardReset(
+  Future<void> crateApiBackendGitTaskStorageForceHardReset(
       {required TaskStorage that, required Oid commit}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1076,27 +1333,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
             commit, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 26, port: port_);
+            funcId: 34, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageForceHardResetConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageForceHardResetConstMeta,
       argValues: [that, commit],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageForceHardResetConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageForceHardResetConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_force_hard_reset',
         argNames: ['that', 'commit'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageImport(
+  Future<void> crateApiBackendGitTaskStorageImport(
       {required TaskStorage that, required String content}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1105,32 +1362,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_String(content, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 27, port: port_);
+            funcId: 35, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageImportConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageImportConstMeta,
       argValues: [that, content],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageImportConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageImportConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_import',
         argNames: ['that', 'content'],
       );
 
   @override
-  TaskStorage crateApiRepositoryGitTaskStorageLoad({required UuidValue uuid}) {
+  TaskStorage crateApiBackendGitTaskStorageLoad({required UuidValue uuid}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Uuid(uuid, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36)!;
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -1138,20 +1395,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageLoadConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageLoadConstMeta,
       argValues: [uuid],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageLoadConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageLoadConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_load',
         argNames: ['uuid'],
       );
 
   @override
-  Future<List<CommitItem>?> crateApiRepositoryGitTaskStorageLog(
+  Future<List<CommitItem>?> crateApiBackendGitTaskStorageLog(
       {required TaskStorage that, Oid? oid, int? n}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1162,27 +1419,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             oid, serializer);
         sse_encode_opt_box_autoadd_u_32(n, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 29, port: port_);
+            funcId: 37, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_list_commit_item,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageLogConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageLogConstMeta,
       argValues: [that, oid, n],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageLogConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageLogConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_log',
         argNames: ['that', 'oid', 'n'],
       );
 
   @override
-  TaskStorage crateApiRepositoryGitTaskStorageNew(
+  TaskStorage crateApiBackendGitTaskStorageNew(
       {required UuidValue repositoryUuid,
       required String path,
       required Settings settings}) {
@@ -1192,7 +1449,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Uuid(repositoryUuid, serializer);
         sse_encode_String(path, serializer);
         sse_encode_box_autoadd_settings(settings, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38)!;
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -1200,20 +1457,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageNewConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageNewConstMeta,
       argValues: [repositoryUuid, path, settings],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageNewConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageNewConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_new',
         argNames: ['repositoryUuid', 'path', 'settings'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStoragePush(
+  Future<void> crateApiBackendGitTaskStoragePush(
       {required TaskStorage that, required bool force}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1222,27 +1479,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_bool(force, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 31, port: port_);
+            funcId: 39, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStoragePushConstMeta,
+      constMeta: kCrateApiBackendGitTaskStoragePushConstMeta,
       argValues: [that, force],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStoragePushConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStoragePushConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_push',
         argNames: ['that', 'force'],
       );
 
   @override
-  Future<List<Task>> crateApiRepositoryGitTaskStorageQuery(
+  Future<List<Task>> crateApiBackendGitTaskStorageQuery(
       {required TaskStorage that, required TaskQuery query}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1251,27 +1508,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_box_autoadd_task_query(query, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 32, port: port_);
+            funcId: 40, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_task,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageQueryConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageQueryConstMeta,
       argValues: [that, query],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageQueryConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageQueryConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_query',
         argNames: ['that', 'query'],
       );
 
   @override
-  Future<bool> crateApiRepositoryGitTaskStorageRemoveByTask(
+  Future<bool> crateApiBackendGitTaskStorageRemoveByTask(
       {required TaskStorage that, required Task task}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1280,27 +1537,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_box_autoadd_task(task, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 33, port: port_);
+            funcId: 41, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageRemoveByTaskConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageRemoveByTaskConstMeta,
       argValues: [that, task],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageRemoveByTaskConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageRemoveByTaskConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_remove_by_task',
         argNames: ['that', 'task'],
       );
 
   @override
-  Future<Task?> crateApiRepositoryGitTaskStorageRemoveByUuid(
+  Future<Task?> crateApiBackendGitTaskStorageRemoveByUuid(
       {required TaskStorage that, required UuidValue uuid}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1309,55 +1566,54 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_Uuid(uuid, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 34, port: port_);
+            funcId: 42, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_task,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageRemoveByUuidConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageRemoveByUuidConstMeta,
       argValues: [that, uuid],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageRemoveByUuidConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageRemoveByUuidConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_remove_by_uuid',
         argNames: ['that', 'uuid'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageSync(
-      {required TaskStorage that}) {
+  Future<void> crateApiBackendGitTaskStorageSync({required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 35, port: port_);
+            funcId: 43, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageSyncConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageSyncConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageSyncConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageSyncConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_sync',
         argNames: ['that'],
       );
 
   @override
-  Future<Task?> crateApiRepositoryGitTaskStorageTaskByUuid(
+  Future<Task?> crateApiBackendGitTaskStorageTaskByUuid(
       {required TaskStorage that, required UuidValue uuid}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1366,27 +1622,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_Uuid(uuid, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 36, port: port_);
+            funcId: 44, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_task,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageTaskByUuidConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageTaskByUuidConstMeta,
       argValues: [that, uuid],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageTaskByUuidConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageTaskByUuidConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_task_by_uuid',
         argNames: ['that', 'uuid'],
       );
 
   @override
-  Future<List<Task>> crateApiRepositoryGitTaskStorageTasksWithFilter(
+  Future<List<Task>> crateApiBackendGitTaskStorageTasksWithFilter(
       {required TaskStorage that, required Filter filter}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1395,27 +1651,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_box_autoadd_filter(filter, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 37, port: port_);
+            funcId: 45, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_task,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageTasksWithFilterConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageTasksWithFilterConstMeta,
       argValues: [that, filter],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageTasksWithFilterConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageTasksWithFilterConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_tasks_with_filter',
         argNames: ['that', 'filter'],
       );
 
   @override
-  Future<void> crateApiRepositoryGitTaskStorageUnload(
+  Future<void> crateApiBackendGitTaskStorageUnload(
       {required TaskStorage that}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1423,26 +1679,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerTaskStorage(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 38, port: port_);
+            funcId: 46, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: null,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageUnloadConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageUnloadConstMeta,
       argValues: [that],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageUnloadConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageUnloadConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_unload',
         argNames: ['that'],
       );
 
   @override
-  Future<bool> crateApiRepositoryGitTaskStorageUpdate(
+  Future<bool> crateApiBackendGitTaskStorageUpdate(
       {required TaskStorage that, required Task task}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1451,20 +1707,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_box_autoadd_task(task, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 39, port: port_);
+            funcId: 47, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
         decodeErrorData:
             sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
       ),
-      constMeta: kCrateApiRepositoryGitTaskStorageUpdateConstMeta,
+      constMeta: kCrateApiBackendGitTaskStorageUpdateConstMeta,
       argValues: [that, task],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitTaskStorageUpdateConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitTaskStorageUpdateConstMeta =>
       const TaskConstMeta(
         debugName: 'TaskStorage_update',
         argNames: ['that', 'task'],
@@ -1478,7 +1734,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(description, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 54, port: port_);
+            funcId: 62, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_annotation,
@@ -1502,7 +1758,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 55, port: port_);
+            funcId: 63, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_application_paths,
@@ -1528,7 +1784,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_StreamSink_unit_Sse(stream, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 56, port: port_);
+            funcId: 64, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1554,7 +1810,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 57, port: port_);
+            funcId: 65, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1580,7 +1836,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(pluginName, serializer);
         sse_encode_opt_String(reason, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 58, port: port_);
+            funcId: 66, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -1609,7 +1865,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             event, serializer);
         sse_encode_String(pluginName, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 59, port: port_);
+            funcId: 67, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1635,7 +1891,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
             event, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 60, port: port_);
+            funcId: 68, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1660,7 +1916,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 61, port: port_);
+            funcId: 69, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_encryption_key,
@@ -1686,7 +1942,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Uuid(repositoryUuid, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 62, port: port_);
+            funcId: 70, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -1714,7 +1970,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Uuid(repositoryUuid, serializer);
         sse_encode_String(key, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 63, port: port_);
+            funcId: 71, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_encryption_key,
@@ -1739,7 +1995,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(key, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 64)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 72)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,
@@ -1764,7 +2020,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 65, port: port_);
+            funcId: 73, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1787,7 +2043,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 66, port: port_);
+            funcId: 74, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_filter,
@@ -1811,7 +2067,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 67, port: port_);
+            funcId: 75, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -1835,7 +2091,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(filepath, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 68, port: port_);
+            funcId: 76, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1861,7 +2117,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 69, port: port_);
+            funcId: 77, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1879,25 +2135,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiRepositoryGitInitApp() {
+  Future<void> crateApiBackendGitInitApp() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 70, port: port_);
+            funcId: 78, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: null,
       ),
-      constMeta: kCrateApiRepositoryGitInitAppConstMeta,
+      constMeta: kCrateApiBackendGitInitAppConstMeta,
       argValues: [],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitInitAppConstMeta =>
-      const TaskConstMeta(
+  TaskConstMeta get kCrateApiBackendGitInitAppConstMeta => const TaskConstMeta(
         debugName: 'init_app',
         argNames: [],
       );
@@ -1908,7 +2163,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 71, port: port_);
+            funcId: 79, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_known_hosts,
@@ -1934,7 +2189,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_known_hosts(this_, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 72, port: port_);
+            funcId: 80, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1960,7 +2215,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(pluginPath, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 73, port: port_);
+            funcId: 81, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1984,7 +2239,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 74, port: port_);
+            funcId: 82, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_event,
@@ -2009,7 +2264,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 75, port: port_);
+            funcId: 83, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_event_task,
@@ -2035,7 +2290,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 76, port: port_);
+            funcId: 84, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_event_timer,
@@ -2061,7 +2316,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 77, port: port_);
+            funcId: 85, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission,
@@ -2087,7 +2342,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 78, port: port_);
+            funcId: 86, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission_network,
@@ -2114,7 +2369,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 79, port: port_);
+            funcId: 87, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission_storage,
@@ -2141,7 +2396,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 80, port: port_);
+            funcId: 88, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission_task,
@@ -2162,25 +2417,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
 
   @override
-  String crateApiRepositoryGitOidToString({required Oid oid}) {
+  String crateApiBackendGitOidToString({required Oid oid}) {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOid(
             oid, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 81)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 89)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
         decodeErrorData: null,
       ),
-      constMeta: kCrateApiRepositoryGitOidToStringConstMeta,
+      constMeta: kCrateApiBackendGitOidToStringConstMeta,
       argValues: [oid],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiRepositoryGitOidToStringConstMeta =>
+  TaskConstMeta get kCrateApiBackendGitOidToStringConstMeta =>
       const TaskConstMeta(
         debugName: 'oid_to_string',
         argNames: ['oid'],
@@ -2194,7 +2449,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(filepath, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 82, port: port_);
+            funcId: 90, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -2222,7 +2477,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 83)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 91)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_String,
@@ -2249,7 +2504,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 84)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 92)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2275,7 +2530,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 85)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 93)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_event,
@@ -2301,7 +2556,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 86)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 94)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -2327,7 +2582,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
             manifest, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 87)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_manifest_permission,
@@ -2352,7 +2607,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 88, port: port_);
+            funcId: 96, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -2378,7 +2633,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 89, port: port_);
+            funcId: 97, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2403,7 +2658,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 90, port: port_);
+            funcId: 98, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_plugin_action,
@@ -2429,7 +2684,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(pluginName, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 91, port: port_);
+            funcId: 99, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2449,26 +2704,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Repository> crateApiSettingsRepositoryDefault() {
+  Future<RepositorySpecification>
+      crateApiSettingsRepositorySpecificationDefault() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 92, port: port_);
+            funcId: 100, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_repository,
+        decodeSuccessData: sse_decode_repository_specification,
         decodeErrorData: null,
       ),
-      constMeta: kCrateApiSettingsRepositoryDefaultConstMeta,
+      constMeta: kCrateApiSettingsRepositorySpecificationDefaultConstMeta,
       argValues: [],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSettingsRepositoryDefaultConstMeta =>
+  TaskConstMeta get kCrateApiSettingsRepositorySpecificationDefaultConstMeta =>
       const TaskConstMeta(
-        debugName: 'repository_default',
+        debugName: 'repository_specification_default',
         argNames: [],
       );
 
@@ -2480,7 +2736,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_StreamSink_settings_Sse(streamSink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 93, port: port_);
+            funcId: 101, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2505,7 +2761,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 94, port: port_);
+            funcId: 102, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2529,7 +2785,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 95, port: port_);
+            funcId: 103, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2555,7 +2811,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_application_paths(paths, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 96, port: port_);
+            funcId: 104, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2579,7 +2835,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 97)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 105)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_settings,
@@ -2604,7 +2860,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_settings(settings, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 98, port: port_);
+            funcId: 106, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2629,7 +2885,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 99, port: port_);
+            funcId: 107, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -2654,7 +2910,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 100, port: port_);
+            funcId: 108, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -2678,7 +2934,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 101, port: port_);
+            funcId: 109, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_Chrono_Utc,
@@ -2702,7 +2958,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_prim_u_8_loose(input, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 102, port: port_);
+            funcId: 110, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_task,
@@ -2725,7 +2981,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(title, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 103)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 111)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -2749,7 +3005,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_task_priority(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 104, port: port_);
+            funcId: 112, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2773,7 +3029,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 105, port: port_);
+            funcId: 113, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task_priority,
@@ -2797,7 +3053,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 106, port: port_);
+            funcId: 114, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task_status,
@@ -2822,7 +3078,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_task_status(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 107, port: port_);
+            funcId: 115, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2847,7 +3103,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 108, port: port_);
+            funcId: 116, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -2870,7 +3126,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_task(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 109)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 117)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_f_32,
@@ -2896,7 +3152,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Uuid(uuid, serializer);
         sse_encode_String(title, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 110, port: port_);
+            funcId: 118, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_task,
@@ -2920,7 +3176,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(pluginName, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 111, port: port_);
+            funcId: 119, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2946,7 +3202,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 112, port: port_);
+            funcId: 120, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -2970,7 +3226,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(message, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 113, port: port_);
+            funcId: 121, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -3008,6 +3264,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RustArcDecrementStrongCountFnType
       get rust_arc_decrement_strong_count_PluginManifestPluginState => wire
           .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState;
+
+  RustArcIncrementStrongCountFnType
+      get rust_arc_increment_strong_count_Repository => wire
+          .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository;
+
+  RustArcDecrementStrongCountFnType
+      get rust_arc_decrement_strong_count_Repository => wire
+          .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository;
 
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_RustError => wire
@@ -3064,6 +3328,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Repository
+      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RepositoryImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   RustError
       dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
           dynamic raw) {
@@ -3085,6 +3357,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return TaskStorageImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  Repository
+      dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RepositoryImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -3173,6 +3453,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Repository
+      dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RepositoryImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   RustError
       dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
           dynamic raw) {
@@ -3221,13 +3509,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  StrideRepository dco_decode_TraitDef_StrideRepository(dynamic raw) {
+  Backend dco_decode_TraitDef_Backend(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
 
   @protected
-  StrideRepositoryExt dco_decode_TraitDef_StrideRepositoryExt(dynamic raw) {
+  BackendExt dco_decode_TraitDef_BackendExt(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
@@ -3588,9 +3876,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<Repository> dco_decode_list_repository(dynamic raw) {
+  List<RepositorySpecification> dco_decode_list_repository_specification(
+      dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_repository).toList();
+    return (raw as List<dynamic>)
+        .map(dco_decode_repository_specification)
+        .toList();
   }
 
   @protected
@@ -3879,12 +4170,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Repository dco_decode_repository(dynamic raw) {
+  RepositorySpecification dco_decode_repository_specification(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
     if (arr.length != 8)
       throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
-    return Repository(
+    return RepositorySpecification(
       uuid: dco_decode_Uuid(arr[0]),
       name: dco_decode_String(arr[1]),
       origin: dco_decode_String(arr[2]),
@@ -3908,7 +4199,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       filters: dco_decode_list_filter(arr[2]),
       selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[3]),
       currentRepository: dco_decode_opt_Uuid(arr[4]),
-      repositories: dco_decode_list_repository(arr[5]),
+      repositories: dco_decode_list_repository_specification(arr[5]),
     );
   }
 
@@ -4024,6 +4315,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Repository
+      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return RepositoryImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
   RustError
       sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
           SseDeserializer deserializer) {
@@ -4047,6 +4347,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return TaskStorageImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
+  Repository
+      sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return RepositoryImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
@@ -4141,6 +4450,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return PluginManifestPluginStateImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
+  Repository
+      sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return RepositoryImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
@@ -4596,13 +4914,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<Repository> sse_decode_list_repository(SseDeserializer deserializer) {
+  List<RepositorySpecification> sse_decode_list_repository_specification(
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <Repository>[];
+    final ans_ = <RepositorySpecification>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_repository(deserializer));
+      ans_.add(sse_decode_repository_specification(deserializer));
     }
     return ans_;
   }
@@ -4972,7 +5291,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Repository sse_decode_repository(SseDeserializer deserializer) {
+  RepositorySpecification sse_decode_repository_specification(
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_uuid = sse_decode_Uuid(deserializer);
     final var_name = sse_decode_String(deserializer);
@@ -4983,7 +5303,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_sshKeyUuid = sse_decode_opt_Uuid(deserializer);
     final var_encryption =
         sse_decode_opt_box_autoadd_encryption_key(deserializer);
-    return Repository(
+    return RepositorySpecification(
         uuid: var_uuid,
         name: var_name,
         origin: var_origin,
@@ -5003,7 +5323,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_selectedFilter =
         sse_decode_opt_box_autoadd_filter_selection(deserializer);
     final var_currentRepository = sse_decode_opt_Uuid(deserializer);
-    final var_repositories = sse_decode_list_repository(deserializer);
+    final var_repositories =
+        sse_decode_list_repository_specification(deserializer);
     return Settings.raw(
         darkMode: var_darkMode,
         periodicSync: var_periodicSync,
@@ -5140,6 +5461,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          Repository self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+        (self as RepositoryImpl).frbInternalSseEncode(move: true), serializer);
+  }
+
+  @protected
+  void
       sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
           RustError self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -5163,6 +5493,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
         (self as TaskStorageImpl).frbInternalSseEncode(move: true), serializer);
+  }
+
+  @protected
+  void
+      sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          Repository self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+        (self as RepositoryImpl).frbInternalSseEncode(move: false), serializer);
   }
 
   @protected
@@ -5263,6 +5602,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_usize(
         (self as PluginManifestPluginStateImpl).frbInternalSseEncode(),
         serializer);
+  }
+
+  @protected
+  void
+      sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
+          Repository self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+        (self as RepositoryImpl).frbInternalSseEncode(), serializer);
   }
 
   @protected
@@ -5684,12 +6032,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_repository(
-      List<Repository> self, SseSerializer serializer) {
+  void sse_encode_list_repository_specification(
+      List<RepositorySpecification> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_repository(item, serializer);
+      sse_encode_repository_specification(item, serializer);
     }
   }
 
@@ -6010,7 +6358,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_repository(Repository self, SseSerializer serializer) {
+  void sse_encode_repository_specification(
+      RepositorySpecification self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_Uuid(self.uuid, serializer);
     sse_encode_String(self.name, serializer);
@@ -6031,7 +6380,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_filter_selection(
         self.selectedFilter, serializer);
     sse_encode_opt_Uuid(self.currentRepository, serializer);
-    sse_encode_list_repository(self.repositories, serializer);
+    sse_encode_list_repository_specification(self.repositories, serializer);
   }
 
   @protected
@@ -6170,6 +6519,49 @@ class PluginManifestPluginStateImpl extends RustOpaque
 }
 
 @sealed
+class RepositoryImpl extends RustOpaque implements Repository {
+  // Not to be used by end users
+  RepositoryImpl.frbInternalDcoDecode(List<dynamic> wire)
+      : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  RepositoryImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+      : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_Repository,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_Repository,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_RepositoryPtr,
+  );
+
+  Future<List<Task>> allTasks({required Filter filter}) => RustLib.instance.api
+      .crateApiRepositoryRepositoryAllTasks(that: this, filter: filter);
+
+  Future<void> insertTask({required Task task}) => RustLib.instance.api
+      .crateApiRepositoryRepositoryInsertTask(that: this, task: task);
+
+  Future<Task?> purgeTaskById({required UuidValue id}) => RustLib.instance.api
+      .crateApiRepositoryRepositoryPurgeTaskById(that: this, id: id);
+
+  Future<Task?> taskById({required UuidValue id}) => RustLib.instance.api
+      .crateApiRepositoryRepositoryTaskById(that: this, id: id);
+
+  Future<List<Task>> taskQuery({required TaskQuery query}) =>
+      RustLib.instance.api
+          .crateApiRepositoryRepositoryTaskQuery(that: this, query: query);
+
+  Future<List<Task>> tasksByStatus({required Set<TaskStatus> status}) => RustLib
+      .instance.api
+      .crateApiRepositoryRepositoryTasksByStatus(that: this, status: status);
+
+  Future<void> updateTask({required Task task}) => RustLib.instance.api
+      .crateApiRepositoryRepositoryUpdateTask(that: this, task: task);
+}
+
+@sealed
 class RustErrorImpl extends RustOpaque implements RustError {
   // Not to be used by end users
   RustErrorImpl.frbInternalDcoDecode(List<dynamic> wire)
@@ -6261,81 +6653,79 @@ class TaskStorageImpl extends RustOpaque implements TaskStorage {
   );
 
   Future<void> add({required Task task}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageAdd(that: this, task: task);
+      .crateApiBackendGitTaskStorageAdd(that: this, task: task);
 
-  Future<bool> addAndCommit({required String message}) =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageAddAndCommit(
-          that: this, message: message);
+  Future<bool> addAndCommit({required String message}) => RustLib.instance.api
+      .crateApiBackendGitTaskStorageAddAndCommit(that: this, message: message);
 
   Future<void> checkout() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageCheckout(
+      RustLib.instance.api.crateApiBackendGitTaskStorageCheckout(
         that: this,
       );
 
   Future<void> clear() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageClear(
+      RustLib.instance.api.crateApiBackendGitTaskStorageClear(
         that: this,
       );
 
   Future<void> cloneRepository() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageCloneRepository(
+      RustLib.instance.api.crateApiBackendGitTaskStorageCloneRepository(
         that: this,
       );
 
   Future<void> commit() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageCommit(
+      RustLib.instance.api.crateApiBackendGitTaskStorageCommit(
         that: this,
       );
 
   Future<void> deleteAll() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageDeleteAll(
+      RustLib.instance.api.crateApiBackendGitTaskStorageDeleteAll(
         that: this,
       );
 
   Future<String> export_() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageExport(
+      RustLib.instance.api.crateApiBackendGitTaskStorageExport(
         that: this,
       );
 
-  Future<void> forceHardReset({required Oid commit}) =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageForceHardReset(
-          that: this, commit: commit);
+  Future<void> forceHardReset({required Oid commit}) => RustLib.instance.api
+      .crateApiBackendGitTaskStorageForceHardReset(that: this, commit: commit);
 
   Future<void> import_({required String content}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageImport(that: this, content: content);
+      .crateApiBackendGitTaskStorageImport(that: this, content: content);
 
   Future<List<CommitItem>?> log({Oid? oid, int? n}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageLog(that: this, oid: oid, n: n);
+      .crateApiBackendGitTaskStorageLog(that: this, oid: oid, n: n);
 
   Future<void> push({required bool force}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStoragePush(that: this, force: force);
+      .crateApiBackendGitTaskStoragePush(that: this, force: force);
 
   Future<List<Task>> query({required TaskQuery query}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageQuery(that: this, query: query);
+      .crateApiBackendGitTaskStorageQuery(that: this, query: query);
 
   Future<bool> removeByTask({required Task task}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageRemoveByTask(that: this, task: task);
+      .crateApiBackendGitTaskStorageRemoveByTask(that: this, task: task);
 
   Future<Task?> removeByUuid({required UuidValue uuid}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageRemoveByUuid(that: this, uuid: uuid);
+      .crateApiBackendGitTaskStorageRemoveByUuid(that: this, uuid: uuid);
 
   Future<void> sync_() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageSync(
+      RustLib.instance.api.crateApiBackendGitTaskStorageSync(
         that: this,
       );
 
   Future<Task?> taskByUuid({required UuidValue uuid}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageTaskByUuid(that: this, uuid: uuid);
+      .crateApiBackendGitTaskStorageTaskByUuid(that: this, uuid: uuid);
 
-  Future<List<Task>> tasksWithFilter({required Filter filter}) =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageTasksWithFilter(
-          that: this, filter: filter);
+  Future<List<Task>> tasksWithFilter({required Filter filter}) => RustLib
+      .instance.api
+      .crateApiBackendGitTaskStorageTasksWithFilter(that: this, filter: filter);
 
   Future<void> unload() =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageUnload(
+      RustLib.instance.api.crateApiBackendGitTaskStorageUnload(
         that: this,
       );
 
   Future<bool> update({required Task task}) => RustLib.instance.api
-      .crateApiRepositoryGitTaskStorageUpdate(that: this, task: task);
+      .crateApiBackendGitTaskStorageUpdate(that: this, task: task);
 }

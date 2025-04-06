@@ -169,7 +169,9 @@ impl Task {
         }
         if let Some(project) = &self.project {
             result.push(b'p');
-            result.extend_from_slice(&(project.len() as u32).to_be_bytes());
+
+            let len = project.len() as u32;
+            result.extend_from_slice(&len.to_be_bytes());
             result.extend_from_slice(project.as_bytes());
         }
         if let Some(priority) = self.priority {
@@ -178,7 +180,9 @@ impl Task {
         }
         for tag in &self.tags {
             result.push(b't');
-            result.extend_from_slice(&(tag.len() as u32).to_be_bytes());
+
+            let len = tag.len() as u32;
+            result.extend_from_slice(&len.to_be_bytes());
             result.extend_from_slice(tag.as_bytes());
         }
         for depend in &self.depends {
@@ -201,6 +205,7 @@ impl Task {
         result
     }
 
+    // TODO(HalidOdat): Return Result<> with error indicating what is wrong.
     #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn from_data(input: &[u8]) -> Option<Task> {
@@ -261,20 +266,26 @@ impl Task {
                         u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
                             as usize;
                     i += size_of::<u32>();
+
                     let bytes = input.get(i..i + len)?;
-                    let value = std::str::from_utf8(bytes).ok()?;
                     i += len;
-                    tags.push(value.into());
+                    let value = std::str::from_utf8(bytes).ok()?.to_string();
+
+                    if !tags.contains(&value) {
+                        tags.push(value);
+                    }
                 }
                 b'p' => {
                     let len =
                         u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
                             as usize;
                     i += size_of::<u32>();
+
                     let bytes = input.get(i..i + len)?;
-                    let value = std::str::from_utf8(bytes).ok()?;
                     i += len;
-                    project = Some(value.into());
+                    let value = std::str::from_utf8(bytes).ok()?.to_string();
+
+                    project = Some(value);
                 }
                 b'r' => {
                     let value = match input.get(i)? {
