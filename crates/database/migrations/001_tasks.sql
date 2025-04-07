@@ -27,29 +27,18 @@ CREATE TABLE task_table (
     task_modified INTEGER,
     task_due INTEGER,
     task_wait INTEGER,
-    task_parent_task_id BLOB,
+    task_annotations BLOB NOT NULL DEFAULT empty_blob(),
+    task_depends BLOB NOT NULL DEFAULT empty_blob()
+    CHECK (mod(length(task_depends, 16)) = 0),
 
     FOREIGN KEY (task_status_id) REFERENCES status_table (status_id)
-    ON DELETE SET NULL,
+    ON DELETE RESTRICT,
 
     FOREIGN KEY (task_priority_id) REFERENCES priority_table (priority_id)
     ON DELETE SET NULL,
 
     FOREIGN KEY (task_project_id) REFERENCES project_table (project_id)
-    ON DELETE SET NULL,
-
-    FOREIGN KEY (task_parent_task_id) REFERENCES task_table (task_id)
     ON DELETE SET NULL
-) STRICT;
-
-CREATE TABLE annotation_table (
-    annotation_id INTEGER PRIMARY KEY,
-    annotation_task_id BLOB NOT NULL,
-    annotation_entry INTEGER NOT NULL DEFAULT (unixepoch('now')),
-    annotation_text TEXT NOT NULL,
-
-    FOREIGN KEY (annotation_task_id) REFERENCES task_table (task_id)
-    ON DELETE CASCADE
 ) STRICT;
 
 CREATE TABLE uda_table (
@@ -95,7 +84,6 @@ VALUES
 -- SQL: down
 
 DROP TABLE IF EXISTS uda_table;
-DROP TABLE IF EXISTS annotation_table;
 DROP TABLE IF EXISTS task_tag_table;
 DROP TABLE IF EXISTS tag_table;
 DROP TABLE IF EXISTS task_table;
