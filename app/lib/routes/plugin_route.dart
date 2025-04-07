@@ -43,6 +43,8 @@ class PluginRoute extends StatelessWidget {
           SettingsSection(
             title: Text('Event', style: headingStyle),
             tiles: [
+              if (event.timer != null)
+                _manifestTimerField('timer', event.timer!.interval),
               if (event.task?.create ?? false)
                 _manifestBoolField('task.create', event.task?.create),
               if (event.task?.modify ?? false)
@@ -110,6 +112,19 @@ class PluginRoute extends StatelessWidget {
         activeColor: Colors.redAccent,
         onChanged: (value) {},
       ),
+    );
+  }
+
+  SettingsTile _manifestTimerField(String name, int interval) {
+    return SettingsTile(
+      title: RichText(
+        text: TextSpan(
+          text: 'Timer',
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+        ),
+      ),
+      trailing: const SizedBox(),
+      description: Text('$interval seconds'),
     );
   }
 
