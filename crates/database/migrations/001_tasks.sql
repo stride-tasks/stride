@@ -2,18 +2,18 @@
 
 CREATE TABLE status_table (
     status_id INTEGER PRIMARY KEY,
-    status_name TEXT NOT NULL
+    status_name TEXT NOT NULL UNIQUE
 ) STRICT;
 
 CREATE TABLE priority_table (
     priority_id INTEGER PRIMARY KEY,
-    priority_name TEXT NOT NULL,
+    priority_name TEXT NOT NULL UNIQUE,
     priority_urgency REAL NOT NULL DEFAULT 0.0
 ) STRICT;
 
 CREATE TABLE project_table (
     project_id INTEGER PRIMARY KEY,
-    project_name TEXT NOT NULL,
+    project_name TEXT NOT NULL UNIQUE,
     project_urgency REAL NOT NULL DEFAULT 0.0
 ) STRICT;
 
@@ -27,9 +27,9 @@ CREATE TABLE task_table (
     task_modified INTEGER,
     task_due INTEGER,
     task_wait INTEGER,
-    task_annotations BLOB NOT NULL DEFAULT empty_blob(),
-    task_depends BLOB NOT NULL DEFAULT empty_blob()
-    CHECK (mod(length(task_depends, 16)) = 0),
+    task_annotations BLOB NOT NULL DEFAULT (empty_blob()),
+    task_depends BLOB NOT NULL DEFAULT (empty_blob())
+    CHECK (mod(length(task_depends), 16) = 0),
 
     FOREIGN KEY (task_status_id) REFERENCES status_table (status_id)
     ON DELETE RESTRICT,
@@ -71,15 +71,15 @@ CREATE TABLE task_tag_table (
 
 INSERT INTO status_table (status_id, status_name)
 VALUES
-(0, "pending"),
-(1, "complete"),
-(2, "delete");
+(0, 'pending'),
+(1, 'complete'),
+(2, 'delete');
 
 INSERT INTO priority_table (priority_id, priority_name, priority_urgency)
 VALUES
-(0, "low", -3.0),
-(1, "medium", 3.0),
-(2, "high", 6.0);
+(0, 'low', -3.0),
+(1, 'medium', 3.0),
+(2, 'high', 6.0);
 
 -- SQL: down
 
