@@ -1868,6 +1868,8 @@ name = "stride_database"
 version = "0.1.0"
 dependencies = [
  "rusqlite",
+ "stride_core",
+ "uuid",
 ]
 
 [[package]]

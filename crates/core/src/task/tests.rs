@@ -192,7 +192,11 @@ fn deserialize_task_with_dates() {
 fn serialize_task_with_tags() {
     let title = "Hello there!";
     let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
-    task.tags = vec![0, 1, 2];
+    task.tags = vec![
+        String::from("tag1"),
+        String::from("tag22"),
+        String::from("tag333"),
+    ];
 
     assert_eq!(
         task.to_data(),
@@ -201,11 +205,14 @@ fn serialize_task_with_tags() {
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"t",
-            0u32.to_be_bytes().as_slice(),
+            4u32.to_be_bytes().as_slice(),
+            b"tag1",
             b"t",
-            1u32.to_be_bytes().as_slice(),
+            5u32.to_be_bytes().as_slice(),
+            b"tag22",
             b"t",
-            2u32.to_be_bytes().as_slice(),
+            6u32.to_be_bytes().as_slice(),
+            b"tag333",
         ])
     );
 }
@@ -218,16 +225,23 @@ fn deserialize_task_with_tags() {
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"t",
-        0u32.to_be_bytes().as_slice(),
+        4u32.to_be_bytes().as_slice(),
+        b"tag1",
         b"t",
-        1u32.to_be_bytes().as_slice(),
+        5u32.to_be_bytes().as_slice(),
+        b"tag22",
         b"t",
-        2u32.to_be_bytes().as_slice(),
+        6u32.to_be_bytes().as_slice(),
+        b"tag333",
     ]))
     .unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
-    expected.tags = vec![0, 1, 2];
+    expected.tags = vec![
+        String::from("tag1"),
+        String::from("tag22"),
+        String::from("tag333"),
+    ];
     assert_eq!(task, expected);
 }
 
@@ -235,7 +249,7 @@ fn deserialize_task_with_tags() {
 fn serialize_task_with_project() {
     let title = "Hello there!";
     let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
-    task.project = Some(2);
+    task.project = Some("work".to_string());
 
     assert_eq!(
         task.to_data(),
@@ -244,7 +258,8 @@ fn serialize_task_with_project() {
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"p",
-            2u32.to_be_bytes().as_slice(),
+            4u32.to_be_bytes().as_slice(),
+            b"work",
         ])
     );
 }
@@ -257,12 +272,13 @@ fn deserialize_task_with_project() {
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"p",
-        2u32.to_be_bytes().as_slice(),
+        4u32.to_be_bytes().as_slice(),
+        b"work",
     ]))
     .unwrap();
 
     let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
-    expected.project = Some(2);
+    expected.project = Some("work".to_string());
     assert_eq!(task, expected);
 }
 
@@ -413,8 +429,12 @@ fn serialize_task_with_all_attributes() {
     task.modified = Some(CONSTANT_DATETIME);
     task.due = Some(CONSTANT_DATETIME);
     task.wait = Some(CONSTANT_DATETIME);
-    task.tags = vec![0, 1, 2];
-    task.project = Some(30);
+    task.tags = vec![
+        String::from("tag1"),
+        String::from("tag22"),
+        String::from("tag333"),
+    ];
+    task.project = Some("test".to_string());
     task.priority = Some(TaskPriority::L);
     task.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
@@ -438,14 +458,18 @@ fn serialize_task_with_all_attributes() {
             b"w",
             &CONSTANT_TIMESTAMP.to_be_bytes(),
             b"p",
-            &30u32.to_be_bytes(),
+            &4u32.to_be_bytes(),
+            b"test",
             b"rL",
             b"t",
-            &0u32.to_be_bytes(),
+            4u32.to_be_bytes().as_slice(),
+            b"tag1",
             b"t",
-            &1u32.to_be_bytes(),
+            5u32.to_be_bytes().as_slice(),
+            b"tag22",
             b"t",
-            &2u32.to_be_bytes(),
+            6u32.to_be_bytes().as_slice(),
+            b"tag333",
             b"n",
             CONSTANT_UUID.as_bytes(),
             b"n",
@@ -478,14 +502,18 @@ fn deserialize_task_with_all_attributes() {
         b"w",
         &CONSTANT_TIMESTAMP.to_be_bytes(),
         b"p",
-        &30u32.to_be_bytes(),
+        &4u32.to_be_bytes(),
+        b"test",
         b"rH",
         b"t",
-        &0u32.to_be_bytes(),
+        4u32.to_be_bytes().as_slice(),
+        b"tag1",
         b"t",
-        &1u32.to_be_bytes(),
+        5u32.to_be_bytes().as_slice(),
+        b"tag22",
         b"t",
-        &2u32.to_be_bytes(),
+        6u32.to_be_bytes().as_slice(),
+        b"tag333",
         b"n",
         CONSTANT_UUID.as_bytes(),
         b"n",
@@ -508,8 +536,12 @@ fn deserialize_task_with_all_attributes() {
     expected.modified = Some(CONSTANT_DATETIME);
     expected.due = Some(CONSTANT_DATETIME);
     expected.wait = Some(CONSTANT_DATETIME);
-    expected.tags = vec![0, 1, 2];
-    expected.project = Some(30);
+    expected.tags = vec![
+        String::from("tag1"),
+        String::from("tag22"),
+        String::from("tag333"),
+    ];
+    expected.project = Some("test".to_string());
     expected.priority = Some(TaskPriority::H);
     expected.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,

@@ -1,6 +1,6 @@
 use rusqlite::{Connection, OptionalExtension};
 
-use crate::{Error, Result};
+use crate::Result;
 
 #[derive(Debug)]
 pub(crate) struct Migration<'a> {
@@ -119,13 +119,13 @@ const SELECT_LAST_MIGRATION_INDEX: &str =
     "SELECT migration_id FROM migration_table ORDER BY ROWID DESC LIMIT 1";
 const DELETE_MIGRATION_WITH_INDEX: &str = "DELETE FROM migration_table WHERE migration_id=?1";
 
-#[derive(Debug)]
-pub struct Migrations {
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Migrations {
     pub(crate) migrations: &'static [Migration<'static>],
 }
 
 impl Migrations {
-    pub fn apply(&self, conn: &mut Connection) -> Result<()> {
+    pub(crate) fn apply(&self, conn: &mut Connection) -> Result<()> {
         let mut last_migration_index: usize = 0;
         if table_exists(conn, TABLE_NAME)? {
             last_migration_index = conn
@@ -151,7 +151,7 @@ impl Migrations {
         Ok(())
     }
 
-    pub fn unapply(&self, conn: &mut Connection) -> Result<()> {
+    pub(crate) fn unapply(&self, conn: &mut Connection) -> Result<()> {
         for (i, migration) in self.migrations.iter().enumerate().rev() {
             let sql = format!("BEGIN;\n\n{}\n\nCOMMIT;\n", migration.sql_down);
 
@@ -170,7 +170,7 @@ impl Migrations {
 #[macro_export]
 macro_rules! migrations {
     [$($filename:expr,)+] => {
-        const MIGRATIONS: $crate::migration::Migrations = $crate::migration::Migrations {
+        pub(crate) const MIGRATIONS: $crate::migration::Migrations = $crate::migration::Migrations {
             migrations: &[
                 $(
                     $crate::migration::parse_migration(
@@ -182,3 +182,5 @@ macro_rules! migrations {
         };
     };
 }
+
+migrations!["000_migration.sql", "001_tasks.sql",];
