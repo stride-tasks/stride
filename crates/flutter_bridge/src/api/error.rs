@@ -139,6 +139,8 @@ pub enum ErrorKind {
     RepositoryNotFound,
 
     Plugin(PluginError),
+
+    Database(stride_database::Error),
 }
 
 impl std::error::Error for ErrorKind {}
@@ -172,6 +174,7 @@ impl std::fmt::Display for ErrorKind {
             Self::TaskChampion(error) => write!(f, "taskchampion error: {error}"),
             Self::RepositoryNotFound => write!(f, "repository not found"),
             Self::Plugin(error) => write!(f, "plugin error: {error}"),
+            Self::Database(error) => write!(f, "database error: {error}"),
         }
     }
 }
@@ -224,6 +227,11 @@ impl From<base64::DecodeError> for ErrorKind {
 impl From<PluginError> for ErrorKind {
     fn from(error: PluginError) -> Self {
         Self::Plugin(error)
+    }
+}
+impl From<stride_database::Error> for ErrorKind {
+    fn from(error: stride_database::Error) -> Self {
+        Self::Database(error)
     }
 }
 
