@@ -52,10 +52,8 @@ VALUES
 );
 ";
 
-const SQL_PROJECT_INSERT_OR_IGNORE: &str = r"
-INSERT OR IGNORE INTO project_table (id)
-VALUES (:project_name);
-";
+const SQL_PROJECT_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO project_table (id) VALUES (?1);";
+const SQL_TAG_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO tag_table (id) VALUES (?1);";
 
 #[derive(Debug)]
 pub struct Database {
@@ -134,7 +132,14 @@ impl Database {
 
         if let Some(project) = &task.project {
             let mut sql = transaction.prepare_cached(SQL_PROJECT_INSERT_OR_IGNORE)?;
-            sql.execute(&[(":project_name", project)])?;
+            sql.execute((project,))?;
+        }
+
+        if !task.tags.is_empty() {
+            let mut sql = transaction.prepare_cached(SQL_TAG_INSERT_OR_IGNORE)?;
+            for tag in &task.tags {
+                sql.execute((tag,))?;
+            }
         }
 
         let mut sql = transaction.prepare_cached(SQL_INSERT)?;
@@ -154,6 +159,14 @@ impl Database {
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
         ])?;
+
+        if !task.tags.is_empty() {
+            let mut sql = transaction
+                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)")?;
+            for tag in &task.tags {
+                sql.execute((task_uuid, tag))?;
+            }
+        }
 
         drop(sql);
         transaction.commit()?;
