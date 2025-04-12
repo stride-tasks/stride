@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS task_tag_table (
     FOREIGN KEY (tag_id) REFERENCES tag_table (id) ON DELETE CASCADE
 ) STRICT;
 
+CREATE INDEX task_tag_table_task_id_idx ON task_tag_table (task_id);
+CREATE INDEX task_tag_table_tag_id_idx ON task_tag_table (tag_id);
+
 CREATE TABLE IF NOT EXISTS annotation_table (
     "id" INTEGER PRIMARY KEY,
     "entry" INTEGER NOT NULL,
