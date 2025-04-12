@@ -168,6 +168,20 @@ impl Database {
         Ok(tasks)
     }
 
+    pub fn tasks_by_title(&mut self, title: &str) -> Result<Vec<Task>> {
+        let title = title.to_lowercase();
+        let mut tasks = Vec::new();
+        let mut sql = self.prepare_cached(SQL_ALL)?;
+        let task_iter = sql.query_map([], Self::row_to_task)?;
+        for task in task_iter {
+            let task = task?;
+            if task.title.to_lowercase() == title {
+                tasks.push(task);
+            }
+        }
+        Ok(tasks)
+    }
+
     pub fn task_by_id(&mut self, id: Uuid) -> Result<Option<Task>> {
         self.query_row(SQL_BY_ID, (id,), Self::row_to_task)
             .optional()
