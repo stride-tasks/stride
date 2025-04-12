@@ -55,6 +55,20 @@ VALUES
 );
 ";
 
+const SQL_UPDATE: &str = r"
+UPDATE task_table
+SET
+    title = :title,
+    entry = :entry,
+    status = :status,
+    priority = :priority,
+    project = :project,
+    modified = :modified,
+    due = :due,
+    wait = :wait
+WHERE id = :id;
+";
+
 const SQL_PROJECT_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO project_table (id) VALUES (?1);";
 const SQL_TAG_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO tag_table (id) VALUES (?1);";
 
@@ -142,13 +156,6 @@ impl Database {
             sql.execute((project,))?;
         }
 
-        if !task.tags.is_empty() {
-            let mut sql = transaction.prepare_cached(SQL_TAG_INSERT_OR_IGNORE)?;
-            for tag in &task.tags {
-                sql.execute((tag,))?;
-            }
-        }
-
         let mut sql = transaction.prepare_cached(SQL_INSERT)?;
 
         let mut task_uuid = task.uuid;
@@ -168,6 +175,11 @@ impl Database {
         ])?;
 
         if !task.tags.is_empty() {
+            let mut sql = transaction.prepare_cached(SQL_TAG_INSERT_OR_IGNORE)?;
+            for tag in &task.tags {
+                sql.execute((tag,))?;
+            }
+
             let mut sql = transaction
                 .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)")?;
             for tag in &task.tags {
@@ -176,6 +188,50 @@ impl Database {
         }
 
         drop(sql);
+        transaction.commit()?;
+        Ok(())
+    }
+
+    pub fn update_task(&mut self, task: &Task) -> Result<()> {
+        let transaction = self.transaction()?;
+        if let Some(project) = &task.project {
+            let mut sql = transaction.prepare_cached(SQL_PROJECT_INSERT_OR_IGNORE)?;
+            sql.execute((project,))?;
+        }
+
+        let mut sql = transaction.prepare_cached(SQL_UPDATE)?;
+        sql.execute::<&[(&str, &dyn ToSql)]>(&[
+            (":id", &task.uuid),
+            (":title", &task.title),
+            (":entry", &Sql::from(task.entry())),
+            (":status", &Sql::from(task.status)),
+            (":priority", &Sql::from(task.priority)),
+            (":project", &task.project),
+            (":modified", &Sql::from(task.modified)),
+            (":due", &Sql::from(task.due)),
+            (":wait", &Sql::from(task.wait)),
+        ])?;
+        drop(sql);
+
+        if !task.tags.is_empty() {
+            let mut sql = transaction.prepare_cached(SQL_TAG_INSERT_OR_IGNORE)?;
+            for tag in &task.tags {
+                sql.execute((tag,))?;
+            }
+
+            // TODO: Maybe instead of deleting them all,
+            // figure out a nice way to delete only the tags that are old.
+            transaction.execute(
+                "DELETE FROM task_tag_table WHERE task_id = ?1",
+                (task.uuid,),
+            )?;
+            let mut sql = transaction
+                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)")?;
+            for tag in &task.tags {
+                sql.execute((task.uuid, tag))?;
+            }
+        }
+
         transaction.commit()?;
         Ok(())
     }
