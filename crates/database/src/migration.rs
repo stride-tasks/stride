@@ -6,25 +6,7 @@ use crate::Result;
 pub(crate) struct Migration<'a> {
     pub(crate) index: usize,
     pub(crate) filename: &'a str,
-    pub(crate) sql_up: &'a str,
-    pub(crate) sql_down: &'a str,
-}
-
-const fn ignore_case_starts_with(mut a: &[u8], mut b: &[u8]) -> bool {
-    if a.len() < b.len() {
-        return false;
-    }
-
-    while let ([first_a, rest_a @ ..], [first_b, rest_b @ ..]) = (a, b) {
-        if first_a.eq_ignore_ascii_case(first_b) {
-            a = rest_a;
-            b = rest_b;
-        } else {
-            return false;
-        }
-    }
-
-    true
+    pub(crate) sql: &'a str,
 }
 
 const fn parse_index(input: &[u8]) -> usize {
@@ -39,34 +21,6 @@ const fn parse_index(input: &[u8]) -> usize {
         i += 1;
     }
     result
-}
-
-const fn parse_content(input: &[u8]) -> (&str, &str) {
-    assert!(input.is_ascii(), "migration content must be ascii");
-
-    assert!(
-        ignore_case_starts_with(input, b"-- SQL: up"),
-        "migration must start with up section"
-    );
-
-    let mut i = 0;
-    while i < input.len() {
-        let (_, rest) = input.split_at(i);
-        if ignore_case_starts_with(rest, b"-- SQL: down") {
-            break;
-        }
-        i += 1;
-    }
-
-    let (sql_up, sql_down) = input.split_at(i);
-
-    // SAFETY: Ascii is valid utf-8
-    unsafe {
-        (
-            std::str::from_utf8_unchecked(sql_up),
-            std::str::from_utf8_unchecked(sql_down),
-        )
-    }
 }
 
 pub(crate) const fn parse_migration(
@@ -84,13 +38,12 @@ pub(crate) const fn parse_migration(
     assert!(separator == b'_');
 
     let index = parse_index(index);
-    let (sql_up, sql_down) = parse_content(content.as_bytes());
+    let sql = content;
 
     Migration {
         index,
         filename,
-        sql_up,
-        sql_down,
+        sql,
     }
 }
 
@@ -110,14 +63,12 @@ fn table_exists(conn: &Connection, table_name: &str) -> Result<bool, rusqlite::E
 const TABLE_NAME: &str = "migration_table";
 const INSERT_MIGRATION_SQL: &str = r"
 INSERT INTO migration_table (
-    migration_id,
-    migration_filename,
-    migration_sql_up,
-    migration_sql_down
-) VALUES (?1, ?2, ?3, ?4)";
+    id,
+    filename,
+    sql
+) VALUES (?1, ?2, ?3)";
 const SELECT_LAST_MIGRATION_INDEX: &str =
-    "SELECT migration_id FROM migration_table ORDER BY ROWID DESC LIMIT 1";
-const DELETE_MIGRATION_WITH_INDEX: &str = "DELETE FROM migration_table WHERE migration_id=?1";
+    "SELECT id FROM migration_table ORDER BY ROWID DESC LIMIT 1";
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Migrations {
@@ -136,31 +87,12 @@ impl Migrations {
         }
 
         for migration in self.migrations.iter().skip(last_migration_index) {
-            let sql = format!("BEGIN;\n\n{}\n\nCOMMIT;\n", migration.sql_up);
+            let sql = format!("BEGIN;\n\n{}\n\nCOMMIT;\n", migration.sql);
             conn.execute_batch(&sql)?;
             conn.execute(
                 INSERT_MIGRATION_SQL,
-                (
-                    migration.index,
-                    migration.filename,
-                    migration.sql_up,
-                    migration.sql_down,
-                ),
+                (migration.index, migration.filename, migration.sql),
             )?;
-        }
-        Ok(())
-    }
-
-    pub(crate) fn unapply(&self, conn: &mut Connection) -> Result<()> {
-        for (i, migration) in self.migrations.iter().enumerate().rev() {
-            let sql = format!("BEGIN;\n\n{}\n\nCOMMIT;\n", migration.sql_down);
-
-            conn.execute_batch(&sql)?;
-
-            if i != 0 {
-                // Last migration deletes migration table
-                conn.execute(DELETE_MIGRATION_WITH_INDEX, (migration.index,))?;
-            }
         }
         Ok(())
     }

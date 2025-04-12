@@ -1,5 +1,3 @@
--- SQL: up
-
 -- NOTE: The ID column of most of tables has to be globally unique,
 --       because the application is intented to be used in a distributed way,
 ---      where the clients don't know about each other.
@@ -62,13 +60,3 @@ CREATE TABLE IF NOT EXISTS uda_table (
 
     FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE
 ) STRICT;
-
--- SQL: down
-
-DROP TABLE IF EXISTS task_dependency_table;
-DROP TABLE IF EXISTS annotation_table;
-DROP TABLE IF EXISTS uda_table;
-DROP TABLE IF EXISTS task_tag_table;
-DROP TABLE IF EXISTS tag_table;
-DROP TABLE IF EXISTS task_table;
-DROP TABLE IF EXISTS project_table;
