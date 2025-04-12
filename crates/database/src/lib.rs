@@ -22,8 +22,11 @@ SELECT
     project,
     modified,
     due,
-    wait
-FROM task_table task;
+    wait,
+    string_agg(task_tag.tag_id, char(0)) as tags
+FROM task_table task
+LEFT JOIN task_tag_table task_tag ON task_tag.task_id = id
+GROUP BY id
 ";
 
 const SQL_INSERT: &str = r"
@@ -100,6 +103,10 @@ impl Database {
             let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
             let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
             let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
+            let tags = row
+                .get::<_, Option<String>>("tags")?
+                .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
+                .unwrap_or_default();
 
             if wait.is_some() {
                 status = TaskStatus::Waiting;
@@ -113,7 +120,7 @@ impl Database {
                 modified,
                 due,
                 project,
-                tags: Vec::new(),
+                tags,
                 annotations: Vec::new(),
                 priority,
                 wait,
