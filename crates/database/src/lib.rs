@@ -87,6 +87,8 @@ SET
 WHERE id = :id;
 ";
 
+const SQL_DELETE: &str = r"DELETE FROM task_table WHERE id = ?1";
+
 const SQL_PROJECT_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO project_table (id) VALUES (?1);";
 const SQL_TAG_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO tag_table (id) VALUES (?1);";
 
@@ -274,5 +276,13 @@ impl Database {
 
         transaction.commit()?;
         Ok(())
+    }
+
+    pub fn purge_task_by_id(&mut self, id: Uuid) -> Result<Option<Task>> {
+        let task = self.task_by_id(id)?;
+        if task.is_some() {
+            self.execute(SQL_DELETE, (id,))?;
+        }
+        Ok(task)
     }
 }
