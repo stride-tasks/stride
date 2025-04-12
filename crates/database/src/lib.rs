@@ -6,7 +6,7 @@ use conversion::Sql;
 pub use error::{Error, Result};
 use migration::MIGRATIONS;
 
-use rusqlite::{Connection, ToSql};
+use rusqlite::{Connection, OptionalExtension, Row, ToSql};
 use stride_core::task::{Date, Task, TaskPriority, TaskStatus};
 use uuid::Uuid;
 
@@ -26,6 +26,24 @@ SELECT
     string_agg(task_tag.tag_id, char(0)) as tags
 FROM task_table task
 LEFT JOIN task_tag_table task_tag ON task_tag.task_id = id
+GROUP BY id
+";
+
+const SQL_BY_ID: &str = r"
+SELECT
+    id,
+    title,
+    entry,
+    status,
+    priority,
+    project,
+    modified,
+    due,
+    wait,
+    string_agg(task_tag.tag_id, char(0)) as tags
+FROM task_table task
+LEFT JOIN task_tag_table task_tag ON task_tag.task_id = id
+WHERE id = ?1
 GROUP BY id
 ";
 
@@ -104,48 +122,56 @@ impl Database {
         MIGRATIONS.apply(&mut self.conn)
     }
 
+    fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
+        let uuid = row.get::<_, Uuid>("id")?;
+        let title = row.get::<_, String>("title")?;
+        let _entry = row.get::<_, Sql<Date>>("entry")?.value;
+        let mut status = row.get::<_, Sql<TaskStatus>>("status")?.value;
+        let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
+        let project = row.get::<_, Option<String>>("project")?;
+        let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
+        let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
+        let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
+        let tags = row
+            .get::<_, Option<String>>("tags")?
+            .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
+            .unwrap_or_default();
+
+        if wait.is_some() {
+            status = TaskStatus::Waiting;
+        }
+
+        Ok(Task {
+            uuid,
+            status,
+            title,
+            active: false,
+            modified,
+            due,
+            project,
+            tags,
+            annotations: Vec::new(),
+            priority,
+            wait,
+            depends: Vec::new(),
+            uda: HashMap::new(),
+        })
+    }
+
     pub fn all_tasks(&mut self) -> Result<Vec<Task>> {
         let mut tasks = Vec::new();
         let mut sql = self.prepare_cached(SQL_ALL)?;
-        let task_iter = sql.query_map([], |row| {
-            let uuid = row.get::<_, Uuid>("id")?;
-            let title = row.get::<_, String>("title")?;
-            let _entry = row.get::<_, Sql<Date>>("entry")?.value;
-            let mut status = row.get::<_, Sql<TaskStatus>>("status")?.value;
-            let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
-            let project = row.get::<_, Option<String>>("project")?;
-            let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
-            let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
-            let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
-            let tags = row
-                .get::<_, Option<String>>("tags")?
-                .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
-                .unwrap_or_default();
-
-            if wait.is_some() {
-                status = TaskStatus::Waiting;
-            }
-
-            return Ok(Task {
-                uuid,
-                status,
-                title,
-                active: false,
-                modified,
-                due,
-                project,
-                tags,
-                annotations: Vec::new(),
-                priority,
-                wait,
-                depends: Vec::new(),
-                uda: HashMap::new(),
-            });
-        })?;
+        let task_iter = sql.query_map([], Self::row_to_task)?;
         for task in task_iter {
             tasks.push(task?);
         }
         Ok(tasks)
+    }
+
+    pub fn task_by_id(&mut self, id: Uuid) -> Result<Option<Task>> {
+        self.query_row(SQL_BY_ID, (id,), Self::row_to_task)
+            .optional()
+            .map_err(Into::into)
     }
 
     pub fn insert_task(&mut self, task: &Task) -> Result<()> {
