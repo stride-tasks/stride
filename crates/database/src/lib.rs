@@ -2,15 +2,22 @@ mod conversion;
 mod error;
 mod migration;
 
-use conversion::Sql;
+use conversion::{Sql, task_status_to_sql};
 pub use error::{Error, Result};
 use migration::MIGRATIONS;
 
-use rusqlite::{Connection, OptionalExtension, Row, ToSql};
-use stride_core::task::{Date, Task, TaskPriority, TaskStatus};
+use rusqlite::{Connection, OptionalExtension, Row, ToSql, types::Value};
+use stride_core::{
+    event::TaskQuery,
+    task::{Date, Task, TaskPriority, TaskStatus},
+};
 use uuid::Uuid;
 
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+    rc::Rc,
+};
 
 const SQL_ALL: &str = r"
 SELECT
@@ -26,6 +33,7 @@ SELECT
     string_agg(task_tag.tag_id, char(0)) as tags
 FROM task_table task
 LEFT JOIN task_tag_table task_tag ON task_tag.task_id = id
+WHERE status IN rarray(?1)
 GROUP BY id
 ";
 
@@ -43,7 +51,7 @@ SELECT
     string_agg(task_tag.tag_id, char(0)) as tags
 FROM task_table task
 LEFT JOIN task_tag_table task_tag ON task_tag.task_id = id
-WHERE id = ?1
+WHERE id = ?1 AND status 
 GROUP BY id
 ";
 
@@ -116,6 +124,7 @@ impl Database {
     #[inline]
     pub fn open(path: &Path) -> Result<Self> {
         let conn = Connection::open(path)?;
+        rusqlite::vtab::array::load_module(&conn)?;
         Ok(Self { conn })
     }
 
@@ -161,11 +170,58 @@ impl Database {
     }
 
     pub fn all_tasks(&mut self) -> Result<Vec<Task>> {
+        self.tasks_by_status(
+            &[
+                TaskStatus::Pending,
+                TaskStatus::Complete,
+                TaskStatus::Deleted,
+                TaskStatus::Waiting,
+                TaskStatus::Recurring,
+            ]
+            .into(),
+        )
+    }
+
+    pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>> {
+        match query {
+            TaskQuery::Uuid { uuid } => {
+                let Some(tasks) = self.task_by_id(*uuid).transpose() else {
+                    return Ok(Vec::new());
+                };
+                Ok(vec![tasks?])
+            }
+            TaskQuery::Title {
+                title,
+                status,
+                limit,
+            } => {
+                // TODO: Optimize this by using sql directly.
+                let title = title.to_lowercase();
+                let mut tasks = self.tasks_by_status(status)?;
+                tasks.retain(|task| task.title.to_lowercase() == title);
+                tasks.truncate(limit.unwrap_or(u32::MAX) as usize);
+                Ok(tasks)
+            }
+        }
+    }
+
+    pub fn tasks_by_status(&mut self, status: &HashSet<TaskStatus>) -> Result<Vec<Task>> {
         let mut tasks = Vec::new();
         let mut sql = self.prepare_cached(SQL_ALL)?;
-        let task_iter = sql.query_map([], Self::row_to_task)?;
+        let statys_array = Rc::new(
+            status
+                .iter()
+                .copied()
+                .map(task_status_to_sql)
+                .map(Value::from)
+                .collect::<Vec<_>>(),
+        );
+        let task_iter = sql.query_map([statys_array], Self::row_to_task)?;
         for task in task_iter {
-            tasks.push(task?);
+            let task = task?;
+            if status.contains(&task.status) {
+                tasks.push(task);
+            }
         }
         Ok(tasks)
     }

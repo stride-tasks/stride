@@ -54,16 +54,19 @@ impl FromSql for Sql<Option<Date>> {
     }
 }
 
+pub(crate) fn task_status_to_sql(status: TaskStatus) -> i64 {
+    match status {
+        TaskStatus::Pending => 0,
+        TaskStatus::Complete => 1,
+        TaskStatus::Deleted => 2,
+        TaskStatus::Waiting => 0,
+        TaskStatus::Recurring => 0,
+    }
+}
+
 impl ToSql for Sql<TaskStatus> {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
-        let value = match self.value {
-            TaskStatus::Pending => 0,
-            TaskStatus::Complete => 1,
-            TaskStatus::Deleted => 2,
-            TaskStatus::Waiting => 0,
-            TaskStatus::Recurring => 0,
-        };
-
+        let value = task_status_to_sql(self.value);
         Ok(ToSqlOutput::Owned(Value::Integer(value)))
     }
 }
