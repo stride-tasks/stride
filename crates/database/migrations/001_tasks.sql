@@ -42,24 +42,27 @@ CREATE TABLE IF NOT EXISTS task_tag_table (
     FOREIGN KEY (tag_id) REFERENCES tag_table (id) ON DELETE CASCADE
 ) STRICT;
 
-CREATE INDEX task_tag_table_task_id_idx ON task_tag_table (task_id);
-CREATE INDEX task_tag_table_tag_id_idx ON task_tag_table (tag_id);
-
 CREATE TABLE IF NOT EXISTS annotation_table (
     "id" INTEGER PRIMARY KEY,
+    "task_id" BLOB NOT NULL,
     "entry" INTEGER NOT NULL,
     "text" TEXT NOT NULL,
-    "task_id" BLOB NOT NULL,
 
     FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS uda_table (
     "id" INTEGER PRIMARY KEY,
+    "task_id" BLOB NOT NULL,
     "namespace" TEXT,
     "key" TEXT NOT NULL,
     "value" BLOB,
-    "task_id" BLOB NOT NULL,
 
     FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE
 ) STRICT;
+
+CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (
+    task_id
+);
+CREATE INDEX IF NOT EXISTS task_tag_table_tag_id_idx ON task_tag_table (tag_id);
+CREATE INDEX IF NOT EXISTS annotation_task_id_idx ON annotation_table (task_id);
