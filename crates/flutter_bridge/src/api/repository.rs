@@ -26,6 +26,7 @@ impl Repository {
         let root_path = application_support_path()
             .join("repository")
             .join(uuid.to_string());
+        std::fs::create_dir_all(&root_path)?;
         let db_path = root_path.join("db.sqlite");
         let mut db = Database::open(&db_path).map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
