@@ -5,15 +5,11 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex, atomic::AtomicBool},
 };
+use stride_core::task::{Task, TaskStatus};
 use stride_crypto::crypter::{Aes256Ocb, AesMode, Crypter};
 use uuid::Uuid;
 
-use crate::{
-    ErrorKind, RustError,
-    api::{backend::git::generate_iv, error::KeyStoreError},
-    base64_decode, base64_encode,
-    task::{Task, TaskStatus},
-};
+use crate::{Error, Result, base64_decode, base64_encode, error::KeyStoreError, git::generate_iv};
 
 pub(crate) struct KeyStore {
     path: PathBuf,
@@ -33,7 +29,7 @@ impl KeyStore {
             master_key: crypther,
         }
     }
-    pub(crate) fn load(&self) -> Result<(), RustError> {
+    pub(crate) fn load(&self) -> Result<()> {
         if self.loaded.load(std::sync::atomic::Ordering::SeqCst) {
             return Ok(());
         }
@@ -94,7 +90,7 @@ impl KeyStore {
         Ok(())
     }
 
-    pub(crate) fn save(&self) -> Result<(), RustError> {
+    pub(crate) fn save(&self) -> Result<()> {
         self.load()?;
         let mut contents = String::new();
         let keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
@@ -117,7 +113,7 @@ impl KeyStore {
         Ok(())
     }
 
-    pub(crate) fn has_key_for(&self, status: TaskStatus) -> Result<bool, RustError> {
+    pub(crate) fn has_key_for(&self, status: TaskStatus) -> Result<bool> {
         self.load()?;
         let keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
         Ok(keys.contains_key(&status))
@@ -127,7 +123,7 @@ impl KeyStore {
         &self,
         task: &Task,
         iv: Option<[u8; Aes256Ocb::IV_LEN]>,
-    ) -> Result<([u8; Aes256Ocb::IV_LEN], String), RustError> {
+    ) -> Result<([u8; Aes256Ocb::IV_LEN], String)> {
         self.load()?;
 
         let mut keys = self.keys.lock().map_err(|_| KeyStoreError::LockError)?;
@@ -159,7 +155,7 @@ impl KeyStore {
         &self,
         status: TaskStatus,
         base64: &str,
-    ) -> Result<([u8; Aes256Ocb::IV_LEN], Task), RustError> {
+    ) -> Result<([u8; Aes256Ocb::IV_LEN], Task)> {
         self.load()?;
 
         let base64 = base64_decode(base64.trim())?;
@@ -168,7 +164,7 @@ impl KeyStore {
         let key = if let Some(key) = keys.get(&status) {
             key.clone()
         } else {
-            let mut task = Task::from_data(&base64).ok_or(ErrorKind::CorruptTask)?;
+            let mut task = Task::from_data(&base64).ok_or(Error::CorruptTask)?;
             task.status = status;
             return Ok((generate_iv(), task));
         };
@@ -178,7 +174,7 @@ impl KeyStore {
         let mut data = aad.to_vec();
         data.extend_from_slice(&decrypted);
 
-        let mut task = Task::from_data(&data).ok_or(ErrorKind::CorruptTask)?;
+        let mut task = Task::from_data(&data).ok_or(Error::CorruptTask)?;
         task.status = status;
         Ok((iv, task))
     }

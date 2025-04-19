@@ -14,6 +14,7 @@ publish = false
 
 [dependencies]
 stride_core.workspace = true
+stride_plugin_manager.workspace = true
 stride_flutter_bridge.workspace = true
 
 anyhow.workspace = true

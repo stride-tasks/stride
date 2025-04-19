@@ -235,6 +235,7 @@ impl Database {
                 let mut tasks = self.tasks_by_status(status)?;
                 tasks.retain(|task| task.title.to_lowercase() == title);
                 tasks.truncate(limit.unwrap_or(u32::MAX) as usize);
+                tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
                 Ok(tasks)
             }
         }
@@ -258,6 +259,7 @@ impl Database {
                 tasks.push(task);
             }
         }
+        tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
         Ok(tasks)
     }
 
@@ -272,6 +274,7 @@ impl Database {
                 tasks.push(task);
             }
         }
+        tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
         Ok(tasks)
     }
 

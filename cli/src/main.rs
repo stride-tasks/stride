@@ -2,16 +2,16 @@ use anyhow::{Context, bail};
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::path::{Path, PathBuf};
-use stride_core::event::{HostEvent, PluginEvent};
-use stride_flutter_bridge::{
-    api::{
-        filter::Filter,
-        repository::Repository,
-        settings::{ApplicationPaths, RepositorySpecification, Settings},
-    },
-    plugin::{PluginManager, manifest::PluginAction},
+use stride_core::{
+    event::{HostEvent, PluginEvent},
     task::{Task, TaskStatus},
 };
+use stride_flutter_bridge::api::{
+    filter::Filter,
+    repository::Repository,
+    settings::{ApplicationPaths, RepositorySpecification, Settings},
+};
+use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
 pub mod cli;
 

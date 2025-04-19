@@ -32,6 +32,8 @@ abstract class Repository implements RustOpaqueInterface {
 
   Future<Task?> purgeTaskById({required UuidValue id});
 
+  Future<void> sync_();
+
   Future<Task?> taskById({required UuidValue id});
 
   Future<List<Task>> taskQuery({required TaskQuery query});

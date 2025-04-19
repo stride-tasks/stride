@@ -1,11 +1,8 @@
 use std::{mem, path::Path};
 
 use chrono::Utc;
-use flutter_rust_bridge::frb;
-use stride_core::{
-    event::TaskQuery,
-    task::{Task, TaskStatus},
-};
+use stride_core::task::Task;
+use stride_database::Database;
 use taskchampion::{Operations, StorageConfig};
 
 use super::Backend;
@@ -14,8 +11,10 @@ use super::Backend;
 // `taskchampion`
 pub use taskchampion::ServerConfig;
 
-#[frb(ignore)]
+use crate::Result;
+
 #[allow(missing_debug_implementations)] /* [`taskchampion::Replica`] does not implement [`Debug`] */
+/// flutter_rust_bridge:ignore
 pub struct Replica {
     source: taskchampion::Replica,
     operations: Operations,
@@ -31,7 +30,7 @@ impl Replica {
         storage_dir: &Path,
         server_config: ServerConfig,
         constraint_environment: bool,
-    ) -> Result<Self, crate::RustError> {
+    ) -> Result<Self> {
         let storage = StorageConfig::OnDisk {
             taskdb_dir: storage_dir.to_path_buf(),
             create_if_missing: true,
@@ -47,14 +46,27 @@ impl Replica {
             constraint_environment,
         })
     }
-}
 
-impl Backend for Replica {
-    fn unload(&mut self) {
-        todo!()
-    }
+    // fn tasks_with_filter(&mut self, filter: &crate::api::filter::Filter) -> Result<Vec<Task>> {
+    //     let search = filter.search.to_lowercase();
+    //     let mut result = Vec::new();
+    //     for task in self
+    //         .source
+    //         .all_tasks()?
+    //         .into_values()
+    //         .filter(|task| {
+    //             filter
+    //                 .status
+    //                 .contains(&Into::<TaskStatus>::into(task.get_status()))
+    //         })
+    //         .filter(|task| task.get_description().to_lowercase().contains(&search))
+    //     {
+    //         result.push(Into::<Task>::into(task));
+    //     }
+    //     Ok(result)
+    // }
 
-    fn add(&mut self, task: Task) -> Result<(), crate::RustError> {
+    pub fn add(&mut self, task: Task) -> Result<()> {
         // Theoretically we need to set all the keys below:
         // add_annotation
         // add_dependency
@@ -81,72 +93,7 @@ impl Backend for Replica {
         Ok(())
     }
 
-    fn remove_by_uuid(&mut self, _uuid: &uuid::Uuid) -> Result<Option<Task>, crate::RustError> {
-        todo!()
-    }
-
-    fn remove_by_task(&mut self, _task: &Task) -> Result<bool, crate::RustError> {
-        todo!()
-    }
-
-    fn task_by_uuid(&mut self, _uuid: &uuid::Uuid) -> Result<Option<Task>, crate::RustError> {
-        todo!()
-    }
-
-    fn tasks_with_filter(
-        &mut self,
-        filter: &crate::api::filter::Filter,
-    ) -> Result<Vec<Task>, crate::RustError> {
-        let search = filter.search.to_lowercase();
-        let mut result = Vec::new();
-
-        for task in self
-            .source
-            .all_tasks()?
-            .into_values()
-            .filter(|task| {
-                filter
-                    .status
-                    .contains(&Into::<TaskStatus>::into(task.get_status()))
-            })
-            .filter(|task| task.get_description().to_lowercase().contains(&search))
-        {
-            result.push(Into::<Task>::into(task));
-        }
-
-        Ok(result)
-    }
-
-    fn update(&mut self, _task: &Task) -> Result<bool, crate::RustError> {
-        todo!()
-    }
-
-    fn sync(&mut self) -> Result<(), crate::RustError> {
-        /* PERF(@bpeetz): We should probably not always force a commit. <2024-10-26> */
-        self.commit()?;
-
-        self.source
-            /* TODO(@bpeetz): It would be wonderful, if we could add the server URL to this error
-             * message. But the [`taskchampion::Server`] trait does not provide us this
-             * information.   <2024-10-26> */
-            .sync(&mut self.server, self.constraint_environment)?;
-
-        Ok(())
-    }
-
-    fn clear(&mut self) -> Result<(), crate::RustError> {
-        todo!()
-    }
-
-    fn export(&mut self) -> Result<String, crate::RustError> {
-        todo!()
-    }
-
-    fn import(&mut self, _content: &str) -> Result<(), crate::RustError> {
-        todo!()
-    }
-
-    fn commit(&mut self) -> Result<(), crate::RustError> {
+    pub fn commit(&mut self) -> Result<()> {
         let operations = mem::take(&mut self.operations);
 
         if let Err(err) = self.source.commit_operations(operations.clone()) {
@@ -164,7 +111,19 @@ impl Backend for Replica {
 
         Ok(())
     }
-    fn query(&mut self, _query: &TaskQuery) -> Result<Vec<Task>, crate::RustError> {
-        todo!()
+}
+
+impl Backend for Replica {
+    fn sync(&mut self, _db: &mut Database) -> Result<()> {
+        /* PERF(@bpeetz): We should probably not always force a commit. <2024-10-26> */
+        self.commit()?;
+
+        self.source
+            /* TODO(@bpeetz): It would be wonderful, if we could add the server URL to this error
+             * message. But the [`taskchampion::Server`] trait does not provide us this
+             * information.   <2024-10-26> */
+            .sync(&mut self.server, self.constraint_environment)?;
+
+        Ok(())
     }
 }

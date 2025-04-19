@@ -7,8 +7,9 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/api/git.dart';
 import 'package:stride/bridge/api/repository.dart';
-import 'package:stride/bridge/git/known_hosts.dart';
+import 'package:stride/bridge/third_party/stride_backend/git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
@@ -188,13 +189,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskState(tasks: tasks, syncing: true));
 
       try {
-        // await repository()?.sync_();
-        throw UnimplementedError();
+        await repository()?.sync_();
       } catch (error) {
         emit(TaskState(tasks: tasks, syncingError: error));
         rethrow;
       }
-      // emit(TaskState(tasks: await _tasks()));
+      emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskFilterEvent>((event, emit) async {
@@ -233,12 +233,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         dialogBloc.add(
           DialogAlertEvent(
             title: 'Accept Unknown Host: ${host.hostname}',
-            content: 'Host Key: ${host.keyType.name} ${host.key}',
+            content:
+                'Host Key: ${hostKeyTypeName(keyType: host.keyType)} ${host.key}',
             onConfirm: (context) async {
               await logBloc.catch_(message: 'known hosts', () async {
                 final knownHosts = await KnownHosts.load();
                 KnownHosts.save(
-                  this_: knownHosts.copyWith(
+                  this_: KnownHosts(
                     hosts: knownHosts.hosts.toList()..add(host),
                   ),
                 );

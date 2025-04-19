@@ -4,6 +4,7 @@ import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/bridge/third_party/stride_backend/git/encryption_key.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
