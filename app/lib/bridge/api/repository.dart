@@ -19,41 +19,24 @@ import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:uuid/uuid.dart';
 
-abstract class StrideRepository {
-  /// Add a [`Task`] to the Repository
-  Future<void> add({required Task task});
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`
 
-  Future<void> clear();
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Repository>>
+abstract class Repository implements RustOpaqueInterface {
+  Future<List<Task>> allTasks({required Filter filter});
 
-  /// Ensure that all previous operations are written to disk.
-  Future<void> commit();
+  Future<void> insertTask({required Task task});
 
-  Future<String> export_();
+  static Repository open({required UuidValue uuid}) =>
+      RustLib.instance.api.crateApiRepositoryRepositoryOpen(uuid: uuid);
 
-  Future<void> import_({required String content});
+  Future<Task?> purgeTaskById({required UuidValue id});
 
-  Future<List<Task>> query({required TaskQuery query});
+  Future<Task?> taskById({required UuidValue id});
 
-  /// Remove an existing [`Task`], returning [`true`] if it was previously added
-  Future<bool> removeByTask({required Task task});
+  Future<List<Task>> taskQuery({required TaskQuery query});
 
-  /// Remove a [`Task`], will return [`None`] if it did not exists
-  Future<Task?> removeByUuid({required UuidValue uuid});
+  Future<List<Task>> tasksByStatus({required Set<TaskStatus> status});
 
-  Future<void> sync_();
-
-  /// Try to get a [`Task`] by [`Uuid`]
-  Future<Task?> taskByUuid({required UuidValue uuid});
-
-  /// Get all [`Task`]s matching [`Filter`]
-  Future<List<Task>> tasksWithFilter({required Filter filter});
-
-  Future<void> unload();
-
-  Future<bool> update({required Task task});
-}
-
-abstract class StrideRepositoryExt {
-  /// Get all [`Task`]s with status [`TaskStatus::Pending`]
-  Future<List<Task>> tasks();
+  Future<void> updateTask({required Task task});
 }

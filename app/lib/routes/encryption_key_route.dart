@@ -6,7 +6,7 @@ import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class EncryptionKeyRoute extends StatefulWidget {
-  final Repository repository;
+  final RepositorySpecification repository;
   const EncryptionKeyRoute({super.key, required this.repository});
 
   @override

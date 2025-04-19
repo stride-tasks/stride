@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     ErrorKind, RustError,
-    api::{error::KeyStoreError, repository::git::generate_iv},
+    api::{backend::git::generate_iv, error::KeyStoreError},
     base64_decode, base64_encode,
     task::{Task, TaskStatus},
 };

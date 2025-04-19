@@ -11,9 +11,9 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:stride/bridge/api/backend.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
-import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
@@ -27,13 +27,13 @@ import 'package:uuid/uuid.dart';
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `next`, `pull`
 
 String oidToString({required Oid oid}) =>
-    RustLib.instance.api.crateApiRepositoryGitOidToString(oid: oid);
+    RustLib.instance.api.crateApiBackendGitOidToString(oid: oid);
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Oid>>
 abstract class Oid implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TaskStorage>>
-abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
+abstract class TaskStorage implements RustOpaqueInterface, Backend {
   @override
   Future<void> add({required Task task});
 
@@ -60,7 +60,7 @@ abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
   Future<void> import_({required String content});
 
   static TaskStorage load({required UuidValue uuid}) =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageLoad(uuid: uuid);
+      RustLib.instance.api.crateApiBackendGitTaskStorageLoad(uuid: uuid);
 
   Future<List<CommitItem>?> log({Oid? oid, int? n});
 
@@ -68,7 +68,7 @@ abstract class TaskStorage implements RustOpaqueInterface, StrideRepository {
           {required UuidValue repositoryUuid,
           required String path,
           required Settings settings}) =>
-      RustLib.instance.api.crateApiRepositoryGitTaskStorageNew(
+      RustLib.instance.api.crateApiBackendGitTaskStorageNew(
           repositoryUuid: repositoryUuid, path: path, settings: settings);
 
   Future<void> push({required bool force});

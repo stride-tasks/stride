@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/bridge/api/database.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
@@ -81,7 +81,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   StreamSubscription<SettingsState>? settingsSubscription;
 
   UuidValue? repositoryUuid;
-  Database? database;
+  Repository? database;
   Filter? filter;
 
   Timer? syncTimer;
@@ -116,14 +116,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
   }
 
-  Database? repository() {
+  Repository? repository() {
     if (database != null) {
       return database;
     }
     if (repositoryUuid == null) {
       return null;
     }
-    return database = Database.open(uuid: repositoryUuid!);
+    return database = Repository.open(uuid: repositoryUuid!);
   }
 
   TaskBloc({

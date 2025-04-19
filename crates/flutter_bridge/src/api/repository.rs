@@ -5,6 +5,7 @@ use stride_core::{
     event::TaskQuery,
     task::{Task, TaskStatus},
 };
+use stride_database::Database;
 use uuid::Uuid;
 
 use crate::RustError;
@@ -13,21 +14,20 @@ use super::{filter::Filter, settings::application_support_path};
 
 #[frb(opaque)]
 #[derive(Debug)]
-pub struct Database {
+pub struct Repository {
     root_path: PathBuf,
     db_path: PathBuf,
-    db: Mutex<stride_database::Database>,
+    db: Mutex<Database>,
 }
 
-impl Database {
+impl Repository {
     #[flutter_rust_bridge::frb(sync)]
     pub fn open(uuid: Uuid) -> Result<Self, RustError> {
         let root_path = application_support_path()
             .join("repository")
             .join(uuid.to_string());
         let db_path = root_path.join("db.sqlite");
-        let mut db = stride_database::Database::open(&db_path)
-            .map_err(Into::<stride_database::Error>::into)?;
+        let mut db = Database::open(&db_path).map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
         Ok(Self {
             db: db.into(),
@@ -62,6 +62,10 @@ impl Database {
         status: &HashSet<TaskStatus>,
     ) -> Result<Vec<Task>, RustError> {
         Ok(self.db.lock().unwrap().tasks_by_status(status)?)
+    }
+
+    pub fn task_by_id(&mut self, id: Uuid) -> Result<Option<Task>, RustError> {
+        Ok(self.db.lock().unwrap().task_by_id(id)?)
     }
 
     pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError> {
