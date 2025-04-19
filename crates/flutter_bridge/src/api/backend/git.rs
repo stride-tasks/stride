@@ -999,7 +999,7 @@ impl TaskStorage {
     }
 }
 
-impl StrideRepository for TaskStorage {
+impl Backend for TaskStorage {
     fn unload(&mut self) {
         for storage in self.storage_mut() {
             storage.unload();
@@ -1377,7 +1377,7 @@ fn do_merge<'a>(
 
 pub use git2::Oid;
 
-use super::StrideRepository;
+use super::Backend;
 
 #[frb(opaque, mirror(Oid))]
 #[derive(Debug, Clone, Copy)]

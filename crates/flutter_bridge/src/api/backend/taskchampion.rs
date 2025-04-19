@@ -8,7 +8,7 @@ use stride_core::{
 };
 use taskchampion::{Operations, StorageConfig};
 
-use super::StrideRepository;
+use super::Backend;
 
 // Re-export this, to allow API users to access the ServerConfig, without depending on
 // `taskchampion`
@@ -49,7 +49,7 @@ impl Replica {
     }
 }
 
-impl StrideRepository for Replica {
+impl Backend for Replica {
     fn unload(&mut self) {
         todo!()
     }

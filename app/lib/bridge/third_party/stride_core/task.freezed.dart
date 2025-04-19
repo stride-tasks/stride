@@ -22,8 +22,8 @@ mixin _$Task {
   bool get active => throw _privateConstructorUsedError;
   DateTime? get modified => throw _privateConstructorUsedError;
   DateTime? get due => throw _privateConstructorUsedError;
-  int? get project => throw _privateConstructorUsedError;
-  Uint32List get tags => throw _privateConstructorUsedError;
+  String? get project => throw _privateConstructorUsedError;
+  List<String> get tags => throw _privateConstructorUsedError;
   List<Annotation> get annotations => throw _privateConstructorUsedError;
   TaskPriority? get priority => throw _privateConstructorUsedError;
   DateTime? get wait => throw _privateConstructorUsedError;
@@ -38,8 +38,8 @@ mixin _$Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
-            Uint32List tags,
+            String? project,
+            List<String> tags,
             List<Annotation> annotations,
             TaskPriority? priority,
             DateTime? wait,
@@ -57,8 +57,8 @@ mixin _$Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
-            Uint32List tags,
+            String? project,
+            List<String> tags,
             List<Annotation> annotations,
             TaskPriority? priority,
             DateTime? wait,
@@ -76,8 +76,8 @@ mixin _$Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
-            Uint32List tags,
+            String? project,
+            List<String> tags,
             List<Annotation> annotations,
             TaskPriority? priority,
             DateTime? wait,
@@ -122,8 +122,8 @@ abstract class $TaskCopyWith<$Res> {
       bool active,
       DateTime? modified,
       DateTime? due,
-      int? project,
-      Uint32List tags,
+      String? project,
+      List<String> tags,
       List<Annotation> annotations,
       TaskPriority? priority,
       DateTime? wait,
@@ -188,11 +188,11 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
       project: freezed == project
           ? _value.project
           : project // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as String?,
       tags: null == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
-              as Uint32List,
+              as List<String>,
       annotations: null == annotations
           ? _value.annotations
           : annotations // ignore: cast_nullable_to_non_nullable
@@ -231,8 +231,8 @@ abstract class _$$TaskImplCopyWith<$Res> implements $TaskCopyWith<$Res> {
       bool active,
       DateTime? modified,
       DateTime? due,
-      int? project,
-      Uint32List tags,
+      String? project,
+      List<String> tags,
       List<Annotation> annotations,
       TaskPriority? priority,
       DateTime? wait,
@@ -294,11 +294,11 @@ class __$$TaskImplCopyWithImpl<$Res>
       project: freezed == project
           ? _value.project
           : project // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as String?,
       tags: null == tags
-          ? _value.tags
+          ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
-              as Uint32List,
+              as List<String>,
       annotations: null == annotations
           ? _value._annotations
           : annotations // ignore: cast_nullable_to_non_nullable
@@ -334,13 +334,14 @@ class _$TaskImpl extends _Task {
       this.modified,
       this.due,
       this.project,
-      required this.tags,
+      required final List<String> tags,
       required final List<Annotation> annotations,
       this.priority,
       this.wait,
       required final List<UuidValue> depends,
       required final Map<String, String> uda})
-      : _annotations = annotations,
+      : _tags = tags,
+        _annotations = annotations,
         _depends = depends,
         _uda = uda,
         super._();
@@ -358,9 +359,15 @@ class _$TaskImpl extends _Task {
   @override
   final DateTime? due;
   @override
-  final int? project;
+  final String? project;
+  final List<String> _tags;
   @override
-  final Uint32List tags;
+  List<String> get tags {
+    if (_tags is EqualUnmodifiableListView) return _tags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_tags);
+  }
+
   final List<Annotation> _annotations;
   @override
   List<Annotation> get annotations {
@@ -407,7 +414,7 @@ class _$TaskImpl extends _Task {
                 other.modified == modified) &&
             (identical(other.due, due) || other.due == due) &&
             (identical(other.project, project) || other.project == project) &&
-            const DeepCollectionEquality().equals(other.tags, tags) &&
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
             const DeepCollectionEquality()
                 .equals(other._annotations, _annotations) &&
             (identical(other.priority, priority) ||
@@ -427,7 +434,7 @@ class _$TaskImpl extends _Task {
       modified,
       due,
       project,
-      const DeepCollectionEquality().hash(tags),
+      const DeepCollectionEquality().hash(_tags),
       const DeepCollectionEquality().hash(_annotations),
       priority,
       wait,
@@ -452,8 +459,8 @@ class _$TaskImpl extends _Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
-            Uint32List tags,
+            String? project,
+            List<String> tags,
             List<Annotation> annotations,
             TaskPriority? priority,
             DateTime? wait,
@@ -475,8 +482,8 @@ class _$TaskImpl extends _Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
-            Uint32List tags,
+            String? project,
+            List<String> tags,
             List<Annotation> annotations,
             TaskPriority? priority,
             DateTime? wait,
@@ -498,8 +505,8 @@ class _$TaskImpl extends _Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
-            Uint32List tags,
+            String? project,
+            List<String> tags,
             List<Annotation> annotations,
             TaskPriority? priority,
             DateTime? wait,
@@ -552,8 +559,8 @@ abstract class _Task extends Task {
       required final bool active,
       final DateTime? modified,
       final DateTime? due,
-      final int? project,
-      required final Uint32List tags,
+      final String? project,
+      required final List<String> tags,
       required final List<Annotation> annotations,
       final TaskPriority? priority,
       final DateTime? wait,
@@ -574,9 +581,9 @@ abstract class _Task extends Task {
   @override
   DateTime? get due;
   @override
-  int? get project;
+  String? get project;
   @override
-  Uint32List get tags;
+  List<String> get tags;
   @override
   List<Annotation> get annotations;
   @override

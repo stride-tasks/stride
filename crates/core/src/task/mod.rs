@@ -12,10 +12,6 @@ pub use annotation::Annotation;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub type TagIndex = u32;
-pub type ProjectIndex = u32;
-pub type PriorityIndex = u32;
-
 #[cfg(test)]
 mod tests;
 
@@ -88,11 +84,11 @@ pub struct Task {
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub project: Option<ProjectIndex>,
+    pub project: Option<String>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub tags: Vec<TagIndex>,
+    pub tags: Vec<String>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -171,9 +167,12 @@ impl Task {
             result.push(b'w');
             result.extend(&wait.timestamp_micros().to_be_bytes());
         }
-        if let Some(project) = self.project {
+        if let Some(project) = &self.project {
             result.push(b'p');
-            result.extend_from_slice(&project.to_be_bytes());
+
+            let len = project.len() as u32;
+            result.extend_from_slice(&len.to_be_bytes());
+            result.extend_from_slice(project.as_bytes());
         }
         if let Some(priority) = self.priority {
             result.push(b'r');
@@ -181,7 +180,10 @@ impl Task {
         }
         for tag in &self.tags {
             result.push(b't');
-            result.extend_from_slice(&tag.to_be_bytes());
+
+            let len = tag.len() as u32;
+            result.extend_from_slice(&len.to_be_bytes());
+            result.extend_from_slice(tag.as_bytes());
         }
         for depend in &self.depends {
             result.push(b'n');
@@ -203,6 +205,7 @@ impl Task {
         result
     }
 
+    // TODO(HalidOdat): Return Result<> with error indicating what is wrong.
     #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn from_data(input: &[u8]) -> Option<Task> {
@@ -259,15 +262,29 @@ impl Task {
                     i += size_of::<Uuid>();
                 }
                 b't' => {
-                    let tag =
-                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
+                    let len =
+                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
+                            as usize;
                     i += size_of::<u32>();
-                    tags.push(tag);
+
+                    let bytes = input.get(i..i + len)?;
+                    i += len;
+                    let value = std::str::from_utf8(bytes).ok()?.to_string();
+
+                    if !tags.contains(&value) {
+                        tags.push(value);
+                    }
                 }
                 b'p' => {
-                    let value =
-                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
+                    let len =
+                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
+                            as usize;
                     i += size_of::<u32>();
+
+                    let bytes = input.get(i..i + len)?;
+                    i += len;
+                    let value = std::str::from_utf8(bytes).ok()?.to_string();
+
                     project = Some(value);
                 }
                 b'r' => {

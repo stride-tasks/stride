@@ -14,10 +14,12 @@ use super::filter::Filter;
 pub mod git;
 pub mod taskchampion;
 
-/// This is the main trait, defining a "Repository".
-/// A repository holds tasks and governs how they are synced.
-/// This trait unites their interface.
-pub trait StrideRepository {
+/// This is the main trait, defining a "Backend".
+/// A backend governs how tasks are synced.
+///
+// TODO: Move this to separate crate (stride_backend)
+// TODO: Ideally we shouldn't need to expose this to flutter.
+pub trait Backend {
     /* TODO(@bpeetz): I have no idea, what this function does <2024-10-25> */
     fn unload(&mut self);
 
@@ -49,7 +51,7 @@ pub trait StrideRepository {
 
 #[frb(ignore)]
 /// An extension trait to the [`StrideRepository`] Trait.
-pub trait StrideRepositoryExt: StrideRepository {
+pub trait BackendExt: Backend {
     /// Get all [`Task`]s with status [`TaskStatus::Pending`]
     fn tasks(&mut self) -> Result<Vec<Task>, RustError> {
         self.tasks_with_filter(&Filter {

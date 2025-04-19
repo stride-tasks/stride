@@ -1,9 +1,8 @@
 [package]
-name = "stride_cli"
-description = "Stride command line tool"
-keywords = ["stride"]
+name = "stride_database"
+description = "Stride's database"
+keywords = ["stride", "wasm", "plugin"]
 categories = []
-default-run = "stride"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -14,18 +13,11 @@ publish = false
 
 [dependencies]
 stride_core.workspace = true
-stride_flutter_bridge.workspace = true
 
-anyhow.workspace = true
-dirs.workspace = true
+rusqlite.workspace = true
 uuid.workspace = true
-log.workspace = true
-clap.workspace = true
 
-[[bin]]
-name = "stride"
-doc = false
-path = "src/main.rs"
+[dev-dependencies]
 
 [lints]
 workspace = true

@@ -15,7 +15,7 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$Repository {
+mixin _$RepositorySpecification {
   UuidValue get uuid => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get origin => throw _privateConstructorUsedError;
@@ -25,18 +25,18 @@ mixin _$Repository {
   UuidValue? get sshKeyUuid => throw _privateConstructorUsedError;
   EncryptionKey? get encryption => throw _privateConstructorUsedError;
 
-  /// Create a copy of Repository
+  /// Create a copy of RepositorySpecification
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $RepositoryCopyWith<Repository> get copyWith =>
+  $RepositorySpecificationCopyWith<RepositorySpecification> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $RepositoryCopyWith<$Res> {
-  factory $RepositoryCopyWith(
-          Repository value, $Res Function(Repository) then) =
-      _$RepositoryCopyWithImpl<$Res, Repository>;
+abstract class $RepositorySpecificationCopyWith<$Res> {
+  factory $RepositorySpecificationCopyWith(RepositorySpecification value,
+          $Res Function(RepositorySpecification) then) =
+      _$RepositorySpecificationCopyWithImpl<$Res, RepositorySpecification>;
   @useResult
   $Res call(
       {UuidValue uuid,
@@ -50,16 +50,17 @@ abstract class $RepositoryCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
-    implements $RepositoryCopyWith<$Res> {
-  _$RepositoryCopyWithImpl(this._value, this._then);
+class _$RepositorySpecificationCopyWithImpl<$Res,
+        $Val extends RepositorySpecification>
+    implements $RepositorySpecificationCopyWith<$Res> {
+  _$RepositorySpecificationCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Repository
+  /// Create a copy of RepositorySpecification
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -111,11 +112,12 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
 }
 
 /// @nodoc
-abstract class _$$RepositoryImplCopyWith<$Res>
-    implements $RepositoryCopyWith<$Res> {
-  factory _$$RepositoryImplCopyWith(
-          _$RepositoryImpl value, $Res Function(_$RepositoryImpl) then) =
-      __$$RepositoryImplCopyWithImpl<$Res>;
+abstract class _$$RepositorySpecificationImplCopyWith<$Res>
+    implements $RepositorySpecificationCopyWith<$Res> {
+  factory _$$RepositorySpecificationImplCopyWith(
+          _$RepositorySpecificationImpl value,
+          $Res Function(_$RepositorySpecificationImpl) then) =
+      __$$RepositorySpecificationImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -130,14 +132,16 @@ abstract class _$$RepositoryImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$RepositoryImplCopyWithImpl<$Res>
-    extends _$RepositoryCopyWithImpl<$Res, _$RepositoryImpl>
-    implements _$$RepositoryImplCopyWith<$Res> {
-  __$$RepositoryImplCopyWithImpl(
-      _$RepositoryImpl _value, $Res Function(_$RepositoryImpl) _then)
+class __$$RepositorySpecificationImplCopyWithImpl<$Res>
+    extends _$RepositorySpecificationCopyWithImpl<$Res,
+        _$RepositorySpecificationImpl>
+    implements _$$RepositorySpecificationImplCopyWith<$Res> {
+  __$$RepositorySpecificationImplCopyWithImpl(
+      _$RepositorySpecificationImpl _value,
+      $Res Function(_$RepositorySpecificationImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Repository
+  /// Create a copy of RepositorySpecification
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -151,7 +155,7 @@ class __$$RepositoryImplCopyWithImpl<$Res>
     Object? sshKeyUuid = freezed,
     Object? encryption = freezed,
   }) {
-    return _then(_$RepositoryImpl(
+    return _then(_$RepositorySpecificationImpl(
       uuid: null == uuid
           ? _value.uuid
           : uuid // ignore: cast_nullable_to_non_nullable
@@ -190,8 +194,8 @@ class __$$RepositoryImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$RepositoryImpl extends _Repository {
-  const _$RepositoryImpl(
+class _$RepositorySpecificationImpl extends _RepositorySpecification {
+  const _$RepositorySpecificationImpl(
       {required this.uuid,
       required this.name,
       required this.origin,
@@ -221,14 +225,14 @@ class _$RepositoryImpl extends _Repository {
 
   @override
   String toString() {
-    return 'Repository(uuid: $uuid, name: $name, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
+    return 'RepositorySpecification(uuid: $uuid, name: $name, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$RepositoryImpl &&
+            other is _$RepositorySpecificationImpl &&
             (identical(other.uuid, uuid) || other.uuid == uuid) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.origin, origin) || other.origin == origin) &&
@@ -245,17 +249,18 @@ class _$RepositoryImpl extends _Repository {
   int get hashCode => Object.hash(runtimeType, uuid, name, origin, author,
       email, branch, sshKeyUuid, encryption);
 
-  /// Create a copy of Repository
+  /// Create a copy of RepositorySpecification
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$RepositoryImplCopyWith<_$RepositoryImpl> get copyWith =>
-      __$$RepositoryImplCopyWithImpl<_$RepositoryImpl>(this, _$identity);
+  _$$RepositorySpecificationImplCopyWith<_$RepositorySpecificationImpl>
+      get copyWith => __$$RepositorySpecificationImplCopyWithImpl<
+          _$RepositorySpecificationImpl>(this, _$identity);
 }
 
-abstract class _Repository extends Repository {
-  const factory _Repository(
+abstract class _RepositorySpecification extends RepositorySpecification {
+  const factory _RepositorySpecification(
       {required final UuidValue uuid,
       required final String name,
       required final String origin,
@@ -263,8 +268,8 @@ abstract class _Repository extends Repository {
       required final String email,
       required final String branch,
       final UuidValue? sshKeyUuid,
-      final EncryptionKey? encryption}) = _$RepositoryImpl;
-  const _Repository._() : super._();
+      final EncryptionKey? encryption}) = _$RepositorySpecificationImpl;
+  const _RepositorySpecification._() : super._();
 
   @override
   UuidValue get uuid;
@@ -283,12 +288,12 @@ abstract class _Repository extends Repository {
   @override
   EncryptionKey? get encryption;
 
-  /// Create a copy of Repository
+  /// Create a copy of RepositorySpecification
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$RepositoryImplCopyWith<_$RepositoryImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$RepositorySpecificationImplCopyWith<_$RepositorySpecificationImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -298,7 +303,8 @@ mixin _$Settings {
   List<Filter> get filters => throw _privateConstructorUsedError;
   FilterSelection? get selectedFilter => throw _privateConstructorUsedError;
   UuidValue? get currentRepository => throw _privateConstructorUsedError;
-  List<Repository> get repositories => throw _privateConstructorUsedError;
+  List<RepositorySpecification> get repositories =>
+      throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(
@@ -307,7 +313,7 @@ mixin _$Settings {
             List<Filter> filters,
             FilterSelection? selectedFilter,
             UuidValue? currentRepository,
-            List<Repository> repositories)
+            List<RepositorySpecification> repositories)
         raw,
   }) =>
       throw _privateConstructorUsedError;
@@ -319,7 +325,7 @@ mixin _$Settings {
             List<Filter> filters,
             FilterSelection? selectedFilter,
             UuidValue? currentRepository,
-            List<Repository> repositories)?
+            List<RepositorySpecification> repositories)?
         raw,
   }) =>
       throw _privateConstructorUsedError;
@@ -331,7 +337,7 @@ mixin _$Settings {
             List<Filter> filters,
             FilterSelection? selectedFilter,
             UuidValue? currentRepository,
-            List<Repository> repositories)?
+            List<RepositorySpecification> repositories)?
         raw,
     required TResult orElse(),
   }) =>
@@ -371,7 +377,7 @@ abstract class $SettingsCopyWith<$Res> {
       List<Filter> filters,
       FilterSelection? selectedFilter,
       UuidValue? currentRepository,
-      List<Repository> repositories});
+      List<RepositorySpecification> repositories});
 
   $FilterSelectionCopyWith<$Res>? get selectedFilter;
 }
@@ -422,7 +428,7 @@ class _$SettingsCopyWithImpl<$Res, $Val extends Settings>
       repositories: null == repositories
           ? _value.repositories
           : repositories // ignore: cast_nullable_to_non_nullable
-              as List<Repository>,
+              as List<RepositorySpecification>,
     ) as $Val);
   }
 
@@ -455,7 +461,7 @@ abstract class _$$SettingsImplCopyWith<$Res>
       List<Filter> filters,
       FilterSelection? selectedFilter,
       UuidValue? currentRepository,
-      List<Repository> repositories});
+      List<RepositorySpecification> repositories});
 
   @override
   $FilterSelectionCopyWith<$Res>? get selectedFilter;
@@ -505,7 +511,7 @@ class __$$SettingsImplCopyWithImpl<$Res>
       repositories: null == repositories
           ? _value._repositories
           : repositories // ignore: cast_nullable_to_non_nullable
-              as List<Repository>,
+              as List<RepositorySpecification>,
     ));
   }
 }
@@ -519,7 +525,7 @@ class _$SettingsImpl extends _Settings {
       required final List<Filter> filters,
       this.selectedFilter,
       this.currentRepository,
-      required final List<Repository> repositories})
+      required final List<RepositorySpecification> repositories})
       : _filters = filters,
         _repositories = repositories,
         super._();
@@ -540,9 +546,9 @@ class _$SettingsImpl extends _Settings {
   final FilterSelection? selectedFilter;
   @override
   final UuidValue? currentRepository;
-  final List<Repository> _repositories;
+  final List<RepositorySpecification> _repositories;
   @override
-  List<Repository> get repositories {
+  List<RepositorySpecification> get repositories {
     if (_repositories is EqualUnmodifiableListView) return _repositories;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_repositories);
@@ -598,7 +604,7 @@ class _$SettingsImpl extends _Settings {
             List<Filter> filters,
             FilterSelection? selectedFilter,
             UuidValue? currentRepository,
-            List<Repository> repositories)
+            List<RepositorySpecification> repositories)
         raw,
   }) {
     return raw(darkMode, periodicSync, filters, selectedFilter,
@@ -614,7 +620,7 @@ class _$SettingsImpl extends _Settings {
             List<Filter> filters,
             FilterSelection? selectedFilter,
             UuidValue? currentRepository,
-            List<Repository> repositories)?
+            List<RepositorySpecification> repositories)?
         raw,
   }) {
     return raw?.call(darkMode, periodicSync, filters, selectedFilter,
@@ -630,7 +636,7 @@ class _$SettingsImpl extends _Settings {
             List<Filter> filters,
             FilterSelection? selectedFilter,
             UuidValue? currentRepository,
-            List<Repository> repositories)?
+            List<RepositorySpecification> repositories)?
         raw,
     required TResult orElse(),
   }) {
@@ -672,12 +678,13 @@ class _$SettingsImpl extends _Settings {
 
 abstract class _Settings extends Settings {
   const factory _Settings(
-      {required final bool darkMode,
-      required final bool periodicSync,
-      required final List<Filter> filters,
-      final FilterSelection? selectedFilter,
-      final UuidValue? currentRepository,
-      required final List<Repository> repositories}) = _$SettingsImpl;
+          {required final bool darkMode,
+          required final bool periodicSync,
+          required final List<Filter> filters,
+          final FilterSelection? selectedFilter,
+          final UuidValue? currentRepository,
+          required final List<RepositorySpecification> repositories}) =
+      _$SettingsImpl;
   const _Settings._() : super._();
 
   @override
@@ -691,7 +698,7 @@ abstract class _Settings extends Settings {
   @override
   UuidValue? get currentRepository;
   @override
-  List<Repository> get repositories;
+  List<RepositorySpecification> get repositories;
 
   /// Create a copy of Settings
   /// with the given fields replaced by the non-null parameter values.

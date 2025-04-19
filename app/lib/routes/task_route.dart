@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
@@ -26,7 +24,7 @@ class TaskRoute extends StatefulWidget {
 class _TaskRouteState extends State<TaskRoute> {
   String title = '';
   DateTime? due;
-  List<int> tags = [];
+  List<String> tags = [];
   List<(DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
@@ -167,7 +165,7 @@ class _TaskRouteState extends State<TaskRoute> {
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
               title: title,
               active: active,
-              tags: Uint32List.fromList(tags),
+              tags: tags,
               due: due,
               status: TaskStatus.pending,
               annotations: annotations
