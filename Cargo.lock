@@ -1833,11 +1833,8 @@ dependencies = [
  "clap",
  "dirs 6.0.0",
  "log",
- "serde",
  "stride_core",
  "stride_flutter_bridge",
- "toml",
- "url",
  "uuid",
 ]
 
@@ -2230,7 +2227,6 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
- "serde",
 ]
 
 [[package]]
