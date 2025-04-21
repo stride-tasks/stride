@@ -168,7 +168,7 @@ class TaskItem extends StatelessWidget {
 
     if (onSwipeLeft != null || onSwipeRight != null) {
       widget = Dismissible(
-        key: Key('${task.uuid}'),
+        key: Key('${task.uuid}-${task.status.index}'),
         direction: switch ((onSwipeLeft != null, onSwipeRight != null)) {
           (true, true) => DismissDirection.horizontal,
           (true, false) => DismissDirection.endToStart,
