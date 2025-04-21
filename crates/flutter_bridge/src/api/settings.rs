@@ -375,11 +375,16 @@ impl Settings {
         APPLICATION_STATE_INSTANCE.lock().unwrap().settings.clone()
     }
     pub fn load(paths: ApplicationPaths) -> Result<Settings, RustError> {
-        // HACK: We need an ~/.ssh directory for libssh2. On android
+        // HACK: We need an ~/.ssh directory for libssh2. On android and iOS
         // that means redefining the HOME dir, so that we can control
         // it. <2025-02-25>
-        #[cfg(target_os = "android")]
-        std::env::set_var("HOME", &paths.support_path);
+        //
+        // SAFETY: We do this initially when the applicattion is initialized,
+        //         so this should be thread-safe.
+        #[cfg(any(target_os = "android", target_os = "ios"))]
+        unsafe {
+            std::env::set_var("HOME", &paths.support_path);
+        }
 
         let ssh_path = Path::new(&paths.support_path).join(".ssh");
 
