@@ -3705,12 +3705,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw as Uint32List;
-  }
-
-  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as List<int>;
@@ -4067,7 +4061,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       modified: dco_decode_opt_box_autoadd_Chrono_Utc(arr[4]),
       due: dco_decode_opt_box_autoadd_Chrono_Utc(arr[5]),
       project: dco_decode_opt_String(arr[6]),
-      tags: dco_decode_list_prim_u_32_strict(arr[7]),
+      tags: dco_decode_list_String(arr[7]),
       annotations: dco_decode_list_annotation(arr[8]),
       priority: dco_decode_opt_box_autoadd_task_priority(arr[9]),
       wait: dco_decode_opt_box_autoadd_Chrono_Utc(arr[10]),
@@ -4737,13 +4731,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
-    return deserializer.buffer.getUint32List(len_);
-  }
-
-  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final len_ = sse_decode_i_32(deserializer);
@@ -5198,7 +5185,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_modified = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     final var_due = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     final var_project = sse_decode_opt_String(deserializer);
-    final var_tags = sse_decode_list_prim_u_32_strict(deserializer);
+    final var_tags = sse_decode_list_String(deserializer);
     final var_annotations = sse_decode_list_annotation(deserializer);
     final var_priority = sse_decode_opt_box_autoadd_task_priority(deserializer);
     final var_wait = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
@@ -5860,14 +5847,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_prim_u_32_strict(
-      Uint32List self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    serializer.buffer.putUint32List(self);
-  }
-
-  @protected
   void sse_encode_list_prim_u_8_loose(
       List<int> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -6255,7 +6234,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_Chrono_Utc(self.modified, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.due, serializer);
     sse_encode_opt_String(self.project, serializer);
-    sse_encode_list_prim_u_32_strict(self.tags, serializer);
+    sse_encode_list_String(self.tags, serializer);
     sse_encode_list_annotation(self.annotations, serializer);
     sse_encode_opt_box_autoadd_task_priority(self.priority, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.wait, serializer);

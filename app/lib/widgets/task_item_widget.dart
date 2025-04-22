@@ -32,51 +32,37 @@ class TaskItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget tags;
-    if (task.tags.isEmpty) {
-      tags = const Text(
-        '',
-        style: TextStyle(fontSize: 12),
-      );
-    } else {
-      tags = Wrap(
-        children: task.tags
-            .map(
-              (tag) => Chip(
-                label: Text(
-                  tag.toString(),
-                  style: const TextStyle(fontSize: 12),
-                ),
-                labelPadding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-            )
-            .map(
-              (chip) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: chip,
-              ),
-            )
-            .toList(),
-      );
-    }
-
     Widget? subtitle;
-    if (task.tags.isNotEmpty || task.due != null) {
-      subtitle = Padding(
-        padding: const EdgeInsets.only(top: 2.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              task.due?.toUtc().toHumanString() ?? '',
-              style: const TextStyle(fontSize: 12),
+    if (task.due != null || task.tags.isNotEmpty) {
+      subtitle = Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (task.due != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2.0),
+              child: Text(
+                task.due?.toUtc().toHumanString() ?? '',
+                style: const TextStyle(fontSize: 12),
+              ),
             ),
-            tags,
-          ],
-        ),
+          if (task.tags.isNotEmpty) SizedBox(width: 8),
+          if (task.tags.isNotEmpty)
+            ...task.tags.map(
+              (tag) => Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: InputChip(
+                  label: Text(
+                    tag,
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                  labelPadding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+        ],
       );
     }
 

@@ -12,10 +12,6 @@ pub use annotation::Annotation;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub type TagIndex = u32;
-pub type ProjectIndex = u32;
-pub type PriorityIndex = u32;
-
 #[cfg(test)]
 mod tests;
 
@@ -92,7 +88,7 @@ pub struct Task {
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub tags: Vec<TagIndex>,
+    pub tags: Vec<String>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -182,7 +178,8 @@ impl Task {
         }
         for tag in &self.tags {
             result.push(b't');
-            result.extend_from_slice(&tag.to_be_bytes());
+            result.extend_from_slice(&(tag.len() as u32).to_be_bytes());
+            result.extend_from_slice(tag.as_bytes());
         }
         for depend in &self.depends {
             result.push(b'n');
@@ -260,10 +257,14 @@ impl Task {
                     i += size_of::<Uuid>();
                 }
                 b't' => {
-                    let tag =
-                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
+                    let len =
+                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
+                            as usize;
                     i += size_of::<u32>();
-                    tags.push(tag);
+                    let bytes = input.get(i..i + len)?;
+                    let value = std::str::from_utf8(bytes).ok()?;
+                    i += len;
+                    tags.push(value.into());
                 }
                 b'p' => {
                     let len =
@@ -407,7 +408,11 @@ impl From<taskchampion::Task> for Task {
             modified: v.get_modified(),
             due: v.get_due(),
             project: v.get_value("project").map(Into::into),
-            tags: vec![],
+            tags: v
+                .get_tags()
+                .filter(|tag| tag.is_user())
+                .map(|tag| tag.as_ref().into())
+                .collect(),
             annotations: v.get_annotations().map(Into::into).collect(),
             priority: taskchampion_priority_to_task_status(v.get_priority()),
             wait: v.get_wait(),

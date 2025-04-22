@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
@@ -10,6 +8,7 @@ import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/icon_text_button.dart';
+import 'package:stride/widgets/tags_widget.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskRoute extends StatefulWidget {
@@ -26,7 +25,7 @@ class TaskRoute extends StatefulWidget {
 class _TaskRouteState extends State<TaskRoute> {
   String title = '';
   DateTime? due;
-  List<int> tags = [];
+  List<String> _tags = [];
   List<(DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
@@ -41,7 +40,7 @@ class _TaskRouteState extends State<TaskRoute> {
 
     title = widget.task?.title ?? title;
     due = widget.task?.due;
-    tags = widget.task?.tags.toList() ?? tags;
+    _tags = widget.task?.tags.toList() ?? _tags;
     annotations = widget.task?.annotations
             .map(
               (annotation) => (
@@ -139,13 +138,13 @@ class _TaskRouteState extends State<TaskRoute> {
                     selectedIcon: const Icon(Icons.check),
                   ),
                 ),
-                // TagsWidget(
-                //   tags: const [],
-                //   onSubmit: (tags) {
-                //     _tags = tags;
-                //   },
-                // ),
-                const SizedBox(height: 20),
+                TagsWidget(
+                  tags: _tags,
+                  onSubmit: (tags) {
+                    _tags = tags;
+                  },
+                ),
+                const SizedBox(height: 10),
                 _annotations(),
               ],
             ),
@@ -167,7 +166,7 @@ class _TaskRouteState extends State<TaskRoute> {
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
               title: title,
               active: active,
-              tags: Uint32List.fromList(tags),
+              tags: _tags,
               due: due,
               status: TaskStatus.pending,
               annotations: annotations

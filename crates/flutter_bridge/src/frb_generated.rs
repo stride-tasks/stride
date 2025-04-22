@@ -4164,7 +4164,7 @@ const _: fn() = || {
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.modified;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.due;
         let _: Option<String> = Task.project;
-        let _: Vec<u32> = Task.tags;
+        let _: Vec<String> = Task.tags;
         let _: Vec<stride_core::task::annotation::Annotation> = Task.annotations;
         let _: Option<stride_core::task::TaskPriority> = Task.priority;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.wait;
@@ -4677,18 +4677,6 @@ impl SseDecode for Vec<crate::git::known_hosts::Host> {
     }
 }
 
-impl SseDecode for Vec<u32> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut len_ = <i32>::sse_decode(deserializer);
-        let mut ans_ = vec![];
-        for idx_ in 0..len_ {
-            ans_.push(<u32>::sse_decode(deserializer));
-        }
-        return ans_;
-    }
-}
-
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -5193,7 +5181,7 @@ impl SseDecode for stride_core::task::Task {
         let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_due = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_project = <Option<String>>::sse_decode(deserializer);
-        let mut var_tags = <Vec<u32>>::sse_decode(deserializer);
+        let mut var_tags = <Vec<String>>::sse_decode(deserializer);
         let mut var_annotations =
             <Vec<stride_core::task::annotation::Annotation>>::sse_decode(deserializer);
         let mut var_priority = <Option<stride_core::task::TaskPriority>>::sse_decode(deserializer);
@@ -6797,16 +6785,6 @@ impl SseEncode for Vec<crate::git::known_hosts::Host> {
     }
 }
 
-impl SseEncode for Vec<u32> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(self.len() as _, serializer);
-        for item in self {
-            <u32>::sse_encode(item, serializer);
-        }
-    }
-}
-
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -7216,7 +7194,7 @@ impl SseEncode for stride_core::task::Task {
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.due, serializer);
         <Option<String>>::sse_encode(self.project, serializer);
-        <Vec<u32>>::sse_encode(self.tags, serializer);
+        <Vec<String>>::sse_encode(self.tags, serializer);
         <Vec<stride_core::task::annotation::Annotation>>::sse_encode(self.annotations, serializer);
         <Option<stride_core::task::TaskPriority>>::sse_encode(self.priority, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.wait, serializer);

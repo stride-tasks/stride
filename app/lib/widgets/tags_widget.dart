@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 
 class TagsWidget extends StatefulWidget {
   final List<String> tags;
-  final List<String> currentItems;
   final void Function(List<String>) onSubmit;
   const TagsWidget({
     super.key,
     required this.tags,
     required this.onSubmit,
-    this.currentItems = const [],
   });
 
   @override
@@ -21,7 +19,7 @@ class TagsWidgetState extends State<TagsWidget> {
   @override
   void initState() {
     super.initState();
-    items = widget.currentItems.toList();
+    items = widget.tags.toList();
   }
 
   @override
@@ -40,39 +38,35 @@ class TagsWidgetState extends State<TagsWidget> {
           },
         ),
         const SizedBox(height: 10),
-        _chips(items),
+        _chips(),
       ],
     );
   }
 
-  Widget _chips(List<String> items) {
+  Widget _chips() {
     return Wrap(
       children: items
           .map(
-            (e) => _chip(e, () {
-              setState(() {
-                items.remove(e);
-              });
-            }),
-          )
-          .map(
-            (e) => Padding(
-              padding: const EdgeInsets.all(2),
-              child: e,
+            (tag) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: _chip(tag),
             ),
           )
           .toList(),
     );
   }
 
-  Widget _chip(String text, void Function() onDelete) {
+  Widget _chip(String text) {
     return InputChip(
       label: Text(text),
       labelStyle: const TextStyle(
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.bold,
       ),
-      onDeleted: onDelete,
+      onDeleted: () => setState(() {
+        items.remove(text);
+        widget.onSubmit(items);
+      }),
     );
   }
 }
