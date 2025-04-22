@@ -42,7 +42,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.9.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1883100118;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1840076236;
 
 // Section: executor
 
@@ -2768,39 +2768,6 @@ fn wire__stride_core__task__task_default_impl(
         },
     )
 }
-fn wire__stride_core__task__task_entry_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "task_entry",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_that = <stride_core::task::Task>::sse_decode(&mut deserializer);
-            deserializer.end();
-            move |context| {
-                transform_result_sse::<_, ()>((move || {
-                    let output_ok = Result::<_, ()>::Ok(stride_core::task::Task::entry(&api_that))?;
-                    Ok(output_ok)
-                })())
-            }
-        },
-    )
-}
 fn wire__stride_core__task__task_from_data_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -3302,6 +3269,7 @@ const _: fn() = || {
     {
         let Task = None::<stride_core::task::Task>.unwrap();
         let _: uuid::Uuid = Task.uuid;
+        let _: chrono::DateTime<chrono::Utc> = Task.entry;
         let _: stride_core::task::TaskStatus = Task.status;
         let _: String = Task.title;
         let _: bool = Task.active;
@@ -4228,6 +4196,7 @@ impl SseDecode for stride_core::task::Task {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
+        let mut var_entry = <chrono::DateTime<chrono::Utc>>::sse_decode(deserializer);
         let mut var_status = <stride_core::task::TaskStatus>::sse_decode(deserializer);
         let mut var_title = <String>::sse_decode(deserializer);
         let mut var_active = <bool>::sse_decode(deserializer);
@@ -4243,6 +4212,7 @@ impl SseDecode for stride_core::task::Task {
         let mut var_uda = <std::collections::HashMap<String, String>>::sse_decode(deserializer);
         return stride_core::task::Task {
             uuid: var_uuid,
+            entry: var_entry,
             status: var_status,
             title: var_title,
             active: var_active,
@@ -4531,21 +4501,20 @@ fn pde_ffi_dispatcher_primary_impl(
         69 => wire__crate__api__settings__settings_save_impl(port, ptr, rust_vec_len, data_len),
         70 => wire__crate__api__settings__ssh_keys_impl(port, ptr, rust_vec_len, data_len),
         71 => wire__stride_core__task__task_default_impl(port, ptr, rust_vec_len, data_len),
-        72 => wire__stride_core__task__task_entry_impl(port, ptr, rust_vec_len, data_len),
-        73 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
-        75 => wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len),
-        76 => {
+        72 => wire__stride_core__task__task_from_data_impl(port, ptr, rust_vec_len, data_len),
+        74 => wire__stride_core__task__task_priority_as_str_impl(port, ptr, rust_vec_len, data_len),
+        75 => {
             wire__stride_core__task__task_priority_default_impl(port, ptr, rust_vec_len, data_len)
         }
-        77 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
-        78 => {
+        76 => wire__stride_core__task__task_status_default_impl(port, ptr, rust_vec_len, data_len),
+        77 => {
             wire__stride_core__task__task_status_is_pending_impl(port, ptr, rust_vec_len, data_len)
         }
-        79 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
-        81 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
-        82 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
-        83 => wire__crate__api__logging__trace_impl(port, ptr, rust_vec_len, data_len),
-        84 => wire__crate__api__logging__warn_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__stride_core__task__task_to_data_impl(port, ptr, rust_vec_len, data_len),
+        80 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
+        81 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
+        82 => wire__crate__api__logging__trace_impl(port, ptr, rust_vec_len, data_len),
+        83 => wire__crate__api__logging__warn_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -4612,8 +4581,8 @@ fn pde_ffi_dispatcher_sync_impl(
             data_len,
         ),
         68 => wire__crate__api__settings__settings_new_impl(ptr, rust_vec_len, data_len),
-        74 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
-        80 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
+        73 => wire__stride_core__task__task_new_impl(ptr, rust_vec_len, data_len),
+        79 => wire__stride_core__task__task_urgency_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5191,6 +5160,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::task::Task> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.0.uuid.into_into_dart().into_dart(),
+            self.0.entry.into_into_dart().into_dart(),
             self.0.status.into_into_dart().into_dart(),
             self.0.title.into_into_dart().into_dart(),
             self.0.active.into_into_dart().into_dart(),
@@ -6033,6 +6003,7 @@ impl SseEncode for stride_core::task::Task {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <uuid::Uuid>::sse_encode(self.uuid, serializer);
+        <chrono::DateTime<chrono::Utc>>::sse_encode(self.entry, serializer);
         <stride_core::task::TaskStatus>::sse_encode(self.status, serializer);
         <String>::sse_encode(self.title, serializer);
         <bool>::sse_encode(self.active, serializer);

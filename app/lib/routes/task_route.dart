@@ -162,6 +162,7 @@ class _TaskRouteState extends State<TaskRoute> {
             final task = Task.raw(
               uuid:
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
+              entry: DateTime.now().toUtc(),
               title: title,
               active: active,
               tags: _tags,

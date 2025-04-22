@@ -29,6 +29,7 @@ class Task with _$Task {
   const Task._();
   const factory Task.raw({
     required UuidValue uuid,
+    required DateTime entry,
     required TaskStatus status,
     required String title,
     required bool active,
@@ -44,10 +45,6 @@ class Task with _$Task {
   }) = _Task;
   static Future<Task> default_() =>
       RustLib.instance.api.strideCoreTaskTaskDefault();
-
-  Future<DateTime> entry() => RustLib.instance.api.strideCoreTaskTaskEntry(
-        that: this,
-      );
 
   static Future<Task?> fromData({required List<int> input}) =>
       RustLib.instance.api.strideCoreTaskTaskFromData(input: input);

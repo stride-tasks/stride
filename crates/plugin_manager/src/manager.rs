@@ -168,7 +168,7 @@ impl PluginManager {
                 }
             }
             _ => {}
-        };
+        }
 
         Some(PluginAction::Event {
             plugin_name: manifest.name,

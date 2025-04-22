@@ -152,7 +152,7 @@ impl Database {
     fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
         let uuid = row.get::<_, Uuid>("id")?;
         let title = row.get::<_, String>("title")?;
-        let _entry = row.get::<_, Sql<Date>>("entry")?.value;
+        let entry = row.get::<_, Sql<Date>>("entry")?.value;
         let mut status = row.get::<_, Sql<TaskStatus>>("status")?.value;
         let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
         let project = row.get::<_, Option<String>>("project")?;
@@ -171,6 +171,7 @@ impl Database {
 
         Ok(Task {
             uuid,
+            entry,
             status,
             title,
             active: false,
@@ -284,7 +285,7 @@ impl Database {
         sql.execute::<&[(&str, &dyn ToSql)]>(&[
             (":id", &task_uuid),
             (":title", &task.title),
-            (":entry", &Sql::from(task.entry())),
+            (":entry", &Sql::from(task.entry)),
             (":status", &Sql::from(task.status)),
             (":priority", &Sql::from(task.priority)),
             (":project", &task.project),
@@ -322,7 +323,7 @@ impl Database {
         sql.execute::<&[(&str, &dyn ToSql)]>(&[
             (":id", &task.uuid),
             (":title", &task.title),
-            (":entry", &Sql::from(task.entry())),
+            (":entry", &Sql::from(task.entry)),
             (":status", &Sql::from(task.status)),
             (":priority", &Sql::from(task.priority)),
             (":project", &task.project),
