@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 Future<DateTime?> showPickDateTime({required BuildContext context}) async {
-  final firstDate = DateTime.now().subtract(const Duration(days: 365 * 100));
-  final lastDate = DateTime.now().add(const Duration(days: 365 * 100));
+  final now = DateTime.now();
+  final firstDate = now.subtract(const Duration(days: 365 * 100));
+  final lastDate = now.add(const Duration(days: 365 * 100));
   final date = await showDatePicker(
     context: context,
     firstDate: firstDate,
@@ -16,17 +17,18 @@ Future<DateTime?> showPickDateTime({required BuildContext context}) async {
 
   final time = await showTimePicker(
     context: context,
-    initialTime: TimeOfDay.now(),
+    initialTime: TimeOfDay.fromDateTime(now),
   );
   if (time == null) return null;
 
+  // NOTE: Dates are stored in UTC.
   return DateTime(
     date.year,
     date.month,
     date.day,
     time.hour,
     time.minute,
-  );
+  ).toUtc();
 }
 
 Future<bool> showAlertDialog({

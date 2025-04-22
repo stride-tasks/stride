@@ -245,7 +245,13 @@ class _TaskRouteState extends State<TaskRoute> {
         ListTile(
           trailing: IconButton(
             onPressed: () => setState(() {
-              annotations.add((DateTime.now(), TextEditingController()));
+              annotations.add(
+                (
+                  // NOTE: Dates are stored in UTC.
+                  DateTime.now().toUtc(),
+                  TextEditingController(),
+                ),
+              );
             }),
             icon: const Icon(Icons.add),
           ),
