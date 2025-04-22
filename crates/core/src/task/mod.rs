@@ -12,10 +12,6 @@ pub use annotation::Annotation;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub type TagIndex = u32;
-pub type ProjectIndex = u32;
-pub type PriorityIndex = u32;
-
 #[cfg(test)]
 mod tests;
 
