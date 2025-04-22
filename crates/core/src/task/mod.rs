@@ -412,7 +412,11 @@ impl From<taskchampion::Task> for Task {
             modified: v.get_modified(),
             due: v.get_due(),
             project: v.get_value("project").map(Into::into),
-            tags: vec![],
+            tags: v
+                .get_tags()
+                .filter(|tag| tag.is_user())
+                .map(|tag| tag.as_ref().into())
+                .collect(),
             annotations: v.get_annotations().map(Into::into).collect(),
             priority: taskchampion_priority_to_task_status(v.get_priority()),
             wait: v.get_wait(),
