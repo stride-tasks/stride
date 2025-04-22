@@ -380,6 +380,16 @@ impl Task {
     }
 }
 
+fn taskchampion_priority_to_task_status(priority: &str) -> Option<TaskPriority> {
+    let priority = match priority.to_lowercase().as_str() {
+        "l" | "low" => TaskPriority::L,
+        "m" | "medium" => TaskPriority::M,
+        "h" | "high" => TaskPriority::H,
+        _ => return None,
+    };
+    Some(priority)
+}
+
 #[cfg(feature = "taskchampion")]
 impl From<taskchampion::Task> for Task {
     fn from(v: taskchampion::Task) -> Self {
@@ -394,7 +404,7 @@ impl From<taskchampion::Task> for Task {
             project: None,
             tags: vec![],
             annotations: v.get_annotations().map(Into::into).collect(),
-            priority: None,
+            priority: taskchampion_priority_to_task_status(v.get_priority()),
             wait: v.get_wait(),
             depends: v.get_dependencies().collect(),
             // TODO: Remove use of deprecated function.
