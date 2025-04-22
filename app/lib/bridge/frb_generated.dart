@@ -4066,7 +4066,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       active: dco_decode_bool(arr[3]),
       modified: dco_decode_opt_box_autoadd_Chrono_Utc(arr[4]),
       due: dco_decode_opt_box_autoadd_Chrono_Utc(arr[5]),
-      project: dco_decode_opt_box_autoadd_u_32(arr[6]),
+      project: dco_decode_opt_String(arr[6]),
       tags: dco_decode_list_prim_u_32_strict(arr[7]),
       annotations: dco_decode_list_annotation(arr[8]),
       priority: dco_decode_opt_box_autoadd_task_priority(arr[9]),
@@ -5197,7 +5197,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_active = sse_decode_bool(deserializer);
     final var_modified = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     final var_due = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
-    final var_project = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_project = sse_decode_opt_String(deserializer);
     final var_tags = sse_decode_list_prim_u_32_strict(deserializer);
     final var_annotations = sse_decode_list_annotation(deserializer);
     final var_priority = sse_decode_opt_box_autoadd_task_priority(deserializer);
@@ -6254,7 +6254,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.active, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.modified, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.due, serializer);
-    sse_encode_opt_box_autoadd_u_32(self.project, serializer);
+    sse_encode_opt_String(self.project, serializer);
     sse_encode_list_prim_u_32_strict(self.tags, serializer);
     sse_encode_list_annotation(self.annotations, serializer);
     sse_encode_opt_box_autoadd_task_priority(self.priority, serializer);

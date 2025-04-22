@@ -34,7 +34,7 @@ class Task with _$Task {
     required bool active,
     DateTime? modified,
     DateTime? due,
-    int? project,
+    String? project,
     required Uint32List tags,
     required List<Annotation> annotations,
     TaskPriority? priority,

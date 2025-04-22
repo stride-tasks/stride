@@ -4163,7 +4163,7 @@ const _: fn() = || {
         let _: bool = Task.active;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.modified;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.due;
-        let _: Option<u32> = Task.project;
+        let _: Option<String> = Task.project;
         let _: Vec<u32> = Task.tags;
         let _: Vec<stride_core::task::annotation::Annotation> = Task.annotations;
         let _: Option<stride_core::task::TaskPriority> = Task.priority;
@@ -5192,7 +5192,7 @@ impl SseDecode for stride_core::task::Task {
         let mut var_active = <bool>::sse_decode(deserializer);
         let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_due = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
-        let mut var_project = <Option<u32>>::sse_decode(deserializer);
+        let mut var_project = <Option<String>>::sse_decode(deserializer);
         let mut var_tags = <Vec<u32>>::sse_decode(deserializer);
         let mut var_annotations =
             <Vec<stride_core::task::annotation::Annotation>>::sse_decode(deserializer);
@@ -7215,7 +7215,7 @@ impl SseEncode for stride_core::task::Task {
         <bool>::sse_encode(self.active, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.due, serializer);
-        <Option<u32>>::sse_encode(self.project, serializer);
+        <Option<String>>::sse_encode(self.project, serializer);
         <Vec<u32>>::sse_encode(self.tags, serializer);
         <Vec<stride_core::task::annotation::Annotation>>::sse_encode(self.annotations, serializer);
         <Option<stride_core::task::TaskPriority>>::sse_encode(self.priority, serializer);

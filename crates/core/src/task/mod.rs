@@ -88,7 +88,7 @@ pub struct Task {
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub project: Option<ProjectIndex>,
+    pub project: Option<String>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -171,9 +171,10 @@ impl Task {
             result.push(b'w');
             result.extend(&wait.timestamp_micros().to_be_bytes());
         }
-        if let Some(project) = self.project {
+        if let Some(project) = &self.project {
             result.push(b'p');
-            result.extend_from_slice(&project.to_be_bytes());
+            result.extend_from_slice(&(project.len() as u32).to_be_bytes());
+            result.extend_from_slice(project.as_bytes());
         }
         if let Some(priority) = self.priority {
             result.push(b'r');
@@ -265,10 +266,14 @@ impl Task {
                     tags.push(tag);
                 }
                 b'p' => {
-                    let value =
-                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
+                    let len =
+                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
+                            as usize;
                     i += size_of::<u32>();
-                    project = Some(value);
+                    let bytes = input.get(i..i + len)?;
+                    let value = std::str::from_utf8(bytes).ok()?;
+                    i += len;
+                    project = Some(value.into());
                 }
                 b'r' => {
                     let value = match input.get(i)? {
@@ -315,7 +320,7 @@ impl Task {
 
         Some(Task {
             uuid,
-            title: title.to_string(),
+            title: title.into(),
             status: TaskStatus::Pending,
             active,
             modified,
@@ -397,11 +402,11 @@ impl From<taskchampion::Task> for Task {
         Self {
             uuid: v.get_uuid(),
             status: v.get_status().into(),
-            title: v.get_description().to_owned(),
+            title: v.get_description().into(),
             active: v.get_status() == taskchampion::Status::Pending,
             modified: v.get_modified(),
             due: v.get_due(),
-            project: None,
+            project: v.get_value("project").map(Into::into),
             tags: vec![],
             annotations: v.get_annotations().map(Into::into).collect(),
             priority: taskchampion_priority_to_task_status(v.get_priority()),

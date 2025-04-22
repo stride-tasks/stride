@@ -22,7 +22,7 @@ mixin _$Task {
   bool get active => throw _privateConstructorUsedError;
   DateTime? get modified => throw _privateConstructorUsedError;
   DateTime? get due => throw _privateConstructorUsedError;
-  int? get project => throw _privateConstructorUsedError;
+  String? get project => throw _privateConstructorUsedError;
   Uint32List get tags => throw _privateConstructorUsedError;
   List<Annotation> get annotations => throw _privateConstructorUsedError;
   TaskPriority? get priority => throw _privateConstructorUsedError;
@@ -38,7 +38,7 @@ mixin _$Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
+            String? project,
             Uint32List tags,
             List<Annotation> annotations,
             TaskPriority? priority,
@@ -57,7 +57,7 @@ mixin _$Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
+            String? project,
             Uint32List tags,
             List<Annotation> annotations,
             TaskPriority? priority,
@@ -76,7 +76,7 @@ mixin _$Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
+            String? project,
             Uint32List tags,
             List<Annotation> annotations,
             TaskPriority? priority,
@@ -122,7 +122,7 @@ abstract class $TaskCopyWith<$Res> {
       bool active,
       DateTime? modified,
       DateTime? due,
-      int? project,
+      String? project,
       Uint32List tags,
       List<Annotation> annotations,
       TaskPriority? priority,
@@ -188,7 +188,7 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
       project: freezed == project
           ? _value.project
           : project // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as String?,
       tags: null == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -231,7 +231,7 @@ abstract class _$$TaskImplCopyWith<$Res> implements $TaskCopyWith<$Res> {
       bool active,
       DateTime? modified,
       DateTime? due,
-      int? project,
+      String? project,
       Uint32List tags,
       List<Annotation> annotations,
       TaskPriority? priority,
@@ -294,7 +294,7 @@ class __$$TaskImplCopyWithImpl<$Res>
       project: freezed == project
           ? _value.project
           : project // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as String?,
       tags: null == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -358,7 +358,7 @@ class _$TaskImpl extends _Task {
   @override
   final DateTime? due;
   @override
-  final int? project;
+  final String? project;
   @override
   final Uint32List tags;
   final List<Annotation> _annotations;
@@ -452,7 +452,7 @@ class _$TaskImpl extends _Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
+            String? project,
             Uint32List tags,
             List<Annotation> annotations,
             TaskPriority? priority,
@@ -475,7 +475,7 @@ class _$TaskImpl extends _Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
+            String? project,
             Uint32List tags,
             List<Annotation> annotations,
             TaskPriority? priority,
@@ -498,7 +498,7 @@ class _$TaskImpl extends _Task {
             bool active,
             DateTime? modified,
             DateTime? due,
-            int? project,
+            String? project,
             Uint32List tags,
             List<Annotation> annotations,
             TaskPriority? priority,
@@ -552,7 +552,7 @@ abstract class _Task extends Task {
       required final bool active,
       final DateTime? modified,
       final DateTime? due,
-      final int? project,
+      final String? project,
       required final Uint32List tags,
       required final List<Annotation> annotations,
       final TaskPriority? priority,
@@ -574,7 +574,7 @@ abstract class _Task extends Task {
   @override
   DateTime? get due;
   @override
-  int? get project;
+  String? get project;
   @override
   Uint32List get tags;
   @override

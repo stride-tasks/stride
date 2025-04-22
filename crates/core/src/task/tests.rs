@@ -22,7 +22,7 @@ fn conversion_task_status() -> anyhow::Result<()> {
 
 #[test]
 fn create_task() {
-    let task = Task::new("work on ...".to_owned());
+    let task = Task::new("work on ...".into());
 
     assert_eq!(task.title, "work on ...");
 }
@@ -47,7 +47,7 @@ fn concat(data: &[&[u8]]) -> Vec<u8> {
 
 #[test]
 fn serialize_simple_task() {
-    let task = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
+    let task = Task::with_uuid(CONSTANT_UUID, "Hello there!".into());
 
     let data = task.to_data();
 
@@ -72,13 +72,13 @@ fn deserialize_simple_task() {
     ]))
     .unwrap();
 
-    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.to_owned()));
+    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.into()));
 }
 
 #[test]
 fn serialize_title_with_emoji() {
     let title = "do something... maybe 🤔";
-    let task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let task = Task::with_uuid(CONSTANT_UUID, title.into());
 
     let data = task.to_data();
     assert_eq!(
@@ -101,13 +101,13 @@ fn deserialize_title_with_emoji() {
     ]))
     .unwrap();
 
-    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.to_owned()));
+    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.into()));
 }
 
 #[test]
 fn serialize_title_with_escape_sequence() {
     let title = "descri\tion wit\t\"\0\n";
-    let task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let task = Task::with_uuid(CONSTANT_UUID, title.into());
 
     let data = task.to_data();
     assert_eq!(
@@ -130,13 +130,13 @@ fn deserialize_title_with_escape_sequence() {
     ]))
     .unwrap();
 
-    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.to_owned()));
+    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.into()));
 }
 
 #[test]
 fn serialize_task_with_dates() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
 
     task.modified = Some(CONSTANT_DATETIME);
     assert_eq!(
@@ -181,7 +181,7 @@ fn deserialize_task_with_dates() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
     expected.modified = Some(CONSTANT_DATETIME);
     expected.due = Some(CONSTANT_DATETIME);
     expected.wait = Some(CONSTANT_DATETIME);
@@ -191,7 +191,7 @@ fn deserialize_task_with_dates() {
 #[test]
 fn serialize_task_with_tags() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
     task.tags = vec![0, 1, 2];
 
     assert_eq!(
@@ -226,7 +226,7 @@ fn deserialize_task_with_tags() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
     expected.tags = vec![0, 1, 2];
     assert_eq!(task, expected);
 }
@@ -234,8 +234,8 @@ fn deserialize_task_with_tags() {
 #[test]
 fn serialize_task_with_project() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
-    task.project = Some(2);
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    task.project = Some("test".into());
 
     assert_eq!(
         task.to_data(),
@@ -244,7 +244,8 @@ fn serialize_task_with_project() {
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"p",
-            2u32.to_be_bytes().as_slice(),
+            &4u32.to_be_bytes(),
+            b"test",
         ])
     );
 }
@@ -257,19 +258,20 @@ fn deserialize_task_with_project() {
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"p",
-        2u32.to_be_bytes().as_slice(),
+        &4u32.to_be_bytes(),
+        b"test",
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
-    expected.project = Some(2);
+    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
+    expected.project = Some("test".into());
     assert_eq!(task, expected);
 }
 
 #[test]
 fn serialize_task_with_priority() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
     task.priority = Some(TaskPriority::M);
 
     assert_eq!(
@@ -295,7 +297,7 @@ fn deserialize_task_with_priority() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
+    let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".into());
     expected.priority = Some(TaskPriority::L);
     assert_eq!(task, expected);
 }
@@ -303,7 +305,7 @@ fn deserialize_task_with_priority() {
 #[test]
 fn serialize_task_with_depends() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
     task.depends.push(CONSTANT_UUID);
     task.depends.push(CONSTANT_UUID);
 
@@ -335,7 +337,7 @@ fn deserialize_task_with_depends() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
     assert_eq!(task, expected);
@@ -344,7 +346,7 @@ fn deserialize_task_with_depends() {
 #[test]
 fn serialize_task_with_annotations() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
     task.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
         description: String::from("Hello"),
@@ -390,7 +392,7 @@ fn deserialize_task_with_annotations() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
     expected.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
         description: String::from("Hello"),
@@ -406,7 +408,7 @@ fn deserialize_task_with_annotations() {
 #[test]
 fn serialize_task_with_all_attributes() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_owned());
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
     task.active = true;
     task.depends.push(CONSTANT_UUID);
     task.depends.push(CONSTANT_UUID);
@@ -414,7 +416,7 @@ fn serialize_task_with_all_attributes() {
     task.due = Some(CONSTANT_DATETIME);
     task.wait = Some(CONSTANT_DATETIME);
     task.tags = vec![0, 1, 2];
-    task.project = Some(30);
+    task.project = Some("test".into());
     task.priority = Some(TaskPriority::L);
     task.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
@@ -438,7 +440,8 @@ fn serialize_task_with_all_attributes() {
             b"w",
             &CONSTANT_TIMESTAMP.to_be_bytes(),
             b"p",
-            &30u32.to_be_bytes(),
+            &4u32.to_be_bytes(),
+            b"test",
             b"rL",
             b"t",
             &0u32.to_be_bytes(),
@@ -478,7 +481,8 @@ fn deserialize_task_with_all_attributes() {
         b"w",
         &CONSTANT_TIMESTAMP.to_be_bytes(),
         b"p",
-        &30u32.to_be_bytes(),
+        &4u32.to_be_bytes(),
+        b"test",
         b"rH",
         b"t",
         &0u32.to_be_bytes(),
@@ -501,7 +505,7 @@ fn deserialize_task_with_all_attributes() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".to_owned());
+    let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".into());
     expected.active = true;
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
@@ -509,7 +513,7 @@ fn deserialize_task_with_all_attributes() {
     expected.due = Some(CONSTANT_DATETIME);
     expected.wait = Some(CONSTANT_DATETIME);
     expected.tags = vec![0, 1, 2];
-    expected.project = Some(30);
+    expected.project = Some("test".into());
     expected.priority = Some(TaskPriority::H);
     expected.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
