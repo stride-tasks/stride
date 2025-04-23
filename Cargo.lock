@@ -1892,6 +1892,7 @@ version = "0.1.0"
 dependencies = [
  "rusqlite",
  "stride_core",
+ "thiserror 2.0.12",
  "uuid",
 ]
 

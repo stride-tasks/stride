@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS task_table (
     `modified` INTEGER,
     `due` INTEGER,
     `wait` INTEGER,
+    `annotations` BLOB,
     -- Where does this task originate from, null implies stride.
     `backend` INTEGER,
 
@@ -52,15 +53,6 @@ CREATE TABLE IF NOT EXISTS task_tag_table (
     FOREIGN KEY (tag_id) REFERENCES tag_table (id) ON DELETE CASCADE
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS annotation_table (
-    `id` INTEGER PRIMARY KEY,
-    `task_id` BLOB NOT NULL,
-    `entry` INTEGER NOT NULL,
-    `text` TEXT NOT NULL,
-
-    FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE
-) STRICT;
-
 CREATE TABLE IF NOT EXISTS uda_table (
     `id` INTEGER PRIMARY KEY,
     `task_id` BLOB NOT NULL,
@@ -75,4 +67,3 @@ CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (
     task_id
 );
 CREATE INDEX IF NOT EXISTS task_tag_table_tag_id_idx ON task_tag_table (tag_id);
-CREATE INDEX IF NOT EXISTS annotation_task_id_idx ON annotation_table (task_id);

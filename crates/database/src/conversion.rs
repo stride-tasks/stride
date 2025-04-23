@@ -2,7 +2,9 @@ use rusqlite::{
     Result, ToSql,
     types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
-use stride_core::task::{Date, TaskPriority, TaskStatus};
+use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus};
+
+use crate::AnnotationParseError;
 
 pub(crate) struct Sql<T> {
     pub value: T,
@@ -114,5 +116,98 @@ impl FromSql for Sql<Option<TaskPriority>> {
             _ => return Err(FromSqlError::OutOfRange(value)),
         })
         .into())
+    }
+}
+
+fn annotations_to_blob(annoations: &[Annotation]) -> Option<Vec<u8>> {
+    if annoations.is_empty() {
+        return None;
+    }
+
+    let mut result = Vec::new();
+    result.push(0x00);
+    let annotation_len = annoations.len() as u32;
+    result.extend_from_slice(&annotation_len.to_be_bytes());
+
+    for Annotation { entry, description } in annoations {
+        let timestamp = entry.timestamp_micros();
+        let text_len = description.len() as u32;
+
+        result.extend_from_slice(&timestamp.to_be_bytes());
+        result.extend_from_slice(&text_len.to_be_bytes());
+        result.extend_from_slice(description.as_bytes());
+    }
+    Some(result)
+}
+
+fn blob_to_annotations(blob: &[u8]) -> Result<Option<Vec<Annotation>>, AnnotationParseError> {
+    let Some((version, blob)) = blob.split_first_chunk::<1>() else {
+        return Ok(None);
+    };
+
+    let version = u8::from_be_bytes(*version);
+    if version != 0x00 {
+        return Err(AnnotationParseError::UnknownVersion { version });
+    }
+
+    let Some((len, mut blob)) = blob.split_first_chunk::<4>() else {
+        return Err(AnnotationParseError::MissingLength);
+    };
+
+    let len = u32::from_be_bytes(*len) as usize;
+
+    let mut annotations = Vec::new();
+    for _ in 0..len {
+        let (entry_bytes, new_blob) = blob
+            .split_first_chunk::<8>()
+            .ok_or(AnnotationParseError::MissingEntryTimestamp)?;
+        let entry_timestamp = i64::from_be_bytes(*entry_bytes);
+
+        let (len_bytes, new_blob) = new_blob
+            .split_first_chunk::<4>()
+            .ok_or(AnnotationParseError::MissingLength)?;
+        let len = u32::from_be_bytes(*len_bytes);
+
+        let (text_bytes, new_blob) = new_blob
+            .split_at_checked(len as usize)
+            .ok_or(AnnotationParseError::MissingText)?;
+        let text = std::str::from_utf8(text_bytes).map_err(|_| AnnotationParseError::InvalidUt8)?;
+
+        annotations.push(Annotation {
+            entry: Date::from_timestamp_micros(entry_timestamp)
+                .ok_or(AnnotationParseError::InvalidTimestamp)?,
+            description: text.into(),
+        });
+
+        blob = new_blob;
+    }
+
+    Ok(Some(annotations))
+}
+
+impl ToSql for Sql<&[Annotation]> {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
+        if self.value.is_empty() {
+            return Ok(ToSqlOutput::Owned(Value::Null));
+        }
+
+        let Some(blob) = annotations_to_blob(self.value) else {
+            return Ok(ToSqlOutput::Owned(Value::Null));
+        };
+
+        Ok(ToSqlOutput::Owned(Value::Blob(blob)))
+    }
+}
+
+impl FromSql for Sql<Vec<Annotation>> {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        let Some(blob) = value.as_blob_or_null()? else {
+            return Ok(Vec::new().into());
+        };
+
+        match blob_to_annotations(blob) {
+            Ok(annotations) => Ok(annotations.unwrap_or_default().into()),
+            Err(err) => Err(FromSqlError::Other(Box::new(err))),
+        }
     }
 }

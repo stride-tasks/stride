@@ -16,6 +16,7 @@ stride_core.workspace = true
 
 rusqlite.workspace = true
 uuid.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 

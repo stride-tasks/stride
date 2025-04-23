@@ -1,22 +1,25 @@
-use std::fmt::Display;
-
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Debug)]
-pub enum Error {
-    Sqlite(rusqlite::Error),
-}
-impl std::error::Error for Error {}
-impl Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::Sqlite(error) => write!(f, "sqlite error: {error}"),
-        }
-    }
+#[derive(thiserror::Error, Debug, Clone, Copy)]
+pub enum AnnotationParseError {
+    #[error("unknown version: {version}")]
+    UnknownVersion { version: u8 },
+    #[error("missing length")]
+    MissingLength,
+    #[error("missing entry timestamp")]
+    MissingEntryTimestamp,
+    #[error("missing text")]
+    MissingText,
+    #[error("invalid UTF8")]
+    InvalidUt8,
+    #[error("invalid timestamp")]
+    InvalidTimestamp,
 }
 
-impl From<rusqlite::Error> for Error {
-    fn from(error: rusqlite::Error) -> Self {
-        Self::Sqlite(error)
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("sqlite error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+    #[error("annotation parse error: {0}")]
+    AnnotationParse(AnnotationParseError),
 }
