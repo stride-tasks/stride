@@ -22,26 +22,11 @@ part 'manifest.freezed.dart';
 
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `PluginApi`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
-// These functions are ignored (category: IgnoreBecauseNotAllowedOwner): `skip_serializing`
-// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `events`, `name`
+// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `skip_serializing`, `skip_serializing`
+// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `events`, `is_enabled`, `name`, `skip_serializing`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManifest < PluginState >>>
 abstract class PluginManifestPluginState implements RustOpaqueInterface {}
-
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginState>>
-abstract class PluginState implements RustOpaqueInterface, ManifestState {
-  static Future<PluginState> default_() =>
-      RustLib.instance.api.stridePluginManagerManifestPluginStateDefault();
-
-  Future<bool> isEnabled();
-
-  @override
-  Future<bool> skipSerializing();
-}
-
-abstract class ManifestState {
-  Future<bool> skipSerializing();
-}
 
 class ManifestEvent {
   final ManifestEventTask? task;

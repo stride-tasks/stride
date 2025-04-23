@@ -96,6 +96,7 @@ pub struct ManifestPermission {
 
 /// flutter_rust_bridge:ignore
 pub trait ManifestState: Sized {
+    /// flutter_rust_bridge:ignore
     fn skip_serializing(&self) -> bool {
         true
     }
@@ -103,6 +104,7 @@ pub trait ManifestState: Sized {
 
 impl ManifestState for () {}
 
+/// flutter_rust_bridge:ignore
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum PluginState {
