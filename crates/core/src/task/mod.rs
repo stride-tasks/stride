@@ -421,7 +421,7 @@ impl From<taskchampion::Task> for Task {
             project: v.get_value("project").map(Into::into),
             tags: v
                 .get_tags()
-                .filter(|tag| tag.is_user())
+                .filter(taskchampion::Tag::is_user)
                 .map(|tag| tag.as_ref().into())
                 .collect(),
             annotations: v.get_annotations().map(Into::into).collect(),

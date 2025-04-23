@@ -1,3 +1,5 @@
+//! Stride's sqlite database wrapper library.
+
 mod conversion;
 mod error;
 mod migration;

@@ -176,7 +176,7 @@ impl Storage {
 
     //     Ok(())
     // }
-    pub fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<()> {
+    fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<()> {
         match query {
             TaskQuery::Uuid { uuid } => {
                 if let Some(task) = self.get_by_id(uuid)? {
@@ -237,7 +237,7 @@ impl Storage {
         Ok(true)
     }
 
-    pub fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
         let index = self.get_index(uuid)?;
         let Some(index) = index else {
             return Ok(None);
@@ -248,13 +248,13 @@ impl Storage {
         Ok(Some(task))
     }
 
-    pub fn clear(&mut self) -> Result<()> {
+    fn clear(&mut self) -> Result<()> {
         self.loaded = true;
         self.tasks.clear();
         self.save()?;
         Ok(())
     }
-    pub fn unload(&mut self) {
+    fn unload(&mut self) {
         self.loaded = false;
         self.tasks.clear();
     }
