@@ -2,12 +2,12 @@
 
 mod conversion;
 mod error;
-mod migration;
+mod migrations;
 
 use conversion::{Sql, task_status_to_sql};
 pub use error::{AnnotationParseError, Error, Result};
-use migration::MIGRATIONS;
 
+use migrations::apply_migrations;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql, types::Value};
 use stride_core::{
     event::TaskQuery,
@@ -145,7 +145,8 @@ impl Database {
 
     #[inline]
     pub fn apply_migrations(&mut self) -> Result<()> {
-        MIGRATIONS.apply(&mut self.conn)
+        apply_migrations(self)?;
+        Ok(())
     }
 
     fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
