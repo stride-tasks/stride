@@ -14,6 +14,7 @@ publish = false
 
 [dependencies]
 stride_core.workspace = true
+stride_backend.workspace = true
 stride_plugin_manager.workspace = true
 stride_flutter_bridge.workspace = true
 
@@ -22,6 +23,9 @@ dirs.workspace = true
 uuid.workspace = true
 log.workspace = true
 clap.workspace = true
+toml.workspace = true
+serde.workspace = true
+url.workspace = true
 
 [[bin]]
 name = "stride"

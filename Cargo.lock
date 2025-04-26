@@ -1837,7 +1837,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64",
- "chrono",
  "getrandom 0.3.2",
  "git2",
  "log",
@@ -1858,9 +1857,13 @@ dependencies = [
  "clap",
  "dirs 6.0.0",
  "log",
+ "serde",
+ "stride_backend",
  "stride_core",
  "stride_flutter_bridge",
  "stride_plugin_manager",
+ "toml",
+ "url",
  "uuid",
 ]
 
@@ -2252,6 +2255,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

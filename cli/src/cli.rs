@@ -15,15 +15,11 @@ pub struct CliArgs {
     #[command(subcommand)]
     /// The mode to operate in
     pub mode: Mode,
-
-    #[arg(global = true, default_value = "git", short, long)]
-    /// Which repository to use as backend
-    pub repository: RepositoryType,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 /// The possible backend Repository types
-pub enum RepositoryType {
+pub enum Backend {
     /// A `git` based repository, which tracks changes as commits
     Git,
 
@@ -49,7 +45,12 @@ pub enum Mode {
     },
 
     /// Sync the task storage
-    Sync,
+    Sync {
+        /// Choose backend to sync.
+        ///
+        /// If `None` then all backends are choosen.
+        backend: Backend,
+    },
 
     /// Output the git-log of the task storage
     Log {

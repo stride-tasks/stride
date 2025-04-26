@@ -2,6 +2,10 @@ use anyhow::{Context, bail};
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::path::{Path, PathBuf};
+use stride_backend::{
+    Backend,
+    taskchampion::{TaskchampionBackend, TaskchampionConfig},
+};
 use stride_core::{
     event::{HostEvent, PluginEvent},
     task::{Task, TaskStatus},
@@ -12,6 +16,8 @@ use stride_flutter_bridge::api::{
     settings::{ApplicationPaths, RepositorySpecification, Settings},
 };
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
+use url::Url;
+use uuid::Uuid;
 
 pub mod cli;
 
@@ -244,9 +250,60 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
-        Mode::Sync => {
-            repository.sync()?;
-        }
+        Mode::Sync { backend } => match backend {
+            cli::Backend::Git => repository.sync()?,
+            cli::Backend::TaskChampion => {
+                let config_dir = choose_path_suffix(
+                    &dirs::config_dir().context("could not get config directory")?,
+                );
+                let config_path = config_dir.join("config.toml");
+
+                let (url, client_id, encryption_secret) = {
+                    #[derive(serde::Deserialize)]
+                    struct Config {
+                        sync: Sync,
+                    }
+                    #[derive(serde::Deserialize)]
+                    struct Sync {
+                        server: Server,
+                        encryption_secret: String,
+                    }
+                    #[derive(serde::Deserialize)]
+                    struct Server {
+                        origin: Url,
+                        client_id: Uuid,
+                    }
+
+                    let file = std::fs::read_to_string(&config_path).with_context(|| {
+                        format!("Failed to read config file at: '{}'", config_path.display())
+                    })?;
+
+                    let config: Config = toml::from_str(&file).with_context(|| {
+                        format!(
+                            "Failed to parse config file at: '{}' as toml config.",
+                            config_path.display()
+                        )
+                    })?;
+
+                    (
+                        config.sync.server.origin,
+                        config.sync.server.client_id,
+                        config.sync.encryption_secret,
+                    )
+                };
+
+                let constraint_environment = false;
+                let config = TaskchampionConfig {
+                    root_path: repository.root_path.join("backend").join("taskchampion"),
+                    url: url.as_str().to_string(),
+                    client_id,
+                    encryption_secret: encryption_secret.as_bytes().to_vec(),
+                    constraint_environment,
+                };
+                let mut backend = TaskchampionBackend::new(config)?;
+                backend.sync(repository.db.get_mut().unwrap())?;
+            }
+        },
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
             // TODO: Maybe figure out what is the best value.

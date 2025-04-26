@@ -397,6 +397,7 @@ impl Task {
     }
 }
 
+#[cfg(feature = "taskchampion")]
 fn taskchampion_priority_to_task_status(priority: &str) -> Option<TaskPriority> {
     let priority = match priority.to_lowercase().as_str() {
         "l" | "low" => TaskPriority::L,

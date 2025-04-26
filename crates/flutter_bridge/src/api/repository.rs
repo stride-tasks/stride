@@ -23,8 +23,8 @@ use super::{
 #[derive(Debug)]
 pub struct Repository {
     uuid: Uuid,
-    root_path: PathBuf,
-    db: Mutex<Database>,
+    pub root_path: PathBuf,
+    pub db: Mutex<Database>,
 }
 
 impl Repository {
