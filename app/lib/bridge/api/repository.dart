@@ -20,6 +20,7 @@ import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:uuid/uuid.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`
+// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `database_mut`, `database`, `root_path`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Repository>>
 abstract class Repository implements RustOpaqueInterface {

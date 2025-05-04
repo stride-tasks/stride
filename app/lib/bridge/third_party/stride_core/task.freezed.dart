@@ -17,6 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$Task {
   UuidValue get uuid => throw _privateConstructorUsedError;
+  DateTime get entry => throw _privateConstructorUsedError;
   TaskStatus get status => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   bool get active => throw _privateConstructorUsedError;
@@ -33,6 +34,7 @@ mixin _$Task {
   TResult when<TResult extends Object?>({
     required TResult Function(
             UuidValue uuid,
+            DateTime entry,
             TaskStatus status,
             String title,
             bool active,
@@ -52,6 +54,7 @@ mixin _$Task {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             UuidValue uuid,
+            DateTime entry,
             TaskStatus status,
             String title,
             bool active,
@@ -71,6 +74,7 @@ mixin _$Task {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             UuidValue uuid,
+            DateTime entry,
             TaskStatus status,
             String title,
             bool active,
@@ -117,6 +121,7 @@ abstract class $TaskCopyWith<$Res> {
   @useResult
   $Res call(
       {UuidValue uuid,
+      DateTime entry,
       TaskStatus status,
       String title,
       bool active,
@@ -147,6 +152,7 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
   @override
   $Res call({
     Object? uuid = null,
+    Object? entry = null,
     Object? status = null,
     Object? title = null,
     Object? active = null,
@@ -165,6 +171,10 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
           ? _value.uuid
           : uuid // ignore: cast_nullable_to_non_nullable
               as UuidValue,
+      entry: null == entry
+          ? _value.entry
+          : entry // ignore: cast_nullable_to_non_nullable
+              as DateTime,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -226,6 +236,7 @@ abstract class _$$TaskImplCopyWith<$Res> implements $TaskCopyWith<$Res> {
   @useResult
   $Res call(
       {UuidValue uuid,
+      DateTime entry,
       TaskStatus status,
       String title,
       bool active,
@@ -253,6 +264,7 @@ class __$$TaskImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? uuid = null,
+    Object? entry = null,
     Object? status = null,
     Object? title = null,
     Object? active = null,
@@ -271,6 +283,10 @@ class __$$TaskImplCopyWithImpl<$Res>
           ? _value.uuid
           : uuid // ignore: cast_nullable_to_non_nullable
               as UuidValue,
+      entry: null == entry
+          ? _value.entry
+          : entry // ignore: cast_nullable_to_non_nullable
+              as DateTime,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -328,6 +344,7 @@ class __$$TaskImplCopyWithImpl<$Res>
 class _$TaskImpl extends _Task {
   const _$TaskImpl(
       {required this.uuid,
+      required this.entry,
       required this.status,
       required this.title,
       required this.active,
@@ -348,6 +365,8 @@ class _$TaskImpl extends _Task {
 
   @override
   final UuidValue uuid;
+  @override
+  final DateTime entry;
   @override
   final TaskStatus status;
   @override
@@ -398,7 +417,7 @@ class _$TaskImpl extends _Task {
 
   @override
   String toString() {
-    return 'Task.raw(uuid: $uuid, status: $status, title: $title, active: $active, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, uda: $uda)';
+    return 'Task.raw(uuid: $uuid, entry: $entry, status: $status, title: $title, active: $active, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, uda: $uda)';
   }
 
   @override
@@ -407,6 +426,7 @@ class _$TaskImpl extends _Task {
         (other.runtimeType == runtimeType &&
             other is _$TaskImpl &&
             (identical(other.uuid, uuid) || other.uuid == uuid) &&
+            (identical(other.entry, entry) || other.entry == entry) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.active, active) || other.active == active) &&
@@ -428,6 +448,7 @@ class _$TaskImpl extends _Task {
   int get hashCode => Object.hash(
       runtimeType,
       uuid,
+      entry,
       status,
       title,
       active,
@@ -454,6 +475,7 @@ class _$TaskImpl extends _Task {
   TResult when<TResult extends Object?>({
     required TResult Function(
             UuidValue uuid,
+            DateTime entry,
             TaskStatus status,
             String title,
             bool active,
@@ -468,7 +490,7 @@ class _$TaskImpl extends _Task {
             Map<String, String> uda)
         raw,
   }) {
-    return raw(uuid, status, title, active, modified, due, project, tags,
+    return raw(uuid, entry, status, title, active, modified, due, project, tags,
         annotations, priority, wait, depends, uda);
   }
 
@@ -477,6 +499,7 @@ class _$TaskImpl extends _Task {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             UuidValue uuid,
+            DateTime entry,
             TaskStatus status,
             String title,
             bool active,
@@ -491,8 +514,8 @@ class _$TaskImpl extends _Task {
             Map<String, String> uda)?
         raw,
   }) {
-    return raw?.call(uuid, status, title, active, modified, due, project, tags,
-        annotations, priority, wait, depends, uda);
+    return raw?.call(uuid, entry, status, title, active, modified, due, project,
+        tags, annotations, priority, wait, depends, uda);
   }
 
   @override
@@ -500,6 +523,7 @@ class _$TaskImpl extends _Task {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             UuidValue uuid,
+            DateTime entry,
             TaskStatus status,
             String title,
             bool active,
@@ -516,8 +540,8 @@ class _$TaskImpl extends _Task {
     required TResult orElse(),
   }) {
     if (raw != null) {
-      return raw(uuid, status, title, active, modified, due, project, tags,
-          annotations, priority, wait, depends, uda);
+      return raw(uuid, entry, status, title, active, modified, due, project,
+          tags, annotations, priority, wait, depends, uda);
     }
     return orElse();
   }
@@ -554,6 +578,7 @@ class _$TaskImpl extends _Task {
 abstract class _Task extends Task {
   const factory _Task(
       {required final UuidValue uuid,
+      required final DateTime entry,
       required final TaskStatus status,
       required final String title,
       required final bool active,
@@ -570,6 +595,8 @@ abstract class _Task extends Task {
 
   @override
   UuidValue get uuid;
+  @override
+  DateTime get entry;
   @override
   TaskStatus get status;
   @override

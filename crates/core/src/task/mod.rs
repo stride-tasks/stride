@@ -65,6 +65,8 @@ impl TaskPriority {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
+    #[serde(default = "Utc::now")]
+    pub entry: Date,
     #[serde(default)]
     #[serde(skip_serializing_if = "TaskStatus::is_pending")]
     pub status: TaskStatus,
@@ -117,6 +119,7 @@ impl Default for Task {
             uuid: Uuid::now_v7(),
             status: TaskStatus::Pending,
             title: String::new(),
+            entry: Utc::now(),
             active: false,
             modified: None,
             due: None,
@@ -132,24 +135,12 @@ impl Default for Task {
 }
 
 impl Task {
-    #[allow(clippy::missing_panics_doc)]
-    #[must_use]
-    pub fn entry(&self) -> Date {
-        let timestamp = self
-            .uuid
-            .get_timestamp()
-            .expect("uuid is v7 so this should not fail");
-        let (secs, nsecs) = timestamp.to_unix();
-
-        #[allow(clippy::cast_possible_wrap)]
-        DateTime::from_timestamp(secs as i64, nsecs).expect("uuidv7 has a valid timestamp")
-    }
-
     #[allow(clippy::cast_possible_truncation)]
     #[must_use]
     pub fn to_data(&self) -> Vec<u8> {
         let mut result = Vec::new();
         result.extend_from_slice(self.uuid.as_bytes());
+        result.extend_from_slice(&self.entry.timestamp_micros().to_be_bytes());
         result.extend_from_slice(&(self.title.len() as u32).to_be_bytes());
         result.extend_from_slice(self.title.as_bytes());
         if self.active {
@@ -209,17 +200,16 @@ impl Task {
     #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn from_data(input: &[u8]) -> Option<Task> {
-        let (uuid_bytes, input) = input.split_at_checked(16)?;
-        let uuid = Uuid::from_bytes(uuid_bytes.try_into().ok()?);
-        let timestamp = uuid.get_timestamp()?;
-        let (secs, nsecs) = timestamp.to_unix();
-        let _entry = DateTime::from_timestamp(secs.try_into().ok()?, nsecs)?;
+        let (uuid_bytes, input) = input.split_first_chunk::<16>()?;
+        let uuid = Uuid::from_bytes(*uuid_bytes);
 
-        let (title_len, input) = input.split_at_checked(size_of::<u32>())?;
-        let title_len = u32::from_be_bytes(title_len.try_into().ok()?) as usize;
+        let (entry_bytes, input) = input.split_first_chunk::<8>()?;
+        let entry_timestamp = i64::from_be_bytes(*entry_bytes);
+        let entry = Date::from_timestamp_micros(entry_timestamp)?;
 
+        let (title_len, input) = input.split_first_chunk::<4>()?;
+        let title_len = u32::from_be_bytes(*title_len) as usize;
         let (title_bytes, input) = input.split_at_checked(title_len)?;
-
         let title = std::str::from_utf8(title_bytes).ok()?;
 
         let mut active = false;
@@ -332,7 +322,8 @@ impl Task {
 
         Some(Task {
             uuid,
-            title: title.into(),
+            entry,
+            title: title.to_string(),
             status: TaskStatus::Pending,
             active,
             modified,
@@ -414,6 +405,7 @@ impl From<taskchampion::Task> for Task {
         /* TODO(@bpeetz): Remove the `None`s and `Vec`s with their actually conversion <2024-10-26> */
         Self {
             uuid: v.get_uuid(),
+            entry: v.get_entry().unwrap_or_else(Utc::now),
             status: v.get_status().into(),
             title: v.get_description().into(),
             active: v.get_status() == taskchampion::Status::Pending,

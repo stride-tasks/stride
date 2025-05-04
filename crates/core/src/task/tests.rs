@@ -20,15 +20,10 @@ fn conversion_task_status() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[test]
-fn create_task() {
-    let task = Task::new("work on ...".into());
-
-    assert_eq!(task.title, "work on ...");
-}
-
 const CONSTANT_UUID: uuid::Uuid = uuid::uuid!("01906b2f-ad90-7930-b4d7-24db034bc3c5");
+const CONSTANT_UUID_BYTES: &[u8] = CONSTANT_UUID.as_bytes();
 const CONSTANT_TIMESTAMP: i64 = 1_719_786_773_674_536;
+const CONSTANT_DATETIME_BYTES: &[u8] = &CONSTANT_TIMESTAMP.to_be_bytes();
 const CONSTANT_DATETIME: DateTime<Utc> = {
     if let Some(datetime) = DateTime::from_timestamp_micros(CONSTANT_TIMESTAMP) {
         datetime
@@ -45,9 +40,15 @@ fn concat(data: &[&[u8]]) -> Vec<u8> {
     result
 }
 
+fn create_task(title: &str) -> Task {
+    let mut task = Task::with_uuid(CONSTANT_UUID, title.to_string());
+    task.entry = CONSTANT_DATETIME;
+    task
+}
+
 #[test]
 fn serialize_simple_task() {
-    let task = Task::with_uuid(CONSTANT_UUID, "Hello there!".into());
+    let task = create_task("Hello there!");
 
     let data = task.to_data();
 
@@ -55,7 +56,8 @@ fn serialize_simple_task() {
     assert_eq!(
         data,
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_slice(),
         ])
@@ -66,25 +68,26 @@ fn serialize_simple_task() {
 fn deserialize_simple_task() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
     ]))
     .unwrap();
 
-    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.into()));
+    assert_eq!(task, create_task(title));
 }
 
 #[test]
 fn serialize_title_with_emoji() {
     let title = "do something... maybe 🤔";
-    let task = Task::with_uuid(CONSTANT_UUID, title.into());
-
+    let task = create_task(title);
     let data = task.to_data();
     assert_eq!(
         data,
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
         ])
@@ -95,25 +98,26 @@ fn serialize_title_with_emoji() {
 fn deserialize_title_with_emoji() {
     let title = "do something... maybe 🤔";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
     ]))
     .unwrap();
 
-    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.into()));
+    assert_eq!(task, create_task(title));
 }
 
 #[test]
 fn serialize_title_with_escape_sequence() {
     let title = "descri\tion wit\t\"\0\n";
-    let task = Task::with_uuid(CONSTANT_UUID, title.into());
-
+    let task = create_task(title);
     let data = task.to_data();
     assert_eq!(
         data,
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
         ])
@@ -124,25 +128,26 @@ fn serialize_title_with_escape_sequence() {
 fn deserialize_title_with_escape_sequence() {
     let title = "descri\tion wit\t\"\0\n";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
     ]))
     .unwrap();
 
-    assert_eq!(task, Task::with_uuid(CONSTANT_UUID, title.into()));
+    assert_eq!(task, create_task(title));
 }
 
 #[test]
 fn serialize_task_with_dates() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
-
+    let mut task = create_task(title);
     task.modified = Some(CONSTANT_DATETIME);
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"m",
@@ -154,7 +159,8 @@ fn serialize_task_with_dates() {
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"m",
@@ -169,7 +175,8 @@ fn serialize_task_with_dates() {
 fn deserialize_task_with_dates() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"m",
@@ -181,7 +188,7 @@ fn deserialize_task_with_dates() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut expected = create_task(title);
     expected.modified = Some(CONSTANT_DATETIME);
     expected.due = Some(CONSTANT_DATETIME);
     expected.wait = Some(CONSTANT_DATETIME);
@@ -191,13 +198,14 @@ fn deserialize_task_with_dates() {
 #[test]
 fn serialize_task_with_tags() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut task = create_task(title);
     task.tags = vec!["tag1".into(), "tag22".into(), "tag333".into()];
 
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"t",
@@ -217,7 +225,8 @@ fn serialize_task_with_tags() {
 fn deserialize_task_with_tags() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"t",
@@ -232,7 +241,7 @@ fn deserialize_task_with_tags() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut expected = create_task(title);
     expected.tags = vec!["tag1".into(), "tag22".into(), "tag333".into()];
     assert_eq!(task, expected);
 }
@@ -240,13 +249,14 @@ fn deserialize_task_with_tags() {
 #[test]
 fn serialize_task_with_project() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut task = create_task(title);
     task.project = Some("work".into());
 
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"p",
@@ -260,7 +270,8 @@ fn serialize_task_with_project() {
 fn deserialize_task_with_project() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"p",
@@ -269,7 +280,7 @@ fn deserialize_task_with_project() {
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut expected = create_task(title);
     expected.project = Some("work".into());
     assert_eq!(task, expected);
 }
@@ -277,14 +288,14 @@ fn deserialize_task_with_project() {
 #[test]
 fn serialize_task_with_priority() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut task = create_task(title);
     task.priority = Some(TaskPriority::M);
 
     assert_eq!(
         task.to_data(),
-        // format!("{CONSTANT_UUID_BASE64}Hello there!\trM")
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"rM",
@@ -296,14 +307,15 @@ fn serialize_task_with_priority() {
 fn deserialize_task_with_priority() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"rL",
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".into());
+    let mut expected = create_task("Hello there!");
     expected.priority = Some(TaskPriority::L);
     assert_eq!(task, expected);
 }
@@ -311,20 +323,21 @@ fn deserialize_task_with_priority() {
 #[test]
 fn serialize_task_with_depends() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut task = create_task(title);
     task.depends.push(CONSTANT_UUID);
     task.depends.push(CONSTANT_UUID);
 
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"n",
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
             b"n",
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
         ])
     );
 }
@@ -333,17 +346,18 @@ fn serialize_task_with_depends() {
 fn deserialize_task_with_depends() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"n",
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
         b"n",
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut expected = create_task(title);
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
     assert_eq!(task, expected);
@@ -352,7 +366,7 @@ fn deserialize_task_with_depends() {
 #[test]
 fn serialize_task_with_annotations() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut task = create_task(title);
     task.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
         description: String::from("Hello"),
@@ -365,15 +379,16 @@ fn serialize_task_with_annotations() {
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"a",
             &2u32.to_be_bytes(),
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             &5u32.to_be_bytes(),
             b"Hello",
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             &5u32.to_be_bytes(),
             b"World",
         ])
@@ -384,21 +399,22 @@ fn serialize_task_with_annotations() {
 fn deserialize_task_with_annotations() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"a",
         &2u32.to_be_bytes(),
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         &5u32.to_be_bytes(),
         b"Hello",
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         &5u32.to_be_bytes(),
         b"World",
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut expected = create_task(title);
     expected.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
         description: String::from("Hello"),
@@ -414,7 +430,7 @@ fn deserialize_task_with_annotations() {
 #[test]
 fn serialize_task_with_all_attributes() {
     let title = "Hello there!";
-    let mut task = Task::with_uuid(CONSTANT_UUID, title.into());
+    let mut task = create_task(title);
     task.active = true;
     task.depends.push(CONSTANT_UUID);
     task.depends.push(CONSTANT_UUID);
@@ -435,16 +451,17 @@ fn serialize_task_with_all_attributes() {
     assert_eq!(
         task.to_data(),
         concat(&[
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
             b"A",
             b"m",
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             b"d",
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             b"w",
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             b"p",
             &4u32.to_be_bytes(),
             b"test",
@@ -459,15 +476,15 @@ fn serialize_task_with_all_attributes() {
             6u32.to_be_bytes().as_slice(),
             b"tag333",
             b"n",
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
             b"n",
-            CONSTANT_UUID.as_bytes(),
+            CONSTANT_UUID_BYTES,
             b"a",
             &2u32.to_be_bytes(),
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             &5u32.to_be_bytes(),
             b"Hello",
-            &CONSTANT_TIMESTAMP.to_be_bytes(),
+            CONSTANT_DATETIME_BYTES,
             &5u32.to_be_bytes(),
             b"World",
         ])
@@ -479,16 +496,17 @@ fn serialize_task_with_all_attributes() {
 fn deserialize_task_with_all_attributes() {
     let title = "Hello there!";
     let task = Task::from_data(&concat(&[
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
         b"A",
         b"m",
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         b"d",
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         b"w",
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         b"p",
         &4u32.to_be_bytes(),
         b"test",
@@ -503,21 +521,21 @@ fn deserialize_task_with_all_attributes() {
         &6u32.to_be_bytes(),
         b"tag333",
         b"n",
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
         b"n",
-        CONSTANT_UUID.as_bytes(),
+        CONSTANT_UUID_BYTES,
         b"a",
         &2u32.to_be_bytes(),
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         &5u32.to_be_bytes(),
         b"Hello",
-        &CONSTANT_TIMESTAMP.to_be_bytes(),
+        CONSTANT_DATETIME_BYTES,
         &5u32.to_be_bytes(),
         b"World",
     ]))
     .unwrap();
 
-    let mut expected = Task::with_uuid(CONSTANT_UUID, "Hello there!".into());
+    let mut expected = create_task("Hello there!");
     expected.active = true;
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
