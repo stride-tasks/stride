@@ -4,6 +4,7 @@
 
 pub mod error;
 pub mod filter;
+pub mod git;
 pub mod logging;
 pub mod plugin;
 pub mod plugin_manager;

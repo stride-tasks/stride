@@ -1650,6 +1650,7 @@ dependencies = [
  "hashlink",
  "libsqlite3-sys",
  "smallvec",
+ "uuid",
 ]
 
 [[package]]
@@ -1831,6 +1832,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "stride_backend"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
+ "getrandom 0.3.2",
+ "git2",
+ "log",
+ "serde",
+ "stride_core",
+ "stride_crypto",
+ "stride_database",
+ "taskchampion",
+ "thiserror 2.0.12",
+ "uuid",
+]
+
+[[package]]
 name = "stride_cli"
 version = "0.1.0"
 dependencies = [
@@ -1839,8 +1858,10 @@ dependencies = [
  "dirs 6.0.0",
  "log",
  "serde",
+ "stride_backend",
  "stride_core",
  "stride_flutter_bridge",
+ "stride_plugin_manager",
  "toml",
  "url",
  "uuid",
@@ -1869,23 +1890,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_database"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+ "stride_core",
+ "thiserror 2.0.12",
+ "uuid",
+]
+
+[[package]]
 name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "base64",
  "chrono",
  "flutter_rust_bridge",
- "getrandom 0.3.2",
- "git2",
  "log",
  "serde",
  "serde_json",
+ "stride_backend",
  "stride_core",
  "stride_crypto",
+ "stride_database",
  "stride_logging",
  "stride_plugin_manager",
- "taskchampion",
+ "thiserror 2.0.12",
  "uuid",
 ]
 

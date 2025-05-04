@@ -179,6 +179,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
                   );
                 },
                 onError: (error) {
+                  // TODO: Log error/notify
                   print(error);
                 },
               );

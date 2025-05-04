@@ -32,6 +32,8 @@ in
         matchesSuffix = lib.any (suffix: lib.hasSuffix suffix base) [
           # Keep rust sources
           ".rs"
+          # Keep SQL files used for sqlite migrations
+          "*.sql"
           # Keep all toml files as they are commonly used to configure other
           # cargo-based tools
           ".toml"

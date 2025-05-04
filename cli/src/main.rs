@@ -1,28 +1,21 @@
 use anyhow::{Context, bail};
 use clap::Parser;
-use cli::{CliArgs, Mode, RepositoryType};
-use serde::Deserialize;
-use std::{
-    cell::RefCell,
-    fs,
-    io::Read,
-    path::{Path, PathBuf},
-    rc::Rc,
+use cli::{CliArgs, Mode};
+use std::path::{Path, PathBuf};
+use stride_backend::{
+    Backend,
+    taskchampion::{TaskchampionBackend, TaskchampionConfig},
 };
-use stride_core::event::{HostEvent, PluginEvent};
-use stride_flutter_bridge::{
-    api::{
-        filter::Filter,
-        repository::{
-            StrideRepository,
-            git::TaskStorage,
-            taskchampion::{self, Replica},
-        },
-        settings::{ApplicationPaths, Repository, Settings},
-    },
-    plugin::{PluginManager, manifest::PluginAction},
+use stride_core::{
+    event::{HostEvent, PluginEvent},
     task::{Task, TaskStatus},
 };
+use stride_flutter_bridge::api::{
+    filter::Filter,
+    repository::Repository,
+    settings::{ApplicationPaths, RepositorySpecification, Settings},
+};
+use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use url::Url;
 use uuid::Uuid;
 
@@ -54,7 +47,19 @@ fn print_tasks(tasks: &[Task]) {
         if task.active {
             active_char = '>';
         }
-        println!("{active_char}{i:4}: {}", task.title);
+        let mut tags = String::new();
+        if !task.tags.is_empty() {
+            tags.push('(');
+            for (i, tag) in task.tags.iter().enumerate() {
+                tags.push_str(tag);
+
+                if i + 1 != task.tags.len() {
+                    tags.push_str(", ");
+                }
+            }
+            tags.push(')');
+        }
+        println!("{active_char}{tags}{i:4}: {}", task.title);
     }
 }
 
@@ -97,7 +102,7 @@ fn main() -> anyhow::Result<()> {
     let current_repository = if let Some(uuid) = current_repository {
         uuid
     } else {
-        let repository = Repository::default();
+        let repository = RepositorySpecification::default();
         let uuid = repository.uuid;
         settings.repositories.push(repository);
         settings.current_repository = Some(uuid);
@@ -109,74 +114,76 @@ fn main() -> anyhow::Result<()> {
     let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
-    let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
-        RepositoryType::Git => Rc::new(RefCell::new(TaskStorage::new(
-            current_repository,
-            &support_dir.join("repository").to_string_lossy(),
-            &settings,
-        )?)),
-        RepositoryType::TaskChampion => {
-            let data_dir =
-                choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
-            let config_dir =
-                choose_path_suffix(&dirs::config_dir().context("could not get config directory")?);
+    let mut repository = Repository::open(current_repository)?;
 
-            let db_path = data_dir.join("taskchampion");
-            let config_path = config_dir.join("config.toml");
+    // let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
+    //     RepositoryType::Git => Rc::new(RefCell::new(TaskStorage::new(
+    //         current_repository,
+    //         &support_dir.join("repository").to_string_lossy(),
+    //         &settings,
+    //     )?)),
+    //     RepositoryType::TaskChampion => {
+    //         let data_dir =
+    //             choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
+    //         let config_dir =
+    //             choose_path_suffix(&dirs::config_dir().context("could not get config directory")?);
 
-            let (url, client_id, encryption_secret) = {
-                #[derive(Deserialize)]
-                struct Config {
-                    sync: Sync,
-                }
-                #[derive(Deserialize)]
-                struct Sync {
-                    server: Server,
-                    encryption_secret: String,
-                }
-                #[derive(Deserialize)]
-                struct Server {
-                    origin: Url,
-                    client_id: Uuid,
-                }
+    //         let db_path = data_dir.join("taskchampion");
+    //         let config_path = config_dir.join("config.toml");
 
-                let file = fs::read_to_string(&config_path).with_context(|| {
-                    format!("Failed to read config file at: '{}'", config_path.display())
-                })?;
+    //         let (url, client_id, encryption_secret) = {
+    //             #[derive(Deserialize)]
+    //             struct Config {
+    //                 sync: Sync,
+    //             }
+    //             #[derive(Deserialize)]
+    //             struct Sync {
+    //                 server: Server,
+    //                 encryption_secret: String,
+    //             }
+    //             #[derive(Deserialize)]
+    //             struct Server {
+    //                 origin: Url,
+    //                 client_id: Uuid,
+    //             }
 
-                let config: Config = toml::from_str(&file).with_context(|| {
-                    format!(
-                        "Failed to parse config file at: '{}' as toml config.",
-                        config_path.display()
-                    )
-                })?;
+    //             let file = fs::read_to_string(&config_path).with_context(|| {
+    //                 format!("Failed to read config file at: '{}'", config_path.display())
+    //             })?;
 
-                (
-                    config.sync.server.origin,
-                    config.sync.server.client_id,
-                    config.sync.encryption_secret,
-                )
-            };
+    //             let config: Config = toml::from_str(&file).with_context(|| {
+    //                 format!(
+    //                     "Failed to parse config file at: '{}' as toml config.",
+    //                     config_path.display()
+    //                 )
+    //             })?;
 
-            let server_config = taskchampion::ServerConfig::Remote {
-                url: url.to_string(),
-                client_id,
-                encryption_secret: encryption_secret.as_bytes().to_vec(),
-            };
-            let constraint_environment = false;
+    //             (
+    //                 config.sync.server.origin,
+    //                 config.sync.server.client_id,
+    //                 config.sync.encryption_secret,
+    //             )
+    //         };
 
-            Rc::new(RefCell::new(
-                Replica::new(&db_path, server_config, constraint_environment).with_context(
-                    || {
-                        format!(
-                            "Failed to initialize taskchampion storage at: {}",
-                            db_path.display()
-                        )
-                    },
-                )?,
-            ))
-        }
-    };
+    //         let server_config = taskchampion::ServerConfig::Remote {
+    //             url: url.to_string(),
+    //             client_id,
+    //             encryption_secret: encryption_secret.as_bytes().to_vec(),
+    //         };
+    //         let constraint_environment = false;
+
+    //         Rc::new(RefCell::new(
+    //             Replica::new(&db_path, server_config, constraint_environment).with_context(
+    //                 || {
+    //                     format!(
+    //                         "Failed to initialize taskchampion storage at: {}",
+    //                         db_path.display()
+    //                     )
+    //                 },
+    //             )?,
+    //         ))
+    //     }
+    // };
 
     match args.mode {
         Mode::Search { filter } => {
@@ -185,7 +192,7 @@ fn main() -> anyhow::Result<()> {
                 status: [TaskStatus::Pending].into(),
                 ..Default::default()
             };
-            let tasks = repository.borrow_mut().tasks_with_filter(&filter)?;
+            let tasks = repository.all_tasks(filter)?;
             print_tasks(&tasks);
         }
         Mode::Add { content } => {
@@ -201,14 +208,16 @@ fn main() -> anyhow::Result<()> {
             }
 
             let task = Task::new(content.trim().to_string());
+
             let event = HostEvent::TaskCreate {
                 task: Some(Box::new(task.clone())),
             };
-            repository.borrow_mut().add(task)?;
+            repository.insert_task(&task)?;
+
             plugin_manager.emit_event(None, &event)?;
             while plugin_manager.process_host_event()? {}
             while let Some(action) = plugin_manager.process_plugin_event() {
-                let (_plugin_name, event) = match action {
+                let (plugin_name, event) = match action {
                     PluginAction::Event { plugin_name, event } => (plugin_name, event),
                     PluginAction::Disable {
                         plugin_name,
@@ -219,18 +228,21 @@ fn main() -> anyhow::Result<()> {
                         continue;
                     }
                 };
+
                 match event {
                     PluginEvent::TaskCreate { task } => {
-                        repository.borrow_mut().add(task)?;
+                        repository.insert_task(&task)?;
                     }
                     PluginEvent::TaskModify { task } => {
-                        repository.borrow_mut().update(&task)?;
+                        repository.update_task(&task)?;
                     }
                     PluginEvent::TaskSync => {
-                        repository.borrow_mut().sync()?;
+                        repository.sync()?;
                     }
-                    PluginEvent::TaskQuery { .. } => {
-                        todo!()
+                    PluginEvent::TaskQuery { query } => {
+                        let tasks = repository.task_query(&query)?;
+                        plugin_manager
+                            .emit_event(Some(&plugin_name), &HostEvent::TaskQuery { tasks })?;
                     }
                     PluginEvent::NetworkRequest { ty, host } => {
                         todo!("{:?}: {}", ty, host)
@@ -238,9 +250,60 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
-        Mode::Sync => {
-            repository.borrow_mut().sync()?;
-        }
+        Mode::Sync { backend } => match backend {
+            cli::Backend::Git => repository.sync()?,
+            cli::Backend::TaskChampion => {
+                let config_dir = choose_path_suffix(
+                    &dirs::config_dir().context("could not get config directory")?,
+                );
+                let config_path = config_dir.join("config.toml");
+
+                let (url, client_id, encryption_secret) = {
+                    #[derive(serde::Deserialize)]
+                    struct Config {
+                        sync: Sync,
+                    }
+                    #[derive(serde::Deserialize)]
+                    struct Sync {
+                        server: Server,
+                        encryption_secret: String,
+                    }
+                    #[derive(serde::Deserialize)]
+                    struct Server {
+                        origin: Url,
+                        client_id: Uuid,
+                    }
+
+                    let file = std::fs::read_to_string(&config_path).with_context(|| {
+                        format!("Failed to read config file at: '{}'", config_path.display())
+                    })?;
+
+                    let config: Config = toml::from_str(&file).with_context(|| {
+                        format!(
+                            "Failed to parse config file at: '{}' as toml config.",
+                            config_path.display()
+                        )
+                    })?;
+
+                    (
+                        config.sync.server.origin,
+                        config.sync.server.client_id,
+                        config.sync.encryption_secret,
+                    )
+                };
+
+                let constraint_environment = false;
+                let config = TaskchampionConfig {
+                    root_path: repository.root_path().join("backend").join("taskchampion"),
+                    url: url.as_str().to_string(),
+                    client_id,
+                    encryption_secret: encryption_secret.as_bytes().to_vec(),
+                    constraint_environment,
+                };
+                let mut backend = TaskchampionBackend::new(config)?;
+                backend.sync(repository.database_mut().get_mut().unwrap())?;
+            }
+        },
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
             // TODO: Maybe figure out what is the best value.
@@ -294,23 +357,26 @@ fn main() -> anyhow::Result<()> {
             //     }
             // }
         }
-        Mode::Export { filepath } => {
-            let contents = repository.borrow_mut().export()?;
-            if let Some(filepath) = filepath {
-                fs::write(filepath, contents)?;
-            } else {
-                println!("{contents}");
-            }
+        Mode::Export { filepath: _ } => {
+            // let contents = repository.borrow_mut().export()?;
+            // if let Some(filepath) = filepath {
+            //     fs::write(filepath, contents)?;
+            // } else {
+            //     println!("{contents}");
+            // }
+
+            todo!()
         }
-        Mode::Import { filepath } => {
-            let contents = if let Some(filepath) = filepath {
-                fs::read_to_string(filepath)?
-            } else {
-                let mut contents = String::new();
-                std::io::stdin().read_to_string(&mut contents)?;
-                contents
-            };
-            repository.borrow_mut().import(&contents)?;
+        Mode::Import { filepath: _ } => {
+            // let contents = if let Some(filepath) = filepath {
+            //     fs::read_to_string(filepath)?
+            // } else {
+            //     let mut contents = String::new();
+            //     std::io::stdin().read_to_string(&mut contents)?;
+            //     contents
+            // };
+            // repository.borrow_mut().import(&contents)?;
+            todo!()
         }
         Mode::Repository { uuid } => {
             let mut settings = Settings::get();
@@ -341,11 +407,6 @@ fn main() -> anyhow::Result<()> {
             };
         }
     }
-
-    repository
-        .borrow_mut()
-        .commit()
-        .context("Failed to commit the change to the repository")?;
 
     Ok(())
 }

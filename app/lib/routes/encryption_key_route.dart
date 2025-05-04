@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:stride/blocs/log_bloc.dart';
+import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/bridge/third_party/stride_backend/git/encryption_key.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class EncryptionKeyRoute extends StatefulWidget {
-  final Repository repository;
+  final RepositorySpecification repository;
   const EncryptionKeyRoute({super.key, required this.repository});
 
   @override
@@ -54,13 +55,21 @@ class EncryptionKeyRouteState extends State<EncryptionKeyRoute> {
                   return;
                 }
 
-                await context.read<LogBloc>().catch_(
-                      message: 'encrypiton key',
-                      () async => EncryptionKey.save(
-                        repositoryUuid: widget.repository.uuid,
-                        key: _key,
-                      ),
-                    );
+                final settingsBloc = context.read<SettingsBloc>();
+                final repositories =
+                    settingsBloc.settings.repositories.toList();
+                final index = repositories.indexWhere(
+                  (repository) => repository.uuid == widget.repository.uuid,
+                );
+                repositories[index] = widget.repository
+                    .copyWith(encryption: EncryptionKey(key: _key));
+
+                settingsBloc.add(
+                  SettingsUpdateEvent(
+                    settings: settingsBloc.settings
+                        .copyWith(repositories: repositories),
+                  ),
+                );
                 setState(() {});
               },
             ),

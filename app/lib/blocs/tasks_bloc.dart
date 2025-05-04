@@ -7,8 +7,9 @@ import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
-import 'package:stride/bridge/api/repository/git.dart';
-import 'package:stride/bridge/git/known_hosts.dart';
+import 'package:stride/bridge/api/git.dart';
+import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/third_party/stride_backend/git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/encryption_key_route.dart';
@@ -81,7 +82,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   StreamSubscription<SettingsState>? settingsSubscription;
 
   UuidValue? repositoryUuid;
-  TaskStorage? storage;
+  Repository? database;
   Filter? filter;
 
   Timer? syncTimer;
@@ -109,29 +110,28 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       final nextRepositoryUuid = event.settings.currentRepositoryUuidOrFirst();
       if (repositoryUuid != nextRepositoryUuid) {
-        storage?.unload();
-        storage = null;
+        database = null;
         repositoryUuid = nextRepositoryUuid;
         add(TaskFetchEvent());
       }
     });
   }
 
-  TaskStorage? repository() {
-    if (storage != null) {
-      return storage;
+  Repository? repository() {
+    if (database != null) {
+      return database;
     }
     if (repositoryUuid == null) {
       return null;
     }
-    return storage = TaskStorage.load(uuid: repositoryUuid!);
+    return database = Repository.open(uuid: repositoryUuid!);
   }
 
   TaskBloc({
     required this.settingsBloc,
     required this.logBloc,
     required this.dialogBloc,
-    this.storage,
+    this.database,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
@@ -140,15 +140,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskAddEvent>((event, emit) async {
-      await repository()?.add(task: event.task);
+      await repository()?.insertTask(task: event.task);
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskRemoveEvent>((event, emit) async {
       if (event.task.status == TaskStatus.deleted) {
-        await repository()?.removeByTask(task: event.task);
+        await repository()?.purgeTaskById(id: event.task.uuid);
       } else {
-        await repository()?.update(
+        await repository()?.updateTask(
           task: event.task.copyWith(status: TaskStatus.deleted),
         );
       }
@@ -158,27 +158,29 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskRemoveAllEvent>((event, emit) async {
       if (event.all) {
-        await repository()?.deleteAll();
+        throw UnimplementedError();
       } else {
-        await repository()?.clear();
+        // await repository()?.deleteDatabase();
+        // throw UnimplementedError();
       }
-      emit(TaskState(tasks: await _tasks()));
+      // emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskForcePushEvent>((event, emit) async {
-      await repository()?.push(force: true);
-      emit(TaskState(tasks: await _tasks()));
+      // await repository()?.push(force: true);
+      throw UnimplementedError();
+      // emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
-      await repository()?.update(
+      await repository()?.updateTask(
         task: event.task.copyWith(status: event.status),
       );
       emit(TaskState(tasks: await _tasks()));
     });
 
     on<TaskUpdateEvent>((event, emit) async {
-      await repository()?.update(task: event.current);
+      await repository()?.updateTask(task: event.current);
       emit(TaskState(tasks: await _tasks()));
     });
 
@@ -201,25 +203,21 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskCheckoutBranchEvent>((event, emit) async {
-      await repository()?.checkout();
-      emit(TaskState(tasks: await _tasks()));
+      // await repository()?.checkout();
+      throw UnimplementedError();
+      // emit(TaskState(tasks: await _tasks()));
     });
   }
 
   Future<List<Task>> _tasks() async {
-    if (filter == null) {
-      final tasks = await repository()?.tasksWithFilter(
-        filter: await Filter.default_(),
-      );
-      return tasks ?? [];
-    } else {
-      final tasks = await repository()?.tasksWithFilter(filter: filter!);
-      return tasks ?? [];
-    }
+    final tasks = await repository()?.allTasks(
+      filter: filter ?? await Filter.default_(),
+    );
+    return tasks ?? [];
   }
 
   Future<List<Task>> query(TaskQuery query) async {
-    final tasks = await repository()?.query(query: query);
+    final tasks = await repository()?.taskQuery(query: query);
     return tasks ?? [];
   }
 
@@ -235,12 +233,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         dialogBloc.add(
           DialogAlertEvent(
             title: 'Accept Unknown Host: ${host.hostname}',
-            content: 'Host Key: ${host.keyType.name} ${host.key}',
+            content:
+                'Host Key: ${hostKeyTypeName(keyType: host.keyType)} ${host.key}',
             onConfirm: (context) async {
               await logBloc.catch_(message: 'known hosts', () async {
                 final knownHosts = await KnownHosts.load();
                 KnownHosts.save(
-                  this_: knownHosts.copyWith(
+                  this_: KnownHosts(
                     hosts: knownHosts.hosts.toList()..add(host),
                   ),
                 );

@@ -4,14 +4,14 @@
 
 use std::{fmt::Display, path::Path, str::FromStr};
 
-use flutter_rust_bridge::frb;
 use git2::cert::SshHostKeyType;
 use serde::{Deserialize, Serialize};
 
-use crate::{ErrorKind, RustError};
+use crate::Result;
 
 // const BUNDELED_KEYS: &[KnownHostRef<'_>] = &[];
 
+/// flutter_rust_bridge:ignore
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HostKeyType {
     Rsa = SshHostKeyType::Rsa as isize,
@@ -24,12 +24,16 @@ pub enum HostKeyType {
 
 impl HostKeyType {
     /// The name of the key type as encoded in the `known_hosts` file.
+    ///
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn name(&self) -> &'static str {
         SshHostKeyType::from(*self).name()
     }
 
     /// A short name of the key type, the colloquial form used as a human-readable description.
+    ///
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn short_name(&self) -> &'static str {
         SshHostKeyType::from(*self).short_name()
@@ -49,6 +53,7 @@ impl From<HostKeyType> for SshHostKeyType {
     }
 }
 
+/// flutter_rust_bridge:ignore
 impl TryFrom<SshHostKeyType> for HostKeyType {
     type Error = KnownHostsError;
     fn try_from(value: SshHostKeyType) -> Result<Self, Self::Error> {
@@ -70,6 +75,7 @@ impl Display for HostKeyType {
     }
 }
 
+/// flutter_rust_bridge:ignore
 impl FromStr for HostKeyType {
     type Err = KnownHostsError;
 
@@ -86,6 +92,7 @@ impl FromStr for HostKeyType {
     }
 }
 
+/// flutter_rust_bridge:ignore
 #[derive(Debug, Clone, Copy)]
 pub struct HostRef<'a> {
     pub hostname: &'a str,
@@ -97,6 +104,7 @@ pub struct HostRef<'a> {
     pub key: &'a str,
 }
 
+/// flutter_rust_bridge:non_opaque
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Host {
     pub hostname: String,
@@ -109,6 +117,7 @@ pub struct Host {
 }
 
 impl Host {
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn new(hostname: String, key_type: HostKeyType, key: String) -> Self {
         Self {
@@ -118,6 +127,7 @@ impl Host {
         }
     }
 
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn as_ref(&self) -> HostRef<'_> {
         HostRef {
@@ -134,6 +144,7 @@ impl Display for Host {
     }
 }
 
+/// flutter_rust_bridge:ignore
 impl FromStr for Host {
     type Err = KnownHostsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -157,33 +168,20 @@ impl FromStr for Host {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+/// flutter_rust_bridge:ignore
+#[derive(thiserror::Error, Debug, Clone, Copy)]
 pub enum KnownHostsError {
+    #[error("missing hostname")]
     MissingHostname,
+    #[error("missing key type")]
     MissingKeyType,
+    #[error("missing remote host key")]
     MissingRemoteHostKey,
+    #[error("unknown remote host key")]
     UnknownHostKeyType,
 }
 
-impl std::error::Error for KnownHostsError {}
-impl Display for KnownHostsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MissingHostname => f.write_str("missing hostname"),
-            Self::MissingKeyType => f.write_str("missing key type"),
-            Self::MissingRemoteHostKey => f.write_str("missing remote host key"),
-            Self::UnknownHostKeyType => f.write_str("unknown remote host key"),
-        }
-    }
-}
-
-impl From<KnownHostsError> for RustError {
-    fn from(error: KnownHostsError) -> Self {
-        ErrorKind::KnownHosts(error).into()
-    }
-}
-
-#[frb(dart_metadata=("freezed"))]
+/// flutter_rust_bridge:non_opaque
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct KnownHosts {
     pub hosts: Vec<Host>,
@@ -192,12 +190,22 @@ pub struct KnownHosts {
 impl KnownHosts {
     const SSH_KNOWN_HOSTS_STANDARD_LOCATION: &'static str = ".ssh/known_hosts";
 
+    pub fn load() -> Result<Self> {
+        KnownHosts::read_standard_file()
+    }
+
+    pub fn save(this: &Self) -> Result<()> {
+        KnownHosts::write_standard_file(this)
+    }
+
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn new() -> Self {
         Self { hosts: Vec::new() }
     }
 
-    pub fn parse_str(input: &str) -> Result<Self, RustError> {
+    /// flutter_rust_bridge:ignore
+    pub fn parse_str(input: &str) -> Result<Self> {
         let mut hosts = Vec::new();
         for line in input.lines() {
             let line = line.trim();
@@ -211,7 +219,8 @@ impl KnownHosts {
         Ok(Self { hosts })
     }
 
-    pub fn read_file(filepath: &Path) -> Result<Self, RustError> {
+    /// flutter_rust_bridge:ignore
+    pub fn read_file(filepath: &Path) -> Result<Self> {
         if !filepath.exists() {
             std::fs::write(filepath, "")?;
             return Ok(Self::default());
@@ -221,35 +230,38 @@ impl KnownHosts {
         Self::parse_str(&contents)
     }
 
-    #[frb]
-    pub fn read_standard_file() -> Result<Self, RustError> {
+    /// flutter_rust_bridge:ignore
+    pub fn read_standard_file() -> Result<Self> {
         let home = std::env::var("HOME")?;
         Self::read_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))
     }
 
+    /// flutter_rust_bridge:ignore
     pub fn write_file(&self, filepath: &Path) -> Result<(), std::io::Error> {
         let contents = self.to_string();
         std::fs::write(filepath, contents)?;
         Ok(())
     }
 
-    #[frb]
-    pub fn write_standard_file(&self) -> Result<(), RustError> {
+    /// flutter_rust_bridge:ignore
+    pub fn write_standard_file(&self) -> Result<()> {
         let home = std::env::var("HOME")?;
         self.write_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))?;
         Ok(())
     }
 
-    #[frb]
+    /// flutter_rust_bridge:ignore
     pub fn add(&mut self, host: Host) {
         self.hosts.push(host);
     }
 
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn hosts(&self) -> &[Host] {
         &self.hosts
     }
 
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn host(&self, hostname: &str, host_key_type: HostKeyType) -> Option<&Host> {
         self.hosts

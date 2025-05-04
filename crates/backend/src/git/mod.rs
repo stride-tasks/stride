@@ -8,45 +8,35 @@ use std::{
 };
 
 use base64::Engine;
-use chrono::Utc;
-use flutter_rust_bridge::frb;
-use stride_core::event::TaskQuery;
-use stride_crypto::crypter::Crypter;
-use uuid::Uuid;
-
-use crate::{
-    ErrorKind, RustError, ToBase64,
-    api::{
-        error::{ExportError, ImportError},
-        logging,
-        settings::{Settings, application_support_path},
-    },
-    base64_decode,
-    git::known_hosts::{Host, HostKeyType, KnownHosts},
-    key_store::KeyStore,
+use config::GitConfig;
+use known_hosts::{Host, HostKeyType, KnownHosts};
+use ssh_key::SshKey;
+use stride_core::{
+    event::TaskQuery,
     task::{Task, TaskStatus},
 };
+use stride_crypto::crypter::Crypter;
+use stride_database::Database;
+use uuid::Uuid;
 
 use git2::{
-    AnnotatedCommit, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
-    RebaseOptions, RemoteCallbacks, Repository, Signature, build::CheckoutBuilder,
+    AnnotatedCommit, Branch, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
+    Oid, RebaseOptions, RemoteCallbacks, Repository, Signature, build::CheckoutBuilder,
 };
 
-use crate::api::{
-    filter::Filter,
-    settings::{EncryptionKey, SshKey, ssh_key},
-};
+mod key_store;
 
-#[frb(init)]
-pub fn init_app() {
-    // Default utilities - feel free to customize
-    flutter_rust_bridge::setup_default_user_utils();
-}
+pub mod config;
+pub mod encryption_key;
+pub mod known_hosts;
+pub mod ssh_key;
 
-#[frb(ignore)]
-pub const IV_LEN: usize = 12;
+use key_store::KeyStore;
 
-#[frb(ignore)]
+use crate::{Backend, Error, Result, ToBase64, base64_decode};
+
+pub(crate) const IV_LEN: usize = 12;
+
 pub(crate) fn generate_iv() -> [u8; IV_LEN] {
     let mut iv = [0u8; IV_LEN];
     getrandom::fill(&mut iv).unwrap();
@@ -87,7 +77,7 @@ impl Storage {
         }
     }
 
-    fn load(&mut self) -> Result<(), RustError> {
+    fn load(&mut self) -> Result<()> {
         if self.loaded {
             return Ok(());
         }
@@ -115,7 +105,7 @@ impl Storage {
         Ok(())
     }
 
-    fn append(&mut self, mut task: Task) -> Result<(), RustError> {
+    fn append(&mut self, mut task: Task) -> Result<()> {
         task.status = self.kind;
 
         let mut file = File::options().append(true).create(true).open(&self.path)?;
@@ -141,7 +131,7 @@ impl Storage {
         Ok(())
     }
 
-    fn save(&mut self) -> Result<(), RustError> {
+    fn save(&mut self) -> Result<()> {
         let mut content = String::new();
         for DecryptedTask { task, iv } in &self.tasks {
             let (_, data) = self.key_store.encrypt(task, Some(*iv))?;
@@ -153,7 +143,7 @@ impl Storage {
         Ok(())
     }
 
-    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>, RustError> {
+    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>> {
         self.load()?;
         Ok(self
             .tasks
@@ -163,30 +153,30 @@ impl Storage {
     }
 
     #[allow(unused)]
-    fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>, RustError> {
+    fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>> {
         self.load()?;
         Ok(self.tasks.iter().position(|task| &task.task.uuid == uuid))
     }
 
-    fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<(), RustError> {
-        if !filter.status.contains(&self.kind) {
-            return Ok(());
-        }
+    // fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<()> {
+    //     if !filter.status.contains(&self.kind) {
+    //         return Ok(());
+    //     }
 
-        let search = filter.search.to_lowercase();
+    //     let search = filter.search.to_lowercase();
 
-        self.load()?;
-        for DecryptedTask { task, .. } in self
-            .tasks
-            .iter()
-            .filter(|DecryptedTask { task, .. }| task.title.to_lowercase().contains(&search))
-        {
-            result.push(task.clone());
-        }
+    //     self.load()?;
+    //     for DecryptedTask { task, .. } in self
+    //         .tasks
+    //         .iter()
+    //         .filter(|DecryptedTask { task, .. }| task.title.to_lowercase().contains(&search))
+    //     {
+    //         result.push(task.clone());
+    //     }
 
-        Ok(())
-    }
-    fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<(), RustError> {
+    //     Ok(())
+    // }
+    fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<()> {
         match query {
             TaskQuery::Uuid { uuid } => {
                 if let Some(task) = self.get_by_id(uuid)? {
@@ -221,7 +211,7 @@ impl Storage {
         Ok(())
     }
 
-    fn update(&mut self, task: &Task) -> Result<bool, RustError> {
+    fn update(&mut self, task: &Task) -> Result<bool> {
         if task.status != self.kind {
             return Ok(false);
         }
@@ -231,18 +221,23 @@ impl Storage {
             .tasks
             .iter_mut()
             .find(|DecryptedTask { task: element, .. }| element.uuid == task.uuid);
+
         let Some(current) = current else {
             return Ok(false);
         };
+
+        if current.task == *task {
+            return Ok(false);
+        }
+
         current.task = task.clone();
-        current.task.modified = Some(Utc::now());
         current.iv = generate_iv();
 
         self.save()?;
         Ok(true)
     }
 
-    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
+    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
         let index = self.get_index(uuid)?;
         let Some(index) = index else {
             return Ok(None);
@@ -253,7 +248,7 @@ impl Storage {
         Ok(Some(task))
     }
 
-    fn clear(&mut self) -> Result<(), RustError> {
+    fn clear(&mut self) -> Result<()> {
         self.loaded = true;
         self.tasks.clear();
         self.save()?;
@@ -265,10 +260,10 @@ impl Storage {
     }
 }
 
-#[frb(opaque)]
-pub struct TaskStorage {
-    pub(crate) uuid: Uuid,
-    pub(crate) repository_path: PathBuf,
+#[allow(missing_debug_implementations)]
+pub struct GitBackend {
+    config: GitConfig,
+
     tasks_path: PathBuf,
     key_store: Arc<KeyStore>,
 
@@ -279,61 +274,27 @@ pub struct TaskStorage {
     recurring: Storage,
 }
 
-impl TaskStorage {
+impl GitBackend {
     const PENDING_DATA_FILENAME: &'static str = "pending";
     const COMPLETE_DATA_FILENAME: &'static str = "complete";
     const DELETED_DATA_FILENAME: &'static str = "deleted";
     const WAITING_DATA_FILENAME: &'static str = "waiting";
     const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
-    #[frb(sync)]
-    pub fn load(uuid: Uuid) -> Result<Self, RustError> {
-        let path = application_support_path().join("repository");
-        let settings = Settings::get();
-        Self::new(uuid, &path.to_string_lossy(), &settings)
-    }
+    pub fn new(config: GitConfig) -> Result<Self> {
+        let repository_path = config.repository_path();
+        let keys_filepath = config.keys_filepath();
 
-    fn init_repository_if_needed(&self) -> Result<(), RustError> {
-        if !self.repository_path.join(".git").exists() {
-            Self::init_repotitory(self.uuid, &self.repository_path, &self.tasks_path)?;
-        }
-        Ok(())
-    }
-
-    #[frb(sync)]
-    pub fn new(repository_uuid: Uuid, path: &str, settings: &Settings) -> Result<Self, RustError> {
-        let repository_path = Path::new(path)
-            .join(repository_uuid.to_string())
-            .join("source");
         std::fs::create_dir_all(&repository_path)?;
 
-        let tasks_path = repository_path.join("tasks");
-        let keys_filepath = tasks_path.join("keys");
-
-        let mut settings = settings.clone();
-        let repository = settings.repository_mut(repository_uuid)?;
-
-        let uuid = repository.uuid;
-
-        let encryption_key = if let Some(encryption_key) = &repository.encryption {
-            encryption_key.clone()
-        } else {
-            let key = EncryptionKey::generate();
-            repository.encryption = Some(key.clone());
-            Settings::save(settings.clone())?;
-            log::info!("repository does not have encryption key, generating new encryption key");
-            key
-        };
-
-        let key = base64_decode(&encryption_key.key)?;
-
+        let key = base64_decode(&config.encryption_key.key)?;
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
-
         let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
 
+        let tasks_path = config.tasks_path();
+
         Ok(Self {
-            uuid,
-            repository_path: repository_path.to_path_buf(),
+            config,
             pending: Storage::new(
                 tasks_path.join(Self::PENDING_DATA_FILENAME),
                 TaskStatus::Pending,
@@ -374,7 +335,7 @@ impl TaskStorage {
         ]
     }
 
-    pub(crate) fn update2(&mut self, task: &Task) -> Result<bool, RustError> {
+    pub(crate) fn update2(&mut self, task: &Task) -> Result<bool> {
         let mut updated = false;
         for storage in self.storage_mut() {
             if storage.update(task)? {
@@ -385,7 +346,7 @@ impl TaskStorage {
         Ok(updated)
     }
 
-    pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>, RustError> {
+    pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>> {
         let mut found_task = None;
         for storage in self.storage_mut() {
             if task.status != storage.kind {
@@ -404,11 +365,9 @@ impl TaskStorage {
         Ok(found_task.map(|DecryptedTask { task, .. }| task))
     }
 
-    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool, RustError> {
-        self.init_repository_if_needed()?;
-
+    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool> {
         if task.status == status {
-            return Ok(true);
+            return Ok(false);
         }
 
         let mut found_task = None;
@@ -431,10 +390,7 @@ impl TaskStorage {
             return Ok(false);
         };
 
-        found_task.task.active = false;
         found_task.task.status = status;
-        found_task.task.modified = Some(Utc::now());
-
         let transition = match status {
             TaskStatus::Pending => "PEND",
             TaskStatus::Waiting => "WAIT",
@@ -446,48 +402,38 @@ impl TaskStorage {
         let message = format!("${transition} {}", found_task.task.uuid.to_base64());
         self.storage_mut()[status as usize].append(found_task.task)?;
         self.add_and_commit(&message)?;
-        Ok(false)
+        Ok(true)
     }
 
-    pub fn clone_repository(&mut self) -> Result<(), RustError> {
-        let mut settings = Settings::get();
-        let ssh_key = self.ssh_key(&settings)?;
-        let repo = settings.repository_mut(self.uuid)?;
-
+    pub fn clone_repository(&mut self) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(ssh_key, &mut callbacks);
+        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
 
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(callbacks);
 
         let mut builder = git2::build::RepoBuilder::new();
         builder.fetch_options(fo);
-        builder.branch(&repo.branch);
+        builder.branch(&self.config.branch);
 
-        let connection = builder.clone(&repo.origin, &self.repository_path);
+        let connection = builder.clone(&self.config.origin, &self.config.repository_path());
 
         if let Some(callback_error) = callback_error.borrow_mut().take() {
             return Err(callback_error);
         }
 
-        if let Err(error) = &connection {
-            return match error.class() {
-                ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().into(),
-                }
-                .into()),
-                ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().into(),
-                }
-                .into()),
-                _ => Err(ErrorKind::Other {
-                    message: error.message().into(),
-                }
-                .into()),
-            };
+        if let Err(err) = connection {
+            // Empty repository case:
+            if (err.class(), err.code()) != (ErrorClass::Reference, ErrorCode::NotFound) {
+                return Err(err.into());
+            }
+
+            let repository = Repository::init(self.config.repository_path())?;
+            self.init_repotitory(&repository)?;
+            self.push(&repository, true)?;
         }
 
-        log::info!("Repository {} cloned successfully!", repo.origin);
+        log::info!("Repository {} cloned successfully!", &self.config.origin);
 
         self.unload();
 
@@ -499,16 +445,11 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn force_hard_reset(&mut self, commit: Oid) -> Result<(), RustError> {
-        self.init_repository_if_needed()?;
-
-        let mut settings = Settings::get();
-        let repo = settings.repository_mut(self.uuid)?;
-
-        let repository = Repository::open(&self.repository_path)?;
+    pub fn force_hard_reset(&mut self, commit: Oid) -> Result<()> {
+        let repository = Repository::open(self.config.repository_path())?;
         let commit = repository.find_commit(commit)?;
 
-        let branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
+        let branch = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
 
         let mut reference = branch.into_reference();
 
@@ -528,73 +469,57 @@ impl TaskStorage {
         Ok(())
     }
 
-    pub fn checkout(&mut self) -> Result<(), RustError> {
-        self.init_repository_if_needed()?;
+    // pub fn checkout(&mut self) -> Result<()> {
+    //     self.init_repository_if_needed()?;
 
-        let mut settings = Settings::get();
-        let repository = settings.repository_mut(self.uuid)?;
+    //     self.sync()?;
+    //     self.unload();
 
-        self.sync()?;
-        self.unload();
+    //     let git_repository = Repository::open(&self.config.repository_path())?;
+    //     let branch = git_repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
+    //     let reference = branch.into_reference();
+    //     let tree = reference.peel_to_tree()?;
+    //     git_repository.checkout_tree(tree.as_object(), None)?;
 
-        let git_repository = Repository::open(&self.repository_path)?;
-        let branch = git_repository.find_branch(&repository.branch, git2::BranchType::Local)?;
-        let reference = branch.into_reference();
-        let tree = reference.peel_to_tree()?;
-        git_repository.checkout_tree(tree.as_object(), None)?;
+    //     let name = reference
+    //         .name()
+    //         .expect("invalid UTF-8 reference name of branch");
+    //     git_repository.set_head(name)?;
 
-        let name = reference
-            .name()
-            .expect("invalid UTF-8 reference name of branch");
-        git_repository.set_head(name)?;
+    //     if !self.tasks_path.exists() {
+    //         std::fs::create_dir(&self.tasks_path)?;
+    //     }
 
-        if !self.tasks_path.exists() {
-            std::fs::create_dir(&self.tasks_path)?;
-        }
+    //     Ok(())
+    // }
 
-        Ok(())
-    }
-
-    pub(crate) fn init_repotitory(
-        uuid: Uuid,
-        repository_path: &Path,
-        tasks_path: &Path,
-    ) -> Result<(), RustError> {
-        let mut settings = Settings::get();
-        let repo = settings.repository_mut(uuid)?;
-
-        let repository = Repository::init(repository_path)?;
-
+    pub(crate) fn init_repotitory<'a>(&self, repository: &'a Repository) -> Result<Branch<'a>> {
         let mut index = repository.index()?;
 
         let tree = index.write_tree()?;
         let tree = repository.find_tree(tree)?;
 
-        let author = Signature::now(&repo.author, &repo.email)?;
+        let author = Signature::now(&self.config.author, &self.config.email)?;
 
         let commit = repository.commit(None, &author, &author, "Initial Commit", &tree, &[])?;
         let commit = repository.find_commit(commit)?;
 
-        let branch = repository.branch(&repo.branch, &commit, true)?;
+        let branch = repository.branch(&self.config.branch, &commit, true)?;
         let mut branch_ref = branch.into_reference();
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();
         repository.set_head(branch_ref_name)?;
 
+        let tasks_path = self.config.tasks_path();
         if !tasks_path.exists() {
             std::fs::create_dir_all(tasks_path)?;
         }
 
-        Ok(())
+        Ok(repository.find_branch(&self.config.branch, git2::BranchType::Local)?)
     }
 
-    pub fn add_and_commit(&self, message: &str) -> Result<bool, RustError> {
-        self.init_repository_if_needed()?;
-
-        let settings = Settings::get();
-        let repo = settings.repository(self.uuid)?;
-
-        let repository = Repository::open(&self.repository_path)?;
+    pub fn add_and_commit(&self, message: &str) -> Result<bool> {
+        let repository = Repository::open(&self.config.repository_path())?;
 
         if repository.statuses(None)?.is_empty() {
             return Ok(false);
@@ -608,7 +533,7 @@ impl TaskStorage {
         let tree = index.write_tree()?;
         let tree = repository.find_tree(tree)?;
 
-        let author = Signature::now(&repo.author, &repo.email)?;
+        let author = Signature::now(&self.config.author, &self.config.email)?;
 
         let parent_commit = repository.head()?.peel_to_commit()?;
 
@@ -622,7 +547,7 @@ impl TaskStorage {
         )?;
         let commit = repository.find_commit(commit)?;
 
-        let branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
+        let branch = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
         let mut branch_ref = branch.into_reference();
         branch_ref.set_target(commit.id(), "update it")?;
         let branch_ref_name = branch_ref.name().unwrap();
@@ -631,7 +556,7 @@ impl TaskStorage {
         Ok(true)
     }
 
-    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<(), RustError> {
+    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<()> {
         for TaskDiff {
             path,
             adding,
@@ -690,13 +615,7 @@ impl TaskStorage {
         Ok(())
     }
 
-    fn rebase(
-        &mut self,
-        settings: &Settings,
-        repository: &Repository,
-        remote: &AnnotatedCommit<'_>,
-    ) -> Result<(), RustError> {
-        let repo = settings.repository(self.uuid)?;
+    fn rebase(&mut self, repository: &Repository, remote: &AnnotatedCommit<'_>) -> Result<()> {
         let mut opts = RebaseOptions::new();
 
         let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
@@ -767,7 +686,7 @@ impl TaskStorage {
             index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
             index.write()?;
 
-            let committer = Signature::now(&repo.author, &repo.email)?;
+            let committer = Signature::now(&self.config.author, &self.config.email)?;
             patch = rebase.commit(None, &committer, None)?;
         }
 
@@ -776,49 +695,22 @@ impl TaskStorage {
         Ok(())
     }
 
-    fn ssh_key(&self, settings: &Settings) -> Result<SshKey, RustError> {
-        let repository = settings.repository(self.uuid)?;
-        let Some(uuid) = repository.ssh_key_uuid else {
-            return Err(ErrorKind::NoSshKeysProvided.into());
-        };
-        let Some((public_path, private_path)) = ssh_key(&uuid) else {
-            // TODO: Report a different error, missing key.
-            return Err(ErrorKind::NoSshKeysProvided.into());
-        };
-
-        let public_key = std::fs::read_to_string(&public_path)?;
-
-        Ok(SshKey {
-            uuid,
-            public_key,
-            public_path,
-            private_path,
-        })
-    }
-
-    #[frb(ignore)]
-    pub fn pull(&mut self) -> Result<bool, RustError> {
-        let settings = Settings::get();
-        let repo = settings.repository(self.uuid)?;
-
-        let repository = Repository::open(&self.repository_path)?;
-
-        let ssh_key = self.ssh_key(&settings)?;
+    pub fn pull(&mut self, repository: &Repository) -> Result<bool> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(ssh_key, &mut callbacks);
+        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
         });
 
-        let remote = repository.remote("origin", &repo.origin);
+        let remote = repository.remote("origin", &self.config.origin);
         if let Err(error) = remote {
             if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
                 log::warn!("Couldn't create remote origin: {error}");
                 return Err(error.into());
             }
         }
-        repository.remote_set_url("origin", &repo.origin)?;
+        repository.remote_set_url("origin", &self.config.origin)?;
 
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
@@ -827,31 +719,16 @@ impl TaskStorage {
             return Err(callback_error);
         }
 
-        if let Err(error) = &connection {
-            return match error.class() {
-                ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().into(),
-                }
-                .into()),
-                ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().into(),
-                }
-                .into()),
-                _ => Err(ErrorKind::Other {
-                    message: error.message().into(),
-                }
-                .into()),
-            };
-        }
+        let mut connection = connection?;
 
-        let branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
+        let branch = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
         let branch_ref = branch.into_reference();
         let branch_ref_name = branch_ref.name().unwrap();
         let mut fetch_options = FetchOptions::new();
         fetch_options.prune(git2::FetchPrune::On);
         fetch_options.download_tags(git2::AutotagOption::All);
-        let connection =
-            connection?
+        let remote_result =
+            connection
                 .remote()
                 .fetch(&[branch_ref_name], Some(&mut fetch_options), None);
 
@@ -859,24 +736,9 @@ impl TaskStorage {
             return Err(callback_error);
         }
 
-        if let Err(error) = &connection {
-            return match error.class() {
-                ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().into(),
-                }
-                .into()),
-                ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().into(),
-                }
-                .into()),
-                _ => Err(ErrorKind::Other {
-                    message: error.message().into(),
-                }
-                .into()),
-            };
-        }
+        let _ = remote_result?;
 
-        let local = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
+        let local = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
         let remote = local.upstream()?;
         let remote = remote.into_reference();
         let (ahead, behind) = repository.graph_ahead_behind(
@@ -891,41 +753,35 @@ impl TaskStorage {
         let remote = repository.reference_to_annotated_commit(&remote)?;
 
         if ahead != 0 {
-            self.rebase(&settings, &repository, &remote)?;
+            self.rebase(&repository, &remote)?;
             return Ok(true);
         }
 
         let fetch_head = repository.find_reference("FETCH_HEAD")?;
         let fetch_commit = repository.reference_to_annotated_commit(&fetch_head)?;
 
-        let remote_branch = &repo.branch;
+        let remote_branch = &self.config.branch;
         do_merge(&repository, remote_branch, &fetch_commit)?;
 
         Ok(true)
     }
 
-    pub fn push(&self, force: bool) -> Result<(), RustError> {
-        let settings = Settings::get();
-        let repo = settings.repository(self.uuid)?;
-
-        let repository = Repository::open(&self.repository_path)?;
-
-        let ssh_key = self.ssh_key(&settings)?;
+    pub fn push(&self, repository: &Repository, force: bool) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(ssh_key, &mut callbacks);
+        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
         });
 
-        let remote = repository.remote("origin", &repo.origin);
+        let remote = repository.remote("origin", &self.config.origin);
         if let Err(error) = remote {
             if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
                 log::warn!("Couldn't create remote origin: {error}");
                 return Err(error.into());
             }
         }
-        repository.remote_set_url("origin", &repo.origin)?;
+        repository.remote_set_url("origin", &self.config.origin)?;
 
         let mut origin = repository.find_remote("origin")?;
         let connection = origin.connect_auth(git2::Direction::Push, Some(callbacks), None);
@@ -934,90 +790,66 @@ impl TaskStorage {
             return Err(callback_error);
         }
 
-        let mut connection = match connection {
-            Ok(connection) => connection,
-            Err(error) => {
-                return match error.class() {
-                    ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                        message: error.message().into(),
-                    }
-                    .into()),
-                    ErrorClass::Net => Err(ErrorKind::Network {
-                        message: error.message().into(),
-                    }
-                    .into()),
-                    _ => Err(error.into()),
-                };
+        let mut connection = connection?;
+
+        let local_branch = match repository
+            .find_branch(&self.config.branch, git2::BranchType::Local)
+        {
+            Ok(value) => value,
+            Err(err)
+                if err.class() == ErrorClass::Reference && err.code() == ErrorCode::NotFound =>
+            {
+                self.init_repotitory(&repository)?
             }
+            Err(err) => return Err(err.into()),
         };
 
-        let local_branch = repository.find_branch(&repo.branch, git2::BranchType::Local)?;
         let branch_ref = local_branch.into_reference();
         let mut branch_ref_name = branch_ref.name().unwrap().to_owned();
 
         // https://github.com/libgit2/libgit2/issues/4286
         // The '+' means force push.
         if force {
-            logging::info(&format!("Force pushing: {branch_ref_name}"));
+            log::info!("Force pushing: {branch_ref_name}");
             branch_ref_name = format!("+{branch_ref_name}");
         }
 
-        let connection = connection.remote().push(&[&branch_ref_name], None);
+        let remote_result = connection.remote().push(&[&branch_ref_name], None);
 
         if let Some(callback_error) = callback_error.borrow_mut().take() {
             return Err(callback_error);
         }
 
-        if let Err(error) = connection {
-            return match error.class() {
-                ErrorClass::Ssh => Err(ErrorKind::Authentication {
-                    message: error.message().into(),
-                }
-                .into()),
-                ErrorClass::Net => Err(ErrorKind::Network {
-                    message: error.message().into(),
-                }
-                .into()),
-                _ => Err(error.into()),
-            };
-        }
+        let _ = remote_result?;
 
         Ok(())
     }
 
-    pub fn delete_all(&mut self) -> Result<(), RustError> {
+    pub fn delete_all(&mut self) -> Result<()> {
         for storage in self.storage_mut() {
             storage.clear()?;
         }
         // delete repository root directory.
-        std::fs::remove_dir_all(
-            self.repository_path
-                .parent()
-                .unwrap_or(&self.repository_path),
-        )?;
+        std::fs::remove_dir_all(&self.config.root_path)?;
         Ok(())
     }
 }
 
-impl StrideRepository for TaskStorage {
+impl GitBackend {
     fn unload(&mut self) {
         for storage in self.storage_mut() {
             storage.unload();
         }
     }
 
-    fn add(&mut self, task: Task) -> Result<(), RustError> {
-        self.init_repository_if_needed()?;
-
+    fn add(&mut self, task: Task) -> Result<()> {
         let message = format!("$ADD {}", task.uuid.to_base64());
         self.pending.append(task)?;
         self.add_and_commit(&message)?;
         Ok(())
     }
 
-    fn remove_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
-        self.init_repository_if_needed()?;
-
+    pub fn remove_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
         for storage in self.storage_mut() {
             if let Some(task) = storage.remove(uuid)? {
                 return Ok(Some(task));
@@ -1026,9 +858,7 @@ impl StrideRepository for TaskStorage {
         Ok(None)
     }
 
-    fn remove_by_task(&mut self, task: &Task) -> Result<bool, RustError> {
-        self.init_repository_if_needed()?;
-
+    pub fn remove_by_task(&mut self, task: &Task) -> Result<bool> {
         let found_task = self.remove_task2(task)?;
 
         let Some(found_task) = found_task else {
@@ -1041,7 +871,7 @@ impl StrideRepository for TaskStorage {
         Ok(false)
     }
 
-    fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>, RustError> {
+    fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
         for storage in self.storage_mut() {
             let task = storage.get_by_id(uuid)?;
 
@@ -1052,148 +882,149 @@ impl StrideRepository for TaskStorage {
         Ok(None)
     }
 
-    fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
-        let mut tasks = Vec::new();
-        for storage in self.storage_mut() {
-            storage.filter(filter, &mut tasks)?;
-        }
+    // fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>> {
+    //     let mut tasks = Vec::new();
+    //     for storage in self.storage_mut() {
+    //         storage.filter(filter, &mut tasks)?;
+    //     }
+    //     tasks.sort_unstable_by(|a, b| {
+    //         b.urgency()
+    //             .partial_cmp(&a.urgency())
+    //             .expect("should never be NaN")
+    //     });
+    //     Ok(tasks)
+    // }
 
-        tasks.sort_unstable_by(|a, b| {
-            b.urgency()
-                .partial_cmp(&a.urgency())
-                .expect("should never be NaN")
-        });
-
-        Ok(tasks)
-    }
-
-    fn update(&mut self, task: &Task) -> Result<bool, RustError> {
-        self.init_repository_if_needed()?;
-
+    fn update(&mut self, task: &Task) -> Result<bool> {
+        let mut updated = false;
         if let Some(found_task) = self.task_by_uuid(&task.uuid)? {
-            self.change_category(&found_task, task.status)?;
+            updated |= self.change_category(&found_task, task.status)?;
         };
 
-        let updated = self.update2(task)?;
+        updated |= self.update2(task)?;
         if updated {
             self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
         }
         Ok(updated)
     }
+}
 
-    fn sync(&mut self) -> Result<(), RustError> {
-        if self.repository_path.join(".git").exists() {
-            // TODO: Make sure that nothing is left behind!
+impl Backend for GitBackend {
+    fn sync(&mut self, db: &mut Database) -> Result<()> {
+        let tasks = db.all_tasks()?;
 
-            if self.pull()? {
+        if self.config.repository_path().join(".git").exists() {
+            for task in tasks {
+                if self.task_by_uuid(&task.uuid)?.is_some() {
+                    self.update(&task)?;
+                } else {
+                    self.add(task)?;
+                }
+            }
+            let repository = Repository::open(self.config.repository_path())?;
+            if self.pull(&repository)? {
                 log::info!("Pulled tasks");
                 self.unload();
             }
 
-            self.push(false)?;
+            self.push(&repository, false)?;
 
             log::info!("Task sync finished!");
             Ok(())
         } else {
-            self.clone_repository()
+            self.clone_repository()?;
+            for task in tasks {
+                if self.task_by_uuid(&task.uuid)?.is_some() {
+                    self.update(&task)?;
+                } else {
+                    self.add(task)?;
+                }
+            }
+            self.sync(db)
         }
     }
-
-    fn clear(&mut self) -> Result<(), RustError> {
-        self.init_repository_if_needed()?;
-
+}
+impl GitBackend {
+    pub fn clear(&mut self) -> Result<()> {
         for storage in self.storage_mut() {
             storage.clear()?;
         }
         // delete repository root directory.
-        std::fs::remove_dir_all(&self.repository_path)?;
+        std::fs::remove_dir_all(&self.config.repository_path())?;
         Ok(())
     }
 
-    fn export(&mut self) -> Result<String, RustError> {
-        #[derive(serde::Serialize)]
-        struct ExportTask<'a> {
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            pending: &'a [DecryptedTask],
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            complete: &'a [DecryptedTask],
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            deleted: &'a [DecryptedTask],
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            waiting: &'a [DecryptedTask],
-            #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            recurring: &'a [DecryptedTask],
-        }
+    // fn export(&mut self) -> Result<String> {
+    //     #[derive(serde::Serialize)]
+    //     struct ExportTask<'a> {
+    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    //         pending: &'a [DecryptedTask],
+    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    //         complete: &'a [DecryptedTask],
+    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    //         deleted: &'a [DecryptedTask],
+    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    //         waiting: &'a [DecryptedTask],
+    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    //         recurring: &'a [DecryptedTask],
+    //     }
 
-        self.init_repository_if_needed()?;
+    //     self.init_repository_if_needed()?;
 
-        for storage in self.storage_mut() {
-            storage.load()?;
-        }
+    //     for storage in self.storage_mut() {
+    //         storage.load()?;
+    //     }
 
-        let record = ExportTask {
-            pending: &self.pending.tasks,
-            complete: &self.complete.tasks,
-            deleted: &self.deleted.tasks,
-            waiting: &self.waiting.tasks,
-            recurring: &self.recurring.tasks,
-        };
+    //     let record = ExportTask {
+    //         pending: &self.pending.tasks,
+    //         complete: &self.complete.tasks,
+    //         deleted: &self.deleted.tasks,
+    //         waiting: &self.waiting.tasks,
+    //         recurring: &self.recurring.tasks,
+    //     };
 
-        Ok(serde_json::to_string(&record).map_err(ExportError::Serialize)?)
-    }
+    //     Ok(serde_json::to_string(&record).map_err(ExportError::Serialize)?)
+    // }
 
-    fn import(&mut self, content: &str) -> Result<(), RustError> {
-        #[derive(serde::Deserialize)]
-        struct ImportRecord {
-            #[serde(default)]
-            pending: Vec<DecryptedTask>,
-            #[serde(default)]
-            complete: Vec<DecryptedTask>,
-            #[serde(default)]
-            deleted: Vec<DecryptedTask>,
-            #[serde(default)]
-            waiting: Vec<DecryptedTask>,
-            #[serde(default)]
-            recurring: Vec<DecryptedTask>,
-        }
+    // fn import(&mut self, content: &str) -> Result<()> {
+    //     #[derive(serde::Deserialize)]
+    //     struct ImportRecord {
+    //         #[serde(default)]
+    //         pending: Vec<DecryptedTask>,
+    //         #[serde(default)]
+    //         complete: Vec<DecryptedTask>,
+    //         #[serde(default)]
+    //         deleted: Vec<DecryptedTask>,
+    //         #[serde(default)]
+    //         waiting: Vec<DecryptedTask>,
+    //         #[serde(default)]
+    //         recurring: Vec<DecryptedTask>,
+    //     }
 
-        self.init_repository_if_needed()?;
+    //     self.init_repository_if_needed()?;
 
-        let record: ImportRecord =
-            serde_json::from_str(content).map_err(ImportError::Deserialize)?;
+    //     let record: ImportRecord =
+    //         serde_json::from_str(content).map_err(ImportError::Deserialize)?;
 
-        self.pending.tasks = record.pending;
-        self.pending.loaded = true;
-        self.complete.tasks = record.complete;
-        self.complete.loaded = true;
-        self.deleted.tasks = record.deleted;
-        self.deleted.loaded = true;
-        self.waiting.tasks = record.waiting;
-        self.waiting.loaded = true;
-        self.recurring.tasks = record.recurring;
-        self.recurring.loaded = true;
+    //     self.pending.tasks = record.pending;
+    //     self.pending.loaded = true;
+    //     self.complete.tasks = record.complete;
+    //     self.complete.loaded = true;
+    //     self.deleted.tasks = record.deleted;
+    //     self.deleted.loaded = true;
+    //     self.waiting.tasks = record.waiting;
+    //     self.waiting.loaded = true;
+    //     self.recurring.tasks = record.recurring;
+    //     self.recurring.loaded = true;
 
-        for storage in self.storage_mut() {
-            storage.save()?;
-        }
+    //     for storage in self.storage_mut() {
+    //         storage.save()?;
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    fn commit(&mut self) -> Result<(), RustError> {
-        self.init_repository_if_needed()?;
-
-        if self.repository_path.exists() {
-            self.add_and_commit(
-                "General commit. (This should probably never actully result in a commit, \
-                as all changes should commit their progress directly.)",
-            )?;
-        }
-
-        Ok(())
-    }
-
-    fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError> {
+    pub fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>> {
         let mut result = Vec::new();
         for storage in self.storage_mut() {
             storage.query(query, &mut result)?;
@@ -1205,10 +1036,10 @@ impl StrideRepository for TaskStorage {
 fn with_authentication(
     ssh_key: SshKey,
     callbacks: &mut RemoteCallbacks<'_>,
-) -> Rc<RefCell<Option<RustError>>> {
+) -> Rc<RefCell<Option<Error>>> {
     let mut tried_ssh = false;
 
-    let error = Rc::<RefCell<Option<RustError>>>::default();
+    let error = Rc::<RefCell<Option<Error>>>::default();
 
     // See: https://github.com/rust-lang/git2-rs/issues/347
     callbacks.credentials(move |_url, username_from_url, _allowed_types| {
@@ -1246,7 +1077,7 @@ fn with_authentication(
         };
         let Some(host_key_type) = cert_host_key.hostkey_type() else {
             *certificate_error.borrow_mut() = Some(
-                ErrorKind::MissingHostKey {
+                Error::MissingHostKey {
                     hostname: hostname.into(),
                 }
                 .into(),
@@ -1261,7 +1092,7 @@ fn with_authentication(
         let host_key = base64::engine::general_purpose::STANDARD.encode(host_key);
 
         let Ok(host_key_type) = HostKeyType::try_from(host_key_type) else {
-            *certificate_error.borrow_mut() = Some(ErrorKind::UnknownKeyType.into());
+            *certificate_error.borrow_mut() = Some(Error::UnknownKeyType.into());
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1271,7 +1102,7 @@ fn with_authentication(
 
         let Some(host) = known_hosts.host(hostname, host_key_type) else {
             *certificate_error.borrow_mut() = Some(
-                ErrorKind::UnknownHost {
+                Error::UnknownHost {
                     host: Host::new(hostname.to_owned(), host_key_type, host_key),
                 }
                 .into(),
@@ -1285,7 +1116,7 @@ fn with_authentication(
 
         if host.key != host_key {
             *certificate_error.borrow_mut() = Some(
-                ErrorKind::MissmatchRemoteKey {
+                Error::MismatchRemoteKey {
                     expected: host.key.clone().into_boxed_str(),
                     actual: host_key.into(),
                 }
@@ -1375,22 +1206,8 @@ fn do_merge<'a>(
     Ok(true)
 }
 
-pub use git2::Oid;
-
-use super::StrideRepository;
-
-#[frb(opaque, mirror(Oid))]
-#[derive(Debug, Clone, Copy)]
-pub struct _MyOid([u8; 20]);
-
-#[frb(sync)]
-#[must_use]
-pub fn oid_to_string(oid: &Oid) -> String {
-    oid.to_string()
-}
-
 // https://github.com/fzyzcjy/flutter_rust_bridge/issues/1937
-#[frb(non_opaque)]
+#[allow(missing_debug_implementations)]
 pub struct CommitItem {
     pub oid: Oid,
     pub parent: Option<Oid>,
@@ -1399,21 +1216,20 @@ pub struct CommitItem {
     pub email: String,
 }
 
-#[frb(ignore)]
+#[allow(missing_debug_implementations)]
 pub struct LogIter<'repo> {
     repository: &'repo Repository,
     revwalk: git2::Revwalk<'repo>,
 }
 
-#[frb(ignore)]
 impl Iterator for LogIter<'_> {
-    type Item = Result<CommitItem, RustError>;
+    type Item = Result<CommitItem>;
     fn next(&mut self) -> Option<Self::Item> {
         let item = self
             .revwalk
             .next()?
             .and_then(|oid| self.repository.find_commit(oid))
-            .map_err(RustError::from)
+            .map_err(Error::from)
             .map(|commit| CommitItem {
                 oid: commit.id(),
                 parent: commit.parent_ids().next(),
@@ -1426,13 +1242,9 @@ impl Iterator for LogIter<'_> {
     }
 }
 
-impl TaskStorage {
-    pub fn log(
-        &mut self,
-        oid: Option<Oid>,
-        n: Option<u32>,
-    ) -> Result<Option<Vec<CommitItem>>, RustError> {
-        let repository = match Repository::open(&self.repository_path) {
+impl GitBackend {
+    pub fn log(&mut self, oid: Option<Oid>, n: Option<u32>) -> Result<Option<Vec<CommitItem>>> {
+        let repository = match Repository::open(self.config.repository_path()) {
             Ok(repository) => repository,
             Err(error) if error.code() == ErrorCode::NotFound => return Ok(None),
             Err(error) => return Err(error.into()),

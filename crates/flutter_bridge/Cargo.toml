@@ -18,21 +18,18 @@ crate-type = ["lib", "cdylib", "staticlib"]
 stride_core = { workspace = true, features = ["taskchampion"] }
 stride_logging.workspace = true
 stride_crypto.workspace = true
+stride_database.workspace = true
+stride_backend.workspace = true
 stride_plugin_manager.workspace = true
 
 flutter_rust_bridge.workspace = true
-taskchampion.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-git2.workspace = true
 base64.workspace = true
 log.workspace = true
-getrandom.workspace = true
-
-[dev-dependencies]
-anyhow.workspace = true
+thiserror.workspace = true
 
 [lints]
 workspace = true

@@ -4,12 +4,10 @@ use std::{
     path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
 };
+use stride_backend::git::encryption_key::EncryptionKey;
 use uuid::Uuid;
 
-use crate::{
-    ErrorKind, RustError, api::error::KeyStoreError, base64_decode, frb_generated::StreamSink,
-    git::known_hosts::KnownHosts,
-};
+use crate::{RustError, frb_generated::StreamSink};
 
 use super::{
     error::SettingsError,
@@ -111,6 +109,7 @@ pub fn ssh_keys() -> Result<Vec<SshKey>, RustError> {
 
         let key_path = ssh_key_path.join(uuid.to_string());
         let public_path = key_path.join("key.pub");
+        let private_path = key_path.join("key");
 
         let public_key = std::fs::read_to_string(&public_path)
             .unwrap_or_else(|_| panic!("missing public key in {uuid} SSH key"));
@@ -118,22 +117,12 @@ pub fn ssh_keys() -> Result<Vec<SshKey>, RustError> {
         result.push(SshKey {
             uuid,
             public_key,
-            public_path: key_path.join("key.pub"),
-            private_path: key_path.join("key"),
+            public_path,
+            private_path,
         });
     }
 
     Ok(result)
-}
-
-impl KnownHosts {
-    pub fn load() -> Result<Self, RustError> {
-        KnownHosts::read_standard_file()
-    }
-
-    pub fn save(this: &Self) -> Result<(), RustError> {
-        KnownHosts::write_standard_file(this)
-    }
 }
 
 #[frb(opaque)]
@@ -204,73 +193,6 @@ impl SshKey {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EncryptionKey {
-    pub key: String,
-}
-
-impl EncryptionKey {
-    #[must_use]
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn generate() -> Self {
-        let key = stride_crypto::crypter::Crypter::generate();
-        Self {
-            key: key.to_base64(),
-        }
-    }
-
-    pub fn save(repository_uuid: Uuid, key: &str) -> Result<Self, RustError> {
-        let decoded = base64_decode(key)?;
-
-        if decoded.len() != 32 {
-            return Err(KeyStoreError::InvalidCipherLength {
-                expected_length: 32,
-                actual_length: decoded.len(),
-            }
-            .into());
-        }
-
-        let mut settings = Settings::get();
-
-        let repository = settings.repository_mut(repository_uuid)?;
-        if let Some(encryption_key) = &mut repository.encryption {
-            encryption_key.key = key.to_string();
-            let result = encryption_key.to_owned();
-            Settings::save(settings)?;
-            return Ok(result);
-        }
-
-        let this = Self {
-            key: key.to_string(),
-        };
-
-        repository.encryption = Some(this.clone());
-        Settings::save(settings)?;
-        Ok(this)
-    }
-
-    // Store keys on disk instead of memory like ssh keys.
-    pub fn remove_key(repository_uuid: Uuid) -> Result<bool, RustError> {
-        let mut settings = Settings::get();
-        settings.repository_mut(repository_uuid)?.encryption = None;
-        Settings::save(settings)?;
-        Ok(true)
-    }
-
-    #[frb(sync)]
-    #[must_use]
-    pub fn validate(key: &str) -> Option<String> {
-        let Ok(decoded) = base64_decode(key) else {
-            return Some("invalid base64".to_owned());
-        };
-
-        if decoded.len() != 32 {
-            return Some("encryption key must be ${32 * 8} bits".to_owned());
-        }
-        None
-    }
-}
-
 const fn default_theme_mode() -> bool {
     true
 }
@@ -293,7 +215,7 @@ fn default_repository_name() -> String {
 
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Repository {
+pub struct RepositorySpecification {
     #[serde(default = "Uuid::now_v7")]
     pub uuid: Uuid,
 
@@ -316,7 +238,7 @@ pub struct Repository {
     pub encryption: Option<EncryptionKey>,
 }
 
-impl Default for Repository {
+impl Default for RepositorySpecification {
     fn default() -> Self {
         Self {
             uuid: Uuid::now_v7(),
@@ -350,7 +272,7 @@ pub struct Settings {
     pub current_repository: Option<Uuid>,
 
     #[serde(default)]
-    pub repositories: Vec<Repository>,
+    pub repositories: Vec<RepositorySpecification>,
 }
 
 impl Default for Settings {
@@ -433,28 +355,4 @@ impl Settings {
         let mut stream = SETTINGS_STREAM_SINK.lock().unwrap();
         *stream = Some(stream_sink);
     }
-
-    pub(crate) fn repository(&self, uuid: Uuid) -> Result<&Repository, RustError> {
-        Ok(self
-            .repositories
-            .iter()
-            .find(|repository| repository.uuid == uuid)
-            .ok_or(ErrorKind::RepositoryNotFound)?)
-    }
-    pub(crate) fn repository_mut(&mut self, uuid: Uuid) -> Result<&mut Repository, RustError> {
-        Ok(self
-            .repositories
-            .iter_mut()
-            .find(|repository| repository.uuid == uuid)
-            .ok_or(ErrorKind::RepositoryNotFound)?)
-    }
-}
-
-pub(crate) fn ssh_key(uuid: &Uuid) -> Option<(PathBuf, PathBuf)> {
-    let key_path = ssh_key_path().join(uuid.to_string());
-    if !key_path.exists() {
-        return None;
-    }
-
-    Some((key_path.join("key.pub"), key_path.join("key")))
 }

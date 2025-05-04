@@ -140,9 +140,7 @@ class _TaskRouteState extends State<TaskRoute> {
                 ),
                 TagsWidget(
                   tags: _tags,
-                  onSubmit: (tags) {
-                    _tags = tags;
-                  },
+                  onSubmit: (tags) => _tags = tags,
                 ),
                 const SizedBox(height: 10),
                 _annotations(),

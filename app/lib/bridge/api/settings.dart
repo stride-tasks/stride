@@ -15,14 +15,15 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/bridge/third_party/stride_backend/git/encryption_key.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_repository_name`, `default_theme_mode`, `repository_mut`, `repository`, `ssh_key_path`, `ssh_key`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `State`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
 Future<List<SshKey>> sshKeys() =>
@@ -87,42 +88,9 @@ class ApplicationPaths {
           logPath == other.logPath;
 }
 
-class EncryptionKey {
-  final String key;
-
-  const EncryptionKey({
-    required this.key,
-  });
-
-  static Future<EncryptionKey> generate() =>
-      RustLib.instance.api.crateApiSettingsEncryptionKeyGenerate();
-
-  static Future<bool> removeKey({required UuidValue repositoryUuid}) => RustLib
-      .instance.api
-      .crateApiSettingsEncryptionKeyRemoveKey(repositoryUuid: repositoryUuid);
-
-  static Future<EncryptionKey> save(
-          {required UuidValue repositoryUuid, required String key}) =>
-      RustLib.instance.api.crateApiSettingsEncryptionKeySave(
-          repositoryUuid: repositoryUuid, key: key);
-
-  static String? validate({required String key}) =>
-      RustLib.instance.api.crateApiSettingsEncryptionKeyValidate(key: key);
-
-  @override
-  int get hashCode => key.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is EncryptionKey &&
-          runtimeType == other.runtimeType &&
-          key == other.key;
-}
-
 @freezed
-class Repository with _$Repository {
-  const factory Repository({
+class RepositorySpecification with _$RepositorySpecification {
+  const factory RepositorySpecification({
     required UuidValue uuid,
     required String name,
     required String origin,
@@ -131,10 +99,10 @@ class Repository with _$Repository {
     required String branch,
     UuidValue? sshKeyUuid,
     EncryptionKey? encryption,
-  }) = _Repository;
-  const Repository._();
-  static Future<Repository> default_() =>
-      RustLib.instance.api.crateApiSettingsRepositoryDefault();
+  }) = _RepositorySpecification;
+  const RepositorySpecification._();
+  static Future<RepositorySpecification> default_() =>
+      RustLib.instance.api.crateApiSettingsRepositorySpecificationDefault();
 }
 
 @freezed
@@ -147,7 +115,7 @@ class Settings with _$Settings {
     required List<Filter> filters,
     FilterSelection? selectedFilter,
     UuidValue? currentRepository,
-    required List<Repository> repositories,
+    required List<RepositorySpecification> repositories,
   }) = _Settings;
   static Stream<Settings> createStream() =>
       RustLib.instance.api.crateApiSettingsSettingsCreateStream();
