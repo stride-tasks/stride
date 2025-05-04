@@ -1,4 +1,8 @@
-use std::{collections::HashSet, path::PathBuf, sync::Mutex};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 
 use flutter_rust_bridge::frb;
 use stride_backend::{
@@ -23,8 +27,8 @@ use super::{
 #[derive(Debug)]
 pub struct Repository {
     uuid: Uuid,
-    pub root_path: PathBuf,
-    pub db: Mutex<Database>,
+    root_path: PathBuf,
+    db: Mutex<Database>,
 }
 
 impl Repository {
@@ -130,5 +134,20 @@ impl Repository {
         self.db.clear_poison();
         backend.sync(self.db.get_mut().expect("poison valued cleared"))?;
         Ok(())
+    }
+
+    /// flutter_rust_bridge:ignore
+    pub fn root_path(&self) -> &Path {
+        &self.root_path
+    }
+
+    /// flutter_rust_bridge:ignore
+    pub fn database(&self) -> &Mutex<Database> {
+        &self.db
+    }
+
+    /// flutter_rust_bridge:ignore
+    pub fn database_mut(&mut self) -> &mut Mutex<Database> {
+        &mut self.db
     }
 }

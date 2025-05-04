@@ -294,14 +294,14 @@ fn main() -> anyhow::Result<()> {
 
                 let constraint_environment = false;
                 let config = TaskchampionConfig {
-                    root_path: repository.root_path.join("backend").join("taskchampion"),
+                    root_path: repository.root_path().join("backend").join("taskchampion"),
                     url: url.as_str().to_string(),
                     client_id,
                     encryption_secret: encryption_secret.as_bytes().to_vec(),
                     constraint_environment,
                 };
                 let mut backend = TaskchampionBackend::new(config)?;
-                backend.sync(repository.db.get_mut().unwrap())?;
+                backend.sync(repository.database_mut().get_mut().unwrap())?;
             }
         },
         Mode::Log { .. } => {
