@@ -29,7 +29,7 @@ use crate::api::error::*;
 use crate::api::repository::*;
 use crate::api::settings::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 use stride_core::event::*;
 use stride_plugin_manager::manifest::*;
@@ -42,7 +42,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.9.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1840076236;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 874353403;
 
 // Section: executor
 
@@ -3134,6 +3134,38 @@ fn wire__crate__api__logging__trace_impl(
         },
     )
 }
+fn wire__stride_core__task__uda__uda_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "uda_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok(stride_core::task::uda::Uda::default())?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__logging__warn_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -3281,7 +3313,7 @@ const _: fn() = || {
         let _: Option<stride_core::task::TaskPriority> = Task.priority;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.wait;
         let _: Vec<uuid::Uuid> = Task.depends;
-        let _: std::collections::HashMap<String, String> = Task.uda;
+        let _: Vec<stride_core::task::uda::Uda> = Task.udas;
     }
     match None::<stride_core::event::TaskQuery>.unwrap() {
         stride_core::event::TaskQuery::Uuid { uuid } => {
@@ -3296,6 +3328,12 @@ const _: fn() = || {
             let _: std::collections::HashSet<stride_core::task::TaskStatus> = status;
             let _: Option<u32> = limit;
         }
+    }
+    {
+        let Uda = None::<stride_core::task::uda::Uda>.unwrap();
+        let _: String = Uda.namespace;
+        let _: String = Uda.key;
+        let _: Vec<u8> = Uda.value;
     }
 };
 
@@ -3387,14 +3425,6 @@ impl SseDecode for chrono::DateTime<chrono::Utc> {
                 .naive_utc(),
             chrono::Utc,
         );
-    }
-}
-
-impl SseDecode for std::collections::HashMap<String, String> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut inner = <Vec<(String, String)>>::sse_decode(deserializer);
-        return inner.into_iter().collect();
     }
 }
 
@@ -3730,18 +3760,6 @@ impl SseDecode for Vec<u8> {
     }
 }
 
-impl SseDecode for Vec<(String, String)> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut len_ = <i32>::sse_decode(deserializer);
-        let mut ans_ = vec![];
-        for idx_ in 0..len_ {
-            ans_.push(<(String, String)>::sse_decode(deserializer));
-        }
-        return ans_;
-    }
-}
-
 impl SseDecode for Vec<crate::api::settings::RepositorySpecification> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -3775,6 +3793,18 @@ impl SseDecode for Vec<stride_core::task::TaskStatus> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<stride_core::task::TaskStatus>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<stride_core::task::uda::Uda> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<stride_core::task::uda::Uda>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -4136,15 +4166,6 @@ impl SseDecode for stride_core::event::PluginEvent {
     }
 }
 
-impl SseDecode for (String, String) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_field0 = <String>::sse_decode(deserializer);
-        let mut var_field1 = <String>::sse_decode(deserializer);
-        return (var_field0, var_field1);
-    }
-}
-
 impl SseDecode for crate::api::settings::RepositorySpecification {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4209,7 +4230,7 @@ impl SseDecode for stride_core::task::Task {
         let mut var_priority = <Option<stride_core::task::TaskPriority>>::sse_decode(deserializer);
         let mut var_wait = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_depends = <Vec<uuid::Uuid>>::sse_decode(deserializer);
-        let mut var_uda = <std::collections::HashMap<String, String>>::sse_decode(deserializer);
+        let mut var_udas = <Vec<stride_core::task::uda::Uda>>::sse_decode(deserializer);
         return stride_core::task::Task {
             uuid: var_uuid,
             entry: var_entry,
@@ -4224,7 +4245,7 @@ impl SseDecode for stride_core::task::Task {
             priority: var_priority,
             wait: var_wait,
             depends: var_depends,
-            uda: var_uda,
+            udas: var_udas,
         };
     }
 }
@@ -4297,6 +4318,20 @@ impl SseDecode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_u8().unwrap()
+    }
+}
+
+impl SseDecode for stride_core::task::uda::Uda {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_namespace = <String>::sse_decode(deserializer);
+        let mut var_key = <String>::sse_decode(deserializer);
+        let mut var_value = <Vec<u8>>::sse_decode(deserializer);
+        return stride_core::task::uda::Uda {
+            namespace: var_namespace,
+            key: var_key,
+            value: var_value,
+        };
     }
 }
 
@@ -4514,7 +4549,8 @@ fn pde_ffi_dispatcher_primary_impl(
         80 => wire__stride_core__task__task_with_uuid_impl(port, ptr, rust_vec_len, data_len),
         81 => wire__crate__api__plugin_manager__toggle_impl(port, ptr, rust_vec_len, data_len),
         82 => wire__crate__api__logging__trace_impl(port, ptr, rust_vec_len, data_len),
-        83 => wire__crate__api__logging__warn_impl(port, ptr, rust_vec_len, data_len),
+        83 => wire__stride_core__task__uda__uda_default_impl(port, ptr, rust_vec_len, data_len),
+        84 => wire__crate__api__logging__warn_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5172,7 +5208,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::task::Task> {
             self.0.priority.into_into_dart().into_dart(),
             self.0.wait.into_into_dart().into_dart(),
             self.0.depends.into_into_dart().into_dart(),
-            self.0.uda.into_into_dart().into_dart(),
+            self.0.udas.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -5269,6 +5305,28 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_core::task::TaskStatus>
         self.into()
     }
 }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::task::uda::Uda> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.namespace.into_into_dart().into_dart(),
+            self.0.key.into_into_dart().into_dart(),
+            self.0.value.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<stride_core::task::uda::Uda>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_core::task::uda::Uda>>
+    for stride_core::task::uda::Uda
+{
+    fn into_into_dart(self) -> FrbWrapper<stride_core::task::uda::Uda> {
+        self.into()
+    }
+}
 
 impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -5321,13 +5379,6 @@ impl SseEncode for chrono::DateTime<chrono::Utc> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i64>::sse_encode(self.timestamp_micros(), serializer);
-    }
-}
-
-impl SseEncode for std::collections::HashMap<String, String> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Vec<(String, String)>>::sse_encode(self.into_iter().collect(), serializer);
     }
 }
 
@@ -5624,16 +5675,6 @@ impl SseEncode for Vec<u8> {
     }
 }
 
-impl SseEncode for Vec<(String, String)> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(self.len() as _, serializer);
-        for item in self {
-            <(String, String)>::sse_encode(item, serializer);
-        }
-    }
-}
-
 impl SseEncode for Vec<crate::api::settings::RepositorySpecification> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -5660,6 +5701,16 @@ impl SseEncode for Vec<stride_core::task::TaskStatus> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <stride_core::task::TaskStatus>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<stride_core::task::uda::Uda> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <stride_core::task::uda::Uda>::sse_encode(item, serializer);
         }
     }
 }
@@ -5959,14 +6010,6 @@ impl SseEncode for stride_core::event::PluginEvent {
     }
 }
 
-impl SseEncode for (String, String) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.0, serializer);
-        <String>::sse_encode(self.1, serializer);
-    }
-}
-
 impl SseEncode for crate::api::settings::RepositorySpecification {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -6015,7 +6058,7 @@ impl SseEncode for stride_core::task::Task {
         <Option<stride_core::task::TaskPriority>>::sse_encode(self.priority, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.wait, serializer);
         <Vec<uuid::Uuid>>::sse_encode(self.depends, serializer);
-        <std::collections::HashMap<String, String>>::sse_encode(self.uda, serializer);
+        <Vec<stride_core::task::uda::Uda>>::sse_encode(self.udas, serializer);
     }
 }
 
@@ -6096,6 +6139,15 @@ impl SseEncode for u8 {
     }
 }
 
+impl SseEncode for stride_core::task::uda::Uda {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.namespace, serializer);
+        <String>::sse_encode(self.key, serializer);
+        <Vec<u8>>::sse_encode(self.value, serializer);
+    }
+}
+
 impl SseEncode for () {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
@@ -6125,7 +6177,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
     use stride_core::event::*;
     use stride_plugin_manager::manifest::*;

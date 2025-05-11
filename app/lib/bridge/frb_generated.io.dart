@@ -29,6 +29,7 @@ import 'package:stride/bridge/third_party/stride_backend/git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
+import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:uuid/uuid.dart';
 
@@ -106,9 +107,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DateTime dco_decode_Chrono_Utc(dynamic raw);
-
-  @protected
-  Map<String, String> dco_decode_Map_String_String_None(dynamic raw);
 
   @protected
   HostEvent
@@ -278,9 +276,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
-  List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
-
-  @protected
   List<RepositorySpecification> dco_decode_list_repository_specification(
       dynamic raw);
 
@@ -289,6 +284,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TaskStatus> dco_decode_list_task_status(dynamic raw);
+
+  @protected
+  List<Uda> dco_decode_list_uda(dynamic raw);
 
   @protected
   ManifestEvent dco_decode_manifest_event(dynamic raw);
@@ -371,9 +369,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginEvent dco_decode_plugin_event(dynamic raw);
 
   @protected
-  (String, String) dco_decode_record_string_string(dynamic raw);
-
-  @protected
   RepositorySpecification dco_decode_repository_specification(dynamic raw);
 
   @protected
@@ -396,6 +391,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int dco_decode_u_8(dynamic raw);
+
+  @protected
+  Uda dco_decode_uda(dynamic raw);
 
   @protected
   void dco_decode_unit(dynamic raw);
@@ -453,10 +451,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DateTime sse_decode_Chrono_Utc(SseDeserializer deserializer);
-
-  @protected
-  Map<String, String> sse_decode_Map_String_String_None(
-      SseDeserializer deserializer);
 
   @protected
   HostEvent
@@ -635,10 +629,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
-  List<(String, String)> sse_decode_list_record_string_string(
-      SseDeserializer deserializer);
-
-  @protected
   List<RepositorySpecification> sse_decode_list_repository_specification(
       SseDeserializer deserializer);
 
@@ -647,6 +637,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TaskStatus> sse_decode_list_task_status(SseDeserializer deserializer);
+
+  @protected
+  List<Uda> sse_decode_list_uda(SseDeserializer deserializer);
 
   @protected
   ManifestEvent sse_decode_manifest_event(SseDeserializer deserializer);
@@ -742,10 +735,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginEvent sse_decode_plugin_event(SseDeserializer deserializer);
 
   @protected
-  (String, String) sse_decode_record_string_string(
-      SseDeserializer deserializer);
-
-  @protected
   RepositorySpecification sse_decode_repository_specification(
       SseDeserializer deserializer);
 
@@ -769,6 +758,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
+
+  @protected
+  Uda sse_decode_uda(SseDeserializer deserializer);
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
@@ -827,10 +819,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_Chrono_Utc(DateTime self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_Map_String_String_None(
-      Map<String, String> self, SseSerializer serializer);
 
   @protected
   void
@@ -1018,10 +1006,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       Uint8List self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_record_string_string(
-      List<(String, String)> self, SseSerializer serializer);
-
-  @protected
   void sse_encode_list_repository_specification(
       List<RepositorySpecification> self, SseSerializer serializer);
 
@@ -1031,6 +1015,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_task_status(
       List<TaskStatus> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_uda(List<Uda> self, SseSerializer serializer);
 
   @protected
   void sse_encode_manifest_event(ManifestEvent self, SseSerializer serializer);
@@ -1125,10 +1112,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_plugin_event(PluginEvent self, SseSerializer serializer);
 
   @protected
-  void sse_encode_record_string_string(
-      (String, String) self, SseSerializer serializer);
-
-  @protected
   void sse_encode_repository_specification(
       RepositorySpecification self, SseSerializer serializer);
 
@@ -1152,6 +1135,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_uda(Uda self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);

@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Utc};
 
-use crate::task::{Annotation, Task, TaskPriority, TaskStatus};
+use crate::task::{Annotation, Task, TaskPriority, TaskStatus, Uda};
 
 #[test]
 fn conversion_task_status() -> anyhow::Result<()> {
@@ -426,7 +426,85 @@ fn deserialize_task_with_annotations() {
     assert_eq!(task, expected);
 }
 
-// TODO: Add the rest of the attributes
+#[test]
+fn serialize_task_with_udas() {
+    let title = "Hello there!";
+    let mut task = create_task(title);
+    task.udas.push(Uda {
+        namespace: "Hello".into(),
+        key: "World".into(),
+        value: "!!".into(),
+    });
+    task.udas.push(Uda {
+        namespace: "namespace".into(),
+        key: "key".into(),
+        value: b"value".into(),
+    });
+
+    assert_eq!(
+        task.to_data(),
+        concat(&[
+            CONSTANT_UUID_BYTES,
+            CONSTANT_DATETIME_BYTES,
+            (title.len() as u32).to_be_bytes().as_slice(),
+            title.as_bytes(),
+            b"u",
+            &2u32.to_be_bytes(),
+            &5u32.to_be_bytes(),
+            b"Hello",
+            &5u32.to_be_bytes(),
+            b"World",
+            &2u32.to_be_bytes(),
+            b"!!",
+            &9u32.to_be_bytes(),
+            b"namespace",
+            &3u32.to_be_bytes(),
+            b"key",
+            &5u32.to_be_bytes(),
+            b"value",
+        ])
+    );
+}
+
+#[test]
+fn deserialize_task_with_udas() {
+    let title = "Hello there!";
+    let task = Task::from_data(&concat(&[
+        CONSTANT_UUID_BYTES,
+        CONSTANT_DATETIME_BYTES,
+        (title.len() as u32).to_be_bytes().as_slice(),
+        title.as_bytes(),
+        b"u",
+        &2u32.to_be_bytes(),
+        &5u32.to_be_bytes(),
+        b"Hello",
+        &5u32.to_be_bytes(),
+        b"World",
+        &2u32.to_be_bytes(),
+        b"!!",
+        &9u32.to_be_bytes(),
+        b"namespace",
+        &3u32.to_be_bytes(),
+        b"key",
+        &5u32.to_be_bytes(),
+        b"value",
+    ]))
+    .unwrap();
+
+    let mut expected = create_task(title);
+    expected.udas.push(Uda {
+        namespace: "Hello".into(),
+        key: "World".into(),
+        value: "!!".into(),
+    });
+    expected.udas.push(Uda {
+        namespace: "namespace".into(),
+        key: "key".into(),
+        value: b"value".into(),
+    });
+    assert_eq!(task, expected);
+}
+
 #[test]
 fn serialize_task_with_all_attributes() {
     let title = "Hello there!";
@@ -447,6 +525,16 @@ fn serialize_task_with_all_attributes() {
     task.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
         description: String::from("World"),
+    });
+    task.udas.push(Uda {
+        namespace: "Hello".into(),
+        key: "World".into(),
+        value: "!!".into(),
+    });
+    task.udas.push(Uda {
+        namespace: "namespace".into(),
+        key: "key".into(),
+        value: b"value".into(),
     });
     assert_eq!(
         task.to_data(),
@@ -487,6 +575,20 @@ fn serialize_task_with_all_attributes() {
             CONSTANT_DATETIME_BYTES,
             &5u32.to_be_bytes(),
             b"World",
+            b"u",
+            &2u32.to_be_bytes(),
+            &5u32.to_be_bytes(),
+            b"Hello",
+            &5u32.to_be_bytes(),
+            b"World",
+            &2u32.to_be_bytes(),
+            b"!!",
+            &9u32.to_be_bytes(),
+            b"namespace",
+            &3u32.to_be_bytes(),
+            b"key",
+            &5u32.to_be_bytes(),
+            b"value",
         ])
     );
 }
@@ -532,6 +634,20 @@ fn deserialize_task_with_all_attributes() {
         CONSTANT_DATETIME_BYTES,
         &5u32.to_be_bytes(),
         b"World",
+        b"u",
+        &2u32.to_be_bytes(),
+        &5u32.to_be_bytes(),
+        b"Hello",
+        &5u32.to_be_bytes(),
+        b"World",
+        &2u32.to_be_bytes(),
+        b"!!",
+        &9u32.to_be_bytes(),
+        b"namespace",
+        &3u32.to_be_bytes(),
+        b"key",
+        &5u32.to_be_bytes(),
+        b"value",
     ]))
     .unwrap();
 
@@ -552,6 +668,16 @@ fn deserialize_task_with_all_attributes() {
     expected.annotations.push(Annotation {
         entry: CONSTANT_DATETIME,
         description: String::from("World"),
+    });
+    expected.udas.push(Uda {
+        namespace: "Hello".into(),
+        key: "World".into(),
+        value: "!!".into(),
+    });
+    expected.udas.push(Uda {
+        namespace: "namespace".into(),
+        key: "key".into(),
+        value: b"value".into(),
     });
     assert_eq!(task, expected);
 }

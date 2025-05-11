@@ -2,9 +2,9 @@ use rusqlite::{
     Result, ToSql,
     types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
-use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus};
+use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus, Uda};
 
-use crate::AnnotationParseError;
+use crate::{AnnotationParseError, error::UdaParseError};
 
 pub(crate) struct Sql<T> {
     pub value: T,
@@ -119,17 +119,17 @@ impl FromSql for Sql<Option<TaskPriority>> {
     }
 }
 
-fn annotations_to_blob(annoations: &[Annotation]) -> Option<Vec<u8>> {
-    if annoations.is_empty() {
+fn annotations_to_blob(udas: &[Annotation]) -> Option<Vec<u8>> {
+    if udas.is_empty() {
         return None;
     }
 
     let mut result = Vec::new();
     result.push(0x00);
-    let annotation_len = annoations.len() as u32;
+    let annotation_len = udas.len() as u32;
     result.extend_from_slice(&annotation_len.to_be_bytes());
 
-    for Annotation { entry, description } in annoations {
+    for Annotation { entry, description } in udas {
         let timestamp = entry.timestamp_micros();
         let text_len = description.len() as u32;
 
@@ -207,6 +207,124 @@ impl FromSql for Sql<Vec<Annotation>> {
 
         match blob_to_annotations(blob) {
             Ok(annotations) => Ok(annotations.unwrap_or_default().into()),
+            Err(err) => Err(FromSqlError::Other(Box::new(err))),
+        }
+    }
+}
+
+fn udas_to_blob(udas: &[Uda]) -> Option<Vec<u8>> {
+    if udas.is_empty() {
+        return None;
+    }
+
+    let mut result = Vec::new();
+    result.push(0x00);
+
+    let uda_len = udas.len() as u32;
+    result.extend_from_slice(&uda_len.to_be_bytes());
+
+    for Uda {
+        namespace,
+        key,
+        value,
+    } in udas
+    {
+        let namespace_len = namespace.len() as u32;
+        result.extend_from_slice(&namespace_len.to_be_bytes());
+        result.extend_from_slice(namespace.as_bytes());
+
+        let key_len = key.len() as u32;
+        result.extend_from_slice(&key_len.to_be_bytes());
+        result.extend_from_slice(key.as_bytes());
+
+        let value_len = value.len() as u32;
+        result.extend_from_slice(&value_len.to_be_bytes());
+        result.extend_from_slice(&value);
+    }
+    Some(result)
+}
+
+fn blob_to_udas(blob: &[u8]) -> Result<Option<Vec<Uda>>, UdaParseError> {
+    let Some((version, blob)) = blob.split_first_chunk::<1>() else {
+        return Ok(None);
+    };
+
+    let version = u8::from_be_bytes(*version);
+    if version != 0x00 {
+        return Err(UdaParseError::UnknownVersion { version });
+    }
+
+    let Some((len, mut blob)) = blob.split_first_chunk::<4>() else {
+        return Err(UdaParseError::MissingLength);
+    };
+
+    let len = u32::from_be_bytes(*len) as usize;
+
+    let mut udas = Vec::new();
+    for _ in 0..len {
+        let (len_bytes, new_blob) = blob
+            .split_first_chunk::<4>()
+            .ok_or(UdaParseError::MissingLength)?;
+        let len = u32::from_be_bytes(*len_bytes);
+
+        let (namespace_bytes, new_blob) = new_blob
+            .split_at_checked(len as usize)
+            .ok_or(UdaParseError::MissingNamespace)?;
+        let namespace =
+            std::str::from_utf8(namespace_bytes).map_err(|_| UdaParseError::InvalidUt8)?;
+
+        let (len_bytes, new_blob) = new_blob
+            .split_first_chunk::<4>()
+            .ok_or(UdaParseError::MissingLength)?;
+        let len = u32::from_be_bytes(*len_bytes);
+        let (key_bytes, new_blob) = new_blob
+            .split_at_checked(len as usize)
+            .ok_or(UdaParseError::MissingKey)?;
+        let key = std::str::from_utf8(key_bytes).map_err(|_| UdaParseError::InvalidUt8)?;
+
+        let (len_bytes, new_blob) = new_blob
+            .split_first_chunk::<4>()
+            .ok_or(UdaParseError::MissingLength)?;
+        let len = u32::from_be_bytes(*len_bytes);
+        let (value_bytes, new_blob) = new_blob
+            .split_at_checked(len as usize)
+            .ok_or(UdaParseError::MissingValue)?;
+        let value = std::str::from_utf8(value_bytes).map_err(|_| UdaParseError::InvalidUt8)?;
+
+        udas.push(Uda {
+            namespace: namespace.into(),
+            key: key.into(),
+            value: value.as_bytes().into(),
+        });
+
+        blob = new_blob;
+    }
+
+    Ok(Some(udas))
+}
+
+impl ToSql for Sql<&[Uda]> {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
+        if self.value.is_empty() {
+            return Ok(ToSqlOutput::Owned(Value::Null));
+        }
+
+        let Some(blob) = udas_to_blob(self.value) else {
+            return Ok(ToSqlOutput::Owned(Value::Null));
+        };
+
+        Ok(ToSqlOutput::Owned(Value::Blob(blob)))
+    }
+}
+
+impl FromSql for Sql<Vec<Uda>> {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        let Some(blob) = value.as_blob_or_null()? else {
+            return Ok(Vec::new().into());
+        };
+
+        match blob_to_udas(blob) {
+            Ok(udas) => Ok(udas.unwrap_or_default().into()),
             Err(err) => Err(FromSqlError::Other(Box::new(err))),
         }
     }

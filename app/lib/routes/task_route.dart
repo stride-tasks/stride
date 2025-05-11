@@ -5,6 +5,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
+import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/icon_text_button.dart';
@@ -30,7 +31,7 @@ class _TaskRouteState extends State<TaskRoute> {
   List<UuidValue> depends = [];
   TaskPriority? priority;
   bool active = false;
-  // Map<String, String> uda = {};
+  List<Uda> udas = [];
 
   final _formKey = GlobalKey<FormState>();
 
@@ -53,7 +54,7 @@ class _TaskRouteState extends State<TaskRoute> {
     depends = widget.task?.depends.toList() ?? depends;
     priority = widget.task?.priority;
     active = widget.task?.active ?? false;
-    // uda = widget.task?.uda ?? uda;
+    udas = widget.task?.udas ?? udas;
   }
 
   String _dueButtonText() {
@@ -178,7 +179,7 @@ class _TaskRouteState extends State<TaskRoute> {
                   .toList(),
               depends: depends,
               priority: priority,
-              uda: {},
+              udas: udas,
             );
 
             if (widget.task == null) {

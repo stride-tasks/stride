@@ -14,6 +14,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
+import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:uuid/uuid.dart';
 
 part 'task.freezed.dart';
@@ -41,7 +42,7 @@ class Task with _$Task {
     TaskPriority? priority,
     DateTime? wait,
     required List<UuidValue> depends,
-    required Map<String, String> uda,
+    required List<Uda> udas,
   }) = _Task;
   static Future<Task> default_() =>
       RustLib.instance.api.strideCoreTaskTaskDefault();

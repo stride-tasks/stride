@@ -1,15 +1,15 @@
 #![allow(clippy::doc_markdown)]
 
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
 
 pub mod annotation;
+pub mod uda;
 
 pub type Date = DateTime<Utc>;
 
 pub use annotation::Annotation;
 use serde::{Deserialize, Serialize};
+pub use uda::Uda;
 use uuid::Uuid;
 
 #[cfg(test)]
@@ -109,8 +109,8 @@ pub struct Task {
     pub depends: Vec<Uuid>,
 
     #[serde(default)]
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub uda: HashMap<String, String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub udas: Vec<Uda>,
 }
 
 impl Default for Task {
@@ -129,7 +129,7 @@ impl Default for Task {
             priority: None,
             wait: None,
             depends: Vec::new(),
-            uda: HashMap::new(),
+            udas: Vec::new(),
         }
     }
 }
@@ -180,7 +180,6 @@ impl Task {
             result.push(b'n');
             result.extend_from_slice(depend.as_bytes());
         }
-        // TODO: Consider adding external annoations (separate files for annotations).
         if !self.annotations.is_empty() {
             result.push(b'a');
             result.extend_from_slice(&(self.annotations.len() as u32).to_be_bytes());
@@ -190,8 +189,17 @@ impl Task {
                 result.extend_from_slice(annotation.description.as_bytes());
             }
         }
-        if !self.uda.is_empty() {
-            todo!("UDA not implemented")
+        if !self.udas.is_empty() {
+            result.push(b'u');
+            result.extend_from_slice(&(self.udas.len() as u32).to_be_bytes());
+            for uda in &self.udas {
+                result.extend_from_slice(&(uda.namespace.len() as u32).to_be_bytes());
+                result.extend_from_slice(uda.namespace.as_bytes());
+                result.extend_from_slice(&(uda.key.len() as u32).to_be_bytes());
+                result.extend_from_slice(uda.key.as_bytes());
+                result.extend_from_slice(&(uda.value.len() as u32).to_be_bytes());
+                result.extend_from_slice(&uda.value);
+            }
         }
         result
     }
@@ -221,6 +229,7 @@ impl Task {
         let mut depends = Vec::new();
         let mut tags = Vec::new();
         let mut annotations = Vec::new();
+        let mut udas = Vec::new();
         let mut i = 0;
         while i < input.len() {
             let Some(typ) = input.get(i).copied() else {
@@ -292,8 +301,6 @@ impl Task {
                         u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
                     i += size_of::<u32>();
 
-                    annotations = Vec::with_capacity(len as usize);
-
                     for _ in 0..len {
                         let timestamp = input.get(i..(i + size_of::<i64>()))?;
                         let timestamp = i64::from_be_bytes(timestamp.try_into().ok()?);
@@ -316,6 +323,47 @@ impl Task {
                         });
                     }
                 }
+                b'u' => {
+                    let len =
+                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?);
+                    i += size_of::<u32>();
+
+                    for _ in 0..len {
+                        let namespace_len = u32::from_be_bytes(
+                            input.get(i..i + size_of::<u32>())?.try_into().ok()?,
+                        ) as usize;
+                        i += size_of::<u32>();
+
+                        let namespace_bytes = input.get(i..i + namespace_len)?;
+                        i += namespace_len;
+
+                        let namespace = std::str::from_utf8(namespace_bytes).ok()?;
+
+                        let key_len = u32::from_be_bytes(
+                            input.get(i..i + size_of::<u32>())?.try_into().ok()?,
+                        ) as usize;
+                        i += size_of::<u32>();
+
+                        let key_bytes = input.get(i..i + key_len)?;
+                        i += key_len;
+
+                        let key = std::str::from_utf8(key_bytes).ok()?;
+
+                        let value_len = u32::from_be_bytes(
+                            input.get(i..i + size_of::<u32>())?.try_into().ok()?,
+                        ) as usize;
+                        i += size_of::<u32>();
+
+                        let value = input.get(i..i + value_len)?;
+                        i += value_len;
+
+                        udas.push(Uda {
+                            namespace: namespace.into(),
+                            key: key.into(),
+                            value: value.into(),
+                        });
+                    }
+                }
                 _ => return None,
             }
         }
@@ -334,7 +382,7 @@ impl Task {
             priority,
             wait,
             depends,
-            uda: HashMap::default(),
+            udas,
         })
     }
 
@@ -423,9 +471,13 @@ impl From<taskchampion::Task> for Task {
             depends: v.get_dependencies().collect(),
             // TODO: Remove use of deprecated function.
             #[allow(deprecated)]
-            uda: v
+            udas: v
                 .get_udas()
-                .map(|((namespace, key), value)| (format!("{namespace}.{key}"), value.to_owned()))
+                .map(|((namespace, key), value)| Uda {
+                    namespace: namespace.into(),
+                    key: key.into(),
+                    value: value.into(),
+                })
                 .collect(),
         }
     }

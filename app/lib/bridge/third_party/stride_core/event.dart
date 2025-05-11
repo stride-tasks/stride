@@ -15,6 +15,7 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
+import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:uuid/uuid.dart';
 
 part 'event.freezed.dart';
