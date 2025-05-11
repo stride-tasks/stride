@@ -29,7 +29,7 @@ mixin _$Task {
   TaskPriority? get priority => throw _privateConstructorUsedError;
   DateTime? get wait => throw _privateConstructorUsedError;
   List<UuidValue> get depends => throw _privateConstructorUsedError;
-  Map<String, String> get uda => throw _privateConstructorUsedError;
+  List<Uda> get udas => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(
@@ -46,7 +46,7 @@ mixin _$Task {
             TaskPriority? priority,
             DateTime? wait,
             List<UuidValue> depends,
-            Map<String, String> uda)
+            List<Uda> udas)
         raw,
   }) =>
       throw _privateConstructorUsedError;
@@ -66,7 +66,7 @@ mixin _$Task {
             TaskPriority? priority,
             DateTime? wait,
             List<UuidValue> depends,
-            Map<String, String> uda)?
+            List<Uda> udas)?
         raw,
   }) =>
       throw _privateConstructorUsedError;
@@ -86,7 +86,7 @@ mixin _$Task {
             TaskPriority? priority,
             DateTime? wait,
             List<UuidValue> depends,
-            Map<String, String> uda)?
+            List<Uda> udas)?
         raw,
     required TResult orElse(),
   }) =>
@@ -133,7 +133,7 @@ abstract class $TaskCopyWith<$Res> {
       TaskPriority? priority,
       DateTime? wait,
       List<UuidValue> depends,
-      Map<String, String> uda});
+      List<Uda> udas});
 }
 
 /// @nodoc
@@ -164,7 +164,7 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
     Object? priority = freezed,
     Object? wait = freezed,
     Object? depends = null,
-    Object? uda = null,
+    Object? udas = null,
   }) {
     return _then(_value.copyWith(
       uuid: null == uuid
@@ -219,10 +219,10 @@ class _$TaskCopyWithImpl<$Res, $Val extends Task>
           ? _value.depends
           : depends // ignore: cast_nullable_to_non_nullable
               as List<UuidValue>,
-      uda: null == uda
-          ? _value.uda
-          : uda // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+      udas: null == udas
+          ? _value.udas
+          : udas // ignore: cast_nullable_to_non_nullable
+              as List<Uda>,
     ) as $Val);
   }
 }
@@ -248,7 +248,7 @@ abstract class _$$TaskImplCopyWith<$Res> implements $TaskCopyWith<$Res> {
       TaskPriority? priority,
       DateTime? wait,
       List<UuidValue> depends,
-      Map<String, String> uda});
+      List<Uda> udas});
 }
 
 /// @nodoc
@@ -276,7 +276,7 @@ class __$$TaskImplCopyWithImpl<$Res>
     Object? priority = freezed,
     Object? wait = freezed,
     Object? depends = null,
-    Object? uda = null,
+    Object? udas = null,
   }) {
     return _then(_$TaskImpl(
       uuid: null == uuid
@@ -331,10 +331,10 @@ class __$$TaskImplCopyWithImpl<$Res>
           ? _value._depends
           : depends // ignore: cast_nullable_to_non_nullable
               as List<UuidValue>,
-      uda: null == uda
-          ? _value._uda
-          : uda // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>,
+      udas: null == udas
+          ? _value._udas
+          : udas // ignore: cast_nullable_to_non_nullable
+              as List<Uda>,
     ));
   }
 }
@@ -356,11 +356,11 @@ class _$TaskImpl extends _Task {
       this.priority,
       this.wait,
       required final List<UuidValue> depends,
-      required final Map<String, String> uda})
+      required final List<Uda> udas})
       : _tags = tags,
         _annotations = annotations,
         _depends = depends,
-        _uda = uda,
+        _udas = udas,
         super._();
 
   @override
@@ -407,17 +407,17 @@ class _$TaskImpl extends _Task {
     return EqualUnmodifiableListView(_depends);
   }
 
-  final Map<String, String> _uda;
+  final List<Uda> _udas;
   @override
-  Map<String, String> get uda {
-    if (_uda is EqualUnmodifiableMapView) return _uda;
+  List<Uda> get udas {
+    if (_udas is EqualUnmodifiableListView) return _udas;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_uda);
+    return EqualUnmodifiableListView(_udas);
   }
 
   @override
   String toString() {
-    return 'Task.raw(uuid: $uuid, entry: $entry, status: $status, title: $title, active: $active, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, uda: $uda)';
+    return 'Task.raw(uuid: $uuid, entry: $entry, status: $status, title: $title, active: $active, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, udas: $udas)';
   }
 
   @override
@@ -441,7 +441,7 @@ class _$TaskImpl extends _Task {
                 other.priority == priority) &&
             (identical(other.wait, wait) || other.wait == wait) &&
             const DeepCollectionEquality().equals(other._depends, _depends) &&
-            const DeepCollectionEquality().equals(other._uda, _uda));
+            const DeepCollectionEquality().equals(other._udas, _udas));
   }
 
   @override
@@ -460,7 +460,7 @@ class _$TaskImpl extends _Task {
       priority,
       wait,
       const DeepCollectionEquality().hash(_depends),
-      const DeepCollectionEquality().hash(_uda));
+      const DeepCollectionEquality().hash(_udas));
 
   /// Create a copy of Task
   /// with the given fields replaced by the non-null parameter values.
@@ -487,11 +487,11 @@ class _$TaskImpl extends _Task {
             TaskPriority? priority,
             DateTime? wait,
             List<UuidValue> depends,
-            Map<String, String> uda)
+            List<Uda> udas)
         raw,
   }) {
     return raw(uuid, entry, status, title, active, modified, due, project, tags,
-        annotations, priority, wait, depends, uda);
+        annotations, priority, wait, depends, udas);
   }
 
   @override
@@ -511,11 +511,11 @@ class _$TaskImpl extends _Task {
             TaskPriority? priority,
             DateTime? wait,
             List<UuidValue> depends,
-            Map<String, String> uda)?
+            List<Uda> udas)?
         raw,
   }) {
     return raw?.call(uuid, entry, status, title, active, modified, due, project,
-        tags, annotations, priority, wait, depends, uda);
+        tags, annotations, priority, wait, depends, udas);
   }
 
   @override
@@ -535,13 +535,13 @@ class _$TaskImpl extends _Task {
             TaskPriority? priority,
             DateTime? wait,
             List<UuidValue> depends,
-            Map<String, String> uda)?
+            List<Uda> udas)?
         raw,
     required TResult orElse(),
   }) {
     if (raw != null) {
       return raw(uuid, entry, status, title, active, modified, due, project,
-          tags, annotations, priority, wait, depends, uda);
+          tags, annotations, priority, wait, depends, udas);
     }
     return orElse();
   }
@@ -590,7 +590,7 @@ abstract class _Task extends Task {
       final TaskPriority? priority,
       final DateTime? wait,
       required final List<UuidValue> depends,
-      required final Map<String, String> uda}) = _$TaskImpl;
+      required final List<Uda> udas}) = _$TaskImpl;
   const _Task._() : super._();
 
   @override
@@ -620,7 +620,7 @@ abstract class _Task extends Task {
   @override
   List<UuidValue> get depends;
   @override
-  Map<String, String> get uda;
+  List<Uda> get udas;
 
   /// Create a copy of Task
   /// with the given fields replaced by the non-null parameter values.

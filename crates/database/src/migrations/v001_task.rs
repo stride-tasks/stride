@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS task_table (
     `due` INTEGER,
     `wait` INTEGER,
     `annotations` BLOB,
+    `udas` BLOB,
     -- Where does this task originate from, null implies stride.
     `backend` INTEGER,
 
@@ -53,16 +54,6 @@ CREATE TABLE IF NOT EXISTS task_tag_table (
 
     FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES tag_table (id) ON DELETE CASCADE
-) STRICT;
-
-CREATE TABLE IF NOT EXISTS uda_table (
-    `id` INTEGER PRIMARY KEY,
-    `task_id` BLOB NOT NULL,
-    `namespace` TEXT,
-    `key` TEXT NOT NULL,
-    `value` BLOB,
-
-    FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (

@@ -5,21 +5,17 @@ mod error;
 mod migrations;
 
 use conversion::{Sql, task_status_to_sql};
-pub use error::{AnnotationParseError, Error, Result};
+pub use error::{AnnotationParseError, Error, Result, UdaParseError};
 
 use migrations::apply_migrations;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql, types::Value};
 use stride_core::{
     event::TaskQuery,
-    task::{Annotation, Date, Task, TaskPriority, TaskStatus},
+    task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
 use uuid::Uuid;
 
-use std::{
-    collections::{HashMap, HashSet},
-    path::Path,
-    rc::Rc,
-};
+use std::{collections::HashSet, path::Path, rc::Rc};
 
 const SQL_ALL: &str = r"
 SELECT
@@ -33,6 +29,7 @@ SELECT
     task.due,
     task.wait,
     task.annotations,
+    task.udas,
     string_agg(task_tag.tag_id, char(0)) AS tags
 FROM
     task_table task
@@ -56,6 +53,7 @@ SELECT
     task.due,
     task.wait,
     task.annotations,
+    task.udas,
     string_agg(task_tag.tag_id, char(0)) AS tags
 FROM
     task_table task
@@ -78,7 +76,8 @@ INSERT INTO task_table (
     modified,
     due,
     wait,
-    annotations
+    annotations,
+    udas
 )
 VALUES
 (
@@ -91,7 +90,8 @@ VALUES
     :modified,
     :due,
     :wait,
-    :annotations
+    :annotations,
+    :udas
 );
 ";
 
@@ -106,7 +106,8 @@ SET
     modified = :modified,
     due = :due,
     wait = :wait,
-    annotations = :annotations
+    annotations = :annotations,
+    udas = :udas
 WHERE id = :id;
 ";
 
@@ -160,6 +161,7 @@ impl Database {
         let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
         let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
         let annotations = row.get::<_, Sql<Vec<Annotation>>>("annotations")?.value;
+        let udas = row.get::<_, Sql<Vec<Uda>>>("udas")?.value;
         let tags = row
             .get::<_, Option<String>>("tags")?
             .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
@@ -183,7 +185,7 @@ impl Database {
             priority,
             wait,
             depends: Vec::new(),
-            uda: HashMap::new(),
+            udas,
         })
     }
 
@@ -293,6 +295,7 @@ impl Database {
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
             (":annotations", &Sql::from(task.annotations.as_slice())),
+            (":udas", &Sql::from(task.udas.as_slice())),
         ])?;
 
         if !task.tags.is_empty() {
@@ -331,6 +334,7 @@ impl Database {
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
             (":annotations", &Sql::from(task.annotations.as_slice())),
+            (":udas", &Sql::from(task.udas.as_slice())),
         ])?;
         drop(sql);
 
