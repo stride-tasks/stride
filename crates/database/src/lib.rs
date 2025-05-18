@@ -6,10 +6,12 @@ pub mod conversion;
 mod error;
 mod migrations;
 
-use conversion::{Sql, task_status_to_sql};
+use conversion::{FromBlob, Sql, ToBlob, task_status_to_sql};
 pub use error::{Error, Result};
+pub mod operation;
 
 use migrations::apply_migrations;
+use operation::{Operation, OperationKind};
 use rusqlite::{Connection, OptionalExtension, Row, ToSql, types::Value};
 use stride_core::{
     event::TaskQuery,
@@ -117,6 +119,291 @@ const SQL_DELETE: &str = r"DELETE FROM task_table WHERE id = ?1";
 
 const SQL_PROJECT_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO project_table (id) VALUES (?1);";
 const SQL_TAG_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO tag_table (id) VALUES (?1);";
+
+#[derive(Debug)]
+pub struct TaskTransaction {
+    task: Task,
+}
+
+impl TaskTransaction {
+    pub fn create(id: Uuid, title: String, ops: &mut Vec<Operation>) -> Self {
+        ops.push(
+            OperationKind::TaskCreate {
+                id,
+                title: title.clone().into_boxed_str(),
+            }
+            .with_now(),
+        );
+        Self {
+            task: Task::with_uuid(id, title),
+        }
+    }
+
+    pub fn set_title(&mut self, title: String, ops: &mut Vec<Operation>) {
+        let new = title.clone();
+        let old = std::mem::replace(&mut self.task.title, title);
+        ops.push(
+            OperationKind::TaskModifyTitle {
+                id: self.task.uuid,
+                new: new.into_boxed_str(),
+                old: old.into_boxed_str(),
+            }
+            .with_now(),
+        );
+    }
+
+    pub fn set_status(&mut self, status: TaskStatus, ops: &mut Vec<Operation>) {
+        let new = status;
+        let old = std::mem::replace(&mut self.task.status, status);
+        ops.push(
+            OperationKind::TaskModifyStatus {
+                id: self.task.uuid,
+                new,
+                old,
+            }
+            .with_now(),
+        );
+    }
+    pub fn set_entry(&mut self, entry: Date, ops: &mut Vec<Operation>) {
+        let new = entry;
+        let old = std::mem::replace(&mut self.task.entry, entry);
+        ops.push(
+            OperationKind::TaskModifyEntry {
+                id: self.task.uuid,
+                new,
+                old,
+            }
+            .with_now(),
+        );
+    }
+    pub fn set_modified(&mut self, modified: Option<Date>, ops: &mut Vec<Operation>) {
+        let new = modified;
+        let old = std::mem::replace(&mut self.task.modified, modified);
+        ops.push(
+            OperationKind::TaskModifyModified {
+                id: self.task.uuid,
+                new,
+                old,
+            }
+            .with_now(),
+        );
+    }
+    pub fn set_due(&mut self, due: Option<Date>, ops: &mut Vec<Operation>) {
+        let new = due;
+        let old = std::mem::replace(&mut self.task.due, due);
+        ops.push(
+            OperationKind::TaskModifyDue {
+                id: self.task.uuid,
+                new,
+                old,
+            }
+            .with_now(),
+        );
+    }
+    pub fn set_project(&mut self, project: Option<String>, ops: &mut Vec<Operation>) {
+        let new = project.clone();
+        let old = std::mem::replace(&mut self.task.project, project);
+        ops.push(
+            OperationKind::TaskModifyProject {
+                id: self.task.uuid,
+                new: new.map(String::into_boxed_str),
+                old: old.map(String::into_boxed_str),
+            }
+            .with_now(),
+        );
+    }
+    pub fn set_priority(&mut self, priority: Option<TaskPriority>, ops: &mut Vec<Operation>) {
+        let new = priority;
+        let old = std::mem::replace(&mut self.task.priority, priority);
+        ops.push(
+            OperationKind::TaskModifyPriority {
+                id: self.task.uuid,
+                new,
+                old,
+            }
+            .with_now(),
+        );
+    }
+    pub fn set_wait(&mut self, wait: Option<Date>, ops: &mut Vec<Operation>) {
+        let new = wait;
+        let old = std::mem::replace(&mut self.task.wait, wait);
+        ops.push(
+            OperationKind::TaskModifyWait {
+                id: self.task.uuid,
+                new,
+                old,
+            }
+            .with_now(),
+        );
+    }
+}
+
+fn push_operations_diff_task_common(current: &Task, previous: &Task, ops: &mut Vec<Operation>) {
+    if current.status != previous.status {
+        ops.push(
+            OperationKind::TaskModifyStatus {
+                id: current.uuid,
+                new: current.status,
+                old: previous.status,
+            }
+            .with_now(),
+        );
+    }
+    if current.active != previous.active {
+        ops.push(
+            OperationKind::TaskModifyActive {
+                id: current.uuid,
+                new: current.active,
+                old: previous.active,
+            }
+            .with_now(),
+        );
+    }
+    if current.modified != previous.modified {
+        ops.push(
+            OperationKind::TaskModifyModified {
+                id: current.uuid,
+                new: current.modified,
+                old: previous.modified,
+            }
+            .with_now(),
+        );
+    }
+    if current.due != previous.due {
+        ops.push(
+            OperationKind::TaskModifyDue {
+                id: current.uuid,
+                new: current.due,
+                old: previous.due,
+            }
+            .with_now(),
+        );
+    }
+    if current.wait != previous.wait {
+        ops.push(
+            OperationKind::TaskModifyWait {
+                id: current.uuid,
+                new: current.wait,
+                old: previous.wait,
+            }
+            .with_now(),
+        );
+    }
+    if current.project != previous.project {
+        ops.push(
+            OperationKind::TaskModifyProject {
+                id: current.uuid,
+                new: current.project.clone().map(String::into_boxed_str),
+                old: previous.project.clone().map(String::into_boxed_str),
+            }
+            .with_now(),
+        );
+    }
+    if current.priority != previous.priority {
+        ops.push(
+            OperationKind::TaskModifyPriority {
+                id: current.uuid,
+                new: current.priority,
+                old: previous.priority,
+            }
+            .with_now(),
+        );
+    }
+    let current_tags = current
+        .tags
+        .iter()
+        .map(String::as_str)
+        .collect::<HashSet<_>>();
+    let previous_tags = previous
+        .tags
+        .iter()
+        .map(String::as_str)
+        .collect::<HashSet<_>>();
+    if current_tags != previous_tags {
+        for tag in previous_tags.difference(&current_tags) {
+            ops.push(
+                OperationKind::TaskModifyRemoveTag {
+                    id: current.uuid,
+                    tag: (*tag).into(),
+                }
+                .with_now(),
+            );
+        }
+        for tag in current_tags.difference(&previous_tags) {
+            ops.push(
+                OperationKind::TaskModifyAddTag {
+                    id: current.uuid,
+                    tag: (*tag).into(),
+                }
+                .with_now(),
+            );
+        }
+    }
+    let current_annotations = current.annotations.iter().collect::<HashSet<_>>();
+    let previous_annotations = previous.annotations.iter().collect::<HashSet<_>>();
+    if current_annotations != previous_annotations {
+        for annotation in previous_annotations.difference(&current_annotations) {
+            ops.push(
+                OperationKind::TaskModifyRemoveAnnotation {
+                    id: current.uuid,
+                    annotation: Box::new((*annotation).clone()),
+                }
+                .with_now(),
+            );
+        }
+        for annotation in current_annotations.difference(&previous_annotations) {
+            ops.push(
+                OperationKind::TaskModifyAddAnnotation {
+                    id: current.uuid,
+                    annotation: Box::new((*annotation).clone()),
+                }
+                .with_now(),
+            );
+        }
+    }
+}
+
+fn push_operations_diff_task(current: &Task, previous: &Task, ops: &mut Vec<Operation>) {
+    if current.title != previous.title {
+        ops.push(
+            OperationKind::TaskModifyTitle {
+                id: current.uuid,
+                new: current.title.clone().into_boxed_str(),
+                old: previous.title.clone().into_boxed_str(),
+            }
+            .with_now(),
+        );
+    }
+    if current.entry != previous.entry {
+        ops.push(
+            OperationKind::TaskModifyEntry {
+                id: current.uuid,
+                new: current.entry,
+                old: previous.entry,
+            }
+            .with_now(),
+        );
+    }
+    push_operations_diff_task_common(current, previous, ops);
+}
+
+fn push_operations_diff_task_with_default(current: &Task, ops: &mut Vec<Operation>) {
+    ops.push(
+        OperationKind::TaskCreate {
+            id: current.uuid,
+            title: current.title.clone().into(),
+        }
+        .with_now(),
+    );
+
+    let previous = Task::default();
+    push_operations_diff_task_common(current, &previous, ops);
+
+    // task.tags;
+    // task.annotations;
+    // task.depends;
+    // task.udas;
+}
 
 #[derive(Debug)]
 pub struct Database {
@@ -229,6 +516,28 @@ impl Database {
     }
 
     pub fn tasks_by_status(&mut self, status: &HashSet<TaskStatus>) -> Result<Vec<Task>> {
+        {
+            let mut sql = self.prepare("SELECT timestamp, kind FROM operation_table")?;
+            let operations = sql.query_map((), |row| {
+                let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
+                let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
+
+                Ok(Operation {
+                    timestamp: timestamp.value,
+                    kind: kind
+                        .as_deref()
+                        .map(|mut blob| OperationKind::from_blob(&mut blob))
+                        .transpose()
+                        .unwrap(),
+                })
+            })?;
+
+            for operation in operations {
+                let operation = operation?;
+                dbg!(operation);
+            }
+        }
+
         let mut tasks = Vec::new();
         let mut sql = self.prepare_cached(SQL_ALL)?;
         let statys_array = Rc::new(
@@ -271,7 +580,21 @@ impl Database {
             .map_err(Into::into)
     }
 
+    pub fn task_create(
+        &mut self,
+        id: Uuid,
+        title: String,
+        ops: &mut Vec<Operation>,
+    ) -> Result<TaskTransaction> {
+        Ok(TaskTransaction::create(id, title, ops))
+    }
+
     pub fn insert_task(&mut self, task: &Task) -> Result<()> {
+        let mut operations = Vec::new();
+
+        operations.push(Operation::undo_point_with_now());
+        push_operations_diff_task_with_default(task, &mut operations);
+
         let transaction = self.transaction()?;
 
         if let Some(project) = &task.project {
@@ -313,12 +636,39 @@ impl Database {
             }
         }
         drop(sql);
+        let mut sql = transaction
+            .prepare_cached("INSERT INTO operation_table (timestamp, kind) VALUES (?1, ?2)")?;
+
+        for operation in operations {
+            sql.execute((
+                &Sql::from(operation.timestamp),
+                &operation.kind.as_ref().map(|kind| {
+                    let mut blob = Vec::new();
+                    kind.to_blob(&mut blob);
+                    blob
+                }),
+            ))?;
+        }
+
+        drop(sql);
         transaction.commit()?;
         Ok(())
     }
 
     pub fn update_task(&mut self, task: &Task) -> Result<()> {
+        let Some(previous) = self.task_by_id(task.uuid)? else {
+            return self.insert_task(task);
+        };
+
+        dbg!(&previous);
+        dbg!(task);
+
+        let mut operations = Vec::new();
+        operations.push(Operation::undo_point_with_now());
+        push_operations_diff_task(task, &previous, &mut operations);
+
         let transaction = self.transaction()?;
+
         if let Some(project) = &task.project {
             let mut sql = transaction.prepare_cached(SQL_PROJECT_INSERT_OR_IGNORE)?;
             sql.execute((project,))?;
@@ -359,6 +709,21 @@ impl Database {
             }
         }
 
+        let mut sql = transaction
+            .prepare_cached("INSERT INTO operation_table (timestamp, kind) VALUES (?1, ?2)")?;
+
+        for operation in operations {
+            sql.execute((
+                &Sql::from(operation.timestamp),
+                &operation.kind.as_ref().map(|kind| {
+                    let mut blob = Vec::new();
+                    kind.to_blob(&mut blob);
+                    blob
+                }),
+            ))?;
+        }
+
+        drop(sql);
         transaction.commit()?;
         Ok(())
     }
@@ -369,5 +734,112 @@ impl Database {
             self.execute(SQL_DELETE, (id,))?;
         }
         Ok(task)
+    }
+
+    pub fn get_undoable_operation(&self, mut limit: usize) -> Result<Vec<Operation>> {
+        let mut operations = Vec::new();
+
+        let mut sql =
+            self.prepare("SELECT timestamp, kind FROM operation_table ORDER BY id DESC")?;
+        let operations_rows = sql.query_map((), |row| {
+            let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
+            let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
+
+            Ok(kind
+                .as_deref()
+                .map(|mut blob| OperationKind::from_blob(&mut blob))
+                .transpose()
+                .map(|kind| Operation {
+                    timestamp: timestamp.value,
+                    kind: kind,
+                }))
+        })?;
+        for operation in operations_rows {
+            let operation = operation??;
+            let is_undo_point = operation.is_undo_point();
+            operations.push(operation);
+            if is_undo_point {
+                limit = limit.saturating_sub(1);
+                if limit == 0 {
+                    break;
+                }
+            }
+        }
+        Ok(operations)
+    }
+
+    pub fn undo(&mut self, mut undo_count: usize) -> Result<()> {
+        let transaction = self.transaction()?;
+
+        let mut operations = Vec::new();
+
+        let mut sql = transaction
+            .prepare("SELECT id, timestamp, kind FROM operation_table ORDER BY id DESC")?;
+        let operations_rows = sql.query_map((), |row| {
+            let id = row.get::<_, i64>("id")?;
+            let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
+            let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
+
+            Ok(kind
+                .as_deref()
+                .map(|mut blob| OperationKind::from_blob(&mut blob))
+                .transpose()
+                .map(|kind| {
+                    (
+                        id,
+                        Operation {
+                            timestamp: timestamp.value,
+                            kind: kind,
+                        },
+                    )
+                }))
+        })?;
+        for operation in operations_rows {
+            let (id, operation) = operation??;
+            let is_undo_point = operation.is_undo_point();
+            operations.push((id, operation));
+            if is_undo_point {
+                undo_count = undo_count.saturating_sub(1);
+                if undo_count == 0 {
+                    break;
+                }
+            }
+        }
+
+        drop(sql);
+
+        for (id, Operation { timestamp, kind }) in operations {
+            transaction.execute("DELETE FROM operation_table WHERE id = ?1", (id,))?;
+            let Some(kind) = kind else {
+                continue;
+            };
+            match kind {
+                OperationKind::TaskCreate { id, .. } => {
+                    transaction.execute("DELETE FROM task_table WHERE id = ?1", (id,))?;
+                }
+                OperationKind::TaskPurge { id } => todo!(),
+                OperationKind::TaskModifyEntry { id, new, old } => todo!(),
+                OperationKind::TaskModifyTitle { id, new, old } => todo!(),
+                OperationKind::TaskModifyStatus { id, new, old } => todo!(),
+                OperationKind::TaskModifyActive { id, new, old } => todo!(),
+                OperationKind::TaskModifyPriority { id, new, old } => todo!(),
+                OperationKind::TaskModifyProject { id, new, old } => todo!(),
+                OperationKind::TaskModifyModified { id, new, old } => todo!(),
+                OperationKind::TaskModifyDue { id, new, old } => todo!(),
+                OperationKind::TaskModifyWait { id, new, old } => todo!(),
+                OperationKind::TaskModifyAddTag { id, tag } => {
+                    transaction.execute(
+                        "DELETE FROM task_tag_table WHERE task_id = ?1 AND tag_id = ?2",
+                        (id, tag),
+                    )?;
+                }
+                OperationKind::TaskModifyRemoveTag { id, tag } => todo!(),
+                OperationKind::TaskModifyAddAnnotation { id, annotation } => todo!(),
+                OperationKind::TaskModifyRemoveAnnotation { id, annotation } => todo!(),
+            }
+        }
+
+        transaction.commit()?;
+        Ok(())
     }
 }

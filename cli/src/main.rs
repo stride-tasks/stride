@@ -1,4 +1,5 @@
 use anyhow::{Context, bail};
+use chrono::Local;
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::path::{Path, PathBuf};
@@ -10,6 +11,7 @@ use stride_core::{
     event::{HostEvent, PluginEvent},
     task::{Task, TaskStatus},
 };
+use stride_database::operation::OperationKind;
 use stride_flutter_bridge::api::{
     filter::Filter,
     repository::Repository,
@@ -249,6 +251,41 @@ fn main() -> anyhow::Result<()> {
                     }
                 }
             }
+        }
+        Mode::Undo => {
+            let mut database = repository.database().lock().unwrap();
+            let operations = database.get_undoable_operation(1)?;
+
+            for (i, operation) in operations.iter().enumerate() {
+                print!(
+                    "{}. Operation ({}): ",
+                    i + 1,
+                    operation
+                        .timestamp
+                        .with_timezone(&Local)
+                        .format("%Y-%m-%d %H:%M:%S")
+                );
+                let Some(kind) = &operation.kind else {
+                    println!("Undo Point");
+                    continue;
+                };
+                match &kind {
+                    OperationKind::TaskCreate { id, title } => {
+                        println!("Create({id}, \"{title}\")");
+                    }
+                    OperationKind::TaskModifyAddTag { id, tag } => {
+                        println!("task({id}): +tag:{tag}");
+                    }
+                    OperationKind::TaskModifyRemoveTag { id, tag } => {
+                        println!("task({id}): -tag:{tag}");
+                    }
+                    _ => {
+                        dbg!(&kind);
+                    }
+                }
+            }
+
+            database.undo(1)?;
         }
         Mode::Sync { backend } => match backend {
             cli::Backend::Git => repository.sync()?,

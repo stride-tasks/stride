@@ -44,6 +44,9 @@ pub enum Mode {
         content: Vec<String>,
     },
 
+    /// Undo previous change.
+    Undo,
+
     /// Sync the task storage
     Sync {
         /// Choose backend to sync.

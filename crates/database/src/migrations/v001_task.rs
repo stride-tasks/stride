@@ -56,6 +56,12 @@ CREATE TABLE IF NOT EXISTS task_tag_table (
     FOREIGN KEY (tag_id) REFERENCES tag_table (id) ON DELETE CASCADE
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS operation_table (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER NOT NULL,
+    kind BLOB
+) STRICT;
+
 CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (
     task_id
 );
