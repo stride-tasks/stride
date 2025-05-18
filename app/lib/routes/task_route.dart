@@ -25,6 +25,7 @@ class TaskRoute extends StatefulWidget {
 
 class _TaskRouteState extends State<TaskRoute> {
   String title = '';
+  DateTime? entry;
   DateTime? due;
   List<String> _tags = [];
   List<(DateTime, TextEditingController)> annotations = [];
@@ -40,6 +41,7 @@ class _TaskRouteState extends State<TaskRoute> {
     super.initState();
 
     title = widget.task?.title ?? title;
+    entry = widget.task?.entry;
     due = widget.task?.due;
     _tags = widget.task?.tags.toList() ?? _tags;
     annotations = widget.task?.annotations
@@ -163,7 +165,7 @@ class _TaskRouteState extends State<TaskRoute> {
             final task = Task.raw(
               uuid:
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
-              entry: DateTime.now().toUtc(),
+              entry: entry ?? DateTime.now().toUtc(),
               title: title,
               active: active,
               tags: _tags,
