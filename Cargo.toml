@@ -72,7 +72,7 @@ zip = { version = "2.6" }
 wasmi = "0.42.1"
 wasmi_wasi = "0.42.1"
 reqwest = { version = "0.12.12", features = ["blocking"] }
-clap = { version = "4.5.37", features = ["derive"] }
+clap = { version = "4.5.38", features = ["derive"] }
 url = { version = "2.5.2", features = ["serde"] }
 thiserror = "2.0.12"
 
