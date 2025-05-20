@@ -1,11 +1,11 @@
 //! Stride's sqlite database wrapper library.
 
-mod conversion;
+pub mod conversion;
 mod error;
 mod migrations;
 
 use conversion::{Sql, task_status_to_sql};
-pub use error::{AnnotationParseError, Error, Result, UdaParseError};
+pub use error::{Error, Result};
 
 use migrations::apply_migrations;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql, types::Value};
