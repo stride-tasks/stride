@@ -1,45 +1,34 @@
+use std::str::Utf8Error;
+
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(thiserror::Error, Debug, Clone, Copy)]
-pub enum AnnotationParseError {
-    #[error("unknown version: {version}")]
-    UnknownVersion { version: u8 },
-    #[error("missing length")]
-    MissingLength,
-    #[error("missing entry timestamp")]
-    MissingEntryTimestamp,
-    #[error("missing text")]
-    MissingText,
-    #[error("invalid UTF8")]
-    InvalidUt8,
-    #[error("invalid timestamp")]
-    InvalidTimestamp,
+#[derive(Debug, Clone, Copy)]
+pub enum PrimitiveVersionedKind {
+    Annotation,
+    Uda,
 }
 
 #[derive(thiserror::Error, Debug, Clone, Copy)]
-pub enum UdaParseError {
-    #[error("unknown version: {version}")]
-    UnknownVersion { version: u8 },
+pub enum BlobError {
+    #[error("unknown version {version} in {kind:?}")]
+    UnknownVersion {
+        version: u8,
+        kind: PrimitiveVersionedKind,
+    },
     #[error("missing length")]
     MissingLength,
-    #[error("missing namespace")]
-    MissingNamespace,
-    #[error("missing key")]
-    MissingKey,
-    #[error("missing value")]
-    MissingValue,
-    #[error("invalid UTF8")]
-    InvalidUt8,
+    #[error("invalid UTF8: {0}")]
+    InvalidUt8(#[from] Utf8Error),
     #[error("invalid timestamp")]
     InvalidTimestamp,
+    #[error("abrupt end")]
+    AbruptEnd,
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("sqlite error: {0}")]
     Sqlite(#[from] rusqlite::Error),
-    #[error("annotation parse error: {0}")]
-    AnnotationParse(AnnotationParseError),
-    #[error("uda parse error: {0}")]
-    UdaParse(UdaParseError),
+    #[error("blob error: {0}")]
+    Blob(#[from] BlobError),
 }
