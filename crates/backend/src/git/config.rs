@@ -17,14 +17,17 @@ pub struct GitConfig {
 impl GitConfig {
     const TASK_DIR: &str = "tasks";
 
+    #[must_use]
     pub fn repository_path(&self) -> PathBuf {
         self.root_path.join("source")
     }
 
+    #[must_use]
     pub fn tasks_path(&self) -> PathBuf {
         self.repository_path().join(Self::TASK_DIR)
     }
 
+    #[must_use]
     pub fn keys_filepath(&self) -> PathBuf {
         self.tasks_path().join("keys")
     }

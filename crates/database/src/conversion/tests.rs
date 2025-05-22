@@ -33,7 +33,7 @@ fn u32_to_and_from_blob() {
 fn date_to_and_from_blob() {
     let mut blob = Vec::new();
 
-    let timestamp = 10000000000;
+    let timestamp = 10_000_000_000;
     let date = Date::from_timestamp_micros(timestamp).unwrap();
     date.to_blob(&mut blob);
     assert_eq!(blob, &timestamp.to_be_bytes());
@@ -119,7 +119,7 @@ fn annotation_to_and_from_blob() {
     let mut blob = Vec::new();
 
     let str = Annotation {
-        entry: Date::from_timestamp_micros(1000000).unwrap(),
+        entry: Date::from_timestamp_micros(1_000_000).unwrap(),
         description: "Testing".into(),
     };
     str.to_blob(&mut blob);

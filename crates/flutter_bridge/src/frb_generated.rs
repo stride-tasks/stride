@@ -284,7 +284,7 @@ fn wire__crate__api__repository__Repository_all_tasks_impl(
                     let mut api_that_guard = api_that_guard.unwrap();
                     let output_ok = crate::api::repository::Repository::all_tasks(
                         &mut *api_that_guard,
-                        api_filter,
+                        &api_filter,
                     )?;
                     Ok(output_ok)
                 })())

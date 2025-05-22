@@ -56,10 +56,12 @@ impl SshKey {
         Ok(())
     }
 
+    #[must_use]
     pub fn uuid(&self) -> Uuid {
         self.uuid
     }
 
+    #[must_use]
     pub fn public_key(&self) -> &str {
         &self.public_key
     }

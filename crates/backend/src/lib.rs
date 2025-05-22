@@ -1,3 +1,7 @@
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+
 use base64::{DecodeError, Engine};
 use stride_database::Database;
 use uuid::Uuid;
