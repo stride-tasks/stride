@@ -14,7 +14,7 @@ trait Migration {
 
     fn apply(&self, db: &mut Database) -> Result<()> {
         let sql = self.sql();
-        let sql = format!("BEGIN;\n\n{}\n\nCOMMIT;\n", sql);
+        let sql = format!("BEGIN;\n\n{sql}\n\nCOMMIT;\n");
         db.execute_batch(&sql)?;
         Ok(())
     }

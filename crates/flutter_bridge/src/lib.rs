@@ -5,6 +5,7 @@
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::similar_names)]
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::doc_markdown)]
 
 pub mod api;
 

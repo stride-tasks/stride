@@ -3,7 +3,7 @@ use super::Migration;
 /// The ID column of most of tables has to be globally unique,
 /// because the application is intented to be used in a distributed way,
 /// where the clients don't know about each other.
-const SQL: &str = r####"
+const SQL: &str = r"
 CREATE TABLE IF NOT EXISTS task_table (
     `id` BLOB PRIMARY KEY, -- UUID
     `title` TEXT NOT NULL,
@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (
     task_id
 );
 CREATE INDEX IF NOT EXISTS task_tag_table_tag_id_idx ON task_tag_table (tag_id);
-"####;
+";
 
 pub(super) struct TaskMigration;
 

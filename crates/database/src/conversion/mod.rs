@@ -15,7 +15,7 @@ pub(crate) struct Sql<T> {
 }
 
 impl<T> From<T> for Sql<T> {
-    #[inline(always)]
+    #[inline]
     fn from(value: T) -> Self {
         Self { value }
     }
@@ -62,11 +62,9 @@ impl FromSql for Sql<Option<Date>> {
 
 pub(crate) fn task_status_to_sql(status: TaskStatus) -> i64 {
     match status {
-        TaskStatus::Pending => 0,
+        TaskStatus::Pending | TaskStatus::Waiting | TaskStatus::Recurring => 0,
         TaskStatus::Complete => 1,
         TaskStatus::Deleted => 2,
-        TaskStatus::Waiting => 0,
-        TaskStatus::Recurring => 0,
     }
 }
 
@@ -183,12 +181,12 @@ pub trait FromBlob<'a>: Sized {
 
 impl ToBlob<'_> for bool {
     fn to_blob(&self, blob: &mut Vec<u8>) {
-        (*self as u8).to_blob(blob);
+        u8::from(*self).to_blob(blob);
     }
 }
 impl FromBlob<'_> for bool {
     fn from_blob(blob: &mut &[u8]) -> Result<Self, BlobError> {
-        return Ok(u8::from_blob(blob)? != 0);
+        Ok(u8::from_blob(blob)? != 0)
     }
 }
 
@@ -202,7 +200,7 @@ impl FromBlob<'_> for u8 {
         let (value, blob) = input.split_first_chunk::<1>().ok_or(BlobError::AbruptEnd)?;
         let value = value[0];
         *input = blob;
-        return Ok(value);
+        Ok(value)
     }
 }
 
@@ -216,7 +214,7 @@ impl FromBlob<'_> for u32 {
         let (bytes, blob) = input.split_first_chunk::<4>().ok_or(BlobError::AbruptEnd)?;
         let value = u32::from_be_bytes(*bytes);
         *input = blob;
-        return Ok(value);
+        Ok(value)
     }
 }
 
@@ -230,7 +228,7 @@ impl FromBlob<'_> for i64 {
         let (bytes, blob) = input.split_first_chunk::<8>().ok_or(BlobError::AbruptEnd)?;
         let value = i64::from_be_bytes(*bytes);
         *input = blob;
-        return Ok(value);
+        Ok(value)
     }
 }
 
@@ -246,7 +244,7 @@ impl FromBlob<'_> for Uuid {
             .ok_or(BlobError::AbruptEnd)?;
         let value = Uuid::from_bytes(*bytes);
         *input = blob;
-        return Ok(value);
+        Ok(value)
     }
 }
 
@@ -259,7 +257,7 @@ impl FromBlob<'_> for Date {
     fn from_blob(blob: &mut &[u8]) -> Result<Self, BlobError> {
         let timestamp = i64::from_blob(blob)?;
         let datetime = Date::from_timestamp_micros(timestamp).ok_or(BlobError::InvalidTimestamp)?;
-        return Ok(datetime);
+        Ok(datetime)
     }
 }
 
@@ -268,7 +266,7 @@ impl<'a> FromBlob<'a> for &'a [u8] {
         let len = u32::from_blob(input)? as usize;
         let (bytes, blob) = input.split_at_checked(len).ok_or(BlobError::AbruptEnd)?;
         *input = blob;
-        return Ok(bytes);
+        Ok(bytes)
     }
 }
 
@@ -281,7 +279,7 @@ impl<'a> FromBlob<'a> for &'a str {
     fn from_blob(input: &mut &'a [u8]) -> Result<Self, BlobError> {
         let bytes = <&[u8]>::from_blob(input)?;
         let str = std::str::from_utf8(bytes).map_err(BlobError::InvalidUt8)?;
-        return Ok(str);
+        Ok(str)
     }
 }
 
@@ -303,10 +301,11 @@ impl<'a, T: FromBlob<'a>> FromBlob<'a> for Option<T> {
             value = Some(T::from_blob(&mut blob)?);
         }
         *input = blob;
-        return Ok(value);
+        Ok(value)
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 impl ToBlob<'_> for Annotation {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         blob.push(0x00); // version
@@ -366,15 +365,17 @@ impl FromBlob<'_> for Uda {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 impl<'a, T: ToBlob<'a>> ToBlob<'a> for &'a [T] {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         (self.len() as u32).to_blob(blob);
-        for value in self.iter() {
+        for value in *self {
             value.to_blob(blob);
         }
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 impl<'a, T: ToBlob<'a>> ToBlob<'a> for Vec<T> {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         (self.len() as u32).to_blob(blob);

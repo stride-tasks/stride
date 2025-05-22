@@ -192,7 +192,7 @@ fn main() -> anyhow::Result<()> {
                 status: [TaskStatus::Pending].into(),
                 ..Default::default()
             };
-            let tasks = repository.all_tasks(filter)?;
+            let tasks = repository.all_tasks(&filter)?;
             print_tasks(&tasks);
         }
         Mode::Add { content } => {
@@ -389,23 +389,21 @@ fn main() -> anyhow::Result<()> {
             settings.current_repository = Some(uuid);
             Settings::save(settings)?;
         }
-        Mode::Plugin { command } => {
-            match command {
-                None => {
-                    for plugin in plugin_manager.list() {
-                        println!("{}", plugin.manifest.name);
-                    }
+        Mode::Plugin { command } => match command {
+            None => {
+                for plugin in plugin_manager.list() {
+                    println!("{}", plugin.manifest.name);
                 }
-                Some(command) => match command {
-                    cli::PluginCommand::Import { filepath } => {
-                        plugin_manager.import(&filepath)?;
-                    }
-                    cli::PluginCommand::Toggle { plugin_name } => {
-                        plugin_manager.toggle(&plugin_name)?;
-                    }
-                },
-            };
-        }
+            }
+            Some(command) => match command {
+                cli::PluginCommand::Import { filepath } => {
+                    plugin_manager.import(&filepath)?;
+                }
+                cli::PluginCommand::Toggle { plugin_name } => {
+                    plugin_manager.toggle(&plugin_name)?;
+                }
+            },
+        },
     }
 
     Ok(())

@@ -125,8 +125,6 @@ impl TaskchampionBackend {
         Ok(())
     }
 
-    pub fn test(&mut self) {}
-
     pub fn commit(&mut self) -> Result<()> {
         let operations = mem::take(&mut self.operations);
 
@@ -136,7 +134,7 @@ impl TaskchampionBackend {
             self.operations = operations;
 
             return Err(err.into());
-        };
+        }
 
         assert!(
             self.operations.is_empty(),

@@ -48,7 +48,7 @@ impl Repository {
         })
     }
 
-    pub fn all_tasks(&mut self, filter: Filter) -> Result<Vec<Task>, RustError> {
+    pub fn all_tasks(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
         let search = filter.search.to_lowercase();
         let mut tasks = self.db.lock().unwrap().tasks_by_status(&filter.status)?;
         tasks.retain(|task| task.title.to_lowercase().contains(&search));
@@ -95,10 +95,9 @@ impl Repository {
         let encryption = if let Some(encrpytion) = &specification.encryption {
             encrpytion
         } else {
-            let reference = specification
+            specification
                 .encryption
-                .get_or_insert(EncryptionKey::generate());
-            reference
+                .get_or_insert(EncryptionKey::generate())
         };
 
         let Some(ssh_key_uuid) = specification.ssh_key_uuid else {

@@ -519,7 +519,7 @@ impl GitBackend {
     }
 
     pub fn add_and_commit(&self, message: &str) -> Result<bool> {
-        let repository = Repository::open(&self.config.repository_path())?;
+        let repository = Repository::open(self.config.repository_path())?;
 
         if repository.statuses(None)?.is_empty() {
             return Ok(false);
@@ -615,6 +615,7 @@ impl GitBackend {
         Ok(())
     }
 
+    #[allow(clippy::similar_names)]
     fn rebase(&mut self, repository: &Repository, remote: &AnnotatedCommit<'_>) -> Result<()> {
         let mut opts = RebaseOptions::new();
 
@@ -736,7 +737,7 @@ impl GitBackend {
             return Err(callback_error);
         }
 
-        let _ = remote_result?;
+        remote_result?;
 
         let local = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
         let remote = local.upstream()?;
@@ -753,7 +754,7 @@ impl GitBackend {
         let remote = repository.reference_to_annotated_commit(&remote)?;
 
         if ahead != 0 {
-            self.rebase(&repository, &remote)?;
+            self.rebase(repository, &remote)?;
             return Ok(true);
         }
 
@@ -761,7 +762,7 @@ impl GitBackend {
         let fetch_commit = repository.reference_to_annotated_commit(&fetch_head)?;
 
         let remote_branch = &self.config.branch;
-        do_merge(&repository, remote_branch, &fetch_commit)?;
+        do_merge(repository, remote_branch, &fetch_commit)?;
 
         Ok(true)
     }
@@ -799,7 +800,7 @@ impl GitBackend {
             Err(err)
                 if err.class() == ErrorClass::Reference && err.code() == ErrorCode::NotFound =>
             {
-                self.init_repotitory(&repository)?
+                self.init_repotitory(repository)?
             }
             Err(err) => return Err(err.into()),
         };
@@ -820,7 +821,7 @@ impl GitBackend {
             return Err(callback_error);
         }
 
-        let _ = remote_result?;
+        remote_result?;
 
         Ok(())
     }
@@ -899,7 +900,7 @@ impl GitBackend {
         let mut updated = false;
         if let Some(found_task) = self.task_by_uuid(&task.uuid)? {
             updated |= self.change_category(&found_task, task.status)?;
-        };
+        }
 
         updated |= self.update2(task)?;
         if updated {
@@ -950,7 +951,7 @@ impl GitBackend {
             storage.clear()?;
         }
         // delete repository root directory.
-        std::fs::remove_dir_all(&self.config.repository_path())?;
+        std::fs::remove_dir_all(self.config.repository_path())?;
         Ok(())
     }
 
@@ -1076,12 +1077,9 @@ fn with_authentication(
             return Ok(CertificateCheckStatus::CertificatePassthrough);
         };
         let Some(host_key_type) = cert_host_key.hostkey_type() else {
-            *certificate_error.borrow_mut() = Some(
-                Error::MissingHostKey {
-                    hostname: hostname.into(),
-                }
-                .into(),
-            );
+            *certificate_error.borrow_mut() = Some(Error::MissingHostKey {
+                hostname: hostname.into(),
+            });
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1092,7 +1090,7 @@ fn with_authentication(
         let host_key = base64::engine::general_purpose::STANDARD.encode(host_key);
 
         let Ok(host_key_type) = HostKeyType::try_from(host_key_type) else {
-            *certificate_error.borrow_mut() = Some(Error::UnknownKeyType.into());
+            *certificate_error.borrow_mut() = Some(Error::UnknownKeyType);
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1101,12 +1099,9 @@ fn with_authentication(
         };
 
         let Some(host) = known_hosts.host(hostname, host_key_type) else {
-            *certificate_error.borrow_mut() = Some(
-                Error::UnknownHost {
-                    host: Host::new(hostname.to_owned(), host_key_type, host_key),
-                }
-                .into(),
-            );
+            *certificate_error.borrow_mut() = Some(Error::UnknownHost {
+                host: Host::new(hostname.to_owned(), host_key_type, host_key),
+            });
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1115,13 +1110,10 @@ fn with_authentication(
         };
 
         if host.key != host_key {
-            *certificate_error.borrow_mut() = Some(
-                Error::MismatchRemoteKey {
-                    expected: host.key.clone().into_boxed_str(),
-                    actual: host_key.into(),
-                }
-                .into(),
-            );
+            *certificate_error.borrow_mut() = Some(Error::MismatchRemoteKey {
+                expected: host.key.clone().into_boxed_str(),
+                actual: host_key.into(),
+            });
             return Err(git2::Error::new(
                 ErrorCode::Certificate,
                 ErrorClass::Callback,
@@ -1145,7 +1137,7 @@ fn fast_forward(
         None => String::from_utf8_lossy(lb.name_bytes()).to_string(),
     };
     let msg = format!("Fast-Forward: Setting {} to id: {}", name, rc.id());
-    log::info!("{}", msg);
+    log::info!("{msg}");
 
     lb.set_target(rc.id(), &msg)?;
     repo.set_head(&name)?;
@@ -1201,7 +1193,7 @@ fn do_merge<'a>(
                     .force(),
             ))?;
         }
-    };
+    }
 
     Ok(true)
 }
