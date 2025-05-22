@@ -70,6 +70,7 @@ fn wasmi_valtype_to_rust_type(ty: &ValType) -> &str {
         ValType::F64 => "f64",
         ValType::FuncRef => "FuncRef",
         ValType::ExternRef => "ExternRef",
+        ValType::V128 => "V128",
     }
 }
 
