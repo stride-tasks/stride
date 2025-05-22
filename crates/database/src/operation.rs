@@ -76,6 +76,7 @@ pub enum OperationKind {
 }
 
 impl OperationKind {
+    #[must_use]
     pub fn with_now(self) -> Operation {
         Operation {
             timestamp: Utc::now(),
@@ -91,6 +92,7 @@ pub struct Operation {
 }
 
 impl Operation {
+    #[must_use]
     pub fn undo_point_with_now() -> Self {
         Operation {
             timestamp: Utc::now(),
@@ -98,6 +100,7 @@ impl Operation {
         }
     }
 
+    #[must_use]
     pub fn is_undo_point(&self) -> bool {
         self.kind.is_none()
     }

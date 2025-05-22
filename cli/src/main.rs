@@ -280,7 +280,7 @@ fn main() -> anyhow::Result<()> {
                         println!("task({id}): -tag:{tag}");
                     }
                     _ => {
-                        dbg!(&kind);
+                        println!("{kind:?}");
                     }
                 }
             }

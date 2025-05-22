@@ -550,12 +550,13 @@ impl ToBlob<'_> for OperationKind {
     }
 }
 impl FromBlob<'_> for OperationKind {
+    #[allow(clippy::too_many_lines)]
     fn from_blob(blob: &mut &[u8]) -> Result<Self, BlobError> {
         let version = u8::from_blob(blob)?;
 
         if version != 0x00 {
             return Err(BlobError::UnknownVersion {
-                version: version,
+                version,
                 kind: BlobVersionedKind::Operation,
             });
         }
