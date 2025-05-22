@@ -1,6 +1,7 @@
 //! Stride's sqlite database wrapper library.
 
 #![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
 
 pub mod conversion;
 mod error;
@@ -238,6 +239,7 @@ impl TaskTransaction {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn push_operations_diff_task_common(current: &Task, previous: &Task, ops: &mut Vec<Operation>) {
     if current.status != previous.status {
         ops.push(
@@ -516,28 +518,6 @@ impl Database {
     }
 
     pub fn tasks_by_status(&mut self, status: &HashSet<TaskStatus>) -> Result<Vec<Task>> {
-        {
-            let mut sql = self.prepare("SELECT timestamp, kind FROM operation_table")?;
-            let operations = sql.query_map((), |row| {
-                let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
-                let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
-
-                Ok(Operation {
-                    timestamp: timestamp.value,
-                    kind: kind
-                        .as_deref()
-                        .map(|mut blob| OperationKind::from_blob(&mut blob))
-                        .transpose()
-                        .unwrap(),
-                })
-            })?;
-
-            for operation in operations {
-                let operation = operation?;
-                dbg!(operation);
-            }
-        }
-
         let mut tasks = Vec::new();
         let mut sql = self.prepare_cached(SQL_ALL)?;
         let statys_array = Rc::new(
@@ -660,9 +640,6 @@ impl Database {
             return self.insert_task(task);
         };
 
-        dbg!(&previous);
-        dbg!(task);
-
         let mut operations = Vec::new();
         operations.push(Operation::undo_point_with_now());
         push_operations_diff_task(task, &previous, &mut operations);
@@ -751,7 +728,7 @@ impl Database {
                 .transpose()
                 .map(|kind| Operation {
                     timestamp: timestamp.value,
-                    kind: kind,
+                    kind,
                 }))
         })?;
         for operation in operations_rows {
@@ -789,7 +766,7 @@ impl Database {
                         id,
                         Operation {
                             timestamp: timestamp.value,
-                            kind: kind,
+                            kind,
                         },
                     )
                 }))
@@ -808,7 +785,7 @@ impl Database {
 
         drop(sql);
 
-        for (id, Operation { timestamp, kind }) in operations {
+        for (id, Operation { timestamp: _, kind }) in operations {
             transaction.execute("DELETE FROM operation_table WHERE id = ?1", (id,))?;
             let Some(kind) = kind else {
                 continue;
@@ -817,25 +794,25 @@ impl Database {
                 OperationKind::TaskCreate { id, .. } => {
                     transaction.execute("DELETE FROM task_table WHERE id = ?1", (id,))?;
                 }
-                OperationKind::TaskPurge { id } => todo!(),
-                OperationKind::TaskModifyEntry { id, new, old } => todo!(),
-                OperationKind::TaskModifyTitle { id, new, old } => todo!(),
-                OperationKind::TaskModifyStatus { id, new, old } => todo!(),
-                OperationKind::TaskModifyActive { id, new, old } => todo!(),
-                OperationKind::TaskModifyPriority { id, new, old } => todo!(),
-                OperationKind::TaskModifyProject { id, new, old } => todo!(),
-                OperationKind::TaskModifyModified { id, new, old } => todo!(),
-                OperationKind::TaskModifyDue { id, new, old } => todo!(),
-                OperationKind::TaskModifyWait { id, new, old } => todo!(),
+                OperationKind::TaskPurge { .. } => todo!(),
+                OperationKind::TaskModifyEntry { .. } => todo!(),
+                OperationKind::TaskModifyTitle { .. } => todo!(),
+                OperationKind::TaskModifyStatus { .. } => todo!(),
+                OperationKind::TaskModifyActive { .. } => todo!(),
+                OperationKind::TaskModifyPriority { .. } => todo!(),
+                OperationKind::TaskModifyProject { .. } => todo!(),
+                OperationKind::TaskModifyModified { .. } => todo!(),
+                OperationKind::TaskModifyDue { .. } => todo!(),
+                OperationKind::TaskModifyWait { .. } => todo!(),
                 OperationKind::TaskModifyAddTag { id, tag } => {
                     transaction.execute(
                         "DELETE FROM task_tag_table WHERE task_id = ?1 AND tag_id = ?2",
                         (id, tag),
                     )?;
                 }
-                OperationKind::TaskModifyRemoveTag { id, tag } => todo!(),
-                OperationKind::TaskModifyAddAnnotation { id, annotation } => todo!(),
-                OperationKind::TaskModifyRemoveAnnotation { id, annotation } => todo!(),
+                OperationKind::TaskModifyRemoveTag { .. } => todo!(),
+                OperationKind::TaskModifyAddAnnotation { .. } => todo!(),
+                OperationKind::TaskModifyRemoveAnnotation { .. } => todo!(),
             }
         }
 
