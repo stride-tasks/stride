@@ -7,20 +7,24 @@ pub mod conversion;
 mod error;
 mod migrations;
 
-use conversion::{FromBlob, Sql, ToBlob, task_status_to_sql};
+use conversion::{FromBlob, Sql, ToBlob, task_priority_to_sql, task_status_to_sql};
 pub use error::{Error, Result};
 pub mod operation;
 
 use migrations::apply_migrations;
 use operation::{Operation, OperationKind};
-use rusqlite::{Connection, OptionalExtension, Row, ToSql, types::Value};
+use rusqlite::{
+    Connection, OptionalExtension, Row, ToSql, Transaction,
+    functions::{Context, FunctionFlags},
+    types::Value,
+};
 use stride_core::{
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
 use uuid::Uuid;
 
-use std::{collections::HashSet, path::Path, rc::Rc};
+use std::{borrow::Cow, collections::HashSet, path::Path, rc::Rc};
 
 const SQL_ALL: &str = r"
 SELECT
@@ -120,6 +124,80 @@ const SQL_DELETE: &str = r"DELETE FROM task_table WHERE id = ?1";
 
 const SQL_PROJECT_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO project_table (id) VALUES (?1);";
 const SQL_TAG_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO tag_table (id) VALUES (?1);";
+
+fn add_annotation_functions(db: &Connection) -> Result<()> {
+    db.create_scalar_function(
+        "stride_annotation_insert",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx| {
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+            let mut annotations = ctx
+                .get_raw(0)
+                .as_blob_or_null()
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?
+                .map(|mut blob| Vec::<Annotation>::from_blob(&mut blob))
+                .transpose()
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?
+                .unwrap_or_default();
+
+            let mut annotations_blob = ctx
+                .get_raw(1)
+                .as_blob()
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?;
+            let annotation = Annotation::from_blob(&mut annotations_blob)
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?;
+
+            annotations.push(annotation);
+
+            let mut blob = Vec::new();
+            annotations.to_blob(&mut blob);
+            Ok(blob)
+        },
+    )?;
+    db.create_scalar_function(
+        "stride_annotation_remove",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        move |ctx: &Context<'_>| -> Result<Option<Cow<'_, [u8]>>, rusqlite::Error> {
+            assert_eq!(ctx.len(), 2, "called with unexpected number of arguments");
+
+            let Some(mut annotations_blob) = ctx
+                .get_raw(0)
+                .as_blob_or_null()
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?
+            else {
+                return Ok(None);
+            };
+            let mut annotations = Vec::<Annotation>::from_blob(&mut annotations_blob)
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?;
+
+            let mut annotation_blob = ctx
+                .get_raw(1)
+                .as_blob()
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?;
+            let annotation = Annotation::from_blob(&mut annotation_blob)
+                .map_err(|e| rusqlite::Error::UserFunctionError(e.into()))?;
+
+            if let Some(index) = annotations
+                .iter()
+                .position(|element| *element == annotation)
+            {
+                annotations.remove(index);
+            }
+
+            if annotations.is_empty() {
+                return Ok(None);
+            }
+
+            let mut blob = Vec::new();
+            annotations.to_blob(&mut blob);
+            Ok(Some(blob.into()))
+        },
+    )?;
+    Ok(())
+}
 
 #[derive(Debug)]
 pub struct TaskTransaction {
@@ -401,8 +479,6 @@ fn push_operations_diff_task_with_default(current: &Task, ops: &mut Vec<Operatio
     let previous = Task::default();
     push_operations_diff_task_common(current, &previous, ops);
 
-    // task.tags;
-    // task.annotations;
     // task.depends;
     // task.udas;
 }
@@ -432,6 +508,7 @@ impl Database {
     pub fn open(path: &Path) -> Result<Self> {
         let conn = Connection::open(path)?;
         rusqlite::vtab::array::load_module(&conn)?;
+        add_annotation_functions(&conn)?;
         Ok(Self { conn })
     }
 
@@ -745,6 +822,19 @@ impl Database {
         Ok(operations)
     }
 
+    pub fn update_task_modified_property(
+        transaction: &Transaction<'_>,
+        id: Uuid,
+        timestamp: Option<Date>,
+    ) -> Result<()> {
+        transaction.execute(
+            "UPDATE task_table SET modified = ?2 WHERE id = ?1",
+            (id, &Sql::from(timestamp)),
+        )?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_lines)]
     pub fn undo(&mut self, mut undo_count: usize) -> Result<()> {
         let transaction = self.transaction()?;
 
@@ -785,7 +875,7 @@ impl Database {
 
         drop(sql);
 
-        for (id, Operation { timestamp: _, kind }) in operations {
+        for (id, Operation { timestamp, kind }) in operations {
             transaction.execute("DELETE FROM operation_table WHERE id = ?1", (id,))?;
             let Some(kind) = kind else {
                 continue;
@@ -795,24 +885,89 @@ impl Database {
                     transaction.execute("DELETE FROM task_table WHERE id = ?1", (id,))?;
                 }
                 OperationKind::TaskPurge { .. } => todo!(),
-                OperationKind::TaskModifyEntry { .. } => todo!(),
-                OperationKind::TaskModifyTitle { .. } => todo!(),
-                OperationKind::TaskModifyStatus { .. } => todo!(),
+                OperationKind::TaskModifyEntry { id, old, .. } => {
+                    transaction.execute(
+                        "UPDATE task_table SET entry = ?2 WHERE id = ?1",
+                        (id, &Sql::from(old)),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyTitle { id, old, .. } => {
+                    transaction
+                        .execute("UPDATE task_table SET title = ?2 WHERE id = ?1", (id, &old))?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyStatus { id, old, .. } => {
+                    transaction.execute(
+                        "UPDATE task_table SET status = ?2 WHERE id = ?1",
+                        (id, &task_status_to_sql(old)),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
                 OperationKind::TaskModifyActive { .. } => todo!(),
-                OperationKind::TaskModifyPriority { .. } => todo!(),
-                OperationKind::TaskModifyProject { .. } => todo!(),
-                OperationKind::TaskModifyModified { .. } => todo!(),
-                OperationKind::TaskModifyDue { .. } => todo!(),
-                OperationKind::TaskModifyWait { .. } => todo!(),
+                OperationKind::TaskModifyPriority { id, old, .. } => {
+                    transaction.execute(
+                        "UPDATE task_table SET priority = ?2 WHERE id = ?1",
+                        (id, &old.map(task_priority_to_sql)),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyProject { id, old, .. } => {
+                    transaction.execute(
+                        "UPDATE task_table SET project = ?2 WHERE id = ?1",
+                        (id, &old),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyModified { id, old, .. } => {
+                    Self::update_task_modified_property(&transaction, id, old)?;
+                }
+                OperationKind::TaskModifyDue { id, old, .. } => {
+                    transaction.execute(
+                        "UPDATE task_table SET due = ?2 WHERE id = ?1",
+                        (id, &Sql::from(old)),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyWait { id, new: _, old } => {
+                    transaction.execute(
+                        "UPDATE task_table SET wait = ?2 WHERE id = ?1",
+                        (id, &Sql::from(old)),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
                 OperationKind::TaskModifyAddTag { id, tag } => {
                     transaction.execute(
                         "DELETE FROM task_tag_table WHERE task_id = ?1 AND tag_id = ?2",
                         (id, tag),
                     )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
                 }
-                OperationKind::TaskModifyRemoveTag { .. } => todo!(),
-                OperationKind::TaskModifyAddAnnotation { .. } => todo!(),
-                OperationKind::TaskModifyRemoveAnnotation { .. } => todo!(),
+                OperationKind::TaskModifyRemoveTag { id, tag } => {
+                    transaction.execute(
+                        "INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)",
+                        (id, tag),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyAddAnnotation { id, annotation } => {
+                    let mut annotation_blob = Vec::new();
+                    annotation.to_blob(&mut annotation_blob);
+                    transaction.execute(
+                        "UPDATE task_table SET annotations = stride_annotation_remove(annotations, ?2) WHERE id = ?1",
+                        (id, &annotation_blob),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
+                    let mut annotation_blob = Vec::new();
+                    annotation.to_blob(&mut annotation_blob);
+                    transaction.execute(
+                        "UPDATE task_table SET annotations = stride_annotation_insert(annotations, ?2) WHERE id = ?1",
+                        (id, &annotation_blob),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
             }
         }
 
