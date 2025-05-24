@@ -92,18 +92,22 @@ impl FromSql for Sql<TaskStatus> {
     }
 }
 
+#[must_use]
+pub fn task_priority_to_sql(priority: TaskPriority) -> i64 {
+    match priority {
+        TaskPriority::L => 0,
+        TaskPriority::M => 1,
+        TaskPriority::H => 2,
+    }
+}
+
 impl ToSql for Sql<Option<TaskPriority>> {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         let Some(priority) = self.value else {
             return Ok(ToSqlOutput::Owned(Value::Null));
         };
 
-        let value = match priority {
-            TaskPriority::L => 0,
-            TaskPriority::M => 1,
-            TaskPriority::H => 2,
-        };
-
+        let value = task_priority_to_sql(priority);
         Ok(ToSqlOutput::Owned(Value::Integer(value)))
     }
 }

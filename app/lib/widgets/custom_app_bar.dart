@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
@@ -53,6 +54,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       .read<SettingsBloc>()
                       .add(SettingsUpdateEvent(settings: newSettings));
                   context.read<TaskBloc>().add(TaskFilterEvent());
+                },
+              ),
+            if (hasRepositories)
+              IconButton(
+                icon: const Icon(Icons.undo),
+                onPressed: () async {
+                  context.read<LogBloc>().catch_(
+                        message: 'undo',
+                        () async => context.read<TaskBloc>().undo(),
+                      );
                 },
               ),
             if (hasRepositories)
