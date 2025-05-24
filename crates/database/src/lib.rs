@@ -307,7 +307,7 @@ impl Database {
             }
 
             let mut sql = transaction
-                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)")?;
+                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING")?;
             for tag in &task.tags {
                 sql.execute((task_uuid, tag))?;
             }
@@ -353,7 +353,7 @@ impl Database {
                 (task.uuid,),
             )?;
             let mut sql = transaction
-                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)")?;
+                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING")?;
             for tag in &task.tags {
                 sql.execute((task.uuid, tag))?;
             }
