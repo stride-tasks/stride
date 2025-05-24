@@ -221,6 +221,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     return tasks ?? [];
   }
 
+  Future<void> undo() async {
+    await repository()?.undo();
+    add(TaskFetchEvent());
+  }
+
   @override
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
