@@ -204,15 +204,6 @@ class _TaskRouteState extends State<TaskRoute> {
                   );
             }
 
-            final text =
-                widget.task == null ? 'New Task added' : 'Task modified';
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(text),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
             Navigator.pop(context);
           }
         },
