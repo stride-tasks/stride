@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TagsWidget extends StatefulWidget {
-  final List<String> tags;
-  final void Function(List<String>) onSubmit;
+  final Set<String> tags;
+  final void Function(Set<String>) onSubmit;
   const TagsWidget({
     super.key,
     required this.tags,
@@ -14,12 +14,12 @@ class TagsWidget extends StatefulWidget {
 }
 
 class TagsWidgetState extends State<TagsWidget> {
-  late List<String> items;
+  late Set<String> items;
 
   @override
   void initState() {
     super.initState();
-    items = widget.tags.toList();
+    items = widget.tags.toSet();
   }
 
   @override

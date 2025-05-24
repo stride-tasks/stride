@@ -27,7 +27,7 @@ class _TaskRouteState extends State<TaskRoute> {
   String title = '';
   DateTime? entry;
   DateTime? due;
-  List<String> _tags = [];
+  Set<String> _tags = {};
   List<(DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
@@ -43,7 +43,7 @@ class _TaskRouteState extends State<TaskRoute> {
     title = widget.task?.title ?? title;
     entry = widget.task?.entry;
     due = widget.task?.due;
-    _tags = widget.task?.tags.toList() ?? _tags;
+    _tags = widget.task?.tags.toSet() ?? _tags;
     annotations = widget.task?.annotations
             .map(
               (annotation) => (
@@ -168,7 +168,7 @@ class _TaskRouteState extends State<TaskRoute> {
               entry: entry ?? DateTime.now().toUtc(),
               title: title,
               active: active,
-              tags: _tags,
+              tags: _tags.toList(),
               due: due,
               status: TaskStatus.pending,
               annotations: annotations
