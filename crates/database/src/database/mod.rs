@@ -640,8 +640,10 @@ impl Database {
         };
 
         let mut operations = Vec::new();
-        operations.push(Operation::undo_point_with_now());
         push_operations_diff_task(task, &previous, &mut operations);
+        if !operations.is_empty() {
+            operations.insert(0, Operation::undo_point_with_now());
+        }
 
         let transaction = self.transaction()?;
 
