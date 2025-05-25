@@ -1,5 +1,5 @@
 use chrono::Utc;
-use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus};
+use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus, Uda};
 use uuid::Uuid;
 
 /// Heavily inspired by taskchampion's Operations.
@@ -72,6 +72,14 @@ pub enum OperationKind {
     TaskModifyRemoveAnnotation {
         id: Uuid,
         annotation: Box<Annotation>,
+    },
+    TaskModifyAddUda {
+        id: Uuid,
+        uda: Box<Uda>,
+    },
+    TaskModifyRemoveUda {
+        id: Uuid,
+        uda: Box<Uda>,
     },
 }
 

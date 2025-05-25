@@ -461,6 +461,8 @@ const OPERATION_TASK_MODIFY_ADD_TAG: u8 = 0x0B;
 const OPERATION_TASK_MODIFY_REMOVE_TAG: u8 = 0x0C;
 const OPERATION_TASK_MODIFY_ADD_ANNOTATION: u8 = 0x0D;
 const OPERATION_TASK_MODIFY_REMOVE_ANNOTATION: u8 = 0x0E;
+const OPERATION_TASK_MODIFY_ADD_UDA: u8 = 0x0F;
+const OPERATION_TASK_MODIFY_REMOVE_UDA: u8 = 0x10;
 
 impl ToBlob<'_> for OperationKind {
     fn to_blob(&self, blob: &mut Vec<u8>) {
@@ -550,6 +552,16 @@ impl ToBlob<'_> for OperationKind {
                 id.to_blob(blob);
                 annotation.as_ref().to_blob(blob);
             }
+            OperationKind::TaskModifyAddUda { id, uda } => {
+                blob.push(OPERATION_TASK_MODIFY_ADD_UDA);
+                id.to_blob(blob);
+                uda.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyRemoveUda { id, uda } => {
+                blob.push(OPERATION_TASK_MODIFY_REMOVE_UDA);
+                id.to_blob(blob);
+                uda.as_ref().to_blob(blob);
+            }
         }
     }
 }
@@ -566,12 +578,10 @@ impl FromBlob<'_> for OperationKind {
         }
 
         let ty = u8::from_blob(blob)?;
-
         Ok(match ty {
             OPERATION_TASK_CREATE => {
                 let id = Uuid::from_blob(blob)?;
                 let title = <&str>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskCreate {
                     id,
                     title: title.into(),
@@ -579,25 +589,18 @@ impl FromBlob<'_> for OperationKind {
             }
             OPERATION_TASK_PURGE => {
                 let id = Uuid::from_blob(blob)?;
-
-                assert!(blob.is_empty());
-
                 OperationKind::TaskPurge { id }
             }
             OPERATION_TASK_MODIFY_ENTRY => {
                 let id = Uuid::from_blob(blob)?;
                 let new = Date::from_blob(blob)?;
                 let old = Date::from_blob(blob)?;
-
-                assert!(blob.is_empty());
-
                 OperationKind::TaskModifyEntry { id, new, old }
             }
             OPERATION_TASK_MODIFY_TITLE => {
                 let id = Uuid::from_blob(blob)?;
                 let new = <&str>::from_blob(blob)?;
                 let old = <&str>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyTitle {
                     id,
                     new: new.into(),
@@ -608,30 +611,24 @@ impl FromBlob<'_> for OperationKind {
                 let id = Uuid::from_blob(blob)?;
                 let new = TaskStatus::from_blob(blob)?;
                 let old = TaskStatus::from_blob(blob)?;
-
-                assert!(blob.is_empty());
-
                 OperationKind::TaskModifyStatus { id, new, old }
             }
             OPERATION_TASK_MODIFY_ACTIVE => {
                 let id = Uuid::from_blob(blob)?;
                 let new = bool::from_blob(blob)?;
                 let old = bool::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyActive { id, new, old }
             }
             OPERATION_TASK_MODIFY_PRIORITY => {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<TaskPriority>::from_blob(blob)?;
                 let old = Option::<TaskPriority>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyPriority { id, new, old }
             }
             OPERATION_TASK_MODIFY_PROJECT => {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<&str>::from_blob(blob)?;
                 let old = Option::<&str>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyProject {
                     id,
                     new: new.map(Into::into),
@@ -642,27 +639,23 @@ impl FromBlob<'_> for OperationKind {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<Date>::from_blob(blob)?;
                 let old = Option::<Date>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyModified { id, new, old }
             }
             OPERATION_TASK_MODIFY_DUE => {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<Date>::from_blob(blob)?;
                 let old = Option::<Date>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyModified { id, new, old }
             }
             OPERATION_TASK_MODIFY_WAIT => {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<Date>::from_blob(blob)?;
                 let old = Option::<Date>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyModified { id, new, old }
             }
             OPERATION_TASK_MODIFY_ADD_TAG => {
                 let id = Uuid::from_blob(blob)?;
                 let tag = <&str>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyAddTag {
                     id,
                     tag: tag.into(),
@@ -671,7 +664,6 @@ impl FromBlob<'_> for OperationKind {
             OPERATION_TASK_MODIFY_REMOVE_TAG => {
                 let id = Uuid::from_blob(blob)?;
                 let tag = <&str>::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyRemoveTag {
                     id,
                     tag: tag.into(),
@@ -680,7 +672,6 @@ impl FromBlob<'_> for OperationKind {
             OPERATION_TASK_MODIFY_ADD_ANNOTATION => {
                 let id = Uuid::from_blob(blob)?;
                 let annotation = Annotation::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyAddAnnotation {
                     id,
                     annotation: Box::new(annotation),
@@ -689,10 +680,25 @@ impl FromBlob<'_> for OperationKind {
             OPERATION_TASK_MODIFY_REMOVE_ANNOTATION => {
                 let id = Uuid::from_blob(blob)?;
                 let annotation = Annotation::from_blob(blob)?;
-                assert!(blob.is_empty());
                 OperationKind::TaskModifyRemoveAnnotation {
                     id,
                     annotation: Box::new(annotation),
+                }
+            }
+            OPERATION_TASK_MODIFY_ADD_UDA => {
+                let id = Uuid::from_blob(blob)?;
+                let uda = Uda::from_blob(blob)?;
+                OperationKind::TaskModifyAddUda {
+                    id,
+                    uda: Box::new(uda),
+                }
+            }
+            OPERATION_TASK_MODIFY_REMOVE_UDA => {
+                let id = Uuid::from_blob(blob)?;
+                let uda = Uda::from_blob(blob)?;
+                OperationKind::TaskModifyRemoveUda {
+                    id,
+                    uda: Box::new(uda),
                 }
             }
             _ => return Err(BlobError::UnknownOperationKind { kind: ty }),

@@ -1,8 +1,3 @@
-//! Stride's sqlite database wrapper library.
-
-#![allow(clippy::missing_errors_doc)]
-#![allow(clippy::missing_panics_doc)]
-
 mod functions;
 
 use functions::init_stride_functions;
@@ -889,6 +884,24 @@ impl Database {
                     transaction.execute(
                         "UPDATE task_table SET annotations = stride_annotation_array_insert(annotations, ?2) WHERE id = ?1",
                         (id, &annotation_blob),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyAddUda { id, uda } => {
+                    let mut uda_blob = Vec::new();
+                    uda.to_blob(&mut uda_blob);
+                    transaction.execute(
+                        "UPDATE task_table SET udas = stride_uda_array_remove(udas, ?2) WHERE id = ?1",
+                        (id, &uda_blob),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyRemoveUda { id, uda } => {
+                    let mut uda_blob = Vec::new();
+                    uda.to_blob(&mut uda_blob);
+                    transaction.execute(
+                        "UPDATE task_table SET udas = stride_uda_array_insert(udas, ?2) WHERE id = ?1",
+                        (id, &uda_blob),
                     )?;
                     Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
                 }
