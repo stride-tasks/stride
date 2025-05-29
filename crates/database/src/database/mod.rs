@@ -336,6 +336,7 @@ fn push_operations_diff_task_common(current: &Task, previous: &Task, ops: &mut V
             );
         }
     }
+
     let current_annotations = current.annotations.iter().collect::<HashSet<_>>();
     let previous_annotations = previous.annotations.iter().collect::<HashSet<_>>();
     if current_annotations != previous_annotations {
@@ -353,6 +354,29 @@ fn push_operations_diff_task_common(current: &Task, previous: &Task, ops: &mut V
                 OperationKind::TaskModifyAddAnnotation {
                     id: current.uuid,
                     annotation: Box::new((*annotation).clone()),
+                }
+                .with_now(),
+            );
+        }
+    }
+
+    let current_udas = current.udas.iter().collect::<HashSet<_>>();
+    let previous_udas = previous.udas.iter().collect::<HashSet<_>>();
+    if current_udas != previous_udas {
+        for uda in previous_udas.difference(&current_udas) {
+            ops.push(
+                OperationKind::TaskModifyRemoveUda {
+                    id: current.uuid,
+                    uda: Box::new((*uda).clone()),
+                }
+                .with_now(),
+            );
+        }
+        for uda in current_udas.difference(&previous_udas) {
+            ops.push(
+                OperationKind::TaskModifyAddUda {
+                    id: current.uuid,
+                    uda: Box::new((*uda).clone()),
                 }
                 .with_now(),
             );
@@ -397,7 +421,6 @@ fn push_operations_diff_task_with_default(current: &Task, ops: &mut Vec<Operatio
     push_operations_diff_task_common(current, &previous, ops);
 
     // task.depends;
-    // task.udas;
 }
 
 #[derive(Debug)]
