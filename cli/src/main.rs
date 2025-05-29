@@ -2,7 +2,10 @@ use anyhow::{Context, bail};
 use chrono::Local;
 use clap::Parser;
 use cli::{CliArgs, Mode};
-use std::path::{Path, PathBuf};
+use std::{
+    io::Write,
+    path::{Path, PathBuf},
+};
 use stride_backend::{
     Backend,
     taskchampion::{TaskchampionBackend, TaskchampionConfig},
@@ -252,26 +255,27 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
-        Mode::Undo => {
-            let mut database = repository.database().lock().unwrap();
-            let operations = database.get_undoable_operation(1)?;
+        Mode::Undo { count } => {
+            let count = count.unwrap_or(1);
 
-            for (i, operation) in operations.iter().enumerate() {
-                print!(
-                    "{}. Operation ({}): ",
-                    i + 1,
-                    operation
-                        .timestamp
-                        .with_timezone(&Local)
-                        .format("%Y-%m-%d %H:%M:%S")
-                );
+            let mut database = repository.database().lock().unwrap();
+            let operations = database.get_undoable_operation(count)?;
+
+            for (i, operation) in operations.iter().rev().enumerate() {
+                let date_time = operation
+                    .timestamp
+                    .with_timezone(&Local)
+                    .format("%Y-%m-%dT%H:%M:%S");
+
+                print!("{:3} | {date_time} | ", i + 1);
                 let Some(kind) = &operation.kind else {
                     println!("Undo Point");
                     continue;
                 };
+
                 match &kind {
                     OperationKind::TaskCreate { id, title } => {
-                        println!("Create({id}, \"{title}\")");
+                        println!("task({id}): create(\"{title}\")");
                     }
                     OperationKind::TaskModifyAddTag { id, tag } => {
                         println!("task({id}): +tag:{tag}");
@@ -279,13 +283,64 @@ fn main() -> anyhow::Result<()> {
                     OperationKind::TaskModifyRemoveTag { id, tag } => {
                         println!("task({id}): -tag:{tag}");
                     }
-                    _ => {
-                        println!("{kind:?}");
+                    OperationKind::TaskPurge { id } => {
+                        println!("task({id}): purge");
+                    }
+                    OperationKind::TaskModifyEntry { id, new, old } => {
+                        println!("task({id}): entry(new:{new}, old:{old})");
+                    }
+                    OperationKind::TaskModifyTitle { id, new, old } => {
+                        println!("task({id}): title(new:\"{new}\", old:\"{old}\")");
+                    }
+                    OperationKind::TaskModifyStatus { id, new, old } => {
+                        println!("task({id}): status(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyActive { id, new, old } => {
+                        println!("task({id}): active(new:{new}, old:{old})");
+                    }
+                    OperationKind::TaskModifyPriority { id, new, old } => {
+                        println!("task({id}): priority(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyProject { id, new, old } => {
+                        println!("task({id}): project(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyModified { id, new, old } => {
+                        println!("task({id}): modified(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyDue { id, new, old } => {
+                        println!("task({id}): due(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyWait { id, new, old } => {
+                        println!("task({id}): wait(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyAddAnnotation { id, annotation } => {
+                        println!("task({id}): +{annotation:?}");
+                    }
+                    OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
+                        println!("task({id}): -{annotation:?}");
+                    }
+                    OperationKind::TaskModifyAddUda { id, uda } => {
+                        println!("task({id}): +{uda:?}");
+                    }
+                    OperationKind::TaskModifyRemoveUda { id, uda } => {
+                        println!("task({id}): -{uda:?}");
                     }
                 }
             }
 
-            database.undo(1)?;
+            if !operations.is_empty() {
+                print!("Undo operations? [y/n] ");
+                std::io::stdout().flush()?;
+
+                let mut line = String::new();
+                std::io::stdin().read_line(&mut line)?;
+                let line = line.trim().to_ascii_lowercase();
+                let undo = matches!(line.as_str(), "y" | "yes");
+
+                if undo {
+                    database.undo(count)?;
+                }
+            }
         }
         Mode::Sync { backend } => match backend {
             cli::Backend::Git => repository.sync()?,

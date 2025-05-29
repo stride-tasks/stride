@@ -45,7 +45,10 @@ pub enum Mode {
     },
 
     /// Undo previous change.
-    Undo,
+    Undo {
+        /// Undo `count` changes.
+        count: Option<usize>,
+    },
 
     /// Sync the task storage
     Sync {
