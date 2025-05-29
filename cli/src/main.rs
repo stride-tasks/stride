@@ -259,9 +259,9 @@ fn main() -> anyhow::Result<()> {
             let count = count.unwrap_or(1);
 
             let mut database = repository.database().lock().unwrap();
-            let operations = database.get_undoable_operation(count)?;
+            let operations = database.undoable_operation(count)?;
 
-            for (i, operation) in operations.iter().rev().enumerate() {
+            for (i, (_, operation)) in operations.iter().rev().enumerate() {
                 let date_time = operation
                     .timestamp
                     .with_timezone(&Local)

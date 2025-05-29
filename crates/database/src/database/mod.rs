@@ -709,38 +709,6 @@ impl Database {
         Ok(task)
     }
 
-    pub fn get_undoable_operation(&self, mut limit: usize) -> Result<Vec<Operation>> {
-        let mut operations = Vec::new();
-
-        let mut sql =
-            self.prepare("SELECT timestamp, kind FROM operation_table ORDER BY id DESC")?;
-        let operations_rows = sql.query_map((), |row| {
-            let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
-            let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
-
-            Ok(kind
-                .as_deref()
-                .map(|mut blob| OperationKind::from_blob(&mut blob))
-                .transpose()
-                .map(|kind| Operation {
-                    timestamp: timestamp.value,
-                    kind,
-                }))
-        })?;
-        for operation in operations_rows {
-            let operation = operation??;
-            let is_undo_point = operation.is_undo_point();
-            operations.push(operation);
-            if is_undo_point {
-                limit = limit.saturating_sub(1);
-                if limit == 0 {
-                    break;
-                }
-            }
-        }
-        Ok(operations)
-    }
-
     pub fn update_task_modified_property(
         transaction: &Transaction<'_>,
         id: Uuid,
@@ -753,10 +721,15 @@ impl Database {
         Ok(())
     }
 
-    #[allow(clippy::too_many_lines)]
-    pub fn undo(&mut self, mut undo_count: usize) -> Result<()> {
+    pub fn undoable_operation(&mut self, undo_count: usize) -> Result<Vec<(i64, Operation)>> {
         let transaction = self.transaction()?;
+        Self::get_undoable_operation(&transaction, undo_count)
+    }
 
+    pub fn get_undoable_operation(
+        transaction: &Transaction<'_>,
+        mut limit: usize,
+    ) -> Result<Vec<(i64, Operation)>> {
         let mut operations = Vec::new();
 
         let mut sql = transaction
@@ -766,34 +739,37 @@ impl Database {
             let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
             let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
 
-            Ok(kind
-                .as_deref()
-                .map(|mut blob| OperationKind::from_blob(&mut blob))
-                .transpose()
-                .map(|kind| {
-                    (
-                        id,
-                        Operation {
-                            timestamp: timestamp.value,
-                            kind,
-                        },
-                    )
-                }))
+            Ok((
+                id,
+                kind.as_deref()
+                    .map(|mut blob| OperationKind::from_blob(&mut blob))
+                    .transpose()
+                    .map(|kind| Operation {
+                        timestamp: timestamp.value,
+                        kind,
+                    })
+                    .map_err(|e| rusqlite::types::FromSqlError::Other(e.into()))?,
+            ))
         })?;
         for operation in operations_rows {
-            let (id, operation) = operation??;
+            let (id, operation) = operation?;
             let is_undo_point = operation.is_undo_point();
             operations.push((id, operation));
             if is_undo_point {
-                undo_count = undo_count.saturating_sub(1);
-                if undo_count == 0 {
+                limit = limit.saturating_sub(1);
+                if limit == 0 {
                     break;
                 }
             }
         }
+        Ok(operations)
+    }
 
-        drop(sql);
+    #[allow(clippy::too_many_lines)]
+    pub fn undo(&mut self, undo_count: usize) -> Result<()> {
+        let transaction = self.transaction()?;
 
+        let operations = Self::get_undoable_operation(&transaction, undo_count)?;
         for (id, Operation { timestamp, kind }) in operations {
             transaction.execute("DELETE FROM operation_table WHERE id = ?1", (id,))?;
             let Some(kind) = kind else {
