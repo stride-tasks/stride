@@ -15,6 +15,7 @@ import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/theme.dart';
 import 'package:stride/utils/functions.dart';
+import 'package:feedback/feedback.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,7 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final Settings settings;
   final PluginManagerState pluginManagerState;
   const MyApp({
@@ -56,6 +57,11 @@ class MyApp extends StatelessWidget {
   });
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
@@ -63,7 +69,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<LogBloc>(create: (context) => LogBloc()),
         BlocProvider<SettingsBloc>(
           create: (context) => SettingsBloc(
-            settings: settings,
+            settings: widget.settings,
             logBloc: context.read<LogBloc>(),
           ),
         ),
@@ -77,7 +83,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<PluginManagerBloc>(
           create: (context) => PluginManagerBloc(
             logBloc: context.read<LogBloc>(),
-            state: pluginManagerState,
+            state: widget.pluginManagerState,
             taskBloc: context.read<TaskBloc>(),
           ),
           lazy: false,
@@ -91,59 +97,62 @@ class MyApp extends StatelessWidget {
         },
         child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, state) {
-            return MaterialApp(
-              title: 'Stride',
-              theme: generateTheme(darkMode: false),
-              darkTheme: generateTheme(darkMode: true),
-              themeMode:
-                  state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
-              home: BlocListener<LogBloc, LogState>(
-                listener: (context, state) {
-                  if (!state.show) {
-                    return;
-                  }
+            return BetterFeedback(
+              darkTheme: FeedbackThemeData.dark(),
+              child: MaterialApp(
+                title: 'Stride',
+                theme: generateTheme(darkMode: false),
+                darkTheme: generateTheme(darkMode: true),
+                themeMode:
+                    state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+                home: BlocListener<LogBloc, LogState>(
+                  listener: (context, state) {
+                    if (!state.show) {
+                      return;
+                    }
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message.split('\n')[0]),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 10),
-                      backgroundColor: state.isError ? Colors.red[300] : null,
-                      action: SnackBarAction(
-                        label: 'Go to Logs',
-                        onPressed: () async {
-                          // TODO: Maybe don't push if already there on top.
-                          await Navigator.of(context).push<void>(
-                            MaterialPageRoute(
-                              builder: (context) => const LoggingRoute(),
-                            ),
-                          );
-                        },
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message.split('\n')[0]),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 10),
+                        backgroundColor: state.isError ? Colors.red[300] : null,
+                        action: SnackBarAction(
+                          label: 'Go to Logs',
+                          onPressed: () async {
+                            // TODO: Maybe don't push if already there on top.
+                            await Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (context) => const LoggingRoute(),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: BlocListener<DialogBloc, DialogState>(
-                  listener: (context, state) async {
-                    final title = await state.title(context);
-                    if (!context.mounted) return;
-                    final description = await state.content?.call(context);
-                    if (!context.mounted) return;
-                    showAlertDialog(
-                      context: context,
-                      content: description == null
-                          ? title
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [title, description],
-                            ),
-                      onConfirm: state.onConfirm,
-                      onCancel: state.onCancel,
                     );
                   },
-                  child: settings.repositories.isEmpty
-                      ? const InitialRoute()
-                      : const TasksRoute(),
+                  child: BlocListener<DialogBloc, DialogState>(
+                    listener: (context, state) async {
+                      final title = await state.title(context);
+                      if (!context.mounted) return;
+                      final description = await state.content?.call(context);
+                      if (!context.mounted) return;
+                      showAlertDialog(
+                        context: context,
+                        content: description == null
+                            ? title
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [title, description],
+                              ),
+                        onConfirm: state.onConfirm,
+                        onCancel: state.onCancel,
+                      );
+                    },
+                    child: widget.settings.repositories.isEmpty
+                        ? const InitialRoute()
+                        : const TasksRoute(),
+                  ),
                 ),
               ),
             );
