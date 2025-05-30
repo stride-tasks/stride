@@ -11,6 +11,8 @@ use uuid::Uuid;
 
 use crate::{Error, Result, base64_decode, base64_encode, error::KeyStoreError, git::generate_iv};
 
+use super::serialization::{task_from_data, task_to_data};
+
 pub(crate) struct KeyStore {
     path: PathBuf,
     master_key: Arc<Crypter>,
@@ -137,7 +139,7 @@ impl KeyStore {
             key
         };
 
-        let data = task.to_data();
+        let data = task_to_data(task);
 
         let iv = iv.unwrap_or_else(generate_iv);
         let encrypted = key.encrypt_with_iv(&iv, &data[16..], task.uuid.as_bytes())?;
@@ -164,7 +166,7 @@ impl KeyStore {
         let key = if let Some(key) = keys.get(&status) {
             key.clone()
         } else {
-            let mut task = Task::from_data(&base64).ok_or(Error::CorruptTask)?;
+            let mut task = task_from_data(&base64).ok_or(Error::CorruptTask)?;
             task.status = status;
             return Ok((generate_iv(), task));
         };
@@ -174,7 +176,7 @@ impl KeyStore {
         let mut data = aad.to_vec();
         data.extend_from_slice(&decrypted);
 
-        let mut task = Task::from_data(&data).ok_or(Error::CorruptTask)?;
+        let mut task = task_from_data(&data).ok_or(Error::CorruptTask)?;
         task.status = status;
         Ok((iv, task))
     }

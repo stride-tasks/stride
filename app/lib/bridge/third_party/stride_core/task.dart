@@ -47,13 +47,6 @@ sealed class Task with _$Task {
   static Future<Task> default_() =>
       RustLib.instance.api.strideCoreTaskTaskDefault();
 
-  static Future<Task?> fromData({required List<int> input}) =>
-      RustLib.instance.api.strideCoreTaskTaskFromData(input: input);
-
-  Future<Uint8List> toData() => RustLib.instance.api.strideCoreTaskTaskToData(
-        that: this,
-      );
-
   /// flutter_rust_bridge:sync
   double urgency() => RustLib.instance.api.strideCoreTaskTaskUrgency(
         that: this,
