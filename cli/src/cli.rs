@@ -44,6 +44,12 @@ pub enum Mode {
         content: Vec<String>,
     },
 
+    /// Undo previous change.
+    Undo {
+        /// Undo `count` changes.
+        count: Option<usize>,
+    },
+
     /// Sync the task storage
     Sync {
         /// Choose backend to sync.

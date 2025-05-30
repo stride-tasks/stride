@@ -42,5 +42,7 @@ abstract class Repository implements RustOpaqueInterface {
 
   Future<List<Task>> tasksByStatus({required Set<TaskStatus> status});
 
+  Future<void> undo();
+
   Future<void> updateTask({required Task task});
 }

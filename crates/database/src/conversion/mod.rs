@@ -5,7 +5,10 @@ use rusqlite::{
 use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus, Uda};
 use uuid::Uuid;
 
-use crate::error::{BlobError, PrimitiveVersionedKind};
+use crate::{
+    error::{BlobError, BlobVersionedKind},
+    operation::OperationKind,
+};
 
 #[cfg(test)]
 mod tests;
@@ -89,18 +92,22 @@ impl FromSql for Sql<TaskStatus> {
     }
 }
 
+#[must_use]
+pub fn task_priority_to_sql(priority: TaskPriority) -> i64 {
+    match priority {
+        TaskPriority::L => 0,
+        TaskPriority::M => 1,
+        TaskPriority::H => 2,
+    }
+}
+
 impl ToSql for Sql<Option<TaskPriority>> {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         let Some(priority) = self.value else {
             return Ok(ToSqlOutput::Owned(Value::Null));
         };
 
-        let value = match priority {
-            TaskPriority::L => 0,
-            TaskPriority::M => 1,
-            TaskPriority::H => 2,
-        };
-
+        let value = task_priority_to_sql(priority);
         Ok(ToSqlOutput::Owned(Value::Integer(value)))
     }
 }
@@ -305,6 +312,50 @@ impl<'a, T: FromBlob<'a>> FromBlob<'a> for Option<T> {
     }
 }
 
+impl ToBlob<'_> for TaskStatus {
+    fn to_blob(&self, blob: &mut Vec<u8>) {
+        let value = match self {
+            TaskStatus::Pending | TaskStatus::Complete | TaskStatus::Deleted => 0,
+            TaskStatus::Waiting => 1,
+            TaskStatus::Recurring => 2,
+        };
+        blob.push(value);
+    }
+}
+impl FromBlob<'_> for TaskStatus {
+    fn from_blob(blob: &mut &[u8]) -> Result<Self, BlobError> {
+        let value = u8::from_blob(blob)?;
+        Ok(match value {
+            0 => TaskStatus::Pending,
+            1 => TaskStatus::Waiting,
+            2 => TaskStatus::Recurring,
+            _ => return Err(BlobError::UnknownTaskStatus { kind: value }),
+        })
+    }
+}
+
+impl ToBlob<'_> for TaskPriority {
+    fn to_blob(&self, blob: &mut Vec<u8>) {
+        let value = match self {
+            TaskPriority::L => 0,
+            TaskPriority::M => 1,
+            TaskPriority::H => 2,
+        };
+        blob.push(value);
+    }
+}
+impl FromBlob<'_> for TaskPriority {
+    fn from_blob(blob: &mut &[u8]) -> Result<Self, BlobError> {
+        let value = u8::from_blob(blob)?;
+        Ok(match value {
+            0 => TaskPriority::L,
+            1 => TaskPriority::M,
+            2 => TaskPriority::H,
+            _ => return Err(BlobError::UnknownTaskPriority { kind: value }),
+        })
+    }
+}
+
 #[allow(clippy::cast_possible_truncation)]
 impl ToBlob<'_> for Annotation {
     fn to_blob(&self, blob: &mut Vec<u8>) {
@@ -324,7 +375,7 @@ impl FromBlob<'_> for Annotation {
         if version != 0x00 {
             return Err(BlobError::UnknownVersion {
                 version,
-                kind: PrimitiveVersionedKind::Annotation,
+                kind: BlobVersionedKind::Annotation,
             });
         }
         let entry = Date::from_blob(blob)?;
@@ -351,7 +402,7 @@ impl FromBlob<'_> for Uda {
         if version != 0x00 {
             return Err(BlobError::UnknownVersion {
                 version,
-                kind: PrimitiveVersionedKind::Uda,
+                kind: BlobVersionedKind::Uda,
             });
         }
         let namespace = <&str>::from_blob(blob)?;
@@ -392,5 +443,265 @@ impl<'a, T: FromBlob<'a>> FromBlob<'a> for Vec<T> {
             result.push(T::from_blob(blob)?);
         }
         Ok(result)
+    }
+}
+
+const OPERATION_TASK_CREATE: u8 = 0x00;
+const OPERATION_TASK_PURGE: u8 = 0x01;
+const OPERATION_TASK_MODIFY_ENTRY: u8 = 0x02;
+const OPERATION_TASK_MODIFY_TITLE: u8 = 0x03;
+const OPERATION_TASK_MODIFY_STATUS: u8 = 0x04;
+const OPERATION_TASK_MODIFY_ACTIVE: u8 = 0x05;
+const OPERATION_TASK_MODIFY_PRIORITY: u8 = 0x06;
+const OPERATION_TASK_MODIFY_PROJECT: u8 = 0x07;
+const OPERATION_TASK_MODIFY_MODIFIED: u8 = 0x08;
+const OPERATION_TASK_MODIFY_DUE: u8 = 0x09;
+const OPERATION_TASK_MODIFY_WAIT: u8 = 0x0A;
+const OPERATION_TASK_MODIFY_ADD_TAG: u8 = 0x0B;
+const OPERATION_TASK_MODIFY_REMOVE_TAG: u8 = 0x0C;
+const OPERATION_TASK_MODIFY_ADD_ANNOTATION: u8 = 0x0D;
+const OPERATION_TASK_MODIFY_REMOVE_ANNOTATION: u8 = 0x0E;
+const OPERATION_TASK_MODIFY_ADD_UDA: u8 = 0x0F;
+const OPERATION_TASK_MODIFY_REMOVE_UDA: u8 = 0x10;
+
+impl ToBlob<'_> for OperationKind {
+    fn to_blob(&self, blob: &mut Vec<u8>) {
+        blob.push(0x00); // version
+        match self {
+            OperationKind::TaskCreate { id, title } => {
+                blob.push(OPERATION_TASK_CREATE);
+                id.to_blob(blob);
+                title.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskPurge { id } => {
+                blob.push(OPERATION_TASK_PURGE);
+                id.to_blob(blob);
+            }
+            OperationKind::TaskModifyEntry { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_ENTRY);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyTitle { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_TITLE);
+                id.to_blob(blob);
+                new.as_ref().to_blob(blob);
+                old.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyStatus { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_STATUS);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyActive { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_ACTIVE);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyPriority { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_PRIORITY);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyProject { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_PROJECT);
+                id.to_blob(blob);
+
+                new.as_deref().to_blob(blob);
+                old.as_deref().to_blob(blob);
+            }
+            OperationKind::TaskModifyModified { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_MODIFIED);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyDue { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_DUE);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyWait { id, new, old } => {
+                blob.push(OPERATION_TASK_MODIFY_WAIT);
+                id.to_blob(blob);
+                new.to_blob(blob);
+                old.to_blob(blob);
+            }
+            OperationKind::TaskModifyAddTag { id, tag } => {
+                blob.push(OPERATION_TASK_MODIFY_ADD_TAG);
+                id.to_blob(blob);
+                tag.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyRemoveTag { id, tag } => {
+                blob.push(OPERATION_TASK_MODIFY_REMOVE_TAG);
+                id.to_blob(blob);
+                tag.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyAddAnnotation { id, annotation } => {
+                blob.push(OPERATION_TASK_MODIFY_ADD_ANNOTATION);
+                id.to_blob(blob);
+                annotation.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
+                blob.push(OPERATION_TASK_MODIFY_REMOVE_ANNOTATION);
+                id.to_blob(blob);
+                annotation.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyAddUda { id, uda } => {
+                blob.push(OPERATION_TASK_MODIFY_ADD_UDA);
+                id.to_blob(blob);
+                uda.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyRemoveUda { id, uda } => {
+                blob.push(OPERATION_TASK_MODIFY_REMOVE_UDA);
+                id.to_blob(blob);
+                uda.as_ref().to_blob(blob);
+            }
+        }
+    }
+}
+impl FromBlob<'_> for OperationKind {
+    #[allow(clippy::too_many_lines)]
+    fn from_blob(blob: &mut &[u8]) -> Result<Self, BlobError> {
+        let version = u8::from_blob(blob)?;
+
+        if version != 0x00 {
+            return Err(BlobError::UnknownVersion {
+                version,
+                kind: BlobVersionedKind::Operation,
+            });
+        }
+
+        let ty = u8::from_blob(blob)?;
+        Ok(match ty {
+            OPERATION_TASK_CREATE => {
+                let id = Uuid::from_blob(blob)?;
+                let title = <&str>::from_blob(blob)?;
+                OperationKind::TaskCreate {
+                    id,
+                    title: title.into(),
+                }
+            }
+            OPERATION_TASK_PURGE => {
+                let id = Uuid::from_blob(blob)?;
+                OperationKind::TaskPurge { id }
+            }
+            OPERATION_TASK_MODIFY_ENTRY => {
+                let id = Uuid::from_blob(blob)?;
+                let new = Date::from_blob(blob)?;
+                let old = Date::from_blob(blob)?;
+                OperationKind::TaskModifyEntry { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_TITLE => {
+                let id = Uuid::from_blob(blob)?;
+                let new = <&str>::from_blob(blob)?;
+                let old = <&str>::from_blob(blob)?;
+                OperationKind::TaskModifyTitle {
+                    id,
+                    new: new.into(),
+                    old: old.into(),
+                }
+            }
+            OPERATION_TASK_MODIFY_STATUS => {
+                let id = Uuid::from_blob(blob)?;
+                let new = TaskStatus::from_blob(blob)?;
+                let old = TaskStatus::from_blob(blob)?;
+                OperationKind::TaskModifyStatus { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_ACTIVE => {
+                let id = Uuid::from_blob(blob)?;
+                let new = bool::from_blob(blob)?;
+                let old = bool::from_blob(blob)?;
+                OperationKind::TaskModifyActive { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_PRIORITY => {
+                let id = Uuid::from_blob(blob)?;
+                let new = Option::<TaskPriority>::from_blob(blob)?;
+                let old = Option::<TaskPriority>::from_blob(blob)?;
+                OperationKind::TaskModifyPriority { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_PROJECT => {
+                let id = Uuid::from_blob(blob)?;
+                let new = Option::<&str>::from_blob(blob)?;
+                let old = Option::<&str>::from_blob(blob)?;
+                OperationKind::TaskModifyProject {
+                    id,
+                    new: new.map(Into::into),
+                    old: old.map(Into::into),
+                }
+            }
+            OPERATION_TASK_MODIFY_MODIFIED => {
+                let id = Uuid::from_blob(blob)?;
+                let new = Option::<Date>::from_blob(blob)?;
+                let old = Option::<Date>::from_blob(blob)?;
+                OperationKind::TaskModifyModified { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_DUE => {
+                let id = Uuid::from_blob(blob)?;
+                let new = Option::<Date>::from_blob(blob)?;
+                let old = Option::<Date>::from_blob(blob)?;
+                OperationKind::TaskModifyModified { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_WAIT => {
+                let id = Uuid::from_blob(blob)?;
+                let new = Option::<Date>::from_blob(blob)?;
+                let old = Option::<Date>::from_blob(blob)?;
+                OperationKind::TaskModifyModified { id, new, old }
+            }
+            OPERATION_TASK_MODIFY_ADD_TAG => {
+                let id = Uuid::from_blob(blob)?;
+                let tag = <&str>::from_blob(blob)?;
+                OperationKind::TaskModifyAddTag {
+                    id,
+                    tag: tag.into(),
+                }
+            }
+            OPERATION_TASK_MODIFY_REMOVE_TAG => {
+                let id = Uuid::from_blob(blob)?;
+                let tag = <&str>::from_blob(blob)?;
+                OperationKind::TaskModifyRemoveTag {
+                    id,
+                    tag: tag.into(),
+                }
+            }
+            OPERATION_TASK_MODIFY_ADD_ANNOTATION => {
+                let id = Uuid::from_blob(blob)?;
+                let annotation = Annotation::from_blob(blob)?;
+                OperationKind::TaskModifyAddAnnotation {
+                    id,
+                    annotation: Box::new(annotation),
+                }
+            }
+            OPERATION_TASK_MODIFY_REMOVE_ANNOTATION => {
+                let id = Uuid::from_blob(blob)?;
+                let annotation = Annotation::from_blob(blob)?;
+                OperationKind::TaskModifyRemoveAnnotation {
+                    id,
+                    annotation: Box::new(annotation),
+                }
+            }
+            OPERATION_TASK_MODIFY_ADD_UDA => {
+                let id = Uuid::from_blob(blob)?;
+                let uda = Uda::from_blob(blob)?;
+                OperationKind::TaskModifyAddUda {
+                    id,
+                    uda: Box::new(uda),
+                }
+            }
+            OPERATION_TASK_MODIFY_REMOVE_UDA => {
+                let id = Uuid::from_blob(blob)?;
+                let uda = Uda::from_blob(blob)?;
+                OperationKind::TaskModifyRemoveUda {
+                    id,
+                    uda: Box::new(uda),
+                }
+            }
+            _ => return Err(BlobError::UnknownOperationKind { kind: ty }),
+        })
     }
 }

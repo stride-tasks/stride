@@ -50,22 +50,26 @@ impl Repository {
 
     pub fn all_tasks(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
         let search = filter.search.to_lowercase();
+        self.db.clear_poison();
         let mut tasks = self.db.lock().unwrap().tasks_by_status(&filter.status)?;
         tasks.retain(|task| task.title.to_lowercase().contains(&search));
         Ok(tasks)
     }
 
     pub fn insert_task(&mut self, task: &Task) -> Result<(), RustError> {
+        self.db.clear_poison();
         self.db.lock().unwrap().insert_task(task)?;
         Ok(())
     }
 
     pub fn update_task(&mut self, task: &Task) -> Result<(), RustError> {
+        self.db.clear_poison();
         self.db.lock().unwrap().update_task(task)?;
         Ok(())
     }
 
     pub fn purge_task_by_id(&mut self, id: Uuid) -> Result<Option<Task>, RustError> {
+        self.db.clear_poison();
         Ok(self.db.lock().unwrap().purge_task_by_id(id)?)
     }
 
@@ -73,14 +77,17 @@ impl Repository {
         &mut self,
         status: &HashSet<TaskStatus>,
     ) -> Result<Vec<Task>, RustError> {
+        self.db.clear_poison();
         Ok(self.db.lock().unwrap().tasks_by_status(status)?)
     }
 
     pub fn task_by_id(&mut self, id: Uuid) -> Result<Option<Task>, RustError> {
+        self.db.clear_poison();
         Ok(self.db.lock().unwrap().task_by_id(id)?)
     }
 
     pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError> {
+        self.db.clear_poison();
         Ok(self.db.lock().unwrap().task_query(query)?)
     }
 
@@ -132,6 +139,11 @@ impl Repository {
         let mut backend = GitBackend::new(config)?;
         self.db.clear_poison();
         backend.sync(self.db.get_mut().expect("poison valued cleared"))?;
+        Ok(())
+    }
+
+    pub fn undo(&self) -> Result<(), RustError> {
+        self.db.lock().unwrap().undo(1)?;
         Ok(())
     }
 
