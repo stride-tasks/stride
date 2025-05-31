@@ -154,8 +154,10 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
         builder: (context) => const TasksRoute(),
       ),
     );
-    context.read<TaskBloc>().add(TaskSyncEvent());
-    context.read<PluginManagerBloc>().emitHostEvent(HostEvent.taskSync());
+    if (widget.cloning) {
+      context.read<TaskBloc>().add(TaskSyncEvent());
+      context.read<PluginManagerBloc>().emitHostEvent(HostEvent.taskSync());
+    }
   }
 
   void _onStepTapped(int value) => setState(() => _currentStep = value);
