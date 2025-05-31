@@ -10,6 +10,7 @@ use std::{
 use base64::Engine;
 use config::GitConfig;
 use known_hosts::{Host, HostKeyType, KnownHosts};
+use serialization::task_to_data;
 use ssh_key::SshKey;
 use stride_core::{
     event::TaskQuery,
@@ -25,6 +26,7 @@ use git2::{
 };
 
 mod key_store;
+mod serialization;
 
 pub mod config;
 pub mod encryption_key;
@@ -116,7 +118,7 @@ impl Storage {
             file.write_all(content.as_bytes())?;
             self.tasks.push(DecryptedTask { task, iv });
         } else {
-            let mut content = task.to_data();
+            let mut content = task_to_data(&task);
             content.push(b'\n');
             file.write_all(&content)?;
 
