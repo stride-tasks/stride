@@ -724,16 +724,12 @@ impl GitBackend {
 
         let mut connection = connection?;
 
-        let branch = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
-        let branch_ref = branch.into_reference();
-        let branch_ref_name = branch_ref.name().unwrap();
         let mut fetch_options = FetchOptions::new();
-        fetch_options.prune(git2::FetchPrune::On);
-        fetch_options.download_tags(git2::AutotagOption::All);
-        let remote_result =
-            connection
-                .remote()
-                .fetch(&[branch_ref_name], Some(&mut fetch_options), None);
+        let remote_result = connection.remote().fetch(
+            &[self.config.branch.as_ref()],
+            Some(&mut fetch_options),
+            Some(&format!("fetch {} branch", self.config.branch)),
+        );
 
         if let Some(callback_error) = callback_error.borrow_mut().take() {
             return Err(callback_error);
@@ -741,9 +737,18 @@ impl GitBackend {
 
         remote_result?;
 
-        let local = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
-        let remote = local.upstream()?;
-        let remote = remote.into_reference();
+        let mut local = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
+        let remote = match local.upstream() {
+            Ok(remote) => remote.into_reference(),
+            Err(error)
+                if error.class() == ErrorClass::Config && error.code() == ErrorCode::NotFound =>
+            {
+                local.set_upstream(Some(&format!("origin/{}", self.config.branch)))?;
+                local.upstream()?.into_reference()
+            }
+            Err(error) => return Err(error.into()),
+        };
+
         let (ahead, behind) = repository.graph_ahead_behind(
             local.into_reference().peel_to_commit()?.id(),
             remote.peel_to_commit()?.id(),
@@ -925,11 +930,12 @@ impl Backend for GitBackend {
                 }
             }
             let repository = Repository::open(self.config.repository_path())?;
+            log::info!("Pulling tasks...");
             if self.pull(&repository)? {
                 log::info!("Pulled tasks");
                 self.unload();
             }
-
+            log::info!("Pushing tasks...");
             self.push(&repository, false)?;
 
             log::info!("Task sync finished!");
