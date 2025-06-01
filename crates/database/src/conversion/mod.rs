@@ -128,6 +128,31 @@ impl FromSql for Sql<Option<TaskPriority>> {
     }
 }
 
+impl ToSql for Sql<&[Uuid]> {
+    fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
+        if self.value.is_empty() {
+            return Ok(ToSqlOutput::Owned(Value::Null));
+        }
+
+        let mut blob = Vec::new();
+        self.value.to_blob(&mut blob);
+        Ok(ToSqlOutput::Owned(Value::Blob(blob)))
+    }
+}
+
+impl FromSql for Sql<Vec<Uuid>> {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        let Some(mut blob) = value.as_blob_or_null()? else {
+            return Ok(Vec::new().into());
+        };
+
+        match Vec::<Uuid>::from_blob(&mut blob) {
+            Ok(uuids) => Ok(uuids.into()),
+            Err(err) => Err(FromSqlError::Other(Box::new(err))),
+        }
+    }
+}
+
 impl ToSql for Sql<&[Annotation]> {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         if self.value.is_empty() {

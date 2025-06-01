@@ -18,6 +18,25 @@ use crate::{
 };
 
 const SQL_ALL: &str = r"
+WITH task_depends_cte AS (
+    SELECT
+        parent_task_id AS id,
+        GROUP_CONCAT(child_task_id) AS depends
+    FROM
+        task_dependency_table
+    GROUP BY
+        parent_task_id
+),
+task_tags_cte AS (
+    SELECT
+        task_id,
+        string_agg(tag_id, char(0)) AS tags
+    FROM
+        task_tag_table
+    GROUP BY
+        task_id
+)
+
 SELECT
     task.id,
     task.title,
@@ -28,20 +47,40 @@ SELECT
     task.modified,
     task.due,
     task.wait,
+    depends_cte.depends,
     task.annotations,
     task.udas,
-    string_agg(task_tag.tag_id, char(0)) AS tags
+    tags_cte.tags
 FROM
     task_table task
 LEFT JOIN
-    task_tag_table task_tag ON task_tag.task_id = task.id
+    task_depends_cte depends_cte ON depends_cte.id = task.id
+LEFT JOIN
+    task_tags_cte tags_cte ON tags_cte.task_id = task.id
 WHERE
     task.status IN rarray(?1)
-GROUP BY
-    task.id
 ";
 
 const SQL_BY_ID: &str = r"
+WITH task_depends_cte AS (
+    SELECT
+        parent_task_id AS id,
+        GROUP_CONCAT(child_task_id) AS depends
+    FROM
+        task_dependency_table
+    GROUP BY
+        parent_task_id
+),
+task_tags_cte AS (
+    SELECT
+        task_id,
+        string_agg(tag_id, char(0)) AS tags
+    FROM
+        task_tag_table
+    GROUP BY
+        task_id
+)
+
 SELECT
     task.id,
     task.title,
@@ -52,17 +91,18 @@ SELECT
     task.modified,
     task.due,
     task.wait,
+    depends_cte.depends,
     task.annotations,
     task.udas,
-    string_agg(task_tag.tag_id, char(0)) AS tags
+    tags_cte.tags
 FROM
     task_table task
 LEFT JOIN
-    task_tag_table task_tag ON task_tag.task_id = task.id
+    task_depends_cte depends_cte ON depends_cte.id = task.id
+LEFT JOIN
+    task_tags_cte tags_cte ON tags_cte.task_id = task.id
 WHERE
     task.id = ?1
-GROUP BY
-    task.id
 ";
 
 const SQL_INSERT: &str = r"
@@ -468,6 +508,7 @@ impl Database {
         let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
         let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
         let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
+        let depends = row.get::<_, Sql<Vec<Uuid>>>("depends")?.value;
         let annotations = row.get::<_, Sql<Vec<Annotation>>>("annotations")?.value;
         let udas = row.get::<_, Sql<Vec<Uda>>>("udas")?.value;
         let tags = row
@@ -492,7 +533,7 @@ impl Database {
             annotations,
             priority,
             wait,
-            depends: Vec::new(),
+            depends,
             udas,
         })
     }
