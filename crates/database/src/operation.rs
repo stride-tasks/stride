@@ -65,6 +65,14 @@ pub enum OperationKind {
         id: Uuid,
         tag: Box<str>,
     },
+    TaskModifyAddDependency {
+        id: Uuid,
+        depend: Uuid,
+    },
+    TaskModifyRemoveDependency {
+        id: Uuid,
+        depend: Uuid,
+    },
     TaskModifyAddAnnotation {
         id: Uuid,
         annotation: Box<Annotation>,

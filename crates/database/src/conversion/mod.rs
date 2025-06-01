@@ -484,12 +484,15 @@ const OPERATION_TASK_MODIFY_DUE: u8 = 0x09;
 const OPERATION_TASK_MODIFY_WAIT: u8 = 0x0A;
 const OPERATION_TASK_MODIFY_ADD_TAG: u8 = 0x0B;
 const OPERATION_TASK_MODIFY_REMOVE_TAG: u8 = 0x0C;
-const OPERATION_TASK_MODIFY_ADD_ANNOTATION: u8 = 0x0D;
-const OPERATION_TASK_MODIFY_REMOVE_ANNOTATION: u8 = 0x0E;
-const OPERATION_TASK_MODIFY_ADD_UDA: u8 = 0x0F;
-const OPERATION_TASK_MODIFY_REMOVE_UDA: u8 = 0x10;
+const OPERATION_TASK_MODIFY_ADD_DEPENDENCY: u8 = 0x0D;
+const OPERATION_TASK_MODIFY_REMOVE_DEPENDENCY: u8 = 0x0E;
+const OPERATION_TASK_MODIFY_ADD_ANNOTATION: u8 = 0x0F;
+const OPERATION_TASK_MODIFY_REMOVE_ANNOTATION: u8 = 0x10;
+const OPERATION_TASK_MODIFY_ADD_UDA: u8 = 0x11;
+const OPERATION_TASK_MODIFY_REMOVE_UDA: u8 = 0x12;
 
 impl ToBlob<'_> for OperationKind {
+    #[allow(clippy::too_many_lines)]
     fn to_blob(&self, blob: &mut Vec<u8>) {
         blob.push(0x00); // version
         match self {
@@ -566,6 +569,16 @@ impl ToBlob<'_> for OperationKind {
                 blob.push(OPERATION_TASK_MODIFY_REMOVE_TAG);
                 id.to_blob(blob);
                 tag.as_ref().to_blob(blob);
+            }
+            OperationKind::TaskModifyAddDependency { id, depend } => {
+                blob.push(OPERATION_TASK_MODIFY_ADD_DEPENDENCY);
+                id.to_blob(blob);
+                depend.to_blob(blob);
+            }
+            OperationKind::TaskModifyRemoveDependency { id, depend } => {
+                blob.push(OPERATION_TASK_MODIFY_REMOVE_DEPENDENCY);
+                id.to_blob(blob);
+                depend.to_blob(blob);
             }
             OperationKind::TaskModifyAddAnnotation { id, annotation } => {
                 blob.push(OPERATION_TASK_MODIFY_ADD_ANNOTATION);
@@ -693,6 +706,16 @@ impl FromBlob<'_> for OperationKind {
                     id,
                     tag: tag.into(),
                 }
+            }
+            OPERATION_TASK_MODIFY_ADD_DEPENDENCY => {
+                let id = Uuid::from_blob(blob)?;
+                let depend = Uuid::from_blob(blob)?;
+                OperationKind::TaskModifyAddDependency { id, depend }
+            }
+            OPERATION_TASK_MODIFY_REMOVE_DEPENDENCY => {
+                let id = Uuid::from_blob(blob)?;
+                let depend = Uuid::from_blob(blob)?;
+                OperationKind::TaskModifyRemoveDependency { id, depend }
             }
             OPERATION_TASK_MODIFY_ADD_ANNOTATION => {
                 let id = Uuid::from_blob(blob)?;

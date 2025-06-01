@@ -909,6 +909,20 @@ impl Database {
                     )?;
                     Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
                 }
+                OperationKind::TaskModifyAddDependency { id, depend } => {
+                    transaction.execute(
+                        "DELETE FROM task_dependency_table WHERE parent_task_id = ?1 AND child_task_id = ?2",
+                        (&id, &depend),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
+                OperationKind::TaskModifyRemoveDependency { id, depend } => {
+                    transaction.execute(
+                        "INSERT INTO task_dependency_table (parent_task_id, child_task_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING",
+                        (&id, &depend),
+                    )?;
+                    Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
+                }
                 OperationKind::TaskModifyAddAnnotation { id, annotation } => {
                     let mut annotation_blob = Vec::new();
                     annotation.to_blob(&mut annotation_blob);

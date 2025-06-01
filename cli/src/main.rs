@@ -277,12 +277,6 @@ fn main() -> anyhow::Result<()> {
                     OperationKind::TaskCreate { id, title } => {
                         println!("task({id}): create(\"{title}\")");
                     }
-                    OperationKind::TaskModifyAddTag { id, tag } => {
-                        println!("task({id}): +tag:{tag}");
-                    }
-                    OperationKind::TaskModifyRemoveTag { id, tag } => {
-                        println!("task({id}): -tag:{tag}");
-                    }
                     OperationKind::TaskPurge { id } => {
                         println!("task({id}): purge");
                     }
@@ -312,6 +306,18 @@ fn main() -> anyhow::Result<()> {
                     }
                     OperationKind::TaskModifyWait { id, new, old } => {
                         println!("task({id}): wait(new:{new:?}, old:{old:?})");
+                    }
+                    OperationKind::TaskModifyAddTag { id, tag } => {
+                        println!("task({id}): +tag:{tag}");
+                    }
+                    OperationKind::TaskModifyRemoveTag { id, tag } => {
+                        println!("task({id}): -tag:{tag}");
+                    }
+                    OperationKind::TaskModifyAddDependency { id, depend } => {
+                        println!("task({id}): +dep:{depend:?}");
+                    }
+                    OperationKind::TaskModifyRemoveDependency { id, depend } => {
+                        println!("task({id}): -dep:{depend:?}");
                     }
                     OperationKind::TaskModifyAddAnnotation { id, annotation } => {
                         println!("task({id}): +{annotation:?}");
