@@ -66,6 +66,9 @@ treefmt-nix.lib.evalModule pkgs (
         shfmt = {
           includes = ["*.bash"];
         };
+        prettier = {
+          excludes = [".vscode/*.json"];
+        };
       };
     };
   }
