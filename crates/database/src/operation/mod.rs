@@ -2,6 +2,8 @@ use chrono::Utc;
 use stride_core::task::{Annotation, Date, TaskPriority, TaskStatus, Uda};
 use uuid::Uuid;
 
+pub mod difference;
+
 /// Heavily inspired by taskchampion's Operations.
 #[derive(Debug, Clone)]
 pub enum OperationKind {
