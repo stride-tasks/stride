@@ -3,6 +3,7 @@ mod functions;
 use functions::init_stride_functions;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql, Transaction, types::Value};
 use stride_core::{
+    backend::BackendRecord,
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -777,6 +778,71 @@ impl Database {
         }
 
         transaction.commit()?;
+        Ok(())
+    }
+
+    pub fn add_backends(&mut self, backend: &BackendRecord) -> Result<()> {
+        let property = serde_json::to_string(&backend.config).expect("should not fail");
+        self.execute(
+            "INSERT INTO backend_table (
+    id,
+    name,
+    enabled,
+    property)
+VALUES (?1, ?2,
+?3,
+?4)",
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                &backend.enabled,
+                &property,
+            ),
+        )?;
+        Ok(())
+    }
+
+    pub fn backends(&mut self) -> Result<Vec<BackendRecord>> {
+        let mut sql = self.prepare("SELECT id, name, enabled, property FROM backend_table")?;
+        let rows = sql.query_map((), |row| {
+            let config = row.get::<_, String>("property")?;
+            let config = serde_json::from_str(&config)
+                .map_err(|error| rusqlite::types::FromSqlError::Other(error.into()))?;
+            Ok(BackendRecord {
+                id: row.get::<_, Uuid>("id")?,
+                name: row.get::<_, Box<str>>("name")?,
+                enabled: row.get::<_, bool>("enabled")?,
+                config,
+            })
+        })?;
+
+        let mut backends = Vec::new();
+        for row in rows {
+            backends.push(row?);
+        }
+        Ok(backends)
+    }
+
+    pub fn update_backend(&mut self, backend: &BackendRecord) -> Result<()> {
+        let config = serde_json::to_string(&backend.config).expect("should not fail");
+        self.execute(
+            "UPDATE backend_table
+SET name = ?2,
+    enabled = ?3,
+    property = ?4
+WHERE id = ?1",
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                &backend.enabled,
+                &config,
+            ),
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_backend(&mut self, id: Uuid) -> Result<()> {
+        self.execute("DELETE FROM backend_table WHERE id = ?1", (id.as_bytes(),))?;
         Ok(())
     }
 }

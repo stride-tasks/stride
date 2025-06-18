@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS task_table (
     `annotations` BLOB,
     `udas` BLOB,
     -- Where does this task originate from, null implies stride.
-    `backend` INTEGER,
+    `backend` BLOB,
 
     FOREIGN KEY (project) REFERENCES project_table (id) ON DELETE SET NULL,
     FOREIGN KEY (backend) REFERENCES backend_table (id) ON DELETE SET NULL
@@ -32,8 +32,10 @@ CREATE TABLE IF NOT EXISTS task_dependency_table (
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS backend_table (
-    id TEXT PRIMARY KEY,
+    id BLOB PRIMARY KEY,
     `name` TEXT NOT NULL CHECK (length(`name`) != 0),
+    enabled INTEGER NOT NULL CHECK (`enabled` = 0 OR `enabled` = 1),
+
     -- Custom properties that the backend stores.
     property TEXT
 ) STRICT;

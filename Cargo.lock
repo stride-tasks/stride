@@ -1852,17 +1852,16 @@ name = "stride_cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "chrono",
  "clap",
  "dirs 6.0.0",
  "log",
- "serde",
  "stride_backend",
  "stride_core",
  "stride_database",
  "stride_flutter_bridge",
  "stride_plugin_manager",
- "toml",
  "url",
  "uuid",
 ]
@@ -1872,10 +1871,13 @@ name = "stride_core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "chrono",
  "serde",
  "serde_json",
  "taskchampion",
+ "thiserror 2.0.12",
+ "url",
  "uuid",
 ]
 
@@ -1895,6 +1897,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "rusqlite",
+ "serde_json",
  "stride_core",
  "thiserror 2.0.12",
  "uuid",

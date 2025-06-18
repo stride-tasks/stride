@@ -51,6 +51,9 @@ pub enum Error {
 
     #[error("database error: {0}")]
     Database(#[from] stride_database::Error),
+
+    #[error("config error: {0}")]
+    Config(#[from] stride_core::backend::Error),
 }
 
 #[derive(thiserror::Error, Debug)]

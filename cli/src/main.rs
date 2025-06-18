@@ -3,30 +3,35 @@ use chrono::Local;
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
+    collections::HashMap,
     io::Write,
     path::{Path, PathBuf},
+    process::ExitCode,
 };
 use stride_backend::{
-    Backend,
-    git::known_hosts::KnownHosts,
-    taskchampion::{TaskchampionBackend, TaskchampionConfig},
+    Backend, BackendHandler,
+    git::{GitBackend, known_hosts::KnownHosts},
+    taskchampion::TaskchampionBackend,
 };
 use stride_core::{
     event::{HostEvent, PluginEvent},
+    state::KnownPaths,
     task::{Task, TaskStatus},
 };
 use stride_database::operation::OperationKind;
-use stride_flutter_bridge::api::{
-    filter::Filter,
-    repository::Repository,
-    settings::{ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys},
+use stride_flutter_bridge::{
+    RustError,
+    api::{
+        filter::Filter,
+        repository::Repository,
+        settings::{ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys},
+    },
 };
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
-use url::Url;
-use uuid::Uuid;
 
 use crate::cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand};
 
+pub mod backend;
 pub mod cli;
 
 const APPLICATION_ID: &str = "org.stridetasks.stride";
@@ -71,8 +76,22 @@ fn print_tasks(tasks: &[Task]) {
     }
 }
 
+#[allow(clippy::unnecessary_wraps)]
+pub(crate) fn get_backend_registry(
+    _known_paths: &KnownPaths,
+) -> Result<HashMap<Box<str>, Box<dyn BackendHandler>>, RustError> {
+    let mut registry: HashMap<_, Box<dyn BackendHandler>> = HashMap::new();
+    let git_handler = GitBackend::handler();
+    registry.insert(git_handler.name(), git_handler);
+
+    let taskchampion_handler = TaskchampionBackend::handler();
+    registry.insert(taskchampion_handler.name(), taskchampion_handler);
+
+    Ok(registry)
+}
+
 #[allow(clippy::too_many_lines)]
-fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<ExitCode> {
     // TODO(@bpeetz): Re-add the functionality of running `stride` without
     // args or not one of the defined subcommands to search  <2024-10-24>
     // else {
@@ -100,6 +119,14 @@ fn main() -> anyhow::Result<()> {
             .to_string(),
     })?;
 
+    let known_paths = KnownPaths {
+        support: support_dir.clone(),
+        logs: cache_dir.join("logs").join("log.txt"),
+        cache: cache_dir,
+        download: document_dir,
+        ssh_keys: support_dir.join(".ssh").join("keys"),
+    };
+
     let current_repository = settings.current_repository.or_else(|| {
         settings
             .repositories
@@ -123,75 +150,6 @@ fn main() -> anyhow::Result<()> {
     plugin_manager.load()?;
 
     let mut repository = Repository::open(current_repository)?;
-
-    // let repository: Rc<RefCell<dyn StrideRepository>> = match args.repository {
-    //     RepositoryType::Git => Rc::new(RefCell::new(TaskStorage::new(
-    //         current_repository,
-    //         &support_dir.join("repository").to_string_lossy(),
-    //         &settings,
-    //     )?)),
-    //     RepositoryType::TaskChampion => {
-    //         let data_dir =
-    //             choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
-    //         let config_dir =
-    //             choose_path_suffix(&dirs::config_dir().context("could not get config directory")?);
-
-    //         let db_path = data_dir.join("taskchampion");
-    //         let config_path = config_dir.join("config.toml");
-
-    //         let (url, client_id, encryption_secret) = {
-    //             #[derive(Deserialize)]
-    //             struct Config {
-    //                 sync: Sync,
-    //             }
-    //             #[derive(Deserialize)]
-    //             struct Sync {
-    //                 server: Server,
-    //                 encryption_secret: String,
-    //             }
-    //             #[derive(Deserialize)]
-    //             struct Server {
-    //                 origin: Url,
-    //                 client_id: Uuid,
-    //             }
-
-    //             let file = fs::read_to_string(&config_path).with_context(|| {
-    //                 format!("Failed to read config file at: '{}'", config_path.display())
-    //             })?;
-
-    //             let config: Config = toml::from_str(&file).with_context(|| {
-    //                 format!(
-    //                     "Failed to parse config file at: '{}' as toml config.",
-    //                     config_path.display()
-    //                 )
-    //             })?;
-
-    //             (
-    //                 config.sync.server.origin,
-    //                 config.sync.server.client_id,
-    //                 config.sync.encryption_secret,
-    //             )
-    //         };
-
-    //         let server_config = taskchampion::ServerConfig::Remote {
-    //             url: url.to_string(),
-    //             client_id,
-    //             encryption_secret: encryption_secret.as_bytes().to_vec(),
-    //         };
-    //         let constraint_environment = false;
-
-    //         Rc::new(RefCell::new(
-    //             Replica::new(&db_path, server_config, constraint_environment).with_context(
-    //                 || {
-    //                     format!(
-    //                         "Failed to initialize taskchampion storage at: {}",
-    //                         db_path.display()
-    //                     )
-    //                 },
-    //             )?,
-    //         ))
-    //     }
-    // };
 
     match args.mode {
         Mode::Search { filter } => {
@@ -351,60 +309,44 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
-        Mode::Sync { backend } => match backend {
-            cli::Backend::Git => repository.sync()?,
-            cli::Backend::TaskChampion => {
-                let config_dir = choose_path_suffix(
-                    &dirs::config_dir().context("could not get config directory")?,
-                );
-                let config_path = config_dir.join("config.toml");
+        Mode::Sync { backend: name } => {
+            let registry = get_backend_registry(&known_paths)?;
 
-                let (url, client_id, encryption_secret) = {
-                    #[derive(serde::Deserialize)]
-                    struct Config {
-                        sync: Sync,
-                    }
-                    #[derive(serde::Deserialize)]
-                    struct Sync {
-                        server: Server,
-                        encryption_secret: String,
-                    }
-                    #[derive(serde::Deserialize)]
-                    struct Server {
-                        origin: Url,
-                        client_id: Uuid,
-                    }
+            let Some(handler) = registry.get(name.as_str()) else {
+                bail!("unknown backend name: {name}");
+            };
 
-                    let file = std::fs::read_to_string(&config_path).with_context(|| {
-                        format!("Failed to read config file at: '{}'", config_path.display())
-                    })?;
+            let mut backends = repository.database().lock().unwrap().backends()?;
 
-                    let config: Config = toml::from_str(&file).with_context(|| {
-                        format!(
-                            "Failed to parse config file at: '{}' as toml config.",
-                            config_path.display()
-                        )
-                    })?;
+            let backend = backends
+                .iter_mut()
+                .find(|backend_record| backend_record.name.contains(&name))
+                .with_context(|| format!("Could not find field with name: {name}"))?;
 
-                    (
-                        config.sync.server.origin,
-                        config.sync.server.client_id,
-                        config.sync.encryption_secret,
-                    )
-                };
+            let path = repository
+                .root_path()
+                .join("backend")
+                .join(handler.name().as_ref())
+                .join(backend.id.to_string());
 
-                let constraint_environment = false;
-                let config = TaskchampionConfig {
-                    root_path: repository.root_path().join("backend").join("taskchampion"),
-                    url: url.as_str().to_string(),
-                    client_id,
-                    encryption_secret: encryption_secret.as_bytes().to_vec(),
-                    constraint_environment,
-                };
-                let mut backend = TaskchampionBackend::new(config)?;
-                backend.sync(repository.database_mut().get_mut().unwrap())?;
+            let config = backend.config.align(&handler.config_schema())?;
+
+            if config != backend.config {
+                backend.config = config;
+                repository
+                    .database()
+                    .lock()
+                    .unwrap()
+                    .update_backend(backend)?;
             }
-        },
+
+            std::fs::create_dir_all(&path)?;
+
+            let mut backend = handler.create(&backend.config, &path, &known_paths)?;
+
+            let db = repository.database_mut().get_mut().unwrap();
+            backend.sync(db)?;
+        }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
             // TODO: Maybe figure out what is the best value.
@@ -490,6 +432,9 @@ fn main() -> anyhow::Result<()> {
             settings.current_repository = Some(uuid);
             Settings::save(settings)?;
         }
+        Mode::Backend { command } => {
+            backend::handle_command(command.as_ref(), &mut repository, &known_paths)?;
+        }
         Mode::Plugin { command } => match command {
             None => {
                 for plugin in plugin_manager.list() {
@@ -538,5 +483,5 @@ fn main() -> anyhow::Result<()> {
         },
     }
 
-    Ok(())
+    Ok(ExitCode::SUCCESS)
 }
