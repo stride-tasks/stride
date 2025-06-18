@@ -1876,6 +1876,7 @@ dependencies = [
  "serde",
  "serde_json",
  "taskchampion",
+ "thiserror 2.0.12",
  "uuid",
 ]
 
@@ -1895,6 +1896,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "rusqlite",
+ "serde_json",
  "stride_core",
  "thiserror 2.0.12",
  "uuid",

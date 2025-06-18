@@ -3,6 +3,9 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::doc_markdown)]
 
+/// flutter_rust_bridge:ignore
+pub mod config;
+
 pub mod constant;
 pub mod event;
 pub mod task;

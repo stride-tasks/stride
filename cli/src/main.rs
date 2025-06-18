@@ -8,13 +8,15 @@ use std::{
 };
 use stride_backend::{
     Backend,
+    config::FromSchema,
+    git::config::GitConfig,
     taskchampion::{TaskchampionBackend, TaskchampionConfig},
 };
 use stride_core::{
     event::{HostEvent, PluginEvent},
     task::{Task, TaskStatus},
 };
-use stride_database::operation::OperationKind;
+use stride_database::{BackendRecord, operation::OperationKind};
 use stride_flutter_bridge::api::{
     filter::Filter,
     repository::Repository,
@@ -23,6 +25,8 @@ use stride_flutter_bridge::api::{
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use url::Url;
 use uuid::Uuid;
+
+use crate::cli::BackendCommand;
 
 pub mod cli;
 
@@ -487,6 +491,56 @@ fn main() -> anyhow::Result<()> {
             settings.current_repository = Some(uuid);
             Settings::save(settings)?;
         }
+        Mode::Backend { command } => match command {
+            None | Some(BackendCommand::List) => {
+                let backends = repository.database().lock().unwrap().backends()?;
+                for (i, backend) in backends.iter().enumerate() {
+                    println!("{i:2}. {}", backend.name);
+                }
+            }
+            Some(BackendCommand::New { backend_name }) => {
+                let backend = match backend_name.as_str() {
+                    "git" => BackendRecord {
+                        id: Uuid::now_v7(),
+                        enabled: true,
+                        name: String::from("git"),
+                        property: GitConfig::default_schema(),
+                    },
+                    "task-champion" => BackendRecord {
+                        id: Uuid::now_v7(),
+                        enabled: true,
+                        name: String::from("task-champion"),
+                        property: TaskchampionConfig::default_schema(),
+                    },
+                    name => {
+                        eprintln!("unknown backend name: {name}");
+                        todo!()
+                    }
+                };
+                repository
+                    .database()
+                    .lock()
+                    .unwrap()
+                    .add_backends(&backend)?;
+            }
+            Some(BackendCommand::Config { backend_name }) => {
+                let backends = repository.database().lock().unwrap().backends()?;
+                let Some(backend) = backends
+                    .iter()
+                    .find(|backend_record| backend_record.name.contains(&backend_name))
+                else {
+                    return Ok(());
+                };
+                for field in &backend.property.fields {
+                    println!(
+                        "{}: {} = {:?}",
+                        field.id,
+                        field.value.as_type_name(),
+                        field.value
+                    );
+                }
+            }
+        },
         Mode::Plugin { command } => match command {
             None => {
                 for plugin in plugin_manager.list() {

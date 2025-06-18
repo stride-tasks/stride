@@ -3,6 +3,7 @@ mod functions;
 use functions::init_stride_functions;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql, Transaction, types::Value};
 use stride_core::{
+    config::Schema,
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -779,4 +780,49 @@ impl Database {
         transaction.commit()?;
         Ok(())
     }
+
+    pub fn add_backends(&mut self, backend: &BackendRecord) -> Result<()> {
+        let property = serde_json::to_string(&backend.property).expect("should not fail");
+        self.execute(
+            "INSERT INTO backend_table (id, name, enabled, property) VALUES (?1, ?2, ?3, ?4)",
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                &backend.enabled,
+                &property,
+            ),
+        )?;
+        Ok(())
+    }
+
+    pub fn backends(&mut self) -> Result<Vec<BackendRecord>> {
+        let mut sql = self.prepare("SELECT id, name, enabled, property FROM backend_table")?;
+        let rows = sql.query_map((), |row| {
+            let property = row.get::<_, String>("property")?;
+            let property = serde_json::from_str(&property)
+                .map_err(|error| rusqlite::types::FromSqlError::Other(error.into()))?;
+            Ok(BackendRecord {
+                id: row.get::<_, Uuid>("id")?,
+                name: row.get::<_, String>("name")?,
+                enabled: row.get::<_, bool>("enabled")?,
+                property,
+            })
+        })?;
+
+        let mut backends = Vec::new();
+        for row in rows {
+            backends.push(row?);
+        }
+        Ok(backends)
+    }
+}
+
+/// flutter_rust_bridge:non_opaque
+#[allow(clippy::doc_markdown)]
+#[derive(Debug)]
+pub struct BackendRecord {
+    pub id: Uuid,
+    pub name: String,
+    pub enabled: bool,
+    pub property: Schema,
 }

@@ -86,11 +86,35 @@ pub enum Mode {
         uuid: Uuid,
     },
 
+    /// Manage backends.
+    Backend {
+        /// Backend command to apply.
+        #[command(subcommand)]
+        command: Option<BackendCommand>,
+    },
+
     /// Manage plugins.
     Plugin {
-        #[command(subcommand)]
         /// Plugin command to apply.
+        #[command(subcommand)]
         command: Option<PluginCommand>,
+    },
+}
+
+/// Backend command/action to apply.
+#[derive(Debug, Clone, Subcommand)]
+pub enum BackendCommand {
+    /// list backends
+    List,
+    /// Create a new backend.
+    New {
+        /// The name of the backend to be created.
+        backend_name: String,
+    },
+    /// Configure a backend option.
+    Config {
+        /// Name of backend to configure.
+        backend_name: String,
     },
 }
 

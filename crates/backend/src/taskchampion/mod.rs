@@ -1,6 +1,12 @@
-use std::{mem, path::PathBuf};
+use std::{
+    mem,
+    path::{Path, PathBuf},
+};
 
-use stride_core::task::Task;
+use stride_core::{
+    config::{Field, Schema, SchemaError, Value},
+    task::Task,
+};
 use stride_database::Database;
 use taskchampion::{Operations, StorageConfig};
 use uuid::Uuid;
@@ -11,7 +17,7 @@ use super::Backend;
 // `taskchampion`
 pub use taskchampion::ServerConfig;
 
-use crate::Result;
+use crate::{Result, config::FromSchema};
 
 #[derive(Debug)]
 pub struct TaskchampionConfig {
@@ -21,6 +27,42 @@ pub struct TaskchampionConfig {
     pub encryption_secret: Vec<u8>,
 
     pub constraint_environment: bool,
+}
+
+impl FromSchema for TaskchampionConfig {
+    fn from_schema(schema: &Schema, root_path: &Path) -> Result<Self, SchemaError> {
+        Ok(TaskchampionConfig {
+            root_path: root_path.to_path_buf(),
+            url: schema.string_value("url")?.into(),
+            client_id: schema.uuid_value("client_id")?,
+            encryption_secret: schema.bytes_value("encryption_secret")?.to_vec(),
+            constraint_environment: true,
+        })
+    }
+
+    fn default_schema() -> Schema {
+        Schema {
+            title: "Task Champion Config".into(),
+            fields: vec![
+                Field {
+                    id: "url".into(),
+                    name: "Server URL".into(),
+                    value: Value::String(None),
+                },
+                Field {
+                    id: "client_id".into(),
+                    name: "Client ID".into(),
+                    value: Value::Uuid(None),
+                },
+                Field {
+                    id: "encryption_secret".into(),
+                    name: "Encryption Secret".into(),
+                    value: Value::Bytes(None),
+                },
+            ]
+            .into(),
+        }
+    }
 }
 
 #[allow(missing_debug_implementations)] /* [`taskchampion::Replica`] does not implement [`Debug`] */

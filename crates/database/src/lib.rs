@@ -15,4 +15,4 @@ pub mod operation;
 
 use migrations::apply_migrations;
 
-pub use database::Database;
+pub use database::{BackendRecord, Database};
