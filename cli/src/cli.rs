@@ -92,6 +92,13 @@ pub enum Mode {
         /// Plugin command to apply.
         command: Option<PluginCommand>,
     },
+
+    /// Manage SSH options.
+    Ssh {
+        /// SSH command to apply.
+        #[command(subcommand)]
+        command: SshCommand,
+    },
 }
 
 /// Plugin command/action to apply.
@@ -106,5 +113,46 @@ pub enum PluginCommand {
     Toggle {
         /// Plugin to toggle.
         plugin_name: String,
+    },
+}
+
+/// SSH command/action to apply.
+#[derive(Debug, Clone, Subcommand)]
+pub enum SshCommand {
+    /// Manage SSH keys.
+    Key {
+        /// SSH Key command to apply.
+        #[command(subcommand)]
+        command: Option<SshKeyCommand>,
+    },
+
+    /// Manage SSH known hosts.
+    KnownHosts {
+        /// SSH Known host command to apply.
+        #[command(subcommand)]
+        command: Option<SshKnownHostsCommand>,
+    },
+}
+
+/// SSH command/action to apply.
+#[derive(Debug, Clone, Copy, Subcommand)]
+pub enum SshKeyCommand {
+    /// Generate new SSH key.
+    Generate,
+
+    /// Remove a SSH key.
+    Remove {
+        /// ID of the SSH key to be removed.
+        id: Uuid,
+    },
+}
+
+/// SSH Known host command to apply.
+#[derive(Debug, Clone, Subcommand)]
+pub enum SshKnownHostsCommand {
+    /// Remove a SSH known host.
+    Remove {
+        /// A Host name (e.g. `github.com`).
+        hostname: String,
     },
 }

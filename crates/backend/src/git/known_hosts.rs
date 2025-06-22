@@ -256,6 +256,11 @@ impl KnownHosts {
     }
 
     /// flutter_rust_bridge:ignore
+    pub fn remove_by_hostname(&mut self, hostname: &str) {
+        self.hosts.retain(|host| host.hostname != hostname);
+    }
+
+    /// flutter_rust_bridge:ignore
     #[must_use]
     pub fn hosts(&self) -> &[Host] {
         &self.hosts

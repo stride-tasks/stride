@@ -8,6 +8,7 @@ use std::{
 };
 use stride_backend::{
     Backend,
+    git::known_hosts::KnownHosts,
     taskchampion::{TaskchampionBackend, TaskchampionConfig},
 };
 use stride_core::{
@@ -18,11 +19,13 @@ use stride_database::operation::OperationKind;
 use stride_flutter_bridge::api::{
     filter::Filter,
     repository::Repository,
-    settings::{ApplicationPaths, RepositorySpecification, Settings},
+    settings::{ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys},
 };
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use url::Url;
 use uuid::Uuid;
+
+use crate::cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand};
 
 pub mod cli;
 
@@ -501,6 +504,37 @@ fn main() -> anyhow::Result<()> {
                     plugin_manager.toggle(&plugin_name)?;
                 }
             },
+        },
+        Mode::Ssh { command } => match command {
+            SshCommand::Key { command: None } => {
+                for key in ssh_keys()? {
+                    println!("{} {}", key.uuid(), key.public_key());
+                }
+            }
+            SshCommand::Key {
+                command: Some(SshKeyCommand::Generate),
+            } => {
+                let key = SshKey::generate()?;
+                println!("{} {}", key.uuid(), key.public_key());
+            }
+            SshCommand::Key {
+                command: Some(SshKeyCommand::Remove { id }),
+            } => {
+                SshKey::remove_key(id)?;
+            }
+            SshCommand::KnownHosts { command: None } => {
+                let hosts = KnownHosts::load()?;
+                for host in hosts.hosts() {
+                    println!("{} {}", host.hostname, host.key_type.name());
+                }
+            }
+            SshCommand::KnownHosts {
+                command: Some(SshKnownHostsCommand::Remove { hostname }),
+            } => {
+                let mut hosts = KnownHosts::load()?;
+                hosts.remove_by_hostname(&hostname);
+                KnownHosts::save(&hosts)?;
+            }
         },
     }
 
