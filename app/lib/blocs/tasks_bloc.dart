@@ -12,7 +12,6 @@ import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
-import 'package:stride/routes/encryption_key_route.dart';
 import 'package:uuid/uuid.dart';
 
 @immutable
@@ -261,13 +260,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
             content: 'Are you sure the encryption key is correct?',
             onConfirm: (context) async {
               Navigator.pop(context);
-              await Navigator.of(context).push<void>(
-                MaterialPageRoute(
-                  builder: (context) => EncryptionKeyRoute(
-                    repository: settingsBloc.settings.repositories.first,
-                  ),
-                ),
-              );
+              // await Navigator.of(context).push<void>(
+              //   MaterialPageRoute(
+              //     builder: (context) => EncryptionKeyRoute(
+              //       repository: settingsBloc.settings.repositories.first,
+              //     ),
+              //   ),
+              // );
               return true;
             },
           ),

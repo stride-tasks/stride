@@ -4,7 +4,10 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
 use stride_core::{
     backend::{Config, Schema},
@@ -14,10 +17,11 @@ use stride_database::Database;
 use uuid::Uuid;
 
 pub mod error;
+pub mod registry;
 
 pub use error::{Error, Result};
 
-pub trait BackendHandler {
+pub trait BackendHandler: Debug + Sync + Send {
     // TODO: encapsulate name in a newtype, to restrict to ascii, no space, etc.
     fn name(&self) -> Box<str>;
 

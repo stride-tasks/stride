@@ -17,11 +17,12 @@ crate-type = ["lib", "cdylib", "staticlib"]
 [dependencies]
 stride_core = { workspace = true, features = ["taskchampion"] }
 stride_logging.workspace = true
-stride_crypto.workspace = true
 stride_database.workspace = true
 stride_backend.workspace = true
 stride_backend_git.workspace = true
+stride_backend_taskchampion.workspace = true
 stride_plugin_manager.workspace = true
+
 flutter_rust_bridge = { version = "=2.11.1", features = ["chrono", "uuid"] }
 serde.workspace = true
 serde_json.workspace = true

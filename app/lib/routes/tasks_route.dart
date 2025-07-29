@@ -99,49 +99,53 @@ class _TasksRouteState extends State<TasksRoute> {
           task.status == TaskStatus.deleted) {
         status = TaskStatus.pending;
       }
-      context
-          .read<TaskBloc>()
-          .add(TaskChangeStatusEvent(task: task, status: status));
+      context.read<TaskBloc>().add(
+        TaskChangeStatusEvent(task: task, status: status),
+      );
       context.read<PluginManagerBloc>().emitHostEvent(
-            HostEvent.taskModify(
-              current: task.copyWith(status: status),
-              previous: task,
-            ),
-          );
+        HostEvent.taskModify(
+          current: task.copyWith(status: status),
+          previous: task,
+        ),
+      );
       return true;
     }
 
     Future<bool> onSwipeLeft() async {
-      final additionalMessage =
-          task.status == TaskStatus.deleted ? ' forever' : '';
+      final additionalMessage = task.status == TaskStatus.deleted
+          ? ' forever'
+          : '';
 
-      return showAlertDialog(
-        context: context,
-        content: Text(
-          'Are you sure you want to delete this task$additionalMessage?',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        onConfirm: (context) async {
-          context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
-          Navigator.of(context).pop();
-          return true;
-        },
-      );
+      return await showAlertDialog<bool>(
+            context: context,
+            content: Text(
+              'Are you sure you want to delete this task$additionalMessage?',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            onConfirm: (context) async {
+              context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
+              return true;
+            },
+          ) ??
+          false;
     }
 
     return TaskItem(
       task: task,
       onSwipeRight: onSwipeRight,
-      swipeRightIcon: (task.status == TaskStatus.complete ||
+      swipeRightIcon:
+          (task.status == TaskStatus.complete ||
               task.status == TaskStatus.deleted)
           ? const Icon(Icons.calendar_month, color: Colors.white)
           : const Icon(Icons.check, color: Colors.white),
-      swipeRightColor: (task.status == TaskStatus.complete ||
+      swipeRightColor:
+          (task.status == TaskStatus.complete ||
               task.status == TaskStatus.deleted)
           ? Colors.purpleAccent
           : Colors.greenAccent,
-      swipeRightText: (task.status == TaskStatus.complete ||
+      swipeRightText:
+          (task.status == TaskStatus.complete ||
               task.status == TaskStatus.deleted)
           ? 'Pending'
           : null,
@@ -211,12 +215,12 @@ class _TasksRouteState extends State<TasksRoute> {
                           onTap: selected
                               ? null
                               : () => context.read<SettingsBloc>().add(
-                                    SettingsUpdateEvent(
-                                      settings: settings.copyWith(
-                                        currentRepository: repository.uuid,
-                                      ),
+                                  SettingsUpdateEvent(
+                                    settings: settings.copyWith(
+                                      currentRepository: repository.uuid,
                                     ),
                                   ),
+                                ),
                           onLongPress: () {
                             Navigator.of(context).push(
                               MaterialPageRoute<void>(
@@ -244,8 +248,9 @@ class _TasksRouteState extends State<TasksRoute> {
                       var selected = false;
                       if (settings.selectedFilter
                           is FilterSelection_Predefined) {
-                        final predefined = settings.selectedFilter!
-                            as FilterSelection_Predefined;
+                        final predefined =
+                            settings.selectedFilter!
+                                as FilterSelection_Predefined;
                         selected = filter.uuid == predefined.uuid;
                       }
                       return Card(
@@ -264,29 +269,28 @@ class _TasksRouteState extends State<TasksRoute> {
                           onTap: () {
                             if (selected) {
                               context.read<SettingsBloc>().add(
-                                    SettingsUpdateEvent(
-                                      settings: settings.copyWith(
-                                        selectedFilter: null,
-                                      ),
-                                    ),
-                                  );
+                                SettingsUpdateEvent(
+                                  settings: settings.copyWith(
+                                    selectedFilter: null,
+                                  ),
+                                ),
+                              );
                               context.read<TaskBloc>().add(TaskFilterEvent());
                               return;
                             }
 
                             context.read<SettingsBloc>().add(
-                                  SettingsUpdateEvent(
-                                    settings: settings.copyWith(
-                                      selectedFilter:
-                                          FilterSelection.predefined(
-                                        uuid: filter.uuid,
-                                      ),
-                                    ),
+                              SettingsUpdateEvent(
+                                settings: settings.copyWith(
+                                  selectedFilter: FilterSelection.predefined(
+                                    uuid: filter.uuid,
                                   ),
-                                );
-                            context
-                                .read<TaskBloc>()
-                                .add(TaskFilterEvent(filter: filter));
+                                ),
+                              ),
+                            );
+                            context.read<TaskBloc>().add(
+                              TaskFilterEvent(filter: filter),
+                            );
                           },
                         ),
                       );
