@@ -2,7 +2,7 @@ use crate::base64_decode;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EncryptionKey {
-    pub key: String,
+    pub key: Vec<u8>,
 }
 
 impl EncryptionKey {
@@ -11,7 +11,7 @@ impl EncryptionKey {
     pub fn generate() -> Self {
         let key = stride_crypto::crypter::Crypter::generate();
         Self {
-            key: key.to_base64(),
+            key: key.encryption_key().to_vec(),
         }
     }
 

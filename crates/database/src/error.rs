@@ -34,6 +34,8 @@ pub enum BlobError {
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
     #[error("sqlite error: {0}")]
     Sqlite(#[from] rusqlite::Error),
     #[error("blob error: {0}")]

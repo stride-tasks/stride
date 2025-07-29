@@ -31,14 +31,14 @@ Future<DateTime?> showPickDateTime({required BuildContext context}) async {
   ).toUtc();
 }
 
-Future<bool> showAlertDialog({
+Future<T?> showAlertDialog<T>({
   required BuildContext context,
   required Widget content,
-  FutureOr<bool> Function(BuildContext context)? onCancel,
-  required FutureOr<bool> Function(BuildContext context) onConfirm,
+  FutureOr<T> Function(BuildContext context)? onCancel,
+  required FutureOr<T> Function(BuildContext context) onConfirm,
+  bool popRoute = true,
 }) async {
-  var result = false;
-  await showDialog<void>(
+  return showDialog<T?>(
     context: context,
     builder: (context) => AlertDialog(
       content: SizedBox(
@@ -54,18 +54,19 @@ Future<bool> showAlertDialog({
               Navigator.pop(context);
               return;
             }
-            await onCancel(context);
+            final result = await onCancel(context);
+
+            if (context.mounted && popRoute) Navigator.pop(context, result);
           },
         ),
         IconButton(
           icon: const Icon(Icons.check),
           onPressed: () async {
-            await onConfirm(context);
-            result = true;
+            final result = await onConfirm(context);
+            if (context.mounted && popRoute) Navigator.pop(context, result);
           },
         ),
       ],
     ),
   );
-  return result;
 }
