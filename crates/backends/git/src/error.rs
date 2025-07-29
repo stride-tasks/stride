@@ -4,7 +4,10 @@ use stride_crypto::crypter::Error as EncryptionError;
 
 use std::{env::VarError, io::Error as IoError};
 
-use crate::known_hosts::{Host, KnownHostsError};
+use crate::{
+    known_hosts::{Host, KnownHostsError},
+    ssh_key::SshError,
+};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -52,6 +55,9 @@ pub enum Error {
 
     #[error("config error: {0}")]
     Config(#[from] stride_core::backend::Error),
+
+    #[error("ssh error: {0}")]
+    Ssh(#[from] SshError),
 }
 
 impl BackendError for Error {}

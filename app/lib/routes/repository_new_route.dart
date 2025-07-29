@@ -1,10 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
-import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
@@ -84,10 +85,10 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
   }
 
   List<GlobalKey<FormState>> _formKeys() => [
-        _generalFormKey,
-        _gitIntegrationFormKey,
-        if (widget.cloning) _encryptionFormKey,
-      ];
+    _generalFormKey,
+    _gitIntegrationFormKey,
+    if (widget.cloning) _encryptionFormKey,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -115,44 +116,42 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
       return;
     }
 
-    EncryptionKey? encrpytionKey;
-    if (widget.cloning) {
-      // NOTE: encryption key should be validated by form validaters
-      encrpytionKey = EncryptionKey(key: _encrytionKeyController.text);
-    } else {
-      encrpytionKey = await EncryptionKey.generate();
-    }
+    // EncryptionKey? encrpytionKey;
+    // if (widget.cloning) {
+    //   // NOTE: encryption key should be validated by form validaters
+    //   encrpytionKey = EncryptionKey(key: _encrytionKeyController.text);
+    // } else {
+    //   encrpytionKey = await EncryptionKey.generate();
+    // }
 
     if (!mounted) return;
 
     final repositoryUuid = const Uuid().v7obj();
     final settings = context.read<SettingsBloc>().settings;
     context.read<SettingsBloc>().add(
-          SettingsUpdateEvent(
-            settings: settings.copyWith(
-              repositories: settings.repositories.toList()
-                ..add(
-                  RepositorySpecification(
-                    uuid: repositoryUuid,
-                    name: _nameController.text,
-                    origin: _originController.text,
-                    author: _authorController.text,
-                    email: _emailController.text,
-                    branch: _branchController.text,
-                    encryption: encrpytionKey,
-                    sshKeyUuid: _sshKeyController.text.isEmpty
-                        ? null
-                        : UuidValue.fromString(_sshKeyController.text),
-                  ),
-                ),
-              currentRepository: repositoryUuid,
+      SettingsUpdateEvent(
+        settings: settings.copyWith(
+          repositories: settings.repositories.toList()
+            ..add(
+              RepositorySpecification(
+                uuid: repositoryUuid,
+                name: _nameController.text,
+                // origin: _originController.text,
+                // author: _authorController.text,
+                // email: _emailController.text,
+                // branch: _branchController.text,
+                // encryption: encrpytionKey,
+                // sshKeyUuid: _sshKeyController.text.isEmpty
+                //     ? null
+                //     : UuidValue.fromString(_sshKeyController.text),
+              ),
             ),
-          ),
-        );
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (context) => const TasksRoute(),
+          currentRepository: repositoryUuid,
+        ),
       ),
+    );
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (context) => const TasksRoute()),
     );
     if (widget.cloning) {
       context.read<TaskBloc>().add(TaskSyncEvent());
@@ -201,10 +200,7 @@ class _GeneralRepositoryForm extends StatelessWidget {
   final TextEditingController name;
   final GlobalKey<FormState> formKey;
 
-  const _GeneralRepositoryForm({
-    required this.formKey,
-    required this.name,
-  });
+  const _GeneralRepositoryForm({required this.formKey, required this.name});
 
   void _onChange(String _) {
     formKey.currentState!.validate();
@@ -275,9 +271,7 @@ class _GitIntegrationRepositoryFormState
         children: [
           TextFormField(
             controller: widget.author,
-            decoration: const InputDecoration(
-              hintText: 'Enter Commit Author',
-            ),
+            decoration: const InputDecoration(hintText: 'Enter Commit Author'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter some text';
@@ -288,9 +282,7 @@ class _GitIntegrationRepositoryFormState
           ),
           TextFormField(
             controller: widget.email,
-            decoration: const InputDecoration(
-              hintText: 'Enter Commit Email',
-            ),
+            decoration: const InputDecoration(hintText: 'Enter Commit Email'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter some text';
@@ -390,14 +382,17 @@ class _EncryptionRepositoryForm extends StatelessWidget {
         children: [
           TextFormField(
             controller: encryptionKey,
-            decoration: const InputDecoration(
-              hintText: 'Enter Encrypiton Key',
-            ),
+            decoration: const InputDecoration(hintText: 'Enter Encrypiton Key'),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'please enter some text';
               }
-              return EncryptionKey.validate(key: value);
+
+              final bytes = Base64Codec.urlSafe().decode(value);
+              if (bytes.length != 32) {
+                return 'encryption key should be 32 bytes in length';
+              }
+              return null;
             },
             onChanged: _onChange,
           ),

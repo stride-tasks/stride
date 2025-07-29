@@ -62,9 +62,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
             }
 
             if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(
-                child: CircularProgressIndicator.adaptive(),
-              );
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
 
             final keys = snapshot.data!;
@@ -116,22 +114,23 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
     final publicKey = key.publicKey;
     final uuid = key.uuid;
 
-    final subtitle = switch (settings.repositories.any(
-      (element) => element.sshKeyUuid == uuid,
-    )) {
-      false => Text(uuid.toString()),
-      true => RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(text: '$uuid '),
-              WidgetSpan(
-                child: Icon(Icons.info, size: 16, color: Colors.blue[200]),
-              ),
-              const TextSpan(text: ' Key In Use'),
-            ],
-          ),
-        ),
-    };
+    final subtitle = Text(uuid.toString());
+    // final subtitle = switch (settings.repositories.any(
+    //   (element) => element.sshKeyUuid == uuid,
+    // )) {
+    //   false => Text(uuid.toString()),
+    //   true => RichText(
+    //     text: TextSpan(
+    //       children: [
+    //         TextSpan(text: '$uuid '),
+    //         WidgetSpan(
+    //           child: Icon(Icons.info, size: 16, color: Colors.blue[200]),
+    //         ),
+    //         const TextSpan(text: ' Key In Use'),
+    //       ],
+    //     ),
+    //   ),
+    // };
 
     return ListTile(
       title: Text(publicKey),
@@ -140,8 +139,8 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
       leading: widget.selected == null
           ? null
           : key.uuid != widget.selected
-              ? const Icon(Icons.circle_outlined)
-              : const Icon(Icons.check_circle_outline_rounded),
+          ? const Icon(Icons.circle_outlined)
+          : const Icon(Icons.check_circle_outline_rounded),
       trailing: !widget.hasDelete
           ? null
           : IconButton(
@@ -163,10 +162,9 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   ),
                   onConfirm: (context) async {
                     await context.read<LogBloc>().catch_(
-                          message: 'ssh key',
-                          () async => SshKey.removeKey(uuid: key.uuid),
-                        );
-                    if (context.mounted) Navigator.of(context).pop();
+                      message: 'ssh key',
+                      () async => SshKey.removeKey(uuid: key.uuid),
+                    );
                     logging.trace(
                       message: 'SSH Key deleted with UUID: ${key.uuid}',
                     );

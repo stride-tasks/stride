@@ -13,10 +13,10 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsRoute extends StatelessWidget {
   TextStyle get headingStyle => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.red,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.red,
+  );
 
   const SettingsRoute({super.key});
 
@@ -43,14 +43,15 @@ class SettingsRoute extends StatelessWidget {
                   SettingsTileSwitch(
                     title: const Text('Periodic Sync'),
                     leading: const Icon(Icons.timer),
-                    description:
-                        const Text('Periodically sync every 5 minutes'),
+                    description: const Text(
+                      'Periodically sync every 5 minutes',
+                    ),
                     value: settings.periodicSync,
                     onChanged: (val) => context.read<SettingsBloc>().add(
-                          SettingsUpdateEvent(
-                            settings: settings.copyWith(periodicSync: val),
-                          ),
-                        ),
+                      SettingsUpdateEvent(
+                        settings: settings.copyWith(periodicSync: val),
+                      ),
+                    ),
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.file_open),
@@ -69,101 +70,11 @@ class SettingsRoute extends StatelessWidget {
                   ),
                 ],
               ),
-              // SettingsSection(
-              //   title: Text('Git Integration', style: headingStyle),
-              //   tiles: [
-              //     SettingsTileText(
-              //       title: const Text('Repository URL'),
-              //       leading: const Icon(Icons.code),
-              //       text: settings.repositories[0].origin,
-              //       onChanged: (text) {
-              //         context.read<SettingsBloc>().add(
-              //               SettingsUpdateEvent(
-              //                 settings: settings.copyWith(
-              //                   repository:
-              //                       settings.repository.copyWith(origin: text),
-              //                 ),
-              //               ),
-              //             );
-              //       },
-              //     ),
-              //     SettingsTileText(
-              //       leading: const Icon(Icons.mail),
-              //       title: const Text('Email'),
-              //       text: settings.repository.email,
-              //       onChanged: (text) {
-              //         context.read<SettingsBloc>().add(
-              //               SettingsUpdateEvent(
-              //                 settings: settings.copyWith(
-              //                   repository:
-              //                       settings.repository.copyWith(email: text),
-              //                 ),
-              //               ),
-              //             );
-              //       },
-              //     ),
-              //     SettingsTileText(
-              //       leading: const Icon(Icons.person),
-              //       title: const Text('Author'),
-              //       text: settings.repository.author,
-              //       onChanged: (text) {
-              //         context.read<SettingsBloc>().add(
-              //               SettingsUpdateEvent(
-              //                 settings: settings.copyWith(
-              //                   repository:
-              //                       settings.repository.copyWith(author: text),
-              //                 ),
-              //               ),
-              //             );
-              //       },
-              //     ),
-              //     SettingsTileText(
-              //       leading: const FaIcon(FontAwesomeIcons.codeBranch),
-              //       title: const Text('Branch'),
-              //       text: settings.repository.branch,
-              //       onChanged: (text) {
-              //         context.read<SettingsBloc>().add(
-              //               SettingsUpdateEvent(
-              //                 settings: settings.copyWith(
-              //                   repository:
-              //                       settings.repository.copyWith(branch: text),
-              //                 ),
-              //               ),
-              //             );
-              //         context.read<TaskBloc>().add(TaskCheckoutBranchEvent());
-              //       },
-              //     ),
-              //     SettingsTileNavigation(
-              //       leading: const Icon(Icons.key),
-              //       title: const Text('SSH Key'),
-              //       builder: (context) => SshKeysRoute(
-              //         hasDelete: false,
-              //         selected: settings.repository.sshKeyUuid,
-              //         onTap: (key) {
-              //           context.read<SettingsBloc>().add(
-              //                 SettingsUpdateEvent(
-              //                   settings: settings.copyWith(
-              //                     repository: settings.repository
-              //                         .copyWith(sshKeyUuid: key.uuid),
-              //                   ),
-              //                 ),
-              //               );
-              //           Navigator.of(context).pop();
-              //         },
-              //       ),
-              //     ),
               //     SettingsTileNavigation(
               //       leading: const Icon(Icons.commit),
               //       title: const Text('Commits'),
               //       builder: (context) => CommitsRoute(
               //         repository: context.read<TaskBloc>().repository,
-              //       ),
-              //     ),
-              //     SettingsTileNavigation(
-              //       leading: const Icon(Icons.lock),
-              //       title: const Text('Encryption'),
-              //       builder: (context) => EncryptionKeyRoute(
-              //         encryption: settings.repository.encryption,
               //       ),
               //     ),
               //     SettingsTile(
@@ -195,27 +106,6 @@ class SettingsRoute extends StatelessWidget {
               //         );
               //       },
               //     ),
-              //     SettingsTile(
-              //       leading: const Icon(Icons.push_pin, color: Colors.red),
-              //       title: const Text('Force Push to Remote'),
-              //       onTap: (context) async {
-              //         await showAlertDialog(
-              //           context: context,
-              //           content: const Text(
-              //             'Are you sure you want to force push local branch to remote repository?',
-              //             style: TextStyle(fontWeight: FontWeight.bold),
-              //             textAlign: TextAlign.center,
-              //           ),
-              //           onConfirm: (context) async {
-              //             context.read<TaskBloc>().add(TaskForcePushEvent());
-              //             Navigator.of(context).pop();
-              //             return true;
-              //           },
-              //         );
-              //       },
-              //     ),
-              //   ],
-              // ),
               SettingsSection(
                 title: Text('Security', style: headingStyle),
                 tiles: [
@@ -225,16 +115,12 @@ class SettingsRoute extends StatelessWidget {
                     builder: (context) => SshKeysRoute(
                       onTap: (key) async {
                         await Clipboard.setData(
-                          ClipboardData(
-                            text: key.publicKey,
-                          ),
+                          ClipboardData(text: key.publicKey),
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                'Copied to clipbard!',
-                              ),
+                              content: Text('Copied to clipbard!'),
                             ),
                           );
                         }
@@ -259,10 +145,7 @@ class SettingsRoute extends StatelessWidget {
                       // maybe use package_info_plus to get the version.
                       '0.0.1+1',
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12.0, color: Colors.grey),
                     ),
                   ),
                   // TODO: Deduplicate string by using the SettingsTileText
@@ -272,18 +155,15 @@ class SettingsRoute extends StatelessWidget {
                     description: const Text(
                       'https://github.com/stride-tasks/stride/issues',
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12.0, color: Colors.grey),
                     ),
                     title: const Text('Issue Tracker'),
                     onTap: (context) async {
                       const url =
                           'https://github.com/stride-tasks/stride/issues';
-                      await context
-                          .read<LogBloc>()
-                          .catch_(() async => launchUrlString(url));
+                      await context.read<LogBloc>().catch_(
+                        () async => launchUrlString(url),
+                      );
                     },
                   ),
                   SettingsTile(
@@ -292,16 +172,13 @@ class SettingsRoute extends StatelessWidget {
                     description: const Text(
                       'https://github.com/stride-tasks/stride',
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12.0, color: Colors.grey),
                     ),
                     onTap: (context) async {
                       const url = 'https://github.com/stride-tasks/stride';
-                      await context
-                          .read<LogBloc>()
-                          .catch_(() async => launchUrlString(url));
+                      await context.read<LogBloc>().catch_(
+                        () async => launchUrlString(url),
+                      );
                     },
                   ),
                   SettingsTile(
@@ -310,17 +187,14 @@ class SettingsRoute extends StatelessWidget {
                     description: const Text(
                       'AGPL-3.0-or-later',
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12.0, color: Colors.grey),
                     ),
                     onTap: (context) async {
                       const url =
                           'https://www.gnu.org/licenses/agpl-3.0.en.html';
-                      await context
-                          .read<LogBloc>()
-                          .catch_(() async => launchUrlString(url));
+                      await context.read<LogBloc>().catch_(
+                        () async => launchUrlString(url),
+                      );
                     },
                   ),
                 ],

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/routes/encryption_key_route.dart';
-import 'package:stride/routes/ssh_keys_route.dart';
+import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/routes/backend/list_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -12,10 +11,10 @@ import 'package:uuid/uuid.dart';
 class RepositoryRoute extends StatelessWidget {
   final UuidValue repositoryUuid;
   TextStyle get headingStyle => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.red,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.red,
+  );
 
   const RepositoryRoute({super.key, required this.repositoryUuid});
 
@@ -32,7 +31,9 @@ class RepositoryRoute extends StatelessWidget {
           if (repositoryIndex == -1) {
             return const Column();
           }
-          final repository = settings.repositories[repositoryIndex];
+          final repositorySpec = settings.repositories[repositoryIndex];
+
+          final repository = Repository.open(uuid: repositoryUuid);
           return SettingsList(
             sections: [
               SettingsSection(
@@ -41,21 +42,22 @@ class RepositoryRoute extends StatelessWidget {
                   SettingsTileText(
                     title: const Text('Name'),
                     leading: const Icon(Icons.label),
-                    text: repository.name,
+                    text: repositorySpec.name,
                     onChanged: (text) {
                       final repositories = settings.repositories
                           .map(
-                            (e) => (e.uuid != repository.uuid)
+                            (e) => (e.uuid != repositorySpec.uuid)
                                 ? e
                                 : e.copyWith(name: text),
                           )
                           .toList();
                       context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              settings:
-                                  settings.copyWith(repositories: repositories),
-                            ),
-                          );
+                        SettingsUpdateEvent(
+                          settings: settings.copyWith(
+                            repositories: repositories,
+                          ),
+                        ),
+                      );
                     },
                   ),
                   // TODO: Currently only work for the currently loaded repository.
@@ -69,174 +71,22 @@ class RepositoryRoute extends StatelessWidget {
                   //   title: const Text('Import Tasks'),
                   //   onTap: _importTasks,
                   // ),
+                  SettingsTileNavigation(
+                    leading: const Icon(Icons.backup),
+                    title: const Text('Backends'),
+                    builder: (context) =>
+                        BackendListRoute(repository: repository),
+                  ),
                 ],
               ),
               SettingsSection(
                 title: Text('Git Integration', style: headingStyle),
                 tiles: [
-                  SettingsTileText(
-                    title: const Text('Repository URL'),
-                    leading: const Icon(Icons.code),
-                    text: repository.origin,
-                    onChanged: (text) {
-                      final repositories = settings.repositories
-                          .map(
-                            (e) => (e.uuid != repository.uuid)
-                                ? e
-                                : e.copyWith(origin: text),
-                          )
-                          .toList();
-                      context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              settings:
-                                  settings.copyWith(repositories: repositories),
-                            ),
-                          );
-                    },
-                  ),
-                  SettingsTileText(
-                    leading: const Icon(Icons.mail),
-                    title: const Text('Email'),
-                    text: repository.email,
-                    onChanged: (text) {
-                      final repositories = settings.repositories
-                          .map(
-                            (e) => (e.uuid != repository.uuid)
-                                ? e
-                                : e.copyWith(email: text),
-                          )
-                          .toList();
-                      context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              settings:
-                                  settings.copyWith(repositories: repositories),
-                            ),
-                          );
-                    },
-                  ),
-                  SettingsTileText(
-                    leading: const Icon(Icons.person),
-                    title: const Text('Author'),
-                    text: repository.author,
-                    onChanged: (text) {
-                      final repositories = settings.repositories
-                          .map(
-                            (e) => (e.uuid != repository.uuid)
-                                ? e
-                                : e.copyWith(author: text),
-                          )
-                          .toList();
-                      context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              settings:
-                                  settings.copyWith(repositories: repositories),
-                            ),
-                          );
-                    },
-                  ),
-                  SettingsTileText(
-                    leading: const FaIcon(FontAwesomeIcons.codeBranch),
-                    title: const Text('Branch'),
-                    text: repository.branch,
-                    onChanged: (text) {
-                      final repositories = settings.repositories
-                          .map(
-                            (e) => (e.uuid != repository.uuid)
-                                ? e
-                                : e.copyWith(branch: text),
-                          )
-                          .toList();
-                      context.read<SettingsBloc>().add(
-                            SettingsUpdateEvent(
-                              settings:
-                                  settings.copyWith(repositories: repositories),
-                            ),
-                          );
-                      context.read<TaskBloc>().add(TaskCheckoutBranchEvent());
-                    },
-                  ),
-                  SettingsTileNavigation(
-                    leading: const Icon(Icons.key),
-                    title: const Text('SSH Key'),
-                    builder: (context) => SshKeysRoute(
-                      hasDelete: false,
-                      selected: repository.sshKeyUuid,
-                      onTap: (key) {
-                        final repositories = settings.repositories
-                            .map(
-                              (e) => (e.uuid != repository.uuid)
-                                  ? e
-                                  : e.copyWith(sshKeyUuid: key.uuid),
-                            )
-                            .toList();
-                        context.read<SettingsBloc>().add(
-                              SettingsUpdateEvent(
-                                settings: settings.copyWith(
-                                  repositories: repositories,
-                                ),
-                              ),
-                            );
-                        Navigator.of(context).pop();
-                      },
+                  SettingsTile(
+                    leading: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.red,
                     ),
-                  ),
-                  // TODO: Currently this only works for the currently loaded repository.
-                  // SettingsTileNavigation(
-                  //   leading: const Icon(Icons.commit),
-                  //   title: const Text('Commits'),
-                  //   builder: (context) => CommitsRoute(
-                  //     repository:
-                  //         context.read<TaskBloc>().repository() as TaskStorage,
-                  //   ),
-                  // ),
-                  SettingsTileNavigation(
-                    leading: const Icon(Icons.lock),
-                    title: const Text('Encryption'),
-                    builder: (context) => EncryptionKeyRoute(
-                      repository: repository,
-                    ),
-                  ),
-                  SettingsTile(
-                    leading: const Icon(Icons.push_pin, color: Colors.red),
-                    title: const Text('Force Push to Remote'),
-                    onTap: (context) async {
-                      await showAlertDialog(
-                        context: context,
-                        content: const Text(
-                          'Are you sure you want to force push local branch to remote repository?',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        ),
-                        onConfirm: (context) async {
-                          context.read<TaskBloc>().add(TaskForcePushEvent());
-                          Navigator.of(context).pop();
-                          return true;
-                        },
-                      );
-                    },
-                  ),
-                  SettingsTile(
-                    leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text('Remove Repository Files'),
-                    onTap: (context) async {
-                      await showAlertDialog(
-                        context: context,
-                        content: const Text(
-                          'Are you sure you want to delete the (local) repository?',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        ),
-                        onConfirm: (context) async {
-                          context.read<TaskBloc>().add(TaskRemoveAllEvent());
-                          Navigator.of(context).pop();
-                          return true;
-                        },
-                      );
-                    },
-                  ),
-                  SettingsTile(
-                    leading:
-                        const Icon(Icons.delete_forever, color: Colors.red),
                     title: const Text('Remove Repository'),
                     onTap: (context) async {
                       await showAlertDialog(
@@ -247,10 +97,11 @@ class RepositoryRoute extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                         onConfirm: (context) async {
-                          context
-                              .read<TaskBloc>()
-                              .add(TaskRemoveAllEvent(all: true));
-                          Navigator.of(context).pop();
+                          context.read<TaskBloc>().add(
+                            TaskRemoveRepositoryEvent(
+                              uuid: repositorySpec.uuid,
+                            ),
+                          );
                           final settingsBloc = context.read<SettingsBloc>();
                           final settings = settingsBloc.settings;
                           settingsBloc.add(
@@ -259,11 +110,12 @@ class RepositoryRoute extends StatelessWidget {
                                 repositories: settings.repositories.toList()
                                   ..removeWhere(
                                     (element) =>
-                                        element.uuid == repository.uuid,
+                                        element.uuid == repositorySpec.uuid,
                                   ),
                               ),
                             ),
                           );
+                          Navigator.of(context).pop();
                           return true;
                         },
                       );

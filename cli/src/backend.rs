@@ -1,43 +1,37 @@
 use std::process::ExitCode;
 
 use anyhow::{Context, bail};
-use stride_core::{
-    backend::{BackendRecord, Config},
-    state::KnownPaths,
-};
-use stride_flutter_bridge::api::repository::Repository;
+use stride_backend::registry::Registry;
+use stride_core::backend::{BackendRecord, Config, Value};
+use stride_database::Database;
 use uuid::Uuid;
 
-use crate::{cli::BackendCommand, get_backend_registry};
+use crate::cli::BackendCommand;
 
 // TODO: Remove lints.
 #[allow(clippy::missing_panics_doc)]
 #[allow(clippy::too_many_lines)]
 pub(crate) fn handle_command(
     command: Option<&BackendCommand>,
-    repository: &mut Repository,
-    known_paths: &KnownPaths,
+    backend_registry: &Registry,
+    database: &mut Database,
 ) -> anyhow::Result<ExitCode> {
-    let registry = get_backend_registry(known_paths)?;
-
     match command {
         None | Some(BackendCommand::List) => {
-            let backends = repository.database().lock().unwrap().backends()?;
+            let backends = database.backends()?;
             for (i, backend) in backends.iter().enumerate() {
                 println!("{i:2}. {}", backend.name);
             }
         }
         Some(BackendCommand::New { backend_name: name }) => {
-            let Some(handler) = registry.get(name.as_str()) else {
-                bail!("unknown backend name: {name}");
-            };
+            let handler = backend_registry.get_or_error(name.as_str())?;
             let record = BackendRecord {
                 id: Uuid::now_v7(),
                 enabled: true,
                 name: handler.name(),
                 config: Config::default(),
             };
-            repository.database().lock().unwrap().add_backend(&record)?;
+            database.add_backend(&record)?;
         }
         Some(BackendCommand::Config {
             backend_name: name,
@@ -45,26 +39,20 @@ pub(crate) fn handle_command(
             unset,
             property_value,
         }) => {
-            let mut backends = repository.database().lock().unwrap().backends()?;
+            let mut backends = database.backends()?;
 
             let backend = backends
                 .iter_mut()
                 .find(|backend_record| backend_record.name.contains(name))
                 .with_context(|| format!("Could not find field with name {name}"))?;
 
-            let Some(handler) = registry.get(name.as_str()) else {
-                bail!("unknown backend name: {name}");
-            };
+            let handler = backend_registry.get_or_error(name.as_str())?;
 
             let schema = handler.config_schema();
             let config = backend.config.align(&schema)?;
             if config != backend.config {
                 backend.config = config;
-                repository
-                    .database()
-                    .lock()
-                    .unwrap()
-                    .update_backend(backend)?;
+                database.update_backend(backend)?;
             }
 
             let Some(property_name) = property_name else {
@@ -85,7 +73,7 @@ pub(crate) fn handle_command(
                         schema_field.value.as_type_name(),
                         value.map_or_else(
                             || String::from("none").into(),
-                            |value| value.as_value_string()
+                            |value: Value| value.as_value_string()
                         )
                     );
                 }
@@ -108,11 +96,7 @@ pub(crate) fn handle_command(
                 }
 
                 let has_value = value.is_some();
-                repository
-                    .database_mut()
-                    .get_mut()
-                    .unwrap()
-                    .update_backend(backend)?;
+                database.update_backend(backend)?;
 
                 return Ok(ExitCode::from(u8::from(!has_value)));
             };
@@ -121,25 +105,17 @@ pub(crate) fn handle_command(
                 .config
                 .set(schema_field, property_name, property_value)?;
 
-            repository
-                .database_mut()
-                .get_mut()
-                .unwrap()
-                .update_backend(backend)?;
+            database.update_backend(backend)?;
         }
         Some(BackendCommand::Remove { backend_name }) => {
-            let backends = repository.database().lock().unwrap().backends()?;
+            let backends = database.backends()?;
 
             let backend = backends
                 .iter()
                 .find(|backend_record| backend_record.name.contains(backend_name))
                 .with_context(|| format!("Could not find field with name {backend_name}"))?;
 
-            repository
-                .database_mut()
-                .get_mut()
-                .unwrap()
-                .delete_backend(backend.id)?;
+            database.delete_backend(backend.id)?;
         }
     }
     Ok(ExitCode::SUCCESS)

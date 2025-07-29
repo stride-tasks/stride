@@ -11,7 +11,7 @@ use std::{
 
 use stride_backend::{Backend, BackendHandler};
 use stride_core::{
-    backend::{Config, Schema, SchemaValue},
+    backend::{BytesCategory, Config, Schema, SchemaValue},
     state::KnownPaths,
     task::Task,
 };
@@ -33,11 +33,17 @@ impl BackendHandler for Handler {
 
     fn config_schema(&self) -> Schema {
         Schema::builder(self.name())
-            .field("url", "Server URL", SchemaValue::Url { default: None })
+            .field(
+                "url",
+                "Server URL",
+                SchemaValue::Url { default: None },
+                false,
+            )
             .field(
                 "client_id",
                 "Client ID",
                 SchemaValue::Uuid { default: None },
+                false,
             )
             .field(
                 "encryption_secret",
@@ -46,7 +52,10 @@ impl BackendHandler for Handler {
                     default: None,
                     min: None,
                     max: None,
+                    category: Some(BytesCategory::Password),
+                    generator: None,
                 },
+                true,
             )
             .build()
     }
@@ -92,6 +101,8 @@ pub struct TaskchampionBackend {
 
 impl TaskchampionBackend {
     pub fn new(config: TaskchampionConfig) -> Result<Self> {
+        std::fs::create_dir_all(&config.root_path)?;
+
         let storage = StorageConfig::OnDisk {
             taskdb_dir: config.root_path,
             create_if_missing: true,

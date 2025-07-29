@@ -4,6 +4,7 @@ use stride_backend_git::{
     Error as GitBackendError,
     error::KeyStoreError,
     known_hosts::{Host, KnownHostsError},
+    ssh_key::SshError,
 };
 use stride_database::Error as DatabaseError;
 use stride_plugin_manager::Error as PluginError;
@@ -80,6 +81,8 @@ pub enum ErrorKind {
     Database(#[from] DatabaseError),
     #[error("backend error: {0}")]
     Backend(#[from] BackendError),
+    #[error("ssh error: {0}")]
+    Ssh(#[from] SshError),
     #[error("other error: {message}")]
     Other { message: Box<str> },
 }

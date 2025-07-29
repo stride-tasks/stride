@@ -5,31 +5,34 @@ use std::{
 };
 
 use flutter_rust_bridge::frb;
-use stride_backend::{Backend, Error as BackendError};
-use stride_backend_git::{
-    Error as GitBackendError, GitBackend, config::GitConfig, encryption_key::EncryptionKey,
-    ssh_key::SshKey,
-};
+use stride_backend::{Backend, registry::Registry};
+use stride_backend_git::GitBackend;
+use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
+    backend::{BackendRecord as CoreBackendRecord, Config},
     event::TaskQuery,
+    state::KnownPaths,
     task::{Task, TaskStatus},
 };
 use stride_database::Database;
 use uuid::Uuid;
 
-use crate::RustError;
-
-use super::{
-    filter::Filter,
-    settings::{Settings, application_support_path, ssh_keys},
+use crate::{
+    RustError,
+    api::{
+        filter::Filter,
+        settings::{application_cache_path, application_support_path},
+    },
 };
 
 #[frb(opaque)]
 #[derive(Debug)]
 pub struct Repository {
     uuid: Uuid,
-    root_path: PathBuf,
-    db: Mutex<Database>,
+    pub(crate) root_path: PathBuf,
+    pub(crate) db: Mutex<Database>,
+
+    pub(crate) backend_registry: Registry,
 }
 
 impl Repository {
@@ -42,11 +45,24 @@ impl Repository {
         let db_path = root_path.join("db.sqlite");
         let mut db = Database::open(&db_path).map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
+
+        let mut backend_registry = Registry::new();
+        backend_registry.insert(GitBackend::handler());
+        backend_registry.insert(TaskchampionBackend::handler());
         Ok(Self {
             uuid,
             db: db.into(),
             root_path,
+            backend_registry,
         })
+    }
+
+    pub fn remove(uuid: Uuid) -> Result<(), RustError> {
+        let root_path = application_support_path()
+            .join("repository")
+            .join(uuid.to_string());
+        std::fs::remove_dir_all(&root_path)?;
+        Ok(())
     }
 
     pub fn all_tasks(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
@@ -93,53 +109,12 @@ impl Repository {
     }
 
     pub fn sync(&mut self) -> Result<(), RustError> {
-        let mut settings = Settings::get();
-        let specification = settings
-            .repositories
-            .iter_mut()
-            .find(|repository| repository.uuid == self.uuid)
-            .unwrap();
+        let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
 
-        let encryption = if let Some(encrpytion) = &specification.encryption {
-            encrpytion
-        } else {
-            specification
-                .encryption
-                .get_or_insert(EncryptionKey::generate())
-        };
+        let db = self.db.get_mut().unwrap();
+        self.backend_registry
+            .sync_all(self.uuid, db, &known_paths)?;
 
-        let Some(ssh_key_uuid) = specification.ssh_key_uuid else {
-            return Err(BackendError::from(GitBackendError::NoSshKeysProvided).into());
-        };
-
-        let ssh_keys = ssh_keys()?;
-        let Some(ssh_key) = ssh_keys.iter().find(|ssh_key| ssh_key.uuid == ssh_key_uuid) else {
-            return Err(BackendError::from(GitBackendError::NoSshKeysProvided).into());
-        };
-
-        let git_backend_path = self.root_path.join("backend").join("git");
-        std::fs::create_dir_all(&git_backend_path)?;
-
-        let config = GitConfig {
-            root_path: git_backend_path,
-            author: specification.author.clone().into_boxed_str(),
-            email: specification.author.clone().into_boxed_str(),
-            branch: specification.branch.clone().into_boxed_str(),
-            origin: specification.origin.clone().into_boxed_str(),
-            encryption_key: encryption.clone(),
-            ssh_key: SshKey {
-                uuid: ssh_key.uuid,
-                public_key: ssh_key.public_key.clone(),
-                public_path: ssh_key.public_path.clone(),
-                private_path: ssh_key.private_path.clone(),
-            },
-        };
-
-        Settings::save(settings.clone())?;
-
-        let mut backend = GitBackend::new(config).map_err(BackendError::from)?;
-        self.db.clear_poison();
-        backend.sync(self.db.get_mut().expect("poison valued cleared"))?;
         Ok(())
     }
 
@@ -162,4 +137,81 @@ impl Repository {
     pub fn database_mut(&mut self) -> &mut Mutex<Database> {
         &mut self.db
     }
+
+    pub fn backends(&self) -> Result<Vec<BackendRecord>, RustError> {
+        let backends = self.database().lock().unwrap().backends()?;
+
+        Ok(backends
+            .into_iter()
+            .map(|backend| BackendRecord {
+                id: backend.id,
+                name: backend.name.to_string(),
+                enabled: backend.enabled,
+                schema: serde_json::to_string_pretty(&GitBackend::handler().config_schema())
+                    .expect("should not fail"),
+                config: serde_json::to_string_pretty(&backend.config).expect("should not fail"),
+            })
+            .collect::<Vec<_>>())
+    }
+
+    pub fn toggle_backend(&self, id: Uuid) -> Result<(), RustError> {
+        self.database().lock().unwrap().toggle_backend(id)?;
+        Ok(())
+    }
+
+    pub fn update_backend(&self, backend: &BackendRecord) -> Result<(), RustError> {
+        let config = serde_json::from_str(&backend.config).expect("invalid backend config json");
+        self.database()
+            .lock()
+            .unwrap()
+            .update_backend(&CoreBackendRecord {
+                id: backend.id,
+                name: backend.name.clone().into_boxed_str(),
+                enabled: backend.enabled,
+                config,
+            })?;
+        Ok(())
+    }
+
+    pub fn add_backend(&self, name: &str) -> Result<(), RustError> {
+        let handler = self.backend_registry.get_or_error(name)?;
+        let name = handler.name();
+        self.database()
+            .lock()
+            .unwrap()
+            .add_backend(&CoreBackendRecord {
+                id: Uuid::now_v7(),
+                name,
+                enabled: false,
+                config: Config::default(),
+            })?;
+        Ok(())
+    }
+
+    pub fn delete_backend(&self, id: Uuid) -> Result<(), RustError> {
+        self.database().lock().unwrap().delete_backend(id)?;
+        Ok(())
+    }
+
+    pub fn backend(&self, id: Uuid) -> Result<Option<BackendRecord>, RustError> {
+        let backends = self.backends()?;
+
+        Ok(backends
+            .into_iter()
+            .filter(|backend| backend.id == id)
+            .nth(0))
+    }
+
+    pub fn backend_names(&self) -> Vec<String> {
+        self.backend_registry.keys().map(Into::into).collect()
+    }
+}
+
+#[derive(Debug)]
+pub struct BackendRecord {
+    pub id: Uuid,
+    pub name: String,
+    pub enabled: bool,
+    pub schema: String,
+    pub config: String,
 }

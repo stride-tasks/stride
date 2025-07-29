@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS backend_table (
 CREATE TABLE IF NOT EXISTS backend_config_table (
     `backend_id` BLOB NOT NULL,
 
-    `name` TEXT NOT NULL PRIMARY KEY,
+    `name` TEXT NOT NULL,
     `type` TEXT NOT NULL,
     `value` BLOB NOT NULL,
 

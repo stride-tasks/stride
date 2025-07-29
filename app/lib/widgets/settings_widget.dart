@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
+import 'package:uuid/uuid_value.dart';
+import 'package:uuid/validation.dart';
 
 Iterable<T> insertBetween<T>(Iterable<T> iterable, T element) sync* {
   final iterator = iterable.iterator;
@@ -36,20 +40,16 @@ class SettingsList extends StatelessWidget {
 }
 
 class SettingsSection extends StatelessWidget {
-  final Widget title;
-  final List<SettingsTile> tiles;
+  final Widget? title;
+  final List<Widget> tiles;
 
-  const SettingsSection({
-    super.key,
-    required this.title,
-    required this.tiles,
-  });
+  const SettingsSection({super.key, this.title, required this.tiles});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(children: [title]),
+        if (title != null) Row(children: [title!]),
         ...insertBetween(tiles, const Divider()),
       ],
     );
@@ -91,13 +91,14 @@ class SettingsTileNavigation extends SettingsTile {
     required super.title,
     super.description,
     super.leading,
+    super.trailing,
     required this.builder,
   }) : super(
-          onTap: (context) {
-            // ignore: inference_failure_on_instance_creation
-            Navigator.of(context).push(MaterialPageRoute(builder: builder));
-          },
-        );
+         onTap: (context) {
+           // ignore: inference_failure_on_instance_creation
+           Navigator.of(context).push(MaterialPageRoute(builder: builder));
+         },
+       );
 }
 
 class SettingsTileSwitch extends SettingsTile {
@@ -111,15 +112,15 @@ class SettingsTileSwitch extends SettingsTile {
     required this.value,
     required this.onChanged,
   }) : super(
-          trailing: Switch(
-            value: value,
-            activeColor: Colors.redAccent,
-            onChanged: onChanged,
-          ),
-          onTap: (context) {
-            onChanged(value);
-          },
-        );
+         trailing: Switch(
+           value: value,
+           activeColor: Colors.redAccent,
+           onChanged: onChanged,
+         ),
+         onTap: (context) {
+           onChanged(value);
+         },
+       );
 }
 
 class SettingsTileText extends SettingsTile {
@@ -128,41 +129,149 @@ class SettingsTileText extends SettingsTile {
     required super.title,
     Widget? description,
     super.leading,
+    Widget? trailing,
     required String text,
     required void Function(String text) onChanged,
+    String? Function(String? text)? validator,
     bool hidden = false,
     bool multiline = false,
+    bool obscureText = false,
   }) : super(
-          trailing: const Icon(Icons.arrow_forward),
-          description: hidden
-              ? null
-              : description != null || text.isEmpty
-                  ? description
-                  : Text(
-                      text,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.grey,
-                      ),
-                    ),
-          onTap: (context) async {
-            final controller = TextEditingController(text: text);
-            await showAlertDialog(
-              context: context,
-              content: TextField(
-                controller: controller,
-                autocorrect: false,
-                autofocus: true,
-                maxLines: multiline ? null : 1,
-                keyboardType: multiline ? TextInputType.multiline : null,
-              ),
-              onConfirm: (context) async {
-                onChanged(controller.text);
-                Navigator.pop(context);
-                return true;
-              },
-            );
-          },
-        );
+         trailing: trailing ?? const Icon(Icons.arrow_forward),
+         description: hidden
+             ? null
+             : description != null || text.isEmpty
+             ? description
+             : Text(
+                 obscureText ? text.replaceAll(RegExp('.'), '*') : text,
+                 overflow: TextOverflow.ellipsis,
+                 style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+               ),
+         onTap: (context) async {
+           final controller = TextEditingController(text: text);
+           await showAlertDialog(
+             context: context,
+             popRoute: false,
+             content: StatefulBuilder(
+               builder: (context, setState) => TextFormField(
+                 controller: controller,
+                 autocorrect: false,
+                 autofocus: true,
+                 maxLines: multiline ? null : 1,
+                 keyboardType: multiline ? TextInputType.multiline : null,
+                 decoration: InputDecoration(
+                   errorText: validator?.call(controller.text),
+                 ),
+                 validator: validator,
+                 onChanged: (_) => setState(() {}),
+               ),
+             ),
+             onConfirm: (context) async {
+               if (validator?.call(controller.text) != null) {
+                 return false;
+               }
+               onChanged(controller.text);
+               Navigator.of(context).pop();
+               return true;
+             },
+           );
+         },
+       );
+}
+
+String? uuidValidator(String? text) {
+  if (text == null) {
+    return 'empty UUID';
+  }
+  return UuidValidation.isValidUUID(fromString: text) ? null : 'Invalid UUID';
+}
+
+class SettingsTileUuid extends SettingsTile {
+  final UuidValue? value;
+  final void Function(UuidValue value) onChanged;
+  SettingsTileUuid({
+    super.key,
+    required super.title,
+    super.leading,
+    required this.value,
+    required this.onChanged,
+  }) : super(
+         trailing: const Icon(Icons.arrow_forward),
+         description: value == null
+             ? null
+             : Text(
+                 value.toString(),
+                 overflow: TextOverflow.ellipsis,
+                 style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+               ),
+         onTap: (context) async {
+           final controller = TextEditingController(text: value?.toString());
+           await showAlertDialog(
+             context: context,
+             content: StatefulBuilder(
+               builder: (context, setState) => TextFormField(
+                 controller: controller,
+                 autocorrect: false,
+                 autofocus: true,
+                 decoration: InputDecoration(
+                   errorText: uuidValidator(controller.text),
+                 ),
+                 validator: uuidValidator,
+                 onChanged: (_) => setState(() {}),
+               ),
+             ),
+             onConfirm: (context) {
+               try {
+                 final uuid = UuidValue.withValidation(controller.text);
+                 onChanged(uuid);
+               } on FormatException {
+                 return false;
+               }
+               return true;
+             },
+           );
+         },
+       );
+}
+
+class SettingsTileSsh extends SettingsTile {
+  SettingsTileSsh({
+    super.key,
+    required super.title,
+    super.leading,
+    required UuidValue? uuid,
+    required void Function(UuidValue value) onChanged,
+    List<SshKey>? keys,
+    Widget? trailing,
+  }) : super(
+         trailing: trailing ?? const Icon(Icons.arrow_forward),
+         description: uuid == null
+             ? null
+             : Text(
+                 keys
+                         ?.cast<SshKey?>()
+                         .firstWhere(
+                           (element) => element!.uuid == uuid,
+                           orElse: () => null,
+                         )
+                         ?.publicKey ??
+                     'key not found!',
+                 overflow: TextOverflow.ellipsis,
+                 style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+               ),
+         onTap: (context) async {
+           await Navigator.of(context).push(
+             MaterialPageRoute<SshKey>(
+               builder: (context) => SshKeysRoute(
+                 selected: uuid,
+                 onTap: (key) {
+                   onChanged(key.uuid);
+                   Navigator.of(context).pop();
+                 },
+                 hasDelete: false,
+               ),
+             ),
+           );
+         },
+       );
 }

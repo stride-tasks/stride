@@ -14,13 +14,12 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_author`, `default_branch_name`, `default_email`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `State`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
@@ -98,12 +97,6 @@ sealed class RepositorySpecification with _$RepositorySpecification {
   const factory RepositorySpecification({
     required UuidValue uuid,
     required String name,
-    required String origin,
-    required String author,
-    required String email,
-    required String branch,
-    UuidValue? sshKeyUuid,
-    EncryptionKey? encryption,
   }) = _RepositorySpecification;
   const RepositorySpecification._();
   static Future<RepositorySpecification> default_() =>

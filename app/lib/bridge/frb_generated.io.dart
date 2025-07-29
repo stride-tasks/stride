@@ -23,7 +23,6 @@ import 'package:stride/bridge/api/plugin_manager.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
@@ -178,6 +177,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ApplicationPaths dco_decode_application_paths(dynamic raw);
 
   @protected
+  BackendRecord dco_decode_backend_record(dynamic raw);
+
+  @protected
   bool dco_decode_bool(dynamic raw);
 
   @protected
@@ -187,7 +189,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw);
 
   @protected
-  EncryptionKey dco_decode_box_autoadd_encryption_key(dynamic raw);
+  BackendRecord dco_decode_box_autoadd_backend_record(dynamic raw);
 
   @protected
   Filter dco_decode_box_autoadd_filter(dynamic raw);
@@ -244,9 +246,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
-  EncryptionKey dco_decode_encryption_key(dynamic raw);
-
-  @protected
   double dco_decode_f_32(dynamic raw);
 
   @protected
@@ -290,6 +289,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Annotation> dco_decode_list_annotation(dynamic raw);
+
+  @protected
+  List<BackendRecord> dco_decode_list_backend_record(dynamic raw);
 
   @protected
   List<Filter> dco_decode_list_filter(dynamic raw);
@@ -351,7 +353,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DateTime? dco_decode_opt_box_autoadd_Chrono_Utc(dynamic raw);
 
   @protected
-  EncryptionKey? dco_decode_opt_box_autoadd_encryption_key(dynamic raw);
+  BackendRecord? dco_decode_opt_box_autoadd_backend_record(dynamic raw);
 
   @protected
   FilterSelection? dco_decode_opt_box_autoadd_filter_selection(dynamic raw);
@@ -555,6 +557,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ApplicationPaths sse_decode_application_paths(SseDeserializer deserializer);
 
   @protected
+  BackendRecord sse_decode_backend_record(SseDeserializer deserializer);
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
@@ -566,7 +571,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  EncryptionKey sse_decode_box_autoadd_encryption_key(
+  BackendRecord sse_decode_box_autoadd_backend_record(
     SseDeserializer deserializer,
   );
 
@@ -635,9 +640,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
-  EncryptionKey sse_decode_encryption_key(SseDeserializer deserializer);
-
-  @protected
   double sse_decode_f_32(SseDeserializer deserializer);
 
   @protected
@@ -681,6 +683,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Annotation> sse_decode_list_annotation(SseDeserializer deserializer);
+
+  @protected
+  List<BackendRecord> sse_decode_list_backend_record(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<Filter> sse_decode_list_filter(SseDeserializer deserializer);
@@ -756,7 +763,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DateTime? sse_decode_opt_box_autoadd_Chrono_Utc(SseDeserializer deserializer);
 
   @protected
-  EncryptionKey? sse_decode_opt_box_autoadd_encryption_key(
+  BackendRecord? sse_decode_opt_box_autoadd_backend_record(
     SseDeserializer deserializer,
   );
 
@@ -1000,6 +1007,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_backend_record(BackendRecord self, SseSerializer serializer);
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
@@ -1015,8 +1025,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_box_autoadd_encryption_key(
-    EncryptionKey self,
+  void sse_encode_box_autoadd_backend_record(
+    BackendRecord self,
     SseSerializer serializer,
   );
 
@@ -1102,9 +1112,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
-  void sse_encode_encryption_key(EncryptionKey self, SseSerializer serializer);
-
-  @protected
   void sse_encode_f_32(double self, SseSerializer serializer);
 
   @protected
@@ -1154,6 +1161,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_annotation(
     List<Annotation> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_backend_record(
+    List<BackendRecord> self,
     SseSerializer serializer,
   );
 
@@ -1248,8 +1261,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_opt_box_autoadd_encryption_key(
-    EncryptionKey? self,
+  void sse_encode_opt_box_autoadd_backend_record(
+    BackendRecord? self,
     SseSerializer serializer,
   );
 
