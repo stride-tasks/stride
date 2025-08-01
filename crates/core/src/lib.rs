@@ -7,7 +7,9 @@
 #[cfg(feature = "backend")]
 pub mod backend;
 
+/// flutter_rust_bridge:ignore
+pub mod state;
+
 pub mod constant;
 pub mod event;
-pub mod state;
 pub mod task;

@@ -35,7 +35,7 @@ stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
 stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 
 # Shared Dependencies
-flutter_rust_bridge = { version = "=2.10.0", default-features = false, features = [
+flutter_rust_bridge = { version = "=2.11.1", default-features = false, features = [
   "thread-pool",
   "rust-async",
   "user-utils",

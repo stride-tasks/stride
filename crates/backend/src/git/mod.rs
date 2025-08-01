@@ -28,7 +28,9 @@ use git2::{
 mod key_store;
 mod serialization;
 
+/// flutter_rust_bridge:ignore
 pub mod config;
+
 pub mod encryption_key;
 pub mod known_hosts;
 pub mod ssh_key;
