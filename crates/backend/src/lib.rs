@@ -4,48 +4,49 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
+use std::path::{Path, PathBuf};
+
 use base64::{DecodeError, Engine};
+use stride_core::{
+    backend::{Config, Schema},
+    state::KnownPaths,
+};
 use stride_database::Database;
 use uuid::Uuid;
 
 pub mod error;
-
 pub mod git;
 pub mod taskchampion;
 
 pub use error::{Error, Result};
 
+pub trait BackendHandler {
+    // TODO: encapsulate name in a newtype, to restrict to ascii, no space, etc.
+    fn name(&self) -> Box<str>;
+
+    fn root_path(&self, repository_uuid: Uuid, known_paths: &KnownPaths) -> PathBuf {
+        known_paths
+            .backend_path(repository_uuid)
+            .join(self.name().as_ref())
+    }
+
+    fn config_schema(&self) -> Schema;
+    fn create(
+        &self,
+        config: &Config,
+        path: &Path,
+        known_paths: &KnownPaths,
+    ) -> Result<Box<dyn Backend>>;
+}
+
 /// This is the main trait, defining a "Backend".
 /// A backend governs how tasks are synced.
-///
-// TODO: Move this to separate crate (stride_backend)
-// TODO: Ideally we shouldn't need to expose this to flutter.
 pub trait Backend {
-    // /* TODO(@bpeetz): I have no idea, what this function does <2024-10-25> */
-    // fn unload(&mut self);
-
-    // /// Add a [`Task`] to the Repository
-    // fn add(&mut self, task: Task) -> Result<()>;
-    // /// Remove a [`Task`], will return [`None`] if it did not exists
-    // fn remove_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>>;
-    // /// Remove an existing [`Task`], returning [`true`] if it was previously added
-    // fn remove_by_task(&mut self, task: &Task) -> Result<bool>;
-
-    // /// Try to get a [`Task`] by [`Uuid`]
-    // fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>>;
-
-    // /// Ensure that all previous operations are written to disk.
-    // fn commit(&mut self) -> Result<()>;
-
-    // fn update(&mut self, task: &Task) -> Result<bool>;
+    fn handler() -> Box<dyn BackendHandler>
+    where
+        Self: Sized;
 
     fn sync(&mut self, db: &mut Database) -> Result<()>;
-    // fn clear(&mut self) -> Result<()>;
-
-    // fn export(&mut self) -> Result<String>;
-    // fn import(&mut self, content: &str) -> Result<()>;
-
-    // fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>>;
 }
 
 pub(crate) fn base64_encode<T: AsRef<[u8]>>(input: T) -> String {

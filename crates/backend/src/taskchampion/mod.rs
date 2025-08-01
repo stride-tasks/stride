@@ -1,6 +1,13 @@
-use std::{mem, path::PathBuf};
+use std::{
+    mem,
+    path::{Path, PathBuf},
+};
 
-use stride_core::task::Task;
+use stride_core::{
+    backend::{Config, Schema, Value},
+    state::KnownPaths,
+    task::Task,
+};
 use stride_database::Database;
 use taskchampion::{Operations, StorageConfig};
 use uuid::Uuid;
@@ -11,7 +18,41 @@ use super::Backend;
 // `taskchampion`
 pub use taskchampion::ServerConfig;
 
-use crate::Result;
+use crate::{BackendHandler, Result};
+
+#[derive(Debug, Clone, Copy)]
+struct Handler;
+
+impl BackendHandler for Handler {
+    fn name(&self) -> Box<str> {
+        "task-champion".into()
+    }
+
+    fn config_schema(&self) -> Schema {
+        Schema::builder(self.name())
+            .field("url", "Server URL", Value::Url(None))
+            .field("client_id", "Client ID", Value::Uuid(None))
+            .field("encryption_secret", "Encryption Secret", Value::Bytes(None))
+            .build()
+    }
+
+    fn create(
+        &self,
+        schema: &Config,
+        path: &Path,
+        _known_paths: &KnownPaths,
+    ) -> Result<Box<dyn Backend>> {
+        let config = TaskchampionConfig {
+            root_path: path.to_path_buf(),
+            url: schema.url_value("url")?.to_string(),
+            client_id: schema.uuid_value("client_id")?,
+            encryption_secret: schema.bytes_value("encryption_secret")?.to_vec(),
+            constraint_environment: true,
+        };
+
+        Ok(Box::new(TaskchampionBackend::new(config)?))
+    }
+}
 
 #[derive(Debug)]
 pub struct TaskchampionConfig {
@@ -146,6 +187,13 @@ impl TaskchampionBackend {
 }
 
 impl Backend for TaskchampionBackend {
+    fn handler() -> Box<dyn BackendHandler>
+    where
+        Self: Sized,
+    {
+        Box::new(Handler)
+    }
+
     fn sync(&mut self, db: &mut Database) -> Result<()> {
         for task in db.all_tasks()? {
             self.add(task)?;

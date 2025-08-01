@@ -53,9 +53,7 @@ pub enum Mode {
     /// Sync the task storage
     Sync {
         /// Choose backend to sync.
-        ///
-        /// If `None` then all backends are choosen.
-        backend: Backend,
+        backend: String,
     },
 
     /// Output the git-log of the task storage
@@ -86,10 +84,17 @@ pub enum Mode {
         uuid: Uuid,
     },
 
+    /// Manage backends.
+    Backend {
+        /// Backend command to apply.
+        #[command(subcommand)]
+        command: Option<BackendCommand>,
+    },
+
     /// Manage plugins.
     Plugin {
-        #[command(subcommand)]
         /// Plugin command to apply.
+        #[command(subcommand)]
         command: Option<PluginCommand>,
     },
 
@@ -98,6 +103,38 @@ pub enum Mode {
         /// SSH command to apply.
         #[command(subcommand)]
         command: SshCommand,
+    },
+}
+
+/// Backend command/action to apply.
+#[derive(Debug, Clone, Subcommand)]
+pub enum BackendCommand {
+    /// list backends
+    List,
+    /// Create a new backend.
+    New {
+        /// The name of the backend to be created.
+        backend_name: String,
+    },
+    /// Remove a backend backend.
+    Remove {
+        /// The name of the backend to be removed.
+        backend_name: String,
+    },
+    /// Configure a backend option.
+    Config {
+        /// Name of backend to configure.
+        backend_name: String,
+
+        /// Property name.
+        property_name: Option<String>,
+
+        /// Unset a property.
+        #[clap(long, conflicts_with = "property_value")]
+        unset: bool,
+
+        /// Property name.
+        property_value: Option<String>,
     },
 }
 

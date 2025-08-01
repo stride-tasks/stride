@@ -12,7 +12,9 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-stride_core.workspace = true
+stride_core = { workspace = true, features = ["backend"] }
+
+serde_json.workspace = true
 
 rusqlite.workspace = true
 uuid.workspace = true

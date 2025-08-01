@@ -35,7 +35,7 @@ pub mod ssh_key;
 
 use key_store::KeyStore;
 
-use crate::{Backend, Error, Result, ToBase64, base64_decode};
+use crate::{Backend, Error, Result, ToBase64, base64_decode, git::config::Handler};
 
 pub(crate) const IV_LEN: usize = 12;
 
@@ -918,6 +918,13 @@ impl GitBackend {
 }
 
 impl Backend for GitBackend {
+    fn handler() -> Box<dyn crate::BackendHandler>
+    where
+        Self: Sized,
+    {
+        Box::new(Handler)
+    }
+
     fn sync(&mut self, db: &mut Database) -> Result<()> {
         let tasks = db.all_tasks()?;
 
