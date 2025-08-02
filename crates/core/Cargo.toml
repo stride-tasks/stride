@@ -21,6 +21,13 @@ base64 = { workspace = true, optional = true }
 taskchampion = { workspace = true, optional = true }
 url = { workspace = true, features = ["serde"], optional = true }
 
+facet = { workspace = true, features = [
+    "url",
+    "uuid",
+    "chrono",
+    "reflect",
+], optional = true }
+
 [dev-dependencies]
 anyhow.workspace = true
 serde_json.workspace = true
@@ -29,6 +36,7 @@ serde_json.workspace = true
 default = ["backend", "taskchampion"]
 backend = ["dep:base64", "dep:url", "dep:thiserror"]
 taskchampion = ["dep:taskchampion"]
+facet = ["dep:facet"]
 
 [lints]
 workspace = true

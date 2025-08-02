@@ -111,6 +111,8 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
+#[repr(C)]
 pub enum EncryptionMode {
     AesOcb256,
 }
@@ -127,15 +129,17 @@ impl EncryptionMode {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[serde(tag = "type", content = "content")]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
+#[repr(C)]
 pub enum Value {
     String(#[serde(default)] Option<Box<str>>),
     Uuid(#[serde(default)] Option<Uuid>),
-    Bytes(#[serde(default)] Option<Box<[u8]>>),
+    Bytes(#[serde(default)] Option<Vec<u8>>),
     Url(#[serde(default)] Option<Url>),
     Encryption {
         mode: EncryptionMode,
         #[serde(default)]
-        value: Option<Box<[u8]>>,
+        value: Option<Vec<u8>>,
     },
     SshKey(#[serde(default)] Option<Uuid>),
 }
@@ -207,6 +211,7 @@ impl Value {
 
 #[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
 pub struct Config {
     pub fields: HashMap<Box<str>, Value>,
 }
@@ -342,6 +347,7 @@ impl Config {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "facet", derive(facet::Facet))]
 pub struct BackendRecord {
     pub id: Uuid,
     pub name: Box<str>,

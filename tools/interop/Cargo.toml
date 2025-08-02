@@ -1,0 +1,22 @@
+[package]
+name = "interop"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+description.workspace = true
+publish = false
+
+[dependencies]
+stride_core = { workspace = true, features = ["backend", "facet"] }
+
+uuid.workspace = true
+anyhow = { workspace = true, features = ["backtrace"] }
+
+facet.workspace = true
+facet-pretty.workspace = true
+
+[lints]
+workspace = true

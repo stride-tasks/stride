@@ -137,7 +137,7 @@ pub(crate) fn handle_command(
                         .decode(property_value)
                         .context("invalid base64 encryption key")?;
 
-                    *value = Some(key.into_boxed_slice());
+                    *value = Some(key);
                 }
                 Value::SshKey(value) => {
                     let id = Uuid::parse_str(property_value)?;

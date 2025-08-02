@@ -11,6 +11,9 @@ members = [
   "crates/plugin",
   "crates/plugin_manager",
   "crates/flutter_bridge",
+
+  "tools/interop",
+
   "cli",
 ]
 
@@ -61,7 +64,7 @@ rusqlite = { version = "0.32.1", features = [
 ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
-uuid = { version = "1.16", features = ["v7", "serde"] }
+uuid = { version = "1.17.0", features = ["v7", "serde"] }
 chrono = { version = "0.4", features = ["serde", "now"] }
 anyhow = "1.0"
 git2 = { version = "0.20", default-features = false, features = [
@@ -84,6 +87,9 @@ reqwest = { version = "0.12.15", features = ["blocking"] }
 clap = { version = "4.5.38", features = ["derive"] }
 url = { version = "2.5.4", features = ["serde"] }
 thiserror = "2.0.12"
+
+facet = "0.28.0"
+facet-pretty = "0.28.0"
 
 [profile.release]
 # strip = "debug"
