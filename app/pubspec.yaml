@@ -7,7 +7,8 @@ repository: https://github.com/stride-tasks/stride
 version: 0.0.1+1
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  sdk: ">=3.8.1 <4.0.0"
+  flutter: ">=3.32.8"
 
 dependencies:
   flutter:
@@ -22,7 +23,7 @@ dependencies:
   path_provider: ^2.1.5
   bloc: ^9.0.0
   flutter_bloc: ^9.1.1
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   font_awesome_flutter: ^10.8.0
   file_picker: ^10.2.1
   qr_flutter: ^4.1.0
@@ -39,7 +40,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   mocktail: ^1.0.4
 
-  freezed: ^2.5.8
+  freezed: ^3.2.0
   build_runner: ^2.5.4
 
   flutter_launcher_icons: ^0.14.4
@@ -75,7 +76,6 @@ flutter_rust_bridge:
   dart_output: lib/bridge
   web: false
   dart_preamble: |
-    // ignore_for_file: require_trailing_commas
     // ignore_for_file: avoid_unused_constructor_parameters
     // ignore_for_file: avoid_dynamic_calls
     // ignore_for_file: avoid_equals_and_hash_code_on_mutable_classes
