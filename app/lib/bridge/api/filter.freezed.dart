@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,566 +9,573 @@ part of 'filter.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
 /// @nodoc
 mixin _$Filter {
-  UuidValue get uuid => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  Set<TaskStatus> get status => throw _privateConstructorUsedError;
-  String get search => throw _privateConstructorUsedError;
 
-  /// Create a copy of Filter
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $FilterCopyWith<Filter> get copyWith => throw _privateConstructorUsedError;
+ UuidValue get uuid; String get name; Set<TaskStatus> get status; String get search;
+/// Create a copy of Filter
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$FilterCopyWith<Filter> get copyWith => _$FilterCopyWithImpl<Filter>(this as Filter, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Filter&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.status, status)&&(identical(other.search, search) || other.search == search));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,uuid,name,const DeepCollectionEquality().hash(status),search);
+
+@override
+String toString() {
+  return 'Filter(uuid: $uuid, name: $name, status: $status, search: $search)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $FilterCopyWith<$Res> {
-  factory $FilterCopyWith(Filter value, $Res Function(Filter) then) =
-      _$FilterCopyWithImpl<$Res, Filter>;
-  @useResult
-  $Res call(
-      {UuidValue uuid, String name, Set<TaskStatus> status, String search});
-}
+abstract mixin class $FilterCopyWith<$Res>  {
+  factory $FilterCopyWith(Filter value, $Res Function(Filter) _then) = _$FilterCopyWithImpl;
+@useResult
+$Res call({
+ UuidValue uuid, String name, Set<TaskStatus> status, String search
+});
 
+
+
+
+}
 /// @nodoc
-class _$FilterCopyWithImpl<$Res, $Val extends Filter>
+class _$FilterCopyWithImpl<$Res>
     implements $FilterCopyWith<$Res> {
-  _$FilterCopyWithImpl(this._value, this._then);
+  _$FilterCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Filter _self;
+  final $Res Function(Filter) _then;
 
-  /// Create a copy of Filter
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? uuid = null,
-    Object? name = null,
-    Object? status = null,
-    Object? search = null,
-  }) {
-    return _then(_value.copyWith(
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as Set<TaskStatus>,
-      search: null == search
-          ? _value.search
-          : search // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
+/// Create a copy of Filter
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? name = null,Object? status = null,Object? search = null,}) {
+  return _then(_self.copyWith(
+uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as UuidValue,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as Set<TaskStatus>,search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [Filter].
+extension FilterPatterns on Filter {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Filter value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Filter() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Filter value)  $default,){
+final _that = this;
+switch (_that) {
+case _Filter():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Filter value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Filter() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( UuidValue uuid,  String name,  Set<TaskStatus> status,  String search)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Filter() when $default != null:
+return $default(_that.uuid,_that.name,_that.status,_that.search);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( UuidValue uuid,  String name,  Set<TaskStatus> status,  String search)  $default,) {final _that = this;
+switch (_that) {
+case _Filter():
+return $default(_that.uuid,_that.name,_that.status,_that.search);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( UuidValue uuid,  String name,  Set<TaskStatus> status,  String search)?  $default,) {final _that = this;
+switch (_that) {
+case _Filter() when $default != null:
+return $default(_that.uuid,_that.name,_that.status,_that.search);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
-abstract class _$$FilterImplCopyWith<$Res> implements $FilterCopyWith<$Res> {
-  factory _$$FilterImplCopyWith(
-          _$FilterImpl value, $Res Function(_$FilterImpl) then) =
-      __$$FilterImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {UuidValue uuid, String name, Set<TaskStatus> status, String search});
+
+
+class _Filter extends Filter {
+  const _Filter({required this.uuid, required this.name, required final  Set<TaskStatus> status, required this.search}): _status = status,super._();
+  
+
+@override final  UuidValue uuid;
+@override final  String name;
+ final  Set<TaskStatus> _status;
+@override Set<TaskStatus> get status {
+  if (_status is EqualUnmodifiableSetView) return _status;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_status);
+}
+
+@override final  String search;
+
+/// Create a copy of Filter
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$FilterCopyWith<_Filter> get copyWith => __$FilterCopyWithImpl<_Filter>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Filter&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other._status, _status)&&(identical(other.search, search) || other.search == search));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,uuid,name,const DeepCollectionEquality().hash(_status),search);
+
+@override
+String toString() {
+  return 'Filter(uuid: $uuid, name: $name, status: $status, search: $search)';
+}
+
+
 }
 
 /// @nodoc
-class __$$FilterImplCopyWithImpl<$Res>
-    extends _$FilterCopyWithImpl<$Res, _$FilterImpl>
-    implements _$$FilterImplCopyWith<$Res> {
-  __$$FilterImplCopyWithImpl(
-      _$FilterImpl _value, $Res Function(_$FilterImpl) _then)
-      : super(_value, _then);
+abstract mixin class _$FilterCopyWith<$Res> implements $FilterCopyWith<$Res> {
+  factory _$FilterCopyWith(_Filter value, $Res Function(_Filter) _then) = __$FilterCopyWithImpl;
+@override @useResult
+$Res call({
+ UuidValue uuid, String name, Set<TaskStatus> status, String search
+});
 
-  /// Create a copy of Filter
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? uuid = null,
-    Object? name = null,
-    Object? status = null,
-    Object? search = null,
-  }) {
-    return _then(_$FilterImpl(
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value._status
-          : status // ignore: cast_nullable_to_non_nullable
-              as Set<TaskStatus>,
-      search: null == search
-          ? _value.search
-          : search // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
+
+
+
 }
-
 /// @nodoc
+class __$FilterCopyWithImpl<$Res>
+    implements _$FilterCopyWith<$Res> {
+  __$FilterCopyWithImpl(this._self, this._then);
 
-class _$FilterImpl extends _Filter {
-  const _$FilterImpl(
-      {required this.uuid,
-      required this.name,
-      required final Set<TaskStatus> status,
-      required this.search})
-      : _status = status,
-        super._();
+  final _Filter _self;
+  final $Res Function(_Filter) _then;
 
-  @override
-  final UuidValue uuid;
-  @override
-  final String name;
-  final Set<TaskStatus> _status;
-  @override
-  Set<TaskStatus> get status {
-    if (_status is EqualUnmodifiableSetView) return _status;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableSetView(_status);
-  }
-
-  @override
-  final String search;
-
-  @override
-  String toString() {
-    return 'Filter(uuid: $uuid, name: $name, status: $status, search: $search)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$FilterImpl &&
-            (identical(other.uuid, uuid) || other.uuid == uuid) &&
-            (identical(other.name, name) || other.name == name) &&
-            const DeepCollectionEquality().equals(other._status, _status) &&
-            (identical(other.search, search) || other.search == search));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, uuid, name,
-      const DeepCollectionEquality().hash(_status), search);
-
-  /// Create a copy of Filter
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$FilterImplCopyWith<_$FilterImpl> get copyWith =>
-      __$$FilterImplCopyWithImpl<_$FilterImpl>(this, _$identity);
+/// Create a copy of Filter
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? name = null,Object? status = null,Object? search = null,}) {
+  return _then(_Filter(
+uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as UuidValue,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self._status : status // ignore: cast_nullable_to_non_nullable
+as Set<TaskStatus>,search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
 }
 
-abstract class _Filter extends Filter {
-  const factory _Filter(
-      {required final UuidValue uuid,
-      required final String name,
-      required final Set<TaskStatus> status,
-      required final String search}) = _$FilterImpl;
-  const _Filter._() : super._();
 
-  @override
-  UuidValue get uuid;
-  @override
-  String get name;
-  @override
-  Set<TaskStatus> get status;
-  @override
-  String get search;
-
-  /// Create a copy of Filter
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$FilterImplCopyWith<_$FilterImpl> get copyWith =>
-      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 mixin _$FilterSelection {
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(UuidValue uuid) predefined,
-    required TResult Function(Filter filter) temporary,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(UuidValue uuid)? predefined,
-    TResult? Function(Filter filter)? temporary,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(UuidValue uuid)? predefined,
-    TResult Function(Filter filter)? temporary,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(FilterSelection_Predefined value) predefined,
-    required TResult Function(FilterSelection_Temporary value) temporary,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(FilterSelection_Predefined value)? predefined,
-    TResult? Function(FilterSelection_Temporary value)? temporary,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(FilterSelection_Predefined value)? predefined,
-    TResult Function(FilterSelection_Temporary value)? temporary,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FilterSelection);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'FilterSelection()';
+}
+
+
 }
 
 /// @nodoc
-abstract class $FilterSelectionCopyWith<$Res> {
-  factory $FilterSelectionCopyWith(
-          FilterSelection value, $Res Function(FilterSelection) then) =
-      _$FilterSelectionCopyWithImpl<$Res, FilterSelection>;
+class $FilterSelectionCopyWith<$Res>  {
+$FilterSelectionCopyWith(FilterSelection _, $Res Function(FilterSelection) __);
 }
 
-/// @nodoc
-class _$FilterSelectionCopyWithImpl<$Res, $Val extends FilterSelection>
-    implements $FilterSelectionCopyWith<$Res> {
-  _$FilterSelectionCopyWithImpl(this._value, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+/// Adds pattern-matching-related methods to [FilterSelection].
+extension FilterSelectionPatterns on FilterSelection {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
 
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( FilterSelection_Predefined value)?  predefined,TResult Function( FilterSelection_Temporary value)?  temporary,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case FilterSelection_Predefined() when predefined != null:
+return predefined(_that);case FilterSelection_Temporary() when temporary != null:
+return temporary(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( FilterSelection_Predefined value)  predefined,required TResult Function( FilterSelection_Temporary value)  temporary,}){
+final _that = this;
+switch (_that) {
+case FilterSelection_Predefined():
+return predefined(_that);case FilterSelection_Temporary():
+return temporary(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( FilterSelection_Predefined value)?  predefined,TResult? Function( FilterSelection_Temporary value)?  temporary,}){
+final _that = this;
+switch (_that) {
+case FilterSelection_Predefined() when predefined != null:
+return predefined(_that);case FilterSelection_Temporary() when temporary != null:
+return temporary(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( UuidValue uuid)?  predefined,TResult Function( Filter filter)?  temporary,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case FilterSelection_Predefined() when predefined != null:
+return predefined(_that.uuid);case FilterSelection_Temporary() when temporary != null:
+return temporary(_that.filter);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( UuidValue uuid)  predefined,required TResult Function( Filter filter)  temporary,}) {final _that = this;
+switch (_that) {
+case FilterSelection_Predefined():
+return predefined(_that.uuid);case FilterSelection_Temporary():
+return temporary(_that.filter);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( UuidValue uuid)?  predefined,TResult? Function( Filter filter)?  temporary,}) {final _that = this;
+switch (_that) {
+case FilterSelection_Predefined() when predefined != null:
+return predefined(_that.uuid);case FilterSelection_Temporary() when temporary != null:
+return temporary(_that.filter);case _:
+  return null;
+
+}
 }
 
-/// @nodoc
-abstract class _$$FilterSelection_PredefinedImplCopyWith<$Res> {
-  factory _$$FilterSelection_PredefinedImplCopyWith(
-          _$FilterSelection_PredefinedImpl value,
-          $Res Function(_$FilterSelection_PredefinedImpl) then) =
-      __$$FilterSelection_PredefinedImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({UuidValue uuid});
-}
-
-/// @nodoc
-class __$$FilterSelection_PredefinedImplCopyWithImpl<$Res>
-    extends _$FilterSelectionCopyWithImpl<$Res,
-        _$FilterSelection_PredefinedImpl>
-    implements _$$FilterSelection_PredefinedImplCopyWith<$Res> {
-  __$$FilterSelection_PredefinedImplCopyWithImpl(
-      _$FilterSelection_PredefinedImpl _value,
-      $Res Function(_$FilterSelection_PredefinedImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? uuid = null,
-  }) {
-    return _then(_$FilterSelection_PredefinedImpl(
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as UuidValue,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$FilterSelection_PredefinedImpl extends FilterSelection_Predefined {
-  const _$FilterSelection_PredefinedImpl({required this.uuid}) : super._();
-
-  @override
-  final UuidValue uuid;
-
-  @override
-  String toString() {
-    return 'FilterSelection.predefined(uuid: $uuid)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$FilterSelection_PredefinedImpl &&
-            (identical(other.uuid, uuid) || other.uuid == uuid));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, uuid);
-
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$FilterSelection_PredefinedImplCopyWith<_$FilterSelection_PredefinedImpl>
-      get copyWith => __$$FilterSelection_PredefinedImplCopyWithImpl<
-          _$FilterSelection_PredefinedImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(UuidValue uuid) predefined,
-    required TResult Function(Filter filter) temporary,
-  }) {
-    return predefined(uuid);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(UuidValue uuid)? predefined,
-    TResult? Function(Filter filter)? temporary,
-  }) {
-    return predefined?.call(uuid);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(UuidValue uuid)? predefined,
-    TResult Function(Filter filter)? temporary,
-    required TResult orElse(),
-  }) {
-    if (predefined != null) {
-      return predefined(uuid);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(FilterSelection_Predefined value) predefined,
-    required TResult Function(FilterSelection_Temporary value) temporary,
-  }) {
-    return predefined(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(FilterSelection_Predefined value)? predefined,
-    TResult? Function(FilterSelection_Temporary value)? temporary,
-  }) {
-    return predefined?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(FilterSelection_Predefined value)? predefined,
-    TResult Function(FilterSelection_Temporary value)? temporary,
-    required TResult orElse(),
-  }) {
-    if (predefined != null) {
-      return predefined(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class FilterSelection_Predefined extends FilterSelection {
-  const factory FilterSelection_Predefined({required final UuidValue uuid}) =
-      _$FilterSelection_PredefinedImpl;
-  const FilterSelection_Predefined._() : super._();
-
-  UuidValue get uuid;
-
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$FilterSelection_PredefinedImplCopyWith<_$FilterSelection_PredefinedImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class _$$FilterSelection_TemporaryImplCopyWith<$Res> {
-  factory _$$FilterSelection_TemporaryImplCopyWith(
-          _$FilterSelection_TemporaryImpl value,
-          $Res Function(_$FilterSelection_TemporaryImpl) then) =
-      __$$FilterSelection_TemporaryImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({Filter filter});
-
-  $FilterCopyWith<$Res> get filter;
-}
-
-/// @nodoc
-class __$$FilterSelection_TemporaryImplCopyWithImpl<$Res>
-    extends _$FilterSelectionCopyWithImpl<$Res, _$FilterSelection_TemporaryImpl>
-    implements _$$FilterSelection_TemporaryImplCopyWith<$Res> {
-  __$$FilterSelection_TemporaryImplCopyWithImpl(
-      _$FilterSelection_TemporaryImpl _value,
-      $Res Function(_$FilterSelection_TemporaryImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? filter = null,
-  }) {
-    return _then(_$FilterSelection_TemporaryImpl(
-      filter: null == filter
-          ? _value.filter
-          : filter // ignore: cast_nullable_to_non_nullable
-              as Filter,
-    ));
-  }
-
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $FilterCopyWith<$Res> get filter {
-    return $FilterCopyWith<$Res>(_value.filter, (value) {
-      return _then(_value.copyWith(filter: value));
-    });
-  }
 }
 
 /// @nodoc
 
-class _$FilterSelection_TemporaryImpl extends FilterSelection_Temporary {
-  const _$FilterSelection_TemporaryImpl({required this.filter}) : super._();
 
-  @override
-  final Filter filter;
+class FilterSelection_Predefined extends FilterSelection {
+  const FilterSelection_Predefined({required this.uuid}): super._();
+  
 
-  @override
-  String toString() {
-    return 'FilterSelection.temporary(filter: $filter)';
-  }
+ final  UuidValue uuid;
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$FilterSelection_TemporaryImpl &&
-            (identical(other.filter, filter) || other.filter == filter));
-  }
+/// Create a copy of FilterSelection
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$FilterSelection_PredefinedCopyWith<FilterSelection_Predefined> get copyWith => _$FilterSelection_PredefinedCopyWithImpl<FilterSelection_Predefined>(this, _$identity);
 
-  @override
-  int get hashCode => Object.hash(runtimeType, filter);
 
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$FilterSelection_TemporaryImplCopyWith<_$FilterSelection_TemporaryImpl>
-      get copyWith => __$$FilterSelection_TemporaryImplCopyWithImpl<
-          _$FilterSelection_TemporaryImpl>(this, _$identity);
 
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(UuidValue uuid) predefined,
-    required TResult Function(Filter filter) temporary,
-  }) {
-    return temporary(filter);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(UuidValue uuid)? predefined,
-    TResult? Function(Filter filter)? temporary,
-  }) {
-    return temporary?.call(filter);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(UuidValue uuid)? predefined,
-    TResult Function(Filter filter)? temporary,
-    required TResult orElse(),
-  }) {
-    if (temporary != null) {
-      return temporary(filter);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(FilterSelection_Predefined value) predefined,
-    required TResult Function(FilterSelection_Temporary value) temporary,
-  }) {
-    return temporary(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(FilterSelection_Predefined value)? predefined,
-    TResult? Function(FilterSelection_Temporary value)? temporary,
-  }) {
-    return temporary?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(FilterSelection_Predefined value)? predefined,
-    TResult Function(FilterSelection_Temporary value)? temporary,
-    required TResult orElse(),
-  }) {
-    if (temporary != null) {
-      return temporary(this);
-    }
-    return orElse();
-  }
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FilterSelection_Predefined&&(identical(other.uuid, uuid) || other.uuid == uuid));
 }
 
-abstract class FilterSelection_Temporary extends FilterSelection {
-  const factory FilterSelection_Temporary({required final Filter filter}) =
-      _$FilterSelection_TemporaryImpl;
-  const FilterSelection_Temporary._() : super._();
 
-  Filter get filter;
+@override
+int get hashCode => Object.hash(runtimeType,uuid);
 
-  /// Create a copy of FilterSelection
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$FilterSelection_TemporaryImplCopyWith<_$FilterSelection_TemporaryImpl>
-      get copyWith => throw _privateConstructorUsedError;
+@override
+String toString() {
+  return 'FilterSelection.predefined(uuid: $uuid)';
 }
+
+
+}
+
+/// @nodoc
+abstract mixin class $FilterSelection_PredefinedCopyWith<$Res> implements $FilterSelectionCopyWith<$Res> {
+  factory $FilterSelection_PredefinedCopyWith(FilterSelection_Predefined value, $Res Function(FilterSelection_Predefined) _then) = _$FilterSelection_PredefinedCopyWithImpl;
+@useResult
+$Res call({
+ UuidValue uuid
+});
+
+
+
+
+}
+/// @nodoc
+class _$FilterSelection_PredefinedCopyWithImpl<$Res>
+    implements $FilterSelection_PredefinedCopyWith<$Res> {
+  _$FilterSelection_PredefinedCopyWithImpl(this._self, this._then);
+
+  final FilterSelection_Predefined _self;
+  final $Res Function(FilterSelection_Predefined) _then;
+
+/// Create a copy of FilterSelection
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? uuid = null,}) {
+  return _then(FilterSelection_Predefined(
+uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as UuidValue,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class FilterSelection_Temporary extends FilterSelection {
+  const FilterSelection_Temporary({required this.filter}): super._();
+  
+
+ final  Filter filter;
+
+/// Create a copy of FilterSelection
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$FilterSelection_TemporaryCopyWith<FilterSelection_Temporary> get copyWith => _$FilterSelection_TemporaryCopyWithImpl<FilterSelection_Temporary>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FilterSelection_Temporary&&(identical(other.filter, filter) || other.filter == filter));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,filter);
+
+@override
+String toString() {
+  return 'FilterSelection.temporary(filter: $filter)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $FilterSelection_TemporaryCopyWith<$Res> implements $FilterSelectionCopyWith<$Res> {
+  factory $FilterSelection_TemporaryCopyWith(FilterSelection_Temporary value, $Res Function(FilterSelection_Temporary) _then) = _$FilterSelection_TemporaryCopyWithImpl;
+@useResult
+$Res call({
+ Filter filter
+});
+
+
+$FilterCopyWith<$Res> get filter;
+
+}
+/// @nodoc
+class _$FilterSelection_TemporaryCopyWithImpl<$Res>
+    implements $FilterSelection_TemporaryCopyWith<$Res> {
+  _$FilterSelection_TemporaryCopyWithImpl(this._self, this._then);
+
+  final FilterSelection_Temporary _self;
+  final $Res Function(FilterSelection_Temporary) _then;
+
+/// Create a copy of FilterSelection
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? filter = null,}) {
+  return _then(FilterSelection_Temporary(
+filter: null == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
+as Filter,
+  ));
+}
+
+/// Create a copy of FilterSelection
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$FilterCopyWith<$Res> get filter {
+  
+  return $FilterCopyWith<$Res>(_self.filter, (value) {
+    return _then(_self.copyWith(filter: value));
+  });
+}
+}
+
+// dart format on
