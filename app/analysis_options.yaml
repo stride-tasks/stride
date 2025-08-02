@@ -123,5 +123,7 @@ linter:
     always_use_package_imports: true
     avoid_dynamic_calls: true
     invalid_case_patterns: true
+    strict_top_level_inference: true
+    unnecessary_underscores: true
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
