@@ -42,7 +42,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -600290493;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -97564000;
 
 // Section: executor
 
@@ -1457,7 +1457,7 @@ fn wire__crate__api__plugin_manager__emit_broadcast_impl(
         },
     )
 }
-fn wire__stride_backend__git__encryption_key__encryption_key_generate_impl(
+fn wire__stride_backend_git__encryption_key__encryption_key_generate_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1483,7 +1483,7 @@ fn wire__stride_backend__git__encryption_key__encryption_key_generate_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(
-                        stride_backend::git::encryption_key::EncryptionKey::generate(),
+                        stride_backend_git::encryption_key::EncryptionKey::generate(),
                     )?;
                     Ok(output_ok)
                 })())
@@ -1491,7 +1491,7 @@ fn wire__stride_backend__git__encryption_key__encryption_key_generate_impl(
         },
     )
 }
-fn wire__stride_backend__git__encryption_key__encryption_key_validate_impl(
+fn wire__stride_backend_git__encryption_key__encryption_key_validate_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
@@ -1516,7 +1516,7 @@ fn wire__stride_backend__git__encryption_key__encryption_key_validate_impl(
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
                 let output_ok = Result::<_, ()>::Ok(
-                    stride_backend::git::encryption_key::EncryptionKey::validate(&api_key),
+                    stride_backend_git::encryption_key::EncryptionKey::validate(&api_key),
                 )?;
                 Ok(output_ok)
             })())
@@ -1644,7 +1644,7 @@ fn wire__crate__api__git__host_key_type_name_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_key_type =
-                <stride_backend::git::known_hosts::HostKeyType>::sse_decode(&mut deserializer);
+                <stride_backend_git::known_hosts::HostKeyType>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
                 let output_ok =
@@ -1722,7 +1722,7 @@ fn wire__crate__api__logging__info_impl(
         },
     )
 }
-fn wire__stride_backend__git__known_hosts__known_hosts_default_impl(
+fn wire__stride_backend_git__known_hosts__known_hosts_default_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1748,7 +1748,7 @@ fn wire__stride_backend__git__known_hosts__known_hosts_default_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Result::<_, ()>::Ok(
-                        stride_backend::git::known_hosts::KnownHosts::default(),
+                        stride_backend_git::known_hosts::KnownHosts::default(),
                     )?;
                     Ok(output_ok)
                 })())
@@ -1756,7 +1756,7 @@ fn wire__stride_backend__git__known_hosts__known_hosts_default_impl(
         },
     )
 }
-fn wire__stride_backend__git__known_hosts__known_hosts_load_impl(
+fn wire__stride_backend_git__known_hosts__known_hosts_load_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1782,7 +1782,7 @@ fn wire__stride_backend__git__known_hosts__known_hosts_load_impl(
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = stride_backend::git::known_hosts::KnownHosts::load()?;
+                        let output_ok = stride_backend_git::known_hosts::KnownHosts::load()?;
                         Ok(output_ok)
                     })(),
                 )
@@ -1790,7 +1790,7 @@ fn wire__stride_backend__git__known_hosts__known_hosts_load_impl(
         },
     )
 }
-fn wire__stride_backend__git__known_hosts__known_hosts_save_impl(
+fn wire__stride_backend_git__known_hosts__known_hosts_save_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1813,13 +1813,13 @@ fn wire__stride_backend__git__known_hosts__known_hosts_save_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_this =
-                <stride_backend::git::known_hosts::KnownHosts>::sse_decode(&mut deserializer);
+                <stride_backend_git::known_hosts::KnownHosts>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
                         let output_ok =
-                            stride_backend::git::known_hosts::KnownHosts::save(&api_this)?;
+                            stride_backend_git::known_hosts::KnownHosts::save(&api_this)?;
                         Ok(output_ok)
                     })(),
                 )
@@ -3193,18 +3193,18 @@ const _: fn() = || {
         let _: String = Annotation.description;
     }
     {
-        let EncryptionKey = None::<stride_backend::git::encryption_key::EncryptionKey>.unwrap();
+        let EncryptionKey = None::<stride_backend_git::encryption_key::EncryptionKey>.unwrap();
         let _: String = EncryptionKey.key;
     }
     {
-        let Host = None::<stride_backend::git::known_hosts::Host>.unwrap();
+        let Host = None::<stride_backend_git::known_hosts::Host>.unwrap();
         let _: String = Host.hostname;
-        let _: stride_backend::git::known_hosts::HostKeyType = Host.key_type;
+        let _: stride_backend_git::known_hosts::HostKeyType = Host.key_type;
         let _: String = Host.key;
     }
     {
-        let KnownHosts = None::<stride_backend::git::known_hosts::KnownHosts>.unwrap();
-        let _: Vec<stride_backend::git::known_hosts::Host> = KnownHosts.hosts;
+        let KnownHosts = None::<stride_backend_git::known_hosts::KnownHosts>.unwrap();
+        let _: Vec<stride_backend_git::known_hosts::Host> = KnownHosts.hosts;
     }
     {
         let ManifestEvent = None::<stride_plugin_manager::manifest::ManifestEvent>.unwrap();
@@ -3536,11 +3536,11 @@ impl SseDecode for bool {
     }
 }
 
-impl SseDecode for stride_backend::git::encryption_key::EncryptionKey {
+impl SseDecode for stride_backend_git::encryption_key::EncryptionKey {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_key = <String>::sse_decode(deserializer);
-        return stride_backend::git::encryption_key::EncryptionKey { key: var_key };
+        return stride_backend_git::encryption_key::EncryptionKey { key: var_key };
     }
 }
 
@@ -3588,14 +3588,14 @@ impl SseDecode for crate::api::filter::FilterSelection {
     }
 }
 
-impl SseDecode for stride_backend::git::known_hosts::Host {
+impl SseDecode for stride_backend_git::known_hosts::Host {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_hostname = <String>::sse_decode(deserializer);
         let mut var_keyType =
-            <stride_backend::git::known_hosts::HostKeyType>::sse_decode(deserializer);
+            <stride_backend_git::known_hosts::HostKeyType>::sse_decode(deserializer);
         let mut var_key = <String>::sse_decode(deserializer);
-        return stride_backend::git::known_hosts::Host {
+        return stride_backend_git::known_hosts::Host {
             hostname: var_hostname,
             key_type: var_keyType,
             key: var_key,
@@ -3603,17 +3603,17 @@ impl SseDecode for stride_backend::git::known_hosts::Host {
     }
 }
 
-impl SseDecode for stride_backend::git::known_hosts::HostKeyType {
+impl SseDecode for stride_backend_git::known_hosts::HostKeyType {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <i32>::sse_decode(deserializer);
         return match inner {
-            0 => stride_backend::git::known_hosts::HostKeyType::Rsa,
-            1 => stride_backend::git::known_hosts::HostKeyType::Dss,
-            2 => stride_backend::git::known_hosts::HostKeyType::Ecdsa256,
-            3 => stride_backend::git::known_hosts::HostKeyType::Ecdsa384,
-            4 => stride_backend::git::known_hosts::HostKeyType::Ecdsa521,
-            5 => stride_backend::git::known_hosts::HostKeyType::Ed255219,
+            0 => stride_backend_git::known_hosts::HostKeyType::Rsa,
+            1 => stride_backend_git::known_hosts::HostKeyType::Dss,
+            2 => stride_backend_git::known_hosts::HostKeyType::Ecdsa256,
+            3 => stride_backend_git::known_hosts::HostKeyType::Ecdsa384,
+            4 => stride_backend_git::known_hosts::HostKeyType::Ecdsa521,
+            5 => stride_backend_git::known_hosts::HostKeyType::Ed255219,
             _ => unreachable!("Invalid variant for HostKeyType: {}", inner),
         };
     }
@@ -3633,11 +3633,11 @@ impl SseDecode for i64 {
     }
 }
 
-impl SseDecode for stride_backend::git::known_hosts::KnownHosts {
+impl SseDecode for stride_backend_git::known_hosts::KnownHosts {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_hosts = <Vec<stride_backend::git::known_hosts::Host>>::sse_decode(deserializer);
-        return stride_backend::git::known_hosts::KnownHosts { hosts: var_hosts };
+        let mut var_hosts = <Vec<stride_backend_git::known_hosts::Host>>::sse_decode(deserializer);
+        return stride_backend_git::known_hosts::KnownHosts { hosts: var_hosts };
     }
 }
 
@@ -3715,13 +3715,13 @@ impl SseDecode for Vec<crate::api::filter::Filter> {
     }
 }
 
-impl SseDecode for Vec<stride_backend::git::known_hosts::Host> {
+impl SseDecode for Vec<stride_backend_git::known_hosts::Host> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
-            ans_.push(<stride_backend::git::known_hosts::Host>::sse_decode(
+            ans_.push(<stride_backend_git::known_hosts::Host>::sse_decode(
                 deserializer,
             ));
         }
@@ -3930,12 +3930,12 @@ impl SseDecode for Option<chrono::DateTime<chrono::Utc>> {
     }
 }
 
-impl SseDecode for Option<stride_backend::git::encryption_key::EncryptionKey> {
+impl SseDecode for Option<stride_backend_git::encryption_key::EncryptionKey> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(
-                <stride_backend::git::encryption_key::EncryptionKey>::sse_decode(deserializer),
+                <stride_backend_git::encryption_key::EncryptionKey>::sse_decode(deserializer),
             );
         } else {
             return None;
@@ -3956,11 +3956,11 @@ impl SseDecode for Option<crate::api::filter::FilterSelection> {
     }
 }
 
-impl SseDecode for Option<stride_backend::git::known_hosts::Host> {
+impl SseDecode for Option<stride_backend_git::known_hosts::Host> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
-            return Some(<stride_backend::git::known_hosts::Host>::sse_decode(
+            return Some(<stride_backend_git::known_hosts::Host>::sse_decode(
                 deserializer,
             ));
         } else {
@@ -4158,7 +4158,7 @@ impl SseDecode for crate::api::settings::RepositorySpecification {
         let mut var_branch = <String>::sse_decode(deserializer);
         let mut var_sshKeyUuid = <Option<uuid::Uuid>>::sse_decode(deserializer);
         let mut var_encryption =
-            <Option<stride_backend::git::encryption_key::EncryptionKey>>::sse_decode(deserializer);
+            <Option<stride_backend_git::encryption_key::EncryptionKey>>::sse_decode(deserializer);
         return crate::api::settings::RepositorySpecification {
             uuid: var_uuid,
             name: var_name,
@@ -4406,7 +4406,7 @@ fn pde_ffi_dispatcher_primary_impl(
         34 => {
             wire__crate__api__plugin_manager__emit_broadcast_impl(port, ptr, rust_vec_len, data_len)
         }
-        35 => wire__stride_backend__git__encryption_key__encryption_key_generate_impl(
+        35 => wire__stride_backend_git__encryption_key__encryption_key_generate_impl(
             port,
             ptr,
             rust_vec_len,
@@ -4417,19 +4417,19 @@ fn pde_ffi_dispatcher_primary_impl(
         39 => wire__crate__api__logging__get_logs_impl(port, ptr, rust_vec_len, data_len),
         41 => wire__crate__api__plugin_manager__import_impl(port, ptr, rust_vec_len, data_len),
         42 => wire__crate__api__logging__info_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__stride_backend__git__known_hosts__known_hosts_default_impl(
+        43 => wire__stride_backend_git__known_hosts__known_hosts_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        44 => wire__stride_backend__git__known_hosts__known_hosts_load_impl(
+        44 => wire__stride_backend_git__known_hosts__known_hosts_load_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        45 => wire__stride_backend__git__known_hosts__known_hosts_save_impl(
+        45 => wire__stride_backend_git__known_hosts__known_hosts_save_impl(
             port,
             ptr,
             rust_vec_len,
@@ -4565,7 +4565,7 @@ fn pde_ffi_dispatcher_sync_impl(
         21 => wire__crate__api__error__RustError_to_error_string_impl(ptr, rust_vec_len, data_len),
         23 => wire__crate__api__settings__SshKey_public_key_impl(ptr, rust_vec_len, data_len),
         27 => wire__crate__api__settings__SshKey_uuid_impl(ptr, rust_vec_len, data_len),
-        36 => wire__stride_backend__git__encryption_key__encryption_key_validate_impl(
+        36 => wire__stride_backend_git__encryption_key__encryption_key_validate_impl(
             ptr,
             rust_vec_len,
             data_len,
@@ -4731,22 +4731,21 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::settings::ApplicationPaths>
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart
-    for FrbWrapper<stride_backend::git::encryption_key::EncryptionKey>
+    for FrbWrapper<stride_backend_git::encryption_key::EncryptionKey>
 {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [self.0.key.into_into_dart().into_dart()].into_dart()
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for FrbWrapper<stride_backend::git::encryption_key::EncryptionKey>
+    for FrbWrapper<stride_backend_git::encryption_key::EncryptionKey>
 {
 }
 impl
-    flutter_rust_bridge::IntoIntoDart<
-        FrbWrapper<stride_backend::git::encryption_key::EncryptionKey>,
-    > for stride_backend::git::encryption_key::EncryptionKey
+    flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend_git::encryption_key::EncryptionKey>>
+    for stride_backend_git::encryption_key::EncryptionKey
 {
-    fn into_into_dart(self) -> FrbWrapper<stride_backend::git::encryption_key::EncryptionKey> {
+    fn into_into_dart(self) -> FrbWrapper<stride_backend_git::encryption_key::EncryptionKey> {
         self.into()
     }
 }
@@ -4796,7 +4795,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::filter::FilterSelection>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend::git::known_hosts::Host> {
+impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend_git::known_hosts::Host> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.0.hostname.into_into_dart().into_dart(),
@@ -4807,55 +4806,55 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend::git::known_hos
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for FrbWrapper<stride_backend::git::known_hosts::Host>
+    for FrbWrapper<stride_backend_git::known_hosts::Host>
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend::git::known_hosts::Host>>
-    for stride_backend::git::known_hosts::Host
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend_git::known_hosts::Host>>
+    for stride_backend_git::known_hosts::Host
 {
-    fn into_into_dart(self) -> FrbWrapper<stride_backend::git::known_hosts::Host> {
+    fn into_into_dart(self) -> FrbWrapper<stride_backend_git::known_hosts::Host> {
         self.into()
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend::git::known_hosts::HostKeyType> {
+impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend_git::known_hosts::HostKeyType> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self.0 {
-            stride_backend::git::known_hosts::HostKeyType::Rsa => 0.into_dart(),
-            stride_backend::git::known_hosts::HostKeyType::Dss => 1.into_dart(),
-            stride_backend::git::known_hosts::HostKeyType::Ecdsa256 => 2.into_dart(),
-            stride_backend::git::known_hosts::HostKeyType::Ecdsa384 => 3.into_dart(),
-            stride_backend::git::known_hosts::HostKeyType::Ecdsa521 => 4.into_dart(),
-            stride_backend::git::known_hosts::HostKeyType::Ed255219 => 5.into_dart(),
+            stride_backend_git::known_hosts::HostKeyType::Rsa => 0.into_dart(),
+            stride_backend_git::known_hosts::HostKeyType::Dss => 1.into_dart(),
+            stride_backend_git::known_hosts::HostKeyType::Ecdsa256 => 2.into_dart(),
+            stride_backend_git::known_hosts::HostKeyType::Ecdsa384 => 3.into_dart(),
+            stride_backend_git::known_hosts::HostKeyType::Ecdsa521 => 4.into_dart(),
+            stride_backend_git::known_hosts::HostKeyType::Ed255219 => 5.into_dart(),
             _ => unreachable!(),
         }
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for FrbWrapper<stride_backend::git::known_hosts::HostKeyType>
+    for FrbWrapper<stride_backend_git::known_hosts::HostKeyType>
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend::git::known_hosts::HostKeyType>>
-    for stride_backend::git::known_hosts::HostKeyType
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend_git::known_hosts::HostKeyType>>
+    for stride_backend_git::known_hosts::HostKeyType
 {
-    fn into_into_dart(self) -> FrbWrapper<stride_backend::git::known_hosts::HostKeyType> {
+    fn into_into_dart(self) -> FrbWrapper<stride_backend_git::known_hosts::HostKeyType> {
         self.into()
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend::git::known_hosts::KnownHosts> {
+impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_backend_git::known_hosts::KnownHosts> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [self.0.hosts.into_into_dart().into_dart()].into_dart()
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for FrbWrapper<stride_backend::git::known_hosts::KnownHosts>
+    for FrbWrapper<stride_backend_git::known_hosts::KnownHosts>
 {
 }
-impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend::git::known_hosts::KnownHosts>>
-    for stride_backend::git::known_hosts::KnownHosts
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_backend_git::known_hosts::KnownHosts>>
+    for stride_backend_git::known_hosts::KnownHosts
 {
-    fn into_into_dart(self) -> FrbWrapper<stride_backend::git::known_hosts::KnownHosts> {
+    fn into_into_dart(self) -> FrbWrapper<stride_backend_git::known_hosts::KnownHosts> {
         self.into()
     }
 }
@@ -5479,7 +5478,7 @@ impl SseEncode for bool {
     }
 }
 
-impl SseEncode for stride_backend::git::encryption_key::EncryptionKey {
+impl SseEncode for stride_backend_git::encryption_key::EncryptionKey {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.key, serializer);
@@ -5525,26 +5524,26 @@ impl SseEncode for crate::api::filter::FilterSelection {
     }
 }
 
-impl SseEncode for stride_backend::git::known_hosts::Host {
+impl SseEncode for stride_backend_git::known_hosts::Host {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.hostname, serializer);
-        <stride_backend::git::known_hosts::HostKeyType>::sse_encode(self.key_type, serializer);
+        <stride_backend_git::known_hosts::HostKeyType>::sse_encode(self.key_type, serializer);
         <String>::sse_encode(self.key, serializer);
     }
 }
 
-impl SseEncode for stride_backend::git::known_hosts::HostKeyType {
+impl SseEncode for stride_backend_git::known_hosts::HostKeyType {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(
             match self {
-                stride_backend::git::known_hosts::HostKeyType::Rsa => 0,
-                stride_backend::git::known_hosts::HostKeyType::Dss => 1,
-                stride_backend::git::known_hosts::HostKeyType::Ecdsa256 => 2,
-                stride_backend::git::known_hosts::HostKeyType::Ecdsa384 => 3,
-                stride_backend::git::known_hosts::HostKeyType::Ecdsa521 => 4,
-                stride_backend::git::known_hosts::HostKeyType::Ed255219 => 5,
+                stride_backend_git::known_hosts::HostKeyType::Rsa => 0,
+                stride_backend_git::known_hosts::HostKeyType::Dss => 1,
+                stride_backend_git::known_hosts::HostKeyType::Ecdsa256 => 2,
+                stride_backend_git::known_hosts::HostKeyType::Ecdsa384 => 3,
+                stride_backend_git::known_hosts::HostKeyType::Ecdsa521 => 4,
+                stride_backend_git::known_hosts::HostKeyType::Ed255219 => 5,
                 _ => {
                     unimplemented!("");
                 }
@@ -5568,10 +5567,10 @@ impl SseEncode for i64 {
     }
 }
 
-impl SseEncode for stride_backend::git::known_hosts::KnownHosts {
+impl SseEncode for stride_backend_git::known_hosts::KnownHosts {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Vec<stride_backend::git::known_hosts::Host>>::sse_encode(self.hosts, serializer);
+        <Vec<stride_backend_git::known_hosts::Host>>::sse_encode(self.hosts, serializer);
     }
 }
 
@@ -5635,12 +5634,12 @@ impl SseEncode for Vec<crate::api::filter::Filter> {
     }
 }
 
-impl SseEncode for Vec<stride_backend::git::known_hosts::Host> {
+impl SseEncode for Vec<stride_backend_git::known_hosts::Host> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <stride_backend::git::known_hosts::Host>::sse_encode(item, serializer);
+            <stride_backend_git::known_hosts::Host>::sse_encode(item, serializer);
         }
     }
 }
@@ -5809,12 +5808,12 @@ impl SseEncode for Option<chrono::DateTime<chrono::Utc>> {
     }
 }
 
-impl SseEncode for Option<stride_backend::git::encryption_key::EncryptionKey> {
+impl SseEncode for Option<stride_backend_git::encryption_key::EncryptionKey> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <stride_backend::git::encryption_key::EncryptionKey>::sse_encode(value, serializer);
+            <stride_backend_git::encryption_key::EncryptionKey>::sse_encode(value, serializer);
         }
     }
 }
@@ -5829,12 +5828,12 @@ impl SseEncode for Option<crate::api::filter::FilterSelection> {
     }
 }
 
-impl SseEncode for Option<stride_backend::git::known_hosts::Host> {
+impl SseEncode for Option<stride_backend_git::known_hosts::Host> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <stride_backend::git::known_hosts::Host>::sse_encode(value, serializer);
+            <stride_backend_git::known_hosts::Host>::sse_encode(value, serializer);
         }
     }
 }
@@ -6000,7 +5999,7 @@ impl SseEncode for crate::api::settings::RepositorySpecification {
         <String>::sse_encode(self.email, serializer);
         <String>::sse_encode(self.branch, serializer);
         <Option<uuid::Uuid>>::sse_encode(self.ssh_key_uuid, serializer);
-        <Option<stride_backend::git::encryption_key::EncryptionKey>>::sse_encode(
+        <Option<stride_backend_git::encryption_key::EncryptionKey>>::sse_encode(
             self.encryption,
             serializer,
         );

@@ -8,11 +8,9 @@ use std::{
     path::{Path, PathBuf},
     process::ExitCode,
 };
-use stride_backend::{
-    Backend, BackendHandler,
-    git::{GitBackend, known_hosts::KnownHosts},
-    taskchampion::TaskchampionBackend,
-};
+use stride_backend::{Backend, BackendHandler};
+use stride_backend_git::{GitBackend, known_hosts::KnownHosts};
+use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
     event::{HostEvent, PluginEvent},
     state::KnownPaths,

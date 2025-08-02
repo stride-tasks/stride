@@ -1,24 +1,27 @@
+//! Stride's taskchampion backend implementations.
+
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+
 use std::{
     mem,
     path::{Path, PathBuf},
 };
 
+use stride_backend::{Backend, BackendHandler};
 use stride_core::{
     backend::{Config, Schema, Value},
     state::KnownPaths,
     task::Task,
 };
 use stride_database::Database;
-use taskchampion::{Operations, StorageConfig};
+use taskchampion::{Operations, ServerConfig, StorageConfig};
 use uuid::Uuid;
 
-use super::Backend;
+pub mod error;
 
-// Re-export this, to allow API users to access the ServerConfig, without depending on
-// `taskchampion`
-pub use taskchampion::ServerConfig;
-
-use crate::{BackendHandler, Result};
+pub type Result<T, E = error::Error> = std::result::Result<T, E>;
 
 #[derive(Debug, Clone, Copy)]
 struct Handler;
@@ -41,7 +44,7 @@ impl BackendHandler for Handler {
         schema: &Config,
         path: &Path,
         _known_paths: &KnownPaths,
-    ) -> Result<Box<dyn Backend>> {
+    ) -> stride_backend::Result<Box<dyn Backend>> {
         let config = TaskchampionConfig {
             root_path: path.to_path_buf(),
             url: schema.url_value("url")?.to_string(),
@@ -194,7 +197,7 @@ impl Backend for TaskchampionBackend {
         Box::new(Handler)
     }
 
-    fn sync(&mut self, db: &mut Database) -> Result<()> {
+    fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
         for task in db.all_tasks()? {
             self.add(task)?;
         }
@@ -206,7 +209,8 @@ impl Backend for TaskchampionBackend {
             /* TODO(@bpeetz): It would be wonderful, if we could add the server URL to this error
              * message. But the [`taskchampion::Server`] trait does not provide us this
              * information.   <2024-10-26> */
-            .sync(&mut self.server, self.constraint_environment)?;
+            .sync(&mut self.server, self.constraint_environment)
+            .map_err(error::Error::from)?;
 
         Ok(())
     }

@@ -1,12 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use base64::Engine;
+use stride_backend::{Backend, BackendHandler};
 use stride_core::{
     backend::{Config, EncryptionMode, Schema, Value},
     state::KnownPaths,
 };
 
-use crate::{Backend, BackendHandler, git::GitBackend};
+use crate::{Error, GitBackend};
 
 use super::{encryption_key::EncryptionKey, ssh_key::SshKey};
 
@@ -45,7 +46,7 @@ impl BackendHandler for Handler {
         config: &Config,
         path: &Path,
         known_paths: &KnownPaths,
-    ) -> crate::Result<Box<dyn Backend>> {
+    ) -> stride_backend::Result<Box<dyn Backend>> {
         let config = GitConfig {
             root_path: path.to_path_buf(),
             author: config.string_value("author")?.into(),
@@ -58,7 +59,7 @@ impl BackendHandler for Handler {
             },
             ssh_key: {
                 let id = config.ssh_key_value("ssh_key")?;
-                SshKey::load_key(id, known_paths)?
+                SshKey::load_key(id, known_paths).map_err(Error::from)?
             },
         };
 

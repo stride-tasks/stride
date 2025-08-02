@@ -1,8 +1,9 @@
 use flutter_rust_bridge::frb;
-use stride_backend::{
-    Error as BackendError,
+use stride_backend::Error as BackendError;
+use stride_backend_git::{
+    Error as GitBackendError,
     error::KeyStoreError,
-    git::known_hosts::{Host, KnownHostsError},
+    known_hosts::{Host, KnownHostsError},
 };
 use stride_database::Error as DatabaseError;
 use stride_plugin_manager::Error as PluginError;
@@ -105,7 +106,8 @@ impl RustError {
             return None;
         };
 
-        let stride_backend::Error::UnknownHost { host } = &backend else {
+        let GitBackendError::UnknownHost { host } = &backend.downcast_ref::<GitBackendError>()?
+        else {
             return None;
         };
 
@@ -114,10 +116,15 @@ impl RustError {
 
     #[frb(sync)]
     pub fn is_key_store_verification(&self) -> bool {
-        matches!(
-            self.repr.as_ref(),
-            ErrorKind::Backend(BackendError::KeyStore(KeyStoreError::Verification))
-        )
+        let ErrorKind::Backend(backend) = self.repr.as_ref() else {
+            return false;
+        };
+        let Some(GitBackendError::KeyStore(error)) = &backend.downcast_ref::<GitBackendError>()
+        else {
+            return false;
+        };
+
+        matches!(error, KeyStoreError::Verification)
     }
 
     #[frb(sync)]

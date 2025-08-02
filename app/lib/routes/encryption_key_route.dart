@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
-import 'package:stride/bridge/third_party/stride_backend/git/encryption_key.dart';
+import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class EncryptionKeyRoute extends StatefulWidget {

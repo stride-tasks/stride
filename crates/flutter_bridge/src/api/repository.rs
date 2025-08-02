@@ -5,9 +5,10 @@ use std::{
 };
 
 use flutter_rust_bridge::frb;
-use stride_backend::{
-    Backend, Error as BackendError,
-    git::{GitBackend, config::GitConfig, encryption_key::EncryptionKey, ssh_key::SshKey},
+use stride_backend::{Backend, Error as BackendError};
+use stride_backend_git::{
+    Error as GitBackendError, GitBackend, config::GitConfig, encryption_key::EncryptionKey,
+    ssh_key::SshKey,
 };
 use stride_core::{
     event::TaskQuery,
@@ -108,12 +109,12 @@ impl Repository {
         };
 
         let Some(ssh_key_uuid) = specification.ssh_key_uuid else {
-            return Err(BackendError::NoSshKeysProvided.into());
+            return Err(BackendError::from(GitBackendError::NoSshKeysProvided).into());
         };
 
         let ssh_keys = ssh_keys()?;
         let Some(ssh_key) = ssh_keys.iter().find(|ssh_key| ssh_key.uuid == ssh_key_uuid) else {
-            return Err(BackendError::NoSshKeysProvided.into());
+            return Err(BackendError::from(GitBackendError::NoSshKeysProvided).into());
         };
 
         let git_backend_path = self.root_path.join("backend").join("git");
@@ -136,7 +137,7 @@ impl Repository {
 
         Settings::save(settings.clone())?;
 
-        let mut backend = GitBackend::new(config)?;
+        let mut backend = GitBackend::new(config).map_err(BackendError::from)?;
         self.db.clear_poison();
         backend.sync(self.db.get_mut().expect("poison valued cleared"))?;
         Ok(())
