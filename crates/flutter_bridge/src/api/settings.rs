@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{LazyLock, Mutex},
 };
-use stride_backend::git::encryption_key::EncryptionKey;
+use stride_backend_git::encryption_key::EncryptionKey;
 use uuid::Uuid;
 
 use crate::{RustError, frb_generated::StreamSink};

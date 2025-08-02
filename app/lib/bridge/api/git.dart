@@ -12,7 +12,7 @@
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_backend/git/known_hosts.dart';
+import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 
 String hostKeyTypeName({required HostKeyType keyType}) =>
     RustLib.instance.api.crateApiGitHostKeyTypeName(keyType: keyType);

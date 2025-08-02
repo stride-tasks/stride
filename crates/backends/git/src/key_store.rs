@@ -9,7 +9,7 @@ use stride_core::task::{Task, TaskStatus};
 use stride_crypto::crypter::{Aes256Ocb, AesMode, Crypter};
 use uuid::Uuid;
 
-use crate::{Error, Result, base64_decode, base64_encode, error::KeyStoreError, git::generate_iv};
+use crate::{Error, Result, base64_decode, base64_encode, error::KeyStoreError, generate_iv};
 
 use super::serialization::{task_from_data, task_to_data};
 

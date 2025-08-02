@@ -15,7 +15,7 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_backend/git/encryption_key.dart';
+import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:uuid/uuid.dart';
 

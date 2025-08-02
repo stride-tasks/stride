@@ -25,8 +25,8 @@ import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
-import 'package:stride/bridge/third_party/stride_backend/git/encryption_key.dart';
-import 'package:stride/bridge/third_party/stride_backend/git/known_hosts.dart';
+import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
+import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
@@ -91,7 +91,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -600290493;
+  int get rustContentHash => -97564000;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(

@@ -16,6 +16,8 @@ publish = false
 stride_core.workspace = true
 stride_database.workspace = true
 stride_backend.workspace = true
+stride_backend_git.workspace = true
+stride_backend_taskchampion.workspace = true
 stride_plugin_manager.workspace = true
 stride_flutter_bridge.workspace = true
 

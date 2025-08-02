@@ -2,7 +2,7 @@
 
 use stride_core::task::{Annotation, Date, Task, TaskPriority, Uda};
 
-use crate::git::serialization::{task_from_data, task_to_data};
+use crate::serialization::{task_from_data, task_to_data};
 
 const CONSTANT_UUID: uuid::Uuid = uuid::uuid!("01906b2f-ad90-7930-b4d7-24db034bc3c5");
 const CONSTANT_UUID_BYTES: &[u8] = CONSTANT_UUID.as_bytes();

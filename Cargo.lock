@@ -428,6 +428,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 
 [[package]]
+name = "console_error_panic_hook"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
+dependencies = [
+ "cfg-if",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "constant_time_eq"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -678,13 +688,16 @@ dependencies = [
  "bytemuck",
  "byteorder",
  "chrono",
+ "console_error_panic_hook",
  "dart-sys",
  "delegate-attr",
  "flutter_rust_bridge_macros",
  "futures",
  "js-sys",
  "lazy_static",
+ "log",
  "oslog",
+ "portable-atomic",
  "threadpool",
  "tokio",
  "uuid",
@@ -1499,6 +1512,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 
 [[package]]
+name = "portable-atomic"
+version = "1.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
+
+[[package]]
 name = "potential_utf"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1864,14 +1883,36 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 name = "stride_backend"
 version = "0.1.0"
 dependencies = [
+ "stride_core",
+ "stride_database",
+ "thiserror 2.0.12",
+ "uuid",
+]
+
+[[package]]
+name = "stride_backend_git"
+version = "0.1.0"
+dependencies = [
  "anyhow",
  "base64",
  "getrandom 0.3.3",
  "git2",
  "log",
  "serde",
+ "stride_backend",
  "stride_core",
  "stride_crypto",
+ "stride_database",
+ "thiserror 2.0.12",
+ "uuid",
+]
+
+[[package]]
+name = "stride_backend_taskchampion"
+version = "0.1.0"
+dependencies = [
+ "stride_backend",
+ "stride_core",
  "stride_database",
  "taskchampion",
  "thiserror 2.0.12",
@@ -1889,6 +1930,8 @@ dependencies = [
  "dirs 6.0.0",
  "log",
  "stride_backend",
+ "stride_backend_git",
+ "stride_backend_taskchampion",
  "stride_core",
  "stride_database",
  "stride_flutter_bridge",
@@ -1945,6 +1988,7 @@ dependencies = [
  "serde",
  "serde_json",
  "stride_backend",
+ "stride_backend_git",
  "stride_core",
  "stride_crypto",
  "stride_database",

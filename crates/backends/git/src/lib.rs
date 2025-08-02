@@ -1,3 +1,18 @@
+//! Stride's backend implementations.
+
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+
+use base64::{DecodeError, Engine};
+use config::GitConfig;
+use git2::{
+    AnnotatedCommit, Branch, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
+    Oid, RebaseOptions, RemoteCallbacks, Repository, Signature, build::CheckoutBuilder,
+};
+use known_hosts::{Host, HostKeyType, KnownHosts};
+use serialization::task_to_data;
+use ssh_key::SshKey;
 use std::{
     cell::RefCell,
     fs::File,
@@ -6,12 +21,7 @@ use std::{
     rc::Rc,
     sync::Arc,
 };
-
-use base64::Engine;
-use config::GitConfig;
-use known_hosts::{Host, HostKeyType, KnownHosts};
-use serialization::task_to_data;
-use ssh_key::SshKey;
+use stride_backend::{Backend, BackendHandler};
 use stride_core::{
     event::TaskQuery,
     task::{Task, TaskStatus},
@@ -20,10 +30,33 @@ use stride_crypto::crypter::Crypter;
 use stride_database::Database;
 use uuid::Uuid;
 
-use git2::{
-    AnnotatedCommit, Branch, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
-    Oid, RebaseOptions, RemoteCallbacks, Repository, Signature, build::CheckoutBuilder,
-};
+pub mod error;
+
+pub use error::{Error, Result};
+
+pub(crate) fn base64_encode<T: AsRef<[u8]>>(input: T) -> String {
+    fn inner(input: &[u8]) -> String {
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(input)
+    }
+    inner(input.as_ref())
+}
+
+pub(crate) fn base64_decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, DecodeError> {
+    fn inner(input: &[u8]) -> Result<Vec<u8>, DecodeError> {
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(input)
+    }
+    inner(input.as_ref())
+}
+
+pub(crate) trait ToBase64 {
+    fn to_base64(&self) -> String;
+}
+
+impl ToBase64 for Uuid {
+    fn to_base64(&self) -> String {
+        base64_encode(self.as_bytes())
+    }
+}
 
 mod key_store;
 mod serialization;
@@ -37,7 +70,7 @@ pub mod ssh_key;
 
 use key_store::KeyStore;
 
-use crate::{Backend, Error, Result, ToBase64, base64_decode, git::config::Handler};
+use crate::config::Handler;
 
 pub(crate) const IV_LEN: usize = 12;
 
@@ -920,14 +953,14 @@ impl GitBackend {
 }
 
 impl Backend for GitBackend {
-    fn handler() -> Box<dyn crate::BackendHandler>
+    fn handler() -> Box<dyn BackendHandler>
     where
         Self: Sized,
     {
         Box::new(Handler)
     }
 
-    fn sync(&mut self, db: &mut Database) -> Result<()> {
+    fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
         let tasks = db.all_tasks()?;
 
         if self.config.repository_path().join(".git").exists() {
@@ -938,7 +971,8 @@ impl Backend for GitBackend {
                     self.add(task)?;
                 }
             }
-            let repository = Repository::open(self.config.repository_path())?;
+            let repository =
+                Repository::open(self.config.repository_path()).map_err(Error::LibGit2)?;
             log::info!("Pulling tasks...");
             if self.pull(&repository)? {
                 log::info!("Pulled tasks");
