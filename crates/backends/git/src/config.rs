@@ -1,6 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use base64::Engine;
 use stride_backend::{Backend, BackendHandler};
 use stride_core::{
     backend::{Config, EncryptionMode, Schema, Value},
@@ -34,7 +33,7 @@ impl BackendHandler for Handler {
                 "Encryption Key",
                 Value::Encryption {
                     mode: EncryptionMode::AesOcb256,
-                    value: None,
+                    bytes: None,
                 },
             )
             .field("ssh_key", "SSH Key", Value::SshKey(None))
@@ -54,12 +53,11 @@ impl BackendHandler for Handler {
             branch: config.string_value("branch")?.into(),
             origin: config.string_value("origin")?.into(),
             encryption_key: EncryptionKey {
-                key: base64::engine::general_purpose::URL_SAFE_NO_PAD
-                    .encode(config.encryption_aes_ocb_256("encryption_key")?),
+                key: config.encryption_aes_ocb_256("encryption_key")?.to_vec(),
             },
             ssh_key: {
                 let id = config.ssh_key_value("ssh_key")?;
-                SshKey::load_key(id, known_paths).map_err(Error::from)?
+                SshKey::load_key(id, &known_paths.ssh_keys).map_err(Error::Ssh)?
             },
         };
 

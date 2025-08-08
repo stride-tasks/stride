@@ -1,49 +1,40 @@
 use std::process::ExitCode;
 
-use anyhow::{Context, bail};
+use anyhow::Context;
 use base64::Engine;
-use stride_core::{
-    backend::{BackendRecord, Value},
-    state::KnownPaths,
-};
-use stride_flutter_bridge::api::{repository::Repository, settings::ssh_keys};
+use stride_backend::registry::Registry;
+use stride_core::backend::{BackendRecord, Value};
+use stride_database::Database;
+use stride_flutter_bridge::api::settings::ssh_keys;
 use url::Url;
 use uuid::Uuid;
 
-use crate::{cli::BackendCommand, get_backend_registry};
+use crate::cli::BackendCommand;
 
 // TODO: Remove lints.
 #[allow(clippy::missing_panics_doc)]
 #[allow(clippy::too_many_lines)]
 pub(crate) fn handle_command(
     command: Option<&BackendCommand>,
-    repository: &mut Repository,
-    known_paths: &KnownPaths,
+    backend_registry: &Registry,
+    database: &mut Database,
 ) -> anyhow::Result<ExitCode> {
-    let registry = get_backend_registry(known_paths)?;
-
     match command {
         None | Some(BackendCommand::List) => {
-            let backends = repository.database().lock().unwrap().backends()?;
+            let backends = database.backends()?;
             for (i, backend) in backends.iter().enumerate() {
                 println!("{i:2}. {}", backend.name);
             }
         }
         Some(BackendCommand::New { backend_name: name }) => {
-            let Some(handler) = registry.get(name.as_str()) else {
-                bail!("unknown backend name: {name}");
-            };
+            let handler = backend_registry.get_or_error(name.as_str())?;
             let record = BackendRecord {
                 id: Uuid::now_v7(),
                 enabled: true,
                 name: handler.name(),
                 config: handler.config_schema().as_config(),
             };
-            repository
-                .database()
-                .lock()
-                .unwrap()
-                .add_backends(&record)?;
+            database.add_backend(&record)?;
         }
         Some(BackendCommand::Config {
             backend_name: name,
@@ -51,25 +42,19 @@ pub(crate) fn handle_command(
             unset,
             property_value,
         }) => {
-            let mut backends = repository.database().lock().unwrap().backends()?;
+            let mut backends = database.backends()?;
 
             let backend = backends
                 .iter_mut()
                 .find(|backend_record| backend_record.name.contains(name))
                 .with_context(|| format!("Could not find field with name {name}"))?;
 
-            let Some(handler) = registry.get(name.as_str()) else {
-                bail!("unknown backend name: {name}");
-            };
+            let handler = backend_registry.get_or_error(name.as_str())?;
 
             let config = backend.config.align(&handler.config_schema())?;
             if config != backend.config {
                 backend.config = config;
-                repository
-                    .database()
-                    .lock()
-                    .unwrap()
-                    .update_backend(backend)?;
+                database.update_backend(backend)?;
             }
 
             let Some(property_name) = property_name else {
@@ -95,7 +80,7 @@ pub(crate) fn handle_command(
                     match value {
                         Value::Uuid(value) | Value::SshKey(value) => *value = None,
                         Value::String(value) => *value = None,
-                        Value::Bytes(value) | Value::Encryption { value, .. } => {
+                        Value::Bytes(value) | Value::Encryption { bytes: value, .. } => {
                             *value = None;
                         }
                         Value::Url(value) => *value = None,
@@ -109,11 +94,7 @@ pub(crate) fn handle_command(
                     println!("{value}");
                 }
 
-                repository
-                    .database_mut()
-                    .get_mut()
-                    .unwrap()
-                    .update_backend(backend)?;
+                database.update_backend(backend)?;
 
                 return Ok(ExitCode::from(u8::from(!has_value)));
             };
@@ -132,12 +113,12 @@ pub(crate) fn handle_command(
                     *value =
                         Some(Url::parse(property_value).context("config input has invalid URL")?);
                 }
-                Value::Encryption { mode: _, value } => {
+                Value::Encryption { mode: _, bytes } => {
                     let key = base64::engine::general_purpose::URL_SAFE_NO_PAD
                         .decode(property_value)
                         .context("invalid base64 encryption key")?;
 
-                    *value = Some(key.into_boxed_slice());
+                    *bytes = Some(key.into_boxed_slice());
                 }
                 Value::SshKey(value) => {
                     let id = Uuid::parse_str(property_value)?;
@@ -152,25 +133,17 @@ pub(crate) fn handle_command(
                 }
             }
 
-            repository
-                .database_mut()
-                .get_mut()
-                .unwrap()
-                .update_backend(backend)?;
+            database.update_backend(backend)?;
         }
         Some(BackendCommand::Remove { backend_name }) => {
-            let backends = repository.database().lock().unwrap().backends()?;
+            let backends = database.backends()?;
 
             let backend = backends
                 .iter()
                 .find(|backend_record| backend_record.name.contains(backend_name))
                 .with_context(|| format!("Could not find field with name {backend_name}"))?;
 
-            repository
-                .database_mut()
-                .get_mut()
-                .unwrap()
-                .delete_backend(backend.id)?;
+            database.delete_backend(backend.id)?;
         }
     }
     Ok(ExitCode::SUCCESS)

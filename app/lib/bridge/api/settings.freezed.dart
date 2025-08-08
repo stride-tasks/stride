@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RepositorySpecification {
 
- UuidValue get uuid; String get name; String get origin; String get author; String get email; String get branch; UuidValue? get sshKeyUuid; EncryptionKey? get encryption;
+ UuidValue get uuid; String get name;
 /// Create a copy of RepositorySpecification
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $RepositorySpecificationCopyWith<RepositorySpecification> get copyWith => _$Repo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepositorySpecification&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name)&&(identical(other.origin, origin) || other.origin == origin)&&(identical(other.author, author) || other.author == author)&&(identical(other.email, email) || other.email == email)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.sshKeyUuid, sshKeyUuid) || other.sshKeyUuid == sshKeyUuid)&&(identical(other.encryption, encryption) || other.encryption == encryption));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepositorySpecification&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uuid,name,origin,author,email,branch,sshKeyUuid,encryption);
+int get hashCode => Object.hash(runtimeType,uuid,name);
 
 @override
 String toString() {
-  return 'RepositorySpecification(uuid: $uuid, name: $name, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
+  return 'RepositorySpecification(uuid: $uuid, name: $name)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $RepositorySpecificationCopyWith<$Res>  {
   factory $RepositorySpecificationCopyWith(RepositorySpecification value, $Res Function(RepositorySpecification) _then) = _$RepositorySpecificationCopyWithImpl;
 @useResult
 $Res call({
- UuidValue uuid, String name, String origin, String author, String email, String branch, UuidValue? sshKeyUuid, EncryptionKey? encryption
+ UuidValue uuid, String name
 });
 
 
@@ -62,17 +62,11 @@ class _$RepositorySpecificationCopyWithImpl<$Res>
 
 /// Create a copy of RepositorySpecification
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? name = null,Object? origin = null,Object? author = null,Object? email = null,Object? branch = null,Object? sshKeyUuid = freezed,Object? encryption = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? name = null,}) {
   return _then(_self.copyWith(
 uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
 as UuidValue,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
-as String,author: null == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
-as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
-as String,branch: null == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
-as String,sshKeyUuid: freezed == sshKeyUuid ? _self.sshKeyUuid : sshKeyUuid // ignore: cast_nullable_to_non_nullable
-as UuidValue?,encryption: freezed == encryption ? _self.encryption : encryption // ignore: cast_nullable_to_non_nullable
-as EncryptionKey?,
+as String,
   ));
 }
 
@@ -154,10 +148,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( UuidValue uuid,  String name,  String origin,  String author,  String email,  String branch,  UuidValue? sshKeyUuid,  EncryptionKey? encryption)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( UuidValue uuid,  String name)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RepositorySpecification() when $default != null:
-return $default(_that.uuid,_that.name,_that.origin,_that.author,_that.email,_that.branch,_that.sshKeyUuid,_that.encryption);case _:
+return $default(_that.uuid,_that.name);case _:
   return orElse();
 
 }
@@ -175,10 +169,10 @@ return $default(_that.uuid,_that.name,_that.origin,_that.author,_that.email,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( UuidValue uuid,  String name,  String origin,  String author,  String email,  String branch,  UuidValue? sshKeyUuid,  EncryptionKey? encryption)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( UuidValue uuid,  String name)  $default,) {final _that = this;
 switch (_that) {
 case _RepositorySpecification():
-return $default(_that.uuid,_that.name,_that.origin,_that.author,_that.email,_that.branch,_that.sshKeyUuid,_that.encryption);}
+return $default(_that.uuid,_that.name);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -192,10 +186,10 @@ return $default(_that.uuid,_that.name,_that.origin,_that.author,_that.email,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( UuidValue uuid,  String name,  String origin,  String author,  String email,  String branch,  UuidValue? sshKeyUuid,  EncryptionKey? encryption)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( UuidValue uuid,  String name)?  $default,) {final _that = this;
 switch (_that) {
 case _RepositorySpecification() when $default != null:
-return $default(_that.uuid,_that.name,_that.origin,_that.author,_that.email,_that.branch,_that.sshKeyUuid,_that.encryption);case _:
+return $default(_that.uuid,_that.name);case _:
   return null;
 
 }
@@ -207,17 +201,11 @@ return $default(_that.uuid,_that.name,_that.origin,_that.author,_that.email,_tha
 
 
 class _RepositorySpecification extends RepositorySpecification {
-  const _RepositorySpecification({required this.uuid, required this.name, required this.origin, required this.author, required this.email, required this.branch, this.sshKeyUuid, this.encryption}): super._();
+  const _RepositorySpecification({required this.uuid, required this.name}): super._();
   
 
 @override final  UuidValue uuid;
 @override final  String name;
-@override final  String origin;
-@override final  String author;
-@override final  String email;
-@override final  String branch;
-@override final  UuidValue? sshKeyUuid;
-@override final  EncryptionKey? encryption;
 
 /// Create a copy of RepositorySpecification
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +217,16 @@ _$RepositorySpecificationCopyWith<_RepositorySpecification> get copyWith => __$R
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepositorySpecification&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name)&&(identical(other.origin, origin) || other.origin == origin)&&(identical(other.author, author) || other.author == author)&&(identical(other.email, email) || other.email == email)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.sshKeyUuid, sshKeyUuid) || other.sshKeyUuid == sshKeyUuid)&&(identical(other.encryption, encryption) || other.encryption == encryption));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepositorySpecification&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uuid,name,origin,author,email,branch,sshKeyUuid,encryption);
+int get hashCode => Object.hash(runtimeType,uuid,name);
 
 @override
 String toString() {
-  return 'RepositorySpecification(uuid: $uuid, name: $name, origin: $origin, author: $author, email: $email, branch: $branch, sshKeyUuid: $sshKeyUuid, encryption: $encryption)';
+  return 'RepositorySpecification(uuid: $uuid, name: $name)';
 }
 
 
@@ -249,7 +237,7 @@ abstract mixin class _$RepositorySpecificationCopyWith<$Res> implements $Reposit
   factory _$RepositorySpecificationCopyWith(_RepositorySpecification value, $Res Function(_RepositorySpecification) _then) = __$RepositorySpecificationCopyWithImpl;
 @override @useResult
 $Res call({
- UuidValue uuid, String name, String origin, String author, String email, String branch, UuidValue? sshKeyUuid, EncryptionKey? encryption
+ UuidValue uuid, String name
 });
 
 
@@ -266,17 +254,11 @@ class __$RepositorySpecificationCopyWithImpl<$Res>
 
 /// Create a copy of RepositorySpecification
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? name = null,Object? origin = null,Object? author = null,Object? email = null,Object? branch = null,Object? sshKeyUuid = freezed,Object? encryption = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? name = null,}) {
   return _then(_RepositorySpecification(
 uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
 as UuidValue,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
-as String,author: null == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
-as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
-as String,branch: null == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
-as String,sshKeyUuid: freezed == sshKeyUuid ? _self.sshKeyUuid : sshKeyUuid // ignore: cast_nullable_to_non_nullable
-as UuidValue?,encryption: freezed == encryption ? _self.encryption : encryption // ignore: cast_nullable_to_non_nullable
-as EncryptionKey?,
+as String,
   ));
 }
 

@@ -9,11 +9,7 @@ class KnownHostsRoute extends StatefulWidget {
   final void Function(Host key)? onTap;
   final bool hasDelete;
 
-  const KnownHostsRoute({
-    super.key,
-    this.onTap,
-    this.hasDelete = true,
-  });
+  const KnownHostsRoute({super.key, this.onTap, this.hasDelete = true});
 
   @override
   State<KnownHostsRoute> createState() => _KnownHostsRouteState();
@@ -37,9 +33,7 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
         future: _knownHosts,
         builder: (context, state) {
           if (state.connectionState != ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state.hasError) {
@@ -89,14 +83,13 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
                   ),
                   onConfirm: (context) async {
                     context.read<LogBloc>().catch_(
-                          () async => KnownHosts.save(
-                            this_: KnownHosts(
-                              hosts: knownHosts.hosts.toList()
-                                ..removeWhere((element) => element == host),
-                            ),
-                          ),
-                        );
-                    Navigator.of(context).pop();
+                      () async => KnownHosts.save(
+                        this_: KnownHosts(
+                          hosts: knownHosts.hosts.toList()
+                            ..removeWhere((element) => element == host),
+                        ),
+                      ),
+                    );
                     logging.trace(message: 'Known host deleted');
                     return true;
                   },

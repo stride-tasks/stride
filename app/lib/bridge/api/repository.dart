@@ -19,12 +19,18 @@ import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:uuid/uuid.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `database_mut`, `database`, `root_path`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Repository>>
 abstract class Repository implements RustOpaqueInterface {
+  Future<void> addBackend({required String name});
+
   Future<List<Task>> allTasks({required Filter filter});
+
+  Future<List<String>> backendNames();
+
+  Future<List<BackendRecord>> backends();
 
   Future<void> insertTask({required Task task});
 
@@ -43,5 +49,35 @@ abstract class Repository implements RustOpaqueInterface {
 
   Future<void> undo();
 
+  Future<void> updateBackend({required BackendRecord backend});
+
   Future<void> updateTask({required Task task});
+}
+
+class BackendRecord {
+  final UuidValue id;
+  final String name;
+  final bool enabled;
+  final String config;
+
+  const BackendRecord({
+    required this.id,
+    required this.name,
+    required this.enabled,
+    required this.config,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ name.hashCode ^ enabled.hashCode ^ config.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BackendRecord &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          enabled == other.enabled &&
+          config == other.config;
 }

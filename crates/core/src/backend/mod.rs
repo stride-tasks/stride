@@ -135,7 +135,7 @@ pub enum Value {
     Encryption {
         mode: EncryptionMode,
         #[serde(default)]
-        value: Option<Box<[u8]>>,
+        bytes: Option<Box<[u8]>>,
     },
     SshKey(#[serde(default)] Option<Uuid>),
 }
@@ -151,7 +151,7 @@ impl Display for Value {
                 Some(uuid) => Display::fmt(uuid, f),
                 None => f.write_str("none"),
             },
-            Value::Bytes(value) | Value::Encryption { value, .. } => match value {
+            Value::Bytes(value) | Value::Encryption { bytes: value, .. } => match value {
                 Some(value) => {
                     let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(value);
                     Display::fmt(&encoded, f)
@@ -193,7 +193,7 @@ impl Value {
             | Value::Uuid(None)
             | Value::Bytes(None)
             | Value::Url(None)
-            | Value::Encryption { value: None, .. }
+            | Value::Encryption { bytes: None, .. }
             | Value::SshKey(None) => false,
             Value::String(_)
             | Value::Uuid(_)
@@ -205,7 +205,7 @@ impl Value {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub fields: HashMap<Box<str>, Value>,
@@ -250,7 +250,7 @@ impl Config {
     pub fn encryption_aes_ocb_256(&self, name: &str) -> Result<&[u8], Error> {
         let value = self.value(name)?;
         let Value::Encryption {
-            value,
+            bytes,
             mode: EncryptionMode::AesOcb256,
         } = value
         else {
@@ -259,7 +259,7 @@ impl Config {
                 actual: value.as_type_name().into(),
             });
         };
-        let value = value
+        let value = bytes
             .as_ref()
             .ok_or_else(|| Error::MissingValue { id: name.into() })?;
         Ok(value)
@@ -325,7 +325,7 @@ impl Config {
                     | Value::Uuid(None)
                     | Value::Bytes(None)
                     | Value::Url(None)
-                    | Value::Encryption { value: None, .. }
+                    | Value::Encryption { bytes: None, .. }
                     | Value::SshKey(None)
             );
 
@@ -341,7 +341,8 @@ impl Config {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct BackendRecord {
     pub id: Uuid,
     pub name: Box<str>,
