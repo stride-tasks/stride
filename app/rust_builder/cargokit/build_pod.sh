@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/env bash
 set -e
 
 BASEDIR=$(dirname "$0")
@@ -56,7 +55,7 @@ for path in "${FLUTTER_EXPORT_BUILD_ENVIRONMENT[@]}"; do
   fi
 done
 
-"$BASEDIR/run_build_tool.sh" build-pod "$@"
+sh "$BASEDIR/run_build_tool.sh" build-pod "$@"
 
 # Make a symlink from built framework to phony file, which will be used as input to
 # build script. This should force rebuild (podspec currently doesn't support alwaysOutOfDate
