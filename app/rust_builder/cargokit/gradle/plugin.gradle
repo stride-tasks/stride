@@ -39,6 +39,13 @@ abstract class CargoKitBuildTask extends DefaultTask {
     @Input
     List<String> targetPlatforms
 
+    private ExecOperations execOperations
+
+    @Inject //@javax.inject.Inject
+    CargoKitBuildTask(ExecOperations execOperations) {
+        this.execOperations = execOperations
+    }
+
     @TaskAction
     def build() {
         if (project.cargokit.manifestDir == null) {
@@ -50,19 +57,19 @@ abstract class CargoKitBuildTask extends DefaultTask {
         }
 
         def executableName = Os.isFamily(Os.FAMILY_WINDOWS) ? "run_build_tool.cmd" : "run_build_tool.sh"
-        def path = Paths.get(new File(pluginFile).parent, "..", executableName);
+        def path = Paths.get(Paths.get(pluginFile).parent.toString(), "..", executableName);
 
         def manifestDir = Paths.get(project.buildscript.sourceFile.parent, project.cargokit.manifestDir)
 
         def rootProjectDir = project.rootProject.projectDir
 
         if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-            project.exec {
+            execOperations.exec {
                 commandLine 'chmod', '+x', path
             }
         }
 
-        project.exec {
+        execOperations.exec {
             executable path
             args "build-gradle"
             environment "CARGOKIT_LIB_NAME", project.cargokit.libname
