@@ -40,7 +40,8 @@ fi
 cd "$BUILD_DIR"
 
 ./scripts/rustup-setup
-./app/flutter build $@
+./app/flutter pub get --enforce-lockfile
+./app/flutter build $@ --no-pub
 
 rm -rf "$PROJECT_DIR"/app/reproducible/apks
 mkdir -p "$PROJECT_DIR"/app/build/reproducible
