@@ -38,12 +38,7 @@ Future<void> main() async {
   final plugins = await pm.pluginManifests();
   final pluginManagerState = PluginManagerState(plugins: plugins);
 
-  runApp(
-    MyApp(
-      settings: settings,
-      pluginManagerState: pluginManagerState,
-    ),
-  );
+  runApp(MyApp(settings: settings, pluginManagerState: pluginManagerState));
 }
 
 class MyApp extends StatelessWidget {
@@ -95,8 +90,9 @@ class MyApp extends StatelessWidget {
               title: 'Stride',
               theme: generateTheme(darkMode: false),
               darkTheme: generateTheme(darkMode: true),
-              themeMode:
-                  state.settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+              themeMode: state.settings.darkMode
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
               home: BlocListener<LogBloc, LogState>(
                 listener: (context, state) {
                   if (!state.show) {
@@ -131,6 +127,7 @@ class MyApp extends StatelessWidget {
                     if (!context.mounted) return;
                     showAlertDialog(
                       context: context,
+                      popRoute: false,
                       content: description == null
                           ? title
                           : Column(

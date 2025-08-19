@@ -781,7 +781,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn add_backends(&mut self, backend: &BackendRecord) -> Result<()> {
+    pub fn add_backend(&mut self, backend: &BackendRecord) -> Result<()> {
         let property = serde_json::to_string(&backend.config).expect("should not fail");
         self.execute(
             "INSERT INTO backend_table (

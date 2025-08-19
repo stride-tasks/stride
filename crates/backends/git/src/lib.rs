@@ -324,7 +324,7 @@ impl GitBackend {
 
         std::fs::create_dir_all(&repository_path)?;
 
-        let key = base64_decode(&config.encryption_key.key)?;
+        let key = config.encryption_key.key.as_slice();
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
         let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
 

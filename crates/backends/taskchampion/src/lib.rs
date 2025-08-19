@@ -80,6 +80,8 @@ pub struct TaskchampionBackend {
 
 impl TaskchampionBackend {
     pub fn new(config: TaskchampionConfig) -> Result<Self> {
+        std::fs::create_dir_all(&config.root_path)?;
+
         let storage = StorageConfig::OnDisk {
             taskdb_dir: config.root_path,
             create_if_missing: true,

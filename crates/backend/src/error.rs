@@ -12,6 +12,9 @@ pub enum Error {
     #[error("config error: {0}")]
     Config(#[from] stride_core::backend::Error),
 
+    #[error("unknown backend: {name}")]
+    UnknownBackend { name: Box<str> },
+
     #[error("{0}")]
     Other(Box<dyn BackendError>),
 }
