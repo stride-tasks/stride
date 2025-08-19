@@ -63,7 +63,7 @@ class _BackendListRouteState extends State<BackendListRoute> {
               ),
               builder: (context) => BackendConfigRoute(
                 repository: widget.repository,
-                backend: backend,
+                backendId: backend.id,
               ),
             );
           }).toList();

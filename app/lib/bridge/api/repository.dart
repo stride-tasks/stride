@@ -28,6 +28,8 @@ abstract class Repository implements RustOpaqueInterface {
 
   Future<List<Task>> allTasks({required Filter filter});
 
+  Future<BackendRecord?> backend({required UuidValue id});
+
   Future<List<String>> backendNames();
 
   Future<List<BackendRecord>> backends();

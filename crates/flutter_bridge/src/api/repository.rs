@@ -174,6 +174,15 @@ impl Repository {
         Ok(())
     }
 
+    pub fn backend(&self, id: Uuid) -> Result<Option<BackendRecord>, RustError> {
+        let backends = self.backends()?;
+
+        Ok(backends
+            .into_iter()
+            .filter(|backend| backend.id == id)
+            .nth(0))
+    }
+
     pub fn backend_names(&self) -> Vec<String> {
         self.backend_registry.keys().map(Into::into).collect()
     }

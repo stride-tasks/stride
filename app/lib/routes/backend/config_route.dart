@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/encryption_key.dart';
@@ -174,11 +176,11 @@ class Config {
 
 class BackendConfigRoute extends StatefulWidget {
   final Repository repository;
-  final BackendRecord backend;
+  final UuidValue backendId;
   const BackendConfigRoute({
     super.key,
     required this.repository,
-    required this.backend,
+    required this.backendId,
   });
 
   @override
@@ -186,14 +188,56 @@ class BackendConfigRoute extends StatefulWidget {
 }
 
 class _BackendConfigRouteState extends State<BackendConfigRoute> {
-  late Map<String, dynamic> _json;
-  Future<List<SshKey>>? _sshKeys;
+  Future<BackendRecord?>? _backend;
 
   @override
   void initState() {
     super.initState();
-    _json = jsonDecode(widget.backend.config) as Map<String, dynamic>;
+    _backend = widget.repository.backend(id: widget.backendId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: _backend,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          context.read<LogBloc>().add(LogErrorEvent(error: snapshot.error!));
+        }
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Center(child: CircularProgressIndicator.adaptive());
+        }
+
+        final record = snapshot.data!;
+        return Scaffold(
+          appBar: AppBar(title: Text(record.name)),
+          body: _ConfigSection(repository: widget.repository, record: record),
+        );
+      },
+    );
+  }
+}
+
+class _ConfigSection extends StatefulWidget {
+  final Repository repository;
+  final BackendRecord record;
+  const _ConfigSection({required this.record, required this.repository});
+
+  @override
+  State<_ConfigSection> createState() => _ConfigSectionState();
+}
+
+class _ConfigSectionState extends State<_ConfigSection> {
+  Future<List<SshKey>>? _sshKeys;
+
+  late Map<String, dynamic> _json;
+
+  @override
+  void initState() {
+    super.initState();
+
     _sshKeys = sshKeys();
+    _json = jsonDecode(widget.record.config) as Map<String, dynamic>;
   }
 
   @override
@@ -274,6 +318,7 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
                         if (key != null) {
                           setState(() {
                             value.content = key;
+                            _sshKeys = sshKeys();
                           });
 
                           await _save(config);
@@ -397,22 +442,16 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
           );
       }
     }
-
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.backend.name)),
-      body: SettingsList(sections: [SettingsSection(tiles: tiles)]),
-    );
+    return SettingsList(sections: [SettingsSection(tiles: tiles)]);
   }
 
   Future<void> _save(Config config) async {
     _json = config.toJson();
-
-    final string = jsonEncode(_json);
     final backend = BackendRecord(
-      id: widget.backend.id,
-      name: widget.backend.name,
-      enabled: widget.backend.enabled,
-      config: string,
+      id: widget.record.id,
+      name: widget.record.name,
+      enabled: widget.record.enabled,
+      config: jsonEncode(_json),
     );
     return widget.repository.updateBackend(backend: backend);
   }

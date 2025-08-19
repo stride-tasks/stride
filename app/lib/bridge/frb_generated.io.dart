@@ -357,6 +357,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DateTime? dco_decode_opt_box_autoadd_Chrono_Utc(dynamic raw);
 
   @protected
+  BackendRecord? dco_decode_opt_box_autoadd_backend_record(dynamic raw);
+
+  @protected
   FilterSelection? dco_decode_opt_box_autoadd_filter_selection(dynamic raw);
 
   @protected
@@ -765,6 +768,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DateTime? sse_decode_opt_box_autoadd_Chrono_Utc(SseDeserializer deserializer);
+
+  @protected
+  BackendRecord? sse_decode_opt_box_autoadd_backend_record(
+    SseDeserializer deserializer,
+  );
 
   @protected
   FilterSelection? sse_decode_opt_box_autoadd_filter_selection(
@@ -1259,6 +1267,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_Chrono_Utc(
     DateTime? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_backend_record(
+    BackendRecord? self,
     SseSerializer serializer,
   );
 
