@@ -27,7 +27,7 @@ jobs:
         run: rustup set auto-self-update disable
 
       - name: Setup JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: ${{ env.JAVA_VERSION }}
