@@ -21,11 +21,11 @@ dependencies:
   uuid: ^4.5.1
   path: ^1.9.0
   path_provider: ^2.1.5
-  bloc: ^9.0.0
+  bloc: ^9.0.1
   flutter_bloc: ^9.1.1
   freezed_annotation: ^3.1.0
-  font_awesome_flutter: ^10.9.1
-  file_picker: ^10.3.1
+  font_awesome_flutter: ^10.10.0
+  file_picker: ^10.3.3
   qr_flutter: ^4.1.0
   url_launcher: ^6.3.2
   intersperse: ^2.0.0
@@ -41,7 +41,7 @@ dev_dependencies:
   mocktail: ^1.0.4
 
   freezed: ^3.2.0
-  build_runner: ^2.7.0
+  build_runner: ^2.8.0
 
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
