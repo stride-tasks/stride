@@ -61,7 +61,7 @@ rusqlite = { version = "0.32.1", features = [
 ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
-uuid = { version = "1.16", features = ["v7", "serde"] }
+uuid = { version = "1.18", features = ["v7", "serde"] }
 chrono = { version = "0.4", features = ["serde", "now"] }
 anyhow = "1.0"
 git2 = { version = "0.20", default-features = false, features = [
@@ -76,14 +76,14 @@ env_logger = { version = "0.11.8", default-features = false }
 getrandom = "0.3"
 zeroize = { version = "1.8", features = ["zeroize_derive"] }
 dirs = "6.0"
-toml = "0.8"
+toml = "0.9"
 zip = { version = "4.0.0" }
-wasmi = "0.46.0"
-wasmi_wasi = "0.46.0"
+wasmi = "0.51.1"
+wasmi_wasi = "0.51.1"
 reqwest = { version = "0.12.15", features = ["blocking"] }
-clap = { version = "4.5.38", features = ["derive"] }
-url = { version = "2.5.4", features = ["serde"] }
-thiserror = "2.0.12"
+clap = { version = "4.5.49", features = ["derive"] }
+url = { version = "2.5.7", features = ["serde"] }
+thiserror = "2.0.17"
 
 [profile.release]
 # strip = "debug"
