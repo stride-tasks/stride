@@ -31,15 +31,6 @@ CREATE TABLE IF NOT EXISTS task_dependency_table (
     FOREIGN KEY (child_task_id) REFERENCES task_table (id) ON DELETE CASCADE
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS backend_table (
-    id BLOB PRIMARY KEY,
-    `name` TEXT NOT NULL CHECK (length(`name`) != 0),
-    enabled INTEGER NOT NULL CHECK (`enabled` = 0 OR `enabled` = 1),
-
-    -- Custom properties that the backend stores.
-    property TEXT
-) STRICT;
-
 CREATE TABLE IF NOT EXISTS project_table (
     id TEXT PRIMARY KEY CHECK (length(id) != 0)
 ) STRICT;
@@ -64,9 +55,23 @@ CREATE TABLE IF NOT EXISTS operation_table (
     kind BLOB
 ) STRICT;
 
-CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (
-    task_id
-);
+CREATE TABLE IF NOT EXISTS backend_table (
+    id BLOB NOT NULL PRIMARY KEY,
+    `name` TEXT NOT NULL CHECK (length(`name`) != 0),
+    enabled INTEGER NOT NULL CHECK (`enabled` = 0 OR `enabled` = 1)
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS backend_config_table (
+    `backend_id` BLOB NOT NULL,
+
+    `name` TEXT NOT NULL PRIMARY KEY,
+    `type` TEXT NOT NULL,
+    `value` BLOB NOT NULL,
+
+    FOREIGN KEY (`backend_id`) REFERENCES backend_table (`id`) ON DELETE CASCADE
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS task_tag_table_task_id_idx ON task_tag_table (task_id);
 CREATE INDEX IF NOT EXISTS task_tag_table_tag_id_idx ON task_tag_table (tag_id);
 ";
 

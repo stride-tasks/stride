@@ -683,13 +683,13 @@ impl FromBlob<'_> for OperationKind {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<Date>::from_blob(blob)?;
                 let old = Option::<Date>::from_blob(blob)?;
-                OperationKind::TaskModifyModified { id, new, old }
+                OperationKind::TaskModifyDue { id, new, old }
             }
             OPERATION_TASK_MODIFY_WAIT => {
                 let id = Uuid::from_blob(blob)?;
                 let new = Option::<Date>::from_blob(blob)?;
                 let old = Option::<Date>::from_blob(blob)?;
-                OperationKind::TaskModifyModified { id, new, old }
+                OperationKind::TaskModifyWait { id, new, old }
             }
             OPERATION_TASK_MODIFY_ADD_TAG => {
                 let id = Uuid::from_blob(blob)?;
