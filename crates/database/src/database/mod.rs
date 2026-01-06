@@ -1,15 +1,21 @@
 mod functions;
 
 use functions::init_stride_functions;
-use rusqlite::{Connection, OptionalExtension, Row, ToSql, Transaction, types::Value};
+use indoc::indoc;
+use rusqlite::{Connection, OptionalExtension, Row, ToSql, Transaction};
 use stride_core::{
-    backend::BackendRecord,
+    backend::{BackendRecord, Config, Value},
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
+use url::Url;
 use uuid::Uuid;
 
-use std::{collections::HashSet, path::Path, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+    rc::Rc,
+};
 
 use crate::{
     Result, Sql, apply_migrations,
@@ -398,7 +404,7 @@ impl Database {
                 .iter()
                 .copied()
                 .map(task_status_to_sql)
-                .map(Value::from)
+                .map(rusqlite::types::Value::from)
                 .collect::<Vec<_>>(),
         );
         let task_iter = sql.query_map([statys_array], Self::row_to_task)?;
@@ -781,63 +787,148 @@ impl Database {
         Ok(())
     }
 
-    pub fn add_backends(&mut self, backend: &BackendRecord) -> Result<()> {
-        let property = serde_json::to_string(&backend.config).expect("should not fail");
-        self.execute(
-            "INSERT INTO backend_table (
-    id,
-    name,
-    enabled,
-    property)
-VALUES (?1, ?2,
-?3,
-?4)",
-            (
-                backend.id.as_bytes(),
-                &backend.name,
-                &backend.enabled,
-                &property,
-            ),
+    pub fn add_backend(&mut self, backend: &BackendRecord) -> Result<()> {
+        let transaction = self.transaction()?;
+
+        transaction.execute(
+            indoc! {"
+                INSERT INTO backend_table (
+                    id,
+                    name,
+                    enabled
+                )
+                VALUES (?1, ?2, ?3)
+            "},
+            (backend.id.as_bytes(), &backend.name, &backend.enabled),
         )?;
+
+        for (name, value) in &backend.config.fields {
+            transaction.execute(
+                indoc! {"
+                    INSERT INTO backend_config_table (
+                        backend_id,
+                        name,
+                        type,
+                        value
+                    ) VALUES (?1, ?2, ?3, ?4)
+                "},
+                (
+                    backend.id.as_bytes(),
+                    name,
+                    value.as_type_name(),
+                    value.as_value_boxed_slice(),
+                ),
+            )?;
+        }
+        transaction.commit()?;
         Ok(())
     }
 
     pub fn backends(&mut self) -> Result<Vec<BackendRecord>> {
-        let mut sql = self.prepare("SELECT id, name, enabled, property FROM backend_table")?;
-        let rows = sql.query_map((), |row| {
-            let config = row.get::<_, String>("property")?;
-            let config = serde_json::from_str(&config)
-                .map_err(|error| rusqlite::types::FromSqlError::Other(error.into()))?;
+        let transaction = self.transaction()?;
+        let mut backend_sql = transaction.prepare(indoc! {"
+            SELECT
+                id,
+                name,
+                enabled
+            FROM
+                backend_table
+        "})?;
+
+        let rows = backend_sql.query_map((), |row| {
+            let id = row.get::<_, Uuid>("id")?;
+
+            let mut backend_config_sql = transaction.prepare_cached(indoc! {"
+                SELECT
+                    name,
+                    type,
+                    value
+                FROM
+                    backend_config_table
+                WHERE
+                    backend_id = ?1
+            "})?;
+            let rows = backend_config_sql.query_map((id,), |row| {
+                let name = row.get::<_, Box<str>>("name")?;
+                let typ = row.get::<_, Box<str>>("type")?;
+
+                Ok((
+                    name,
+                    match typ.as_ref() {
+                        typ @ ("string" | "url") => {
+                            let value = row.get::<_, Vec<u8>>("value")?;
+                            let string = String::from_utf8(value)
+                                .map_err(|e| rusqlite::Error::Utf8Error(e.utf8_error()))?;
+                            if typ == "string" {
+                                Value::String(string.into_boxed_str())
+                            } else {
+                                Value::Url(Url::parse(&string).map_err(|e| {
+                                    rusqlite::types::FromSqlError::Other(Box::new(e))
+                                })?)
+                            }
+                        }
+                        "uuid" => Value::Uuid(row.get::<_, Uuid>("value")?),
+                        "bytes" => Value::Bytes(row.get::<_, Vec<u8>>("value")?.into_boxed_slice()),
+                        _ => todo!(),
+                    },
+                ))
+            })?;
+
+            let mut fields = HashMap::new();
+            for field in rows {
+                let (name, value) = field?;
+                fields.insert(name, value);
+            }
             Ok(BackendRecord {
                 id: row.get::<_, Uuid>("id")?,
                 name: row.get::<_, Box<str>>("name")?,
                 enabled: row.get::<_, bool>("enabled")?,
-                config,
+                config: Config { fields },
             })
         })?;
-
         let mut backends = Vec::new();
-        for row in rows {
-            backends.push(row?);
+        for backend in rows {
+            backends.push(backend?);
         }
+
         Ok(backends)
     }
 
     pub fn update_backend(&mut self, backend: &BackendRecord) -> Result<()> {
-        let config = serde_json::to_string(&backend.config).expect("should not fail");
-        self.execute(
-            "UPDATE backend_table
-SET name = ?2,
-    enabled = ?3,
-    property = ?4
-WHERE id = ?1",
-            (
-                backend.id.as_bytes(),
-                &backend.name,
-                &backend.enabled,
-                &config,
-            ),
+        let transaction = self.transaction()?;
+
+        // TODO: Maybe instead of deleting them all,
+        // figure out a nice way to delete only the tags that are old.
+        transaction.execute(
+            "DELETE FROM backend_config_table WHERE backend_id = ?1",
+            (backend.id,),
         )?;
+        let mut sql = transaction
+            .prepare_cached("INSERT INTO backend_config_table (backend_id, name, type, value) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING")?;
+        for (name, value) in &backend.config.fields {
+            sql.execute((
+                backend.id,
+                name,
+                value.as_type_name(),
+                value.as_value_boxed_slice(),
+            ))?;
+        }
+
+        transaction.execute(
+            indoc! {"
+            UPDATE backend_table
+            SET
+                name = ?2,
+                enabled = ?3
+            WHERE
+                id = ?1
+            "},
+            (backend.id.as_bytes(), &backend.name, &backend.enabled),
+        )?;
+
+        drop(sql);
+
+        transaction.commit()?;
         Ok(())
     }
 

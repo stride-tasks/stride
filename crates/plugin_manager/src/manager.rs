@@ -65,7 +65,7 @@ impl PluginManager {
             let manifest: PluginManifest<PluginState> =
                 toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
 
-            plugins.insert(manifest.name.to_string(), Plugin { manifest });
+            plugins.insert(manifest.name.clone(), Plugin { manifest });
         }
 
         self.plugins = plugins;

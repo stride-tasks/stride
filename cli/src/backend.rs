@@ -1,13 +1,11 @@
 use std::process::ExitCode;
 
 use anyhow::{Context, bail};
-use base64::Engine;
 use stride_core::{
-    backend::{BackendRecord, Value},
+    backend::{BackendRecord, Config},
     state::KnownPaths,
 };
-use stride_flutter_bridge::api::{repository::Repository, settings::ssh_keys};
-use url::Url;
+use stride_flutter_bridge::api::repository::Repository;
 use uuid::Uuid;
 
 use crate::{cli::BackendCommand, get_backend_registry};
@@ -37,13 +35,9 @@ pub(crate) fn handle_command(
                 id: Uuid::now_v7(),
                 enabled: true,
                 name: handler.name(),
-                config: handler.config_schema().as_config(),
+                config: Config::default(),
             };
-            repository
-                .database()
-                .lock()
-                .unwrap()
-                .add_backends(&record)?;
+            repository.database().lock().unwrap().add_backend(&record)?;
         }
         Some(BackendCommand::Config {
             backend_name: name,
@@ -62,7 +56,8 @@ pub(crate) fn handle_command(
                 bail!("unknown backend name: {name}");
             };
 
-            let config = backend.config.align(&handler.config_schema())?;
+            let schema = handler.config_schema();
+            let config = backend.config.align(&schema)?;
             if config != backend.config {
                 backend.config = config;
                 repository
@@ -73,42 +68,46 @@ pub(crate) fn handle_command(
             }
 
             let Some(property_name) = property_name else {
-                for (id, value) in &backend.config.fields {
-                    let required = if value.is_some() { "*" } else { "" };
-                    println!("{id}: {}{required} = {}", value.as_type_name(), value);
+                for (id, schema_field) in &schema.fields {
+                    let required = if schema_field.value.as_value().is_some() {
+                        "*"
+                    } else {
+                        ""
+                    };
+                    let value = backend
+                        .config
+                        .get(id)
+                        .cloned()
+                        .or_else(|| schema_field.value.as_value());
+
+                    println!(
+                        "{id}: {}{required} = {}",
+                        schema_field.value.as_type_name(),
+                        value.map_or_else(
+                            || String::from("none").into(),
+                            |value| value.as_value_string()
+                        )
+                    );
                 }
                 return Ok(ExitCode::SUCCESS);
             };
 
-            let value = backend
-                .config
-                .find_field_mut(property_name)
-                .with_context(|| format!("Could not find field with name {property_name}"))?;
+            let Some(schema_field) = schema.field(property_name) else {
+                bail!("property is not in the schema: {property_name}");
+            };
 
             let Some(property_value) = property_value else {
                 if *unset {
-                    assert!(
-                        property_value.is_none(),
-                        "connot unset with specifying value"
-                    );
-
-                    match value {
-                        Value::Uuid(value) | Value::SshKey(value) => *value = None,
-                        Value::String(value) => *value = None,
-                        Value::Bytes(value) | Value::Encryption { value, .. } => {
-                            *value = None;
-                        }
-                        Value::Url(value) => *value = None,
-                    }
-
+                    backend.config.unset(property_name);
                     return Ok(ExitCode::SUCCESS);
                 }
 
-                let has_value = value.is_some();
-                if has_value {
+                let value = backend.config.get(property_name);
+                if let Some(value) = value {
                     println!("{value}");
                 }
 
+                let has_value = value.is_some();
                 repository
                     .database_mut()
                     .get_mut()
@@ -118,39 +117,9 @@ pub(crate) fn handle_command(
                 return Ok(ExitCode::from(u8::from(!has_value)));
             };
 
-            match value {
-                Value::Uuid(value) => {
-                    *value = Some(Uuid::parse_str(property_value)?);
-                }
-                Value::String(value) => {
-                    *value = Some(property_value.clone().into_boxed_str());
-                }
-                Value::Bytes(value) => {
-                    *value = Some(property_value.as_bytes().into());
-                }
-                Value::Url(value) => {
-                    *value =
-                        Some(Url::parse(property_value).context("config input has invalid URL")?);
-                }
-                Value::Encryption { mode: _, value } => {
-                    let key = base64::engine::general_purpose::URL_SAFE_NO_PAD
-                        .decode(property_value)
-                        .context("invalid base64 encryption key")?;
-
-                    *value = Some(key.into_boxed_slice());
-                }
-                Value::SshKey(value) => {
-                    let id = Uuid::parse_str(property_value)?;
-
-                    let ssh_keys = ssh_keys()?;
-                    let ssh_key = ssh_keys
-                        .iter()
-                        .find(|ssh_key| ssh_key.uuid() == id)
-                        .with_context(|| format!("could not find ssh key with uuid: {id}"))?;
-
-                    *value = Some(ssh_key.uuid());
-                }
-            }
+            backend
+                .config
+                .set(schema_field, property_name, property_value)?;
 
             repository
                 .database_mut()

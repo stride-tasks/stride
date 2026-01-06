@@ -11,7 +11,7 @@ use std::{
 
 use stride_backend::{Backend, BackendHandler};
 use stride_core::{
-    backend::{Config, Schema, Value},
+    backend::{Config, Schema, SchemaValue},
     state::KnownPaths,
     task::Task,
 };
@@ -33,9 +33,21 @@ impl BackendHandler for Handler {
 
     fn config_schema(&self) -> Schema {
         Schema::builder(self.name())
-            .field("url", "Server URL", Value::Url(None))
-            .field("client_id", "Client ID", Value::Uuid(None))
-            .field("encryption_secret", "Encryption Secret", Value::Bytes(None))
+            .field("url", "Server URL", SchemaValue::Url { default: None })
+            .field(
+                "client_id",
+                "Client ID",
+                SchemaValue::Uuid { default: None },
+            )
+            .field(
+                "encryption_secret",
+                "Encryption Secret",
+                SchemaValue::Bytes {
+                    default: None,
+                    min: None,
+                    max: None,
+                },
+            )
             .build()
     }
 

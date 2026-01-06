@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use base64::Engine;
 use stride_backend::{Backend, BackendHandler};
 use stride_core::{
-    backend::{Config, EncryptionMode, Schema, Value},
+    backend::{Config, Schema, SchemaValue},
     state::KnownPaths,
 };
 
@@ -21,23 +21,38 @@ impl BackendHandler for Handler {
 
     fn config_schema(&self) -> Schema {
         Schema::builder(self.name())
-            .field("origin", "Origin", Value::String(None))
-            .field("author", "Author", Value::string("Stride"))
+            .field("origin", "Origin", SchemaValue::String { default: None })
+            .field(
+                "author",
+                "Author",
+                SchemaValue::String {
+                    default: Some("Stride".into()),
+                },
+            )
             .field(
                 "email",
                 "E-mail",
-                Value::string("noreply.stride.tasks@gmail.com"),
+                SchemaValue::String {
+                    default: Some("noreply.stride.tasks@gmail.com".into()),
+                },
             )
-            .field("branch", "Git Branch", Value::String(Some("main".into())))
+            .field(
+                "branch",
+                "Git Branch",
+                SchemaValue::String {
+                    default: Some("main".into()),
+                },
+            )
             .field(
                 "encryption_key",
                 "Encryption Key",
-                Value::Encryption {
-                    mode: EncryptionMode::AesOcb256,
-                    value: None,
+                SchemaValue::Bytes {
+                    default: None,
+                    min: Some(32),
+                    max: Some(32),
                 },
             )
-            .field("ssh_key", "SSH Key", Value::SshKey(None))
+            .field("ssh_key", "SSH Key", SchemaValue::SshKey { default: None })
             .build()
     }
 
@@ -55,10 +70,10 @@ impl BackendHandler for Handler {
             origin: config.string_value("origin")?.into(),
             encryption_key: EncryptionKey {
                 key: base64::engine::general_purpose::URL_SAFE_NO_PAD
-                    .encode(config.encryption_aes_ocb_256("encryption_key")?),
+                    .encode(config.bytes_value("encryption_key")?),
             },
             ssh_key: {
-                let id = config.ssh_key_value("ssh_key")?;
+                let id = config.uuid_value("ssh_key")?;
                 SshKey::load_key(id, known_paths).map_err(Error::from)?
             },
         };

@@ -327,8 +327,8 @@ fn main() -> anyhow::Result<ExitCode> {
                 .join(handler.name().as_ref())
                 .join(backend.id.to_string());
 
-            let config = backend.config.align(&handler.config_schema())?;
-
+            let schema = handler.config_schema();
+            let config = backend.config.align(&schema)?;
             if config != backend.config {
                 backend.config = config;
                 repository
@@ -340,7 +340,8 @@ fn main() -> anyhow::Result<ExitCode> {
 
             std::fs::create_dir_all(&path)?;
 
-            let mut backend = handler.create(&backend.config, &path, &known_paths)?;
+            let config = backend.config.fill(&schema)?;
+            let mut backend = handler.create(&config, &path, &known_paths)?;
 
             let db = repository.database_mut().get_mut().unwrap();
             backend.sync(db)?;

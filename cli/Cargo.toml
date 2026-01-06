@@ -27,8 +27,6 @@ dirs.workspace = true
 uuid.workspace = true
 log.workspace = true
 clap.workspace = true
-base64.workspace = true
-url.workspace = true
 
 [[bin]]
 name = "stride"

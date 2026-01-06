@@ -252,7 +252,7 @@ impl PluginManager {
 
         if manifest.name.is_empty() || manifest.name.len() > 255 || !manifest.name.is_ascii() {
             return Err(Error::InvalidName {
-                name: manifest.name.to_string(),
+                name: manifest.name.clone(),
             });
         }
 
@@ -317,7 +317,7 @@ impl PluginManager {
         std::fs::write(&code_path, &plugin.code)?;
 
         self.plugins.insert(
-            plugin.manifest.name.to_string(),
+            plugin.manifest.name.clone(),
             Plugin {
                 manifest: plugin.manifest,
             },
@@ -337,7 +337,7 @@ impl PluginManager {
             };
             if plugin.can_accept_event(event) {
                 self.host_events
-                    .push_back((plugin.manifest.name.to_string(), event.clone()));
+                    .push_back((plugin.manifest.name.clone(), event.clone()));
             }
             return Ok(());
         }
@@ -347,7 +347,7 @@ impl PluginManager {
             }
 
             self.host_events
-                .push_back((plugin.manifest.name.to_string(), event.clone()));
+                .push_back((plugin.manifest.name.clone(), event.clone()));
         }
 
         Ok(())
