@@ -7,16 +7,16 @@ repository: https://github.com/stride-tasks/stride
 version: 0.0.1+1
 
 environment:
-  sdk: ">=3.8.1 <4.0.0"
-  flutter: ">=3.32.8"
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.38.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  stride_flutter_bridge:
-    path: rust_builder
+  # stride_flutter_bridge:
+  #   path: rust_builder
   flutter_rust_bridge: 2.11.1
   uuid: ^4.5.1
   path: ^1.9.0
@@ -30,6 +30,9 @@ dependencies:
   url_launcher: ^6.3.2
   intersperse: ^2.0.0
   http: ^1.5.0
+  hooks: ^1.0.0
+  native_toolchain_rust: ^1.0.3
+  code_assets: ^1.0.0
 
 dev_dependencies:
   flutter_test:
