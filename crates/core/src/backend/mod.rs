@@ -397,10 +397,10 @@ impl Config {
     pub fn align(&self, schema: &Schema) -> Result<Config, Error> {
         let mut fields = HashMap::default();
         for (name, field) in &schema.fields {
-            if let Some(value) = self.get(name) {
-                if let Ok(Some(aligned_value)) = value.align(field) {
-                    fields.insert(name.clone(), aligned_value);
-                }
+            if let Some(value) = self.get(name)
+                && let Ok(Some(aligned_value)) = value.align(field)
+            {
+                fields.insert(name.clone(), aligned_value);
             }
         }
         Ok(Config { fields })
@@ -409,10 +409,10 @@ impl Config {
     pub fn fill(&self, schema: &Schema) -> Result<Config, Error> {
         let mut fields = self.fields.clone();
         for (name, field) in &schema.fields {
-            if self.get(name).is_none() {
-                if let Some(default) = field.value.as_value() {
-                    fields.insert(name.clone(), default);
-                }
+            if self.get(name).is_none()
+                && let Some(default) = field.value.as_value()
+            {
+                fields.insert(name.clone(), default);
             }
         }
         Ok(Config { fields })

@@ -626,19 +626,19 @@ impl PluginManager {
             .call(&mut store, (ret as i32, event_data.len() as i32))
             .to_error(&plugin.manifest.name)?;
 
-        if let Some(storage) = store.data_mut().storage.take() {
-            if storage.needs_save {
-                let file = File::create(&storage_filepath)?;
-                let mut writer = BufWriter::new(file);
+        if let Some(storage) = store.data_mut().storage.take()
+            && storage.needs_save
+        {
+            let file = File::create(&storage_filepath)?;
+            let mut writer = BufWriter::new(file);
 
-                for (key, value) in storage.data {
-                    let key_len = key.len() as u32;
-                    let value_len = value.len() as u32;
-                    writer.write_all(&key_len.to_be_bytes())?;
-                    writer.write_all(&key)?;
-                    writer.write_all(&value_len.to_be_bytes())?;
-                    writer.write_all(&value)?;
-                }
+            for (key, value) in storage.data {
+                let key_len = key.len() as u32;
+                let value_len = value.len() as u32;
+                writer.write_all(&key_len.to_be_bytes())?;
+                writer.write_all(&key)?;
+                writer.write_all(&value_len.to_be_bytes())?;
+                writer.write_all(&value)?;
             }
         }
 

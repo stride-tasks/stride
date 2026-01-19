@@ -742,11 +742,11 @@ impl GitBackend {
         });
 
         let remote = repository.remote("origin", &self.config.origin);
-        if let Err(error) = remote {
-            if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
-                log::warn!("Couldn't create remote origin: {error}");
-                return Err(error.into());
-            }
+        if let Err(error) = remote
+            && (error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists)
+        {
+            log::warn!("Couldn't create remote origin: {error}");
+            return Err(error.into());
         }
         repository.remote_set_url("origin", &self.config.origin)?;
 
@@ -818,11 +818,11 @@ impl GitBackend {
         });
 
         let remote = repository.remote("origin", &self.config.origin);
-        if let Err(error) = remote {
-            if error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists {
-                log::warn!("Couldn't create remote origin: {error}");
-                return Err(error.into());
-            }
+        if let Err(error) = remote
+            && (error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists)
+        {
+            log::warn!("Couldn't create remote origin: {error}");
+            return Err(error.into());
         }
         repository.remote_set_url("origin", &self.config.origin)?;
 

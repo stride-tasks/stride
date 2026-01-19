@@ -19,7 +19,7 @@ exclude = ["app"]
 [workspace.package]
 edition = "2024"
 version = "0.1.0"
-rust-version = "1.87.0"
+rust-version = "1.91.0"
 authors = ["Haled Odat <haledodat@gmail.com>"]
 repository = "https://github.com/HalidOdat/stride"
 license = "AGPL-3.0-or-later"
