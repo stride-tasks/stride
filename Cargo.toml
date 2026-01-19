@@ -79,7 +79,7 @@ zeroize = { version = "1.8", features = ["zeroize_derive"] }
 dirs = "6.0"
 toml = "0.8"
 zip = { version = "4.0.0" }
-wasmi = "0.46.0"
+wasmi = "1.0.7"
 wasmi_wasi = "0.46.0"
 reqwest = { version = "0.12.15", features = ["blocking"] }
 clap = { version = "4.5.54", features = ["derive"] }

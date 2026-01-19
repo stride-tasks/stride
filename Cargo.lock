@@ -2179,7 +2179,7 @@ dependencies = [
  "serde_json",
  "stride_core",
  "toml",
- "wasmi",
+ "wasmi 1.0.7",
  "wasmi_wasi",
  "zip",
 ]
@@ -2677,9 +2677,22 @@ dependencies = [
  "multi-stash",
  "smallvec",
  "spin",
- "wasmi_collections",
- "wasmi_core",
- "wasmi_ir",
+ "wasmi_collections 0.46.0",
+ "wasmi_core 0.46.0",
+ "wasmi_ir 0.46.0",
+ "wasmparser 0.228.0",
+]
+
+[[package]]
+name = "wasmi"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75c97bf74a48796b57fdfe35c00a9fe05410f0f1f8ccfe38591e382a0060a6fd"
+dependencies = [
+ "spin",
+ "wasmi_collections 1.0.7",
+ "wasmi_core 1.0.7",
+ "wasmi_ir 1.0.7",
  "wasmparser 0.228.0",
  "wat",
 ]
@@ -2689,6 +2702,15 @@ name = "wasmi_collections"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "001f3a73d68df33e164c935fd64a4bf63bcd6cd6a6e88ae0e4328fd5aff1b7a7"
+dependencies = [
+ "string-interner",
+]
+
+[[package]]
+name = "wasmi_collections"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc03d171a00367f89bfb376fe952bb67e337a4992911948c22e1093730a4e718"
 dependencies = [
  "string-interner",
 ]
@@ -2704,12 +2726,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmi_core"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f2f829ada3e3fc5d723cd80feb7bbb1ba358ce3a9b069477b3c58c85f892c71"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "wasmi_ir"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab7c61bb8aa9de5b09fb63f95649af9d206f3a912b54508756a827f29eae678"
 dependencies = [
- "wasmi_core",
+ "wasmi_core 0.46.0",
+]
+
+[[package]]
+name = "wasmi_ir"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a28c3e221277780790bd0abd5c5da440dd39989cd8fa98330a4820d398a7af66"
+dependencies = [
+ "wasmi_core 1.0.7",
 ]
 
 [[package]]
@@ -2719,7 +2759,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4eabce9eeb804445490dd3d5ebb919a2cc61a3a888533dfba4bcc78a9eab511c"
 dependencies = [
  "wasi-common",
- "wasmi",
+ "wasmi 0.46.0",
  "wiggle",
 ]
 
