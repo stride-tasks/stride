@@ -60,28 +60,28 @@ rusqlite = { version = "0.32.1", features = [
   "functions",
 ] }
 serde = { version = "1.0", features = ["derive"] }
-serde_with = { version = "3.16" }
-serde_json = { version = "1.0" }
-uuid = { version = "1.19", features = ["v7", "serde"] }
-chrono = { version = "0.4", features = ["serde", "now"] }
+serde_with = "3.16"
+serde_json = "1.0"
+uuid = { version = "1.19.0", features = ["v7", "serde"] }
+chrono = { version = "0.4.43", features = ["serde", "now"] }
 anyhow = "1.0"
-git2 = { version = "0.20", default-features = false, features = [
+git2 = { version = "0.20.3", default-features = false, features = [
   "ssh",
   "vendored-libgit2",
   "vendored-openssl",
 ] }
-base64 = "0.22"
-openssl = { version = "0.10", features = ["vendored"] }
-log = { version = "0.4" }
+base64 = "0.22.1"
+openssl = { version = "0.10.75", features = ["vendored"] }
+log = { version = "0.4.29" }
 env_logger = { version = "0.11.8", default-features = false }
-getrandom = "0.3"
-zeroize = { version = "1.8", features = ["zeroize_derive"] }
-dirs = "6.0"
-toml = "0.8"
-zip = { version = "4.0.0" }
-reqwest = { version = "0.12.15", features = ["blocking"] }
+getrandom = "0.3.4"
+zeroize = { version = "1.8.2", features = ["zeroize_derive"] }
+dirs = "6.0.0"
+toml = "0.9.11"
+zip = "7.1.0"
 wasmi = "1.0.7"
 wasmi_wasi = "1.0.7"
+reqwest = { version = "0.13.1", features = ["blocking"] }
 clap = { version = "4.5.54", features = ["derive"] }
 url = { version = "2.5.8", features = ["serde"] }
 thiserror = "2.0.18"
