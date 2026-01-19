@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use wasmi::core::{TrapCode, ValType};
+use wasmi::{TrapCode, ValType};
 use wasmi_wasi::wasi_common;
 
 pub type Result<T> = std::result::Result<T, Error>;

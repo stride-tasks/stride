@@ -18,7 +18,7 @@ use stride_core::{
     constant::StorageErrorCode,
     event::{HostEvent, PluginEvent},
 };
-use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, core::ValType};
+use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
@@ -577,9 +577,8 @@ impl PluginManager {
         linker.define("env", "stride__storage_remove", stride_storage_remove)?;
 
         let instance = linker
-            .instantiate(&mut store, &module)
-            .to_error(&plugin.manifest.name)?
-            .ensure_no_start(&mut store)?;
+            .instantiate_and_start(&mut store, &module)
+            .to_error(&plugin.manifest.name)?;
 
         let stride_allocate = instance
             .get_typed_func::<i32, i32>(&store, "stride__allocate")
