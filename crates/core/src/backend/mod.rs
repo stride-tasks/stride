@@ -30,7 +30,7 @@ impl SchemaBuilder {
     ///
     /// If the same is field is passed twice.
     #[must_use]
-    pub fn field<T, U, D>(mut self, id: T, name: U, value: D) -> Self
+    pub fn field<T, U, D>(mut self, id: T, name: U, value: D, show_qr_code: bool) -> Self
     where
         T: Into<Box<str>>,
         U: Into<Box<str>>,
@@ -44,6 +44,7 @@ impl SchemaBuilder {
             SchemaField {
                 name,
                 value: value.into(),
+                show_qr_code,
             },
         );
         assert!(inserted.is_none(), "field added twice: {id}");
@@ -89,6 +90,18 @@ impl Schema {
     }
 }
 
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum BytesCategory {
+    Password,
+}
+
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum BytesGenerator {
+    CryptoRandom,
+}
+
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[serde(tag = "type")]
@@ -116,6 +129,14 @@ pub enum SchemaValue {
         #[serde(default)]
         #[serde(skip_serializing_if = "Option::is_none")]
         max: Option<usize>,
+
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        category: Option<BytesCategory>,
+
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        generator: Option<BytesGenerator>,
     },
     Url {
         #[serde(default)]
@@ -174,6 +195,7 @@ pub struct SchemaField {
     pub name: Box<str>,
     #[serde(flatten)]
     pub value: SchemaValue,
+    pub show_qr_code: bool,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -219,10 +241,16 @@ pub enum Error {
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[serde(tag = "type", content = "content")]
 pub enum Value {
     String(Box<str>),
     Uuid(Uuid),
-    Bytes(#[serde(with = "::serde_with::As::<serde_with::base64::Base64>")] Box<[u8]>),
+    Bytes(
+        #[serde(
+            with = "::serde_with::As::<serde_with::base64::Base64::<serde_with::base64::UrlSafe>>"
+        )]
+        Box<[u8]>,
+    ),
     Url(Url),
 }
 
@@ -484,7 +512,8 @@ impl Config {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct BackendRecord {
     pub id: Uuid,
     pub name: Box<str>,

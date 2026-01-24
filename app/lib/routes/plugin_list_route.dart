@@ -15,10 +15,10 @@ class PluginListRoute extends StatelessWidget {
   const PluginListRoute({super.key});
 
   TextStyle get headingStyle => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.red,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.red,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +26,9 @@ class PluginListRoute extends StatelessWidget {
       appBar: AppBar(title: const Text('Plugin List')),
       body: BlocBuilder<PluginManagerBloc, PluginManagerState>(
         builder: (context, state) {
-          final plugins =
-              state.plugins.map((plugin) => _plugin(context, plugin)).toList();
+          final plugins = state.plugins
+              .map((plugin) => _plugin(context, plugin))
+              .toList();
           return SettingsList(
             sections: [
               SettingsSection(
@@ -108,9 +109,7 @@ class PluginListRoute extends StatelessWidget {
       ),
       onTap: (context) {
         Navigator.of(context).push<void>(
-          MaterialPageRoute(
-            builder: (context) => PluginRoute(plugin: plugin),
-          ),
+          MaterialPageRoute(builder: (context) => PluginRoute(plugin: plugin)),
         );
       },
     );
@@ -133,9 +132,8 @@ class PluginListRoute extends StatelessWidget {
           ),
           onConfirm: (context) async {
             context.read<LogBloc>().catch_(
-                  () async => context.read<PluginManagerBloc>().remove(name),
-                );
-            Navigator.of(context).pop();
+              () async => context.read<PluginManagerBloc>().remove(name),
+            );
             logging.trace(message: 'Plugin $name deleted');
             return true;
           },

@@ -894,6 +894,20 @@ impl Database {
         Ok(backends)
     }
 
+    pub fn toggle_backend(&mut self, id: Uuid) -> Result<()> {
+        self.execute(
+            indoc! {"
+                UPDATE backend_table
+                SET
+                    enabled = (CASE WHEN enabled = 0 THEN 1 ELSE 0 END)
+                WHERE
+                    id = ?1
+            "},
+            (id.as_bytes(),),
+        )?;
+        Ok(())
+    }
+
     pub fn update_backend(&mut self, backend: &BackendRecord) -> Result<()> {
         let transaction = self.transaction()?;
 
@@ -913,20 +927,19 @@ impl Database {
                 value.as_value_boxed_slice(),
             ))?;
         }
+        drop(sql);
 
         transaction.execute(
             indoc! {"
-            UPDATE backend_table
-            SET
-                name = ?2,
-                enabled = ?3
-            WHERE
-                id = ?1
+                UPDATE backend_table
+                SET
+                    name = ?2,
+                    enabled = ?3
+                WHERE
+                    id = ?1
             "},
             (backend.id.as_bytes(), &backend.name, &backend.enabled),
         )?;
-
-        drop(sql);
 
         transaction.commit()?;
         Ok(())

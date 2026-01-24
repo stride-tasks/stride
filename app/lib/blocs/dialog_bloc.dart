@@ -34,12 +34,12 @@ class DialogState {
 
 class DialogBloc extends Bloc<DialogEvent, DialogState> {
   DialogBloc()
-      : super(
-          DialogState(
-            title: (context) => const Placeholder(),
-            onConfirm: (context) async => false,
-          ),
-        ) {
+    : super(
+        DialogState(
+          title: (context) => const Placeholder(),
+          onConfirm: (context) async => false,
+        ),
+      ) {
     on<DialogAlertEvent>((event, emit) async {
       emit(
         DialogState(

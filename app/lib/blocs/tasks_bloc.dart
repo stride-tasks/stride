@@ -12,7 +12,6 @@ import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
-import 'package:stride/routes/encryption_key_route.dart';
 import 'package:uuid/uuid.dart';
 
 @immutable
@@ -30,13 +29,9 @@ final class TaskRemoveEvent extends TaskEvent {
   TaskRemoveEvent({required this.task});
 }
 
-final class TaskRemoveAllEvent extends TaskEvent {
-  final bool all;
-  TaskRemoveAllEvent({this.all = false});
-}
-
-final class TaskForcePushEvent extends TaskEvent {
-  TaskForcePushEvent();
+final class TaskRemoveRepositoryEvent extends TaskEvent {
+  final UuidValue uuid;
+  TaskRemoveRepositoryEvent({required this.uuid});
 }
 
 final class TaskChangeStatusEvent extends TaskEvent {
@@ -58,10 +53,6 @@ final class TaskSyncEvent extends TaskEvent {
 final class TaskFilterEvent extends TaskEvent {
   final Filter? filter;
   TaskFilterEvent({this.filter});
-}
-
-final class TaskCheckoutBranchEvent extends TaskEvent {
-  TaskCheckoutBranchEvent();
 }
 
 class TaskState {
@@ -156,20 +147,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskState(tasks: await _tasks()));
     });
 
-    on<TaskRemoveAllEvent>((event, emit) async {
-      if (event.all) {
-        throw UnimplementedError();
-      } else {
-        // await repository()?.deleteDatabase();
-        // throw UnimplementedError();
-      }
-      // emit(TaskState(tasks: await _tasks()));
-    });
-
-    on<TaskForcePushEvent>((event, emit) async {
-      // await repository()?.push(force: true);
-      throw UnimplementedError();
-      // emit(TaskState(tasks: await _tasks()));
+    on<TaskRemoveRepositoryEvent>((event, emit) async {
+      await Repository.remove(uuid: event.uuid);
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
@@ -200,12 +179,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<TaskFilterEvent>((event, emit) async {
       filter = event.filter;
       emit(TaskState(tasks: await _tasks()));
-    });
-
-    on<TaskCheckoutBranchEvent>((event, emit) async {
-      // await repository()?.checkout();
-      throw UnimplementedError();
-      // emit(TaskState(tasks: await _tasks()));
     });
   }
 
@@ -261,13 +234,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
             content: 'Are you sure the encryption key is correct?',
             onConfirm: (context) async {
               Navigator.pop(context);
-              await Navigator.of(context).push<void>(
-                MaterialPageRoute(
-                  builder: (context) => EncryptionKeyRoute(
-                    repository: settingsBloc.settings.repositories.first,
-                  ),
-                ),
-              );
+              // TODO: Send user to encryption key.
               return true;
             },
           ),

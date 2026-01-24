@@ -64,7 +64,6 @@ mod serialization;
 /// flutter_rust_bridge:ignore
 pub mod config;
 
-pub mod encryption_key;
 pub mod known_hosts;
 pub mod ssh_key;
 
@@ -324,7 +323,7 @@ impl GitBackend {
 
         std::fs::create_dir_all(&repository_path)?;
 
-        let key = base64_decode(&config.encryption_key.key)?;
+        let key = config.encryption_key.as_ref();
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
         let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
 

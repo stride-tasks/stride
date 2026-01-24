@@ -12,10 +12,7 @@ import 'package:uuid/uuid.dart';
 class TaskFilterRoute extends StatefulWidget {
   final Filter? filter;
 
-  const TaskFilterRoute({
-    super.key,
-    this.filter,
-  });
+  const TaskFilterRoute({super.key, this.filter});
 
   @override
   State<TaskFilterRoute> createState() => _TaskFilterRouteState();
@@ -131,20 +128,15 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
             search: searchController.text,
           );
           final newSettings = state.settings.copyWith(
-            selectedFilter: FilterSelection.temporary(
-              filter: filter,
-            ),
+            selectedFilter: FilterSelection.temporary(filter: filter),
           );
-          context
-              .read<SettingsBloc>()
-              .add(SettingsUpdateEvent(settings: newSettings));
+          context.read<SettingsBloc>().add(
+            SettingsUpdateEvent(settings: newSettings),
+          );
           context.read<TaskBloc>().add(TaskFilterEvent(filter: filter));
 
           // Pop to first route.
-          Navigator.popUntil(
-            context,
-            (route) => route.isFirst,
-          );
+          Navigator.popUntil(context, (route) => route.isFirst);
         },
       ),
       const SizedBox(width: 20),
@@ -154,13 +146,12 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
         onPressed: () async {
           await showAlertDialog(
             context: context,
+            popRoute: false,
             content: TextField(
               controller: nameController,
               autocorrect: false,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Filter name...',
-              ),
+              decoration: const InputDecoration(hintText: 'Filter name...'),
             ),
             onConfirm: (context) async {
               if (nameController.text.isEmpty) {
@@ -195,12 +186,10 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
               }
 
               context.read<SettingsBloc>().add(
-                    SettingsUpdateEvent(
-                      settings: state.settings.copyWith(
-                        filters: filters,
-                      ),
-                    ),
-                  );
+                SettingsUpdateEvent(
+                  settings: state.settings.copyWith(filters: filters),
+                ),
+              );
 
               // Pop to first route.
               Navigator.popUntil(context, (route) => route.isFirst);
@@ -230,6 +219,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
         onPressed: () async {
           await showAlertDialog(
             context: context,
+            popRoute: false,
             content: Text(
               'Are you sure you want to delete ${filter.name} filter?',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -237,32 +227,30 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
             ),
             onConfirm: (context) {
               final filters = state.settings.filters.toList()
-                ..removeWhere(
-                  (element) => element.uuid == filter.uuid,
-                );
+                ..removeWhere((element) => element.uuid == filter.uuid);
 
-              if (state.settings.selectedFilter
-                  case FilterSelection_Predefined(:final uuid)) {
+              if (state.settings.selectedFilter case FilterSelection_Predefined(
+                :final uuid,
+              )) {
                 if (uuid == filter.uuid) {
                   context.read<TaskBloc>().add(TaskFilterEvent());
                   context.read<SettingsBloc>().add(
-                        SettingsUpdateEvent(
-                          settings:
-                              state.settings.copyWith(selectedFilter: null),
-                        ),
-                      );
+                    SettingsUpdateEvent(
+                      settings: state.settings.copyWith(selectedFilter: null),
+                    ),
+                  );
                 }
               }
 
               context.read<SettingsBloc>().add(
-                    SettingsUpdateEvent(
-                      settings: state.settings.copyWith(filters: filters),
-                    ),
-                  );
+                SettingsUpdateEvent(
+                  settings: state.settings.copyWith(filters: filters),
+                ),
+              );
 
               // Pop to first route.
               Navigator.popUntil(context, (route) => route.isFirst);
-              return Future.value(true);
+              return true;
             },
           );
         },

@@ -3,12 +3,11 @@ use chrono::Local;
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
-    collections::HashMap,
     io::Write,
     path::{Path, PathBuf},
     process::ExitCode,
 };
-use stride_backend::{Backend, BackendHandler};
+use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::{GitBackend, known_hosts::KnownHosts};
 use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
@@ -16,14 +15,10 @@ use stride_core::{
     state::KnownPaths,
     task::{Task, TaskStatus},
 };
-use stride_database::operation::OperationKind;
-use stride_flutter_bridge::{
-    RustError,
-    api::{
-        filter::Filter,
-        repository::Repository,
-        settings::{ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys},
-    },
+use stride_database::{Database, operation::OperationKind};
+use stride_flutter_bridge::api::{
+    filter::Filter,
+    settings::{ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys},
 };
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
@@ -74,20 +69,6 @@ fn print_tasks(tasks: &[Task]) {
     }
 }
 
-#[allow(clippy::unnecessary_wraps)]
-pub(crate) fn get_backend_registry(
-    _known_paths: &KnownPaths,
-) -> Result<HashMap<Box<str>, Box<dyn BackendHandler>>, RustError> {
-    let mut registry: HashMap<_, Box<dyn BackendHandler>> = HashMap::new();
-    let git_handler = GitBackend::handler();
-    registry.insert(git_handler.name(), git_handler);
-
-    let taskchampion_handler = TaskchampionBackend::handler();
-    registry.insert(taskchampion_handler.name(), taskchampion_handler);
-
-    Ok(registry)
-}
-
 #[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<ExitCode> {
     // TODO(@bpeetz): Re-add the functionality of running `stride` without
@@ -117,13 +98,7 @@ fn main() -> anyhow::Result<ExitCode> {
             .to_string(),
     })?;
 
-    let known_paths = KnownPaths {
-        support: support_dir.clone(),
-        logs: cache_dir.join("logs").join("log.txt"),
-        cache: cache_dir,
-        download: document_dir,
-        ssh_keys: support_dir.join(".ssh").join("keys"),
-    };
+    let known_paths = KnownPaths::new(support_dir.clone(), cache_dir.clone());
 
     let current_repository = settings.current_repository.or_else(|| {
         settings
@@ -147,7 +122,14 @@ fn main() -> anyhow::Result<ExitCode> {
     let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
-    let mut repository = Repository::open(current_repository)?;
+    let repository_path = known_paths.repository_path(current_repository);
+    let database_filepath = known_paths.database_filepath(current_repository);
+    let mut database = Database::open(&database_filepath)?;
+    database.apply_migrations()?;
+
+    let mut backend_registry = Registry::new();
+    backend_registry.insert(GitBackend::handler());
+    backend_registry.insert(TaskchampionBackend::handler());
 
     match args.mode {
         Mode::Search { filter } => {
@@ -156,7 +138,10 @@ fn main() -> anyhow::Result<ExitCode> {
                 status: [TaskStatus::Pending].into(),
                 ..Default::default()
             };
-            let tasks = repository.all_tasks(&filter)?;
+
+            let search = filter.search.to_lowercase();
+            let mut tasks = database.tasks_by_status(&filter.status)?;
+            tasks.retain(|task| task.title.to_lowercase().contains(&search));
             print_tasks(&tasks);
         }
         Mode::Add { content } => {
@@ -176,7 +161,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let event = HostEvent::TaskCreate {
                 task: Some(Box::new(task.clone())),
             };
-            repository.insert_task(&task)?;
+            database.insert_task(&task)?;
 
             plugin_manager.emit_event(None, &event)?;
             while plugin_manager.process_host_event()? {}
@@ -195,16 +180,20 @@ fn main() -> anyhow::Result<ExitCode> {
 
                 match event {
                     PluginEvent::TaskCreate { task } => {
-                        repository.insert_task(&task)?;
+                        database.insert_task(&task)?;
                     }
                     PluginEvent::TaskModify { task } => {
-                        repository.update_task(&task)?;
+                        database.update_task(&task)?;
                     }
                     PluginEvent::TaskSync => {
-                        repository.sync()?;
+                        backend_registry.sync_all(
+                            current_repository,
+                            &mut database,
+                            &known_paths,
+                        )?;
                     }
                     PluginEvent::TaskQuery { query } => {
-                        let tasks = repository.task_query(&query)?;
+                        let tasks = database.task_query(&query)?;
                         plugin_manager
                             .emit_event(Some(&plugin_name), &HostEvent::TaskQuery { tasks })?;
                     }
@@ -217,7 +206,6 @@ fn main() -> anyhow::Result<ExitCode> {
         Mode::Undo { count } => {
             let count = count.unwrap_or(1);
 
-            let mut database = repository.database().lock().unwrap();
             let operations = database.undoable_operation(count)?;
 
             for (i, (_, operation)) in operations.iter().rev().enumerate() {
@@ -308,43 +296,31 @@ fn main() -> anyhow::Result<ExitCode> {
             }
         }
         Mode::Sync { backend: name } => {
-            let registry = get_backend_registry(&known_paths)?;
+            let handler = backend_registry.get_or_error(name.as_str())?;
 
-            let Some(handler) = registry.get(name.as_str()) else {
-                bail!("unknown backend name: {name}");
-            };
-
-            let mut backends = repository.database().lock().unwrap().backends()?;
+            let mut backends = database.backends()?;
 
             let backend = backends
                 .iter_mut()
                 .find(|backend_record| backend_record.name.contains(&name))
                 .with_context(|| format!("Could not find field with name: {name}"))?;
 
-            let path = repository
-                .root_path()
-                .join("backend")
-                .join(handler.name().as_ref())
-                .join(backend.id.to_string());
-
             let schema = handler.config_schema();
             let config = backend.config.align(&schema)?;
             if config != backend.config {
                 backend.config = config;
-                repository
-                    .database()
-                    .lock()
-                    .unwrap()
-                    .update_backend(backend)?;
+                database.update_backend(backend)?;
             }
 
-            std::fs::create_dir_all(&path)?;
+            let path = repository_path
+                .join("backend")
+                .join(handler.name().as_ref())
+                .join(backend.id.to_string());
 
             let config = backend.config.fill(&schema)?;
             let mut backend = handler.create(&config, &path, &known_paths)?;
 
-            let db = repository.database_mut().get_mut().unwrap();
-            backend.sync(db)?;
+            backend.sync(&mut database)?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
@@ -432,7 +408,7 @@ fn main() -> anyhow::Result<ExitCode> {
             Settings::save(settings)?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), &mut repository, &known_paths)?;
+            backend::handle_command(command.as_ref(), &backend_registry, &mut database)?;
         }
         Mode::Plugin { command } => match command {
             None => {
