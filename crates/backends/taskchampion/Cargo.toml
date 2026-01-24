@@ -19,6 +19,7 @@ stride_database.workspace = true
 taskchampion.workspace = true
 uuid.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true

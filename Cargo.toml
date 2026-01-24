@@ -48,17 +48,20 @@ flutter_rust_bridge = { version = "=2.11.1", default-features = false, features 
   "uuid",
   "anyhow",
 ] }
-taskchampion = { version = "2.0.3", default-features = false, features = [
+taskchampion = { version = "3.0.1", default-features = false, features = [
   "encryption",
   "server-sync",
   "bundled",
+  "storage-sqlite",
+  "tls-webpki-roots",
 ] }
-rusqlite = { version = "0.32.1", features = [
+rusqlite = { version = "0.37.0", features = [
   "bundled",
   "uuid",
   "array",
   "functions",
 ] }
+tokio = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "3.16"
 serde_json = "1.0"

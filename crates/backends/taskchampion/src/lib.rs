@@ -16,7 +16,7 @@ use stride_core::{
     task::Task,
 };
 use stride_database::Database;
-use taskchampion::{Operations, ServerConfig, StorageConfig};
+use taskchampion::{Operations, Replica, ServerConfig, SqliteStorage, storage::AccessMode};
 use uuid::Uuid;
 
 pub mod error;
@@ -74,7 +74,10 @@ impl BackendHandler for Handler {
             constraint_environment: true,
         };
 
-        Ok(Box::new(TaskchampionBackend::new(config)?))
+        let runtime = tokio::runtime::Runtime::new().expect("cannot create tokio runtime");
+        let this = runtime.block_on(TaskchampionBackend::new(config))?;
+
+        Ok(Box::new(this))
     }
 }
 
@@ -90,7 +93,7 @@ pub struct TaskchampionConfig {
 
 #[allow(missing_debug_implementations)] /* [`taskchampion::Replica`] does not implement [`Debug`] */
 pub struct TaskchampionBackend {
-    source: taskchampion::Replica,
+    source: Replica<SqliteStorage>,
     operations: Operations,
     server: Box<dyn taskchampion::Server>,
 
@@ -100,27 +103,25 @@ pub struct TaskchampionBackend {
 }
 
 impl TaskchampionBackend {
-    pub fn new(config: TaskchampionConfig) -> Result<Self> {
+    pub async fn new(config: TaskchampionConfig) -> Result<Self> {
         std::fs::create_dir_all(&config.root_path)?;
 
-        let storage = StorageConfig::OnDisk {
-            taskdb_dir: config.root_path,
-            create_if_missing: true,
-            access_mode: taskchampion::storage::AccessMode::ReadWrite,
-        }
-        .into_storage()?;
-        let source = taskchampion::Replica::new(storage);
+        // Create a new Replica, storing data on disk.
+        let storage = SqliteStorage::new(config.root_path, AccessMode::ReadWrite, true).await?;
+        let source = Replica::new(storage);
 
+        // Set up a local, on-disk server.
         let server_config = ServerConfig::Remote {
             url: config.url,
             client_id: config.client_id,
             encryption_secret: config.encryption_secret,
         };
+        let server = server_config.into_server().await?;
 
         Ok(Self {
             source,
             operations: Operations::new(),
-            server: server_config.into_server()?,
+            server,
             constraint_environment: config.constraint_environment,
         })
     }
@@ -144,7 +145,7 @@ impl TaskchampionBackend {
     //     Ok(result)
     // }
 
-    pub fn add(&mut self, task: Task) -> Result<()> {
+    pub async fn add(&mut self, task: Task) -> Result<()> {
         // Theoretically we need to set all the keys below:
         // add_annotation   [x]
         // add_dependency
@@ -160,7 +161,10 @@ impl TaskchampionBackend {
         // set_wait         [x]
         /* TODO(@bpeetz): Actually set all of these keys. <2024-10-26> */
 
-        let mut champion_task = self.source.create_task(task.uuid, &mut self.operations)?;
+        let mut champion_task = self
+            .source
+            .create_task(task.uuid, &mut self.operations)
+            .await?;
 
         champion_task.set_entry(Some(task.entry), &mut self.operations)?;
         champion_task.set_description(task.title, &mut self.operations)?;
@@ -192,10 +196,10 @@ impl TaskchampionBackend {
         Ok(())
     }
 
-    pub fn commit(&mut self) -> Result<()> {
+    pub async fn commit(&mut self) -> Result<()> {
         let operations = mem::take(&mut self.operations);
 
-        if let Err(err) = self.source.commit_operations(operations.clone()) {
+        if let Err(err) = self.source.commit_operations(operations.clone()).await {
             // On error, restore the taken operations.
             // Otherwise, these would be silently dropped.
             self.operations = operations;
@@ -210,6 +214,25 @@ impl TaskchampionBackend {
 
         Ok(())
     }
+
+    async fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
+        for task in db.all_tasks()? {
+            self.add(task).await?;
+        }
+
+        /* PERF(@bpeetz): We should probably not always force a commit. <2024-10-26> */
+        self.commit().await?;
+
+        /* TODO(@bpeetz): It would be wonderful, if we could add the server URL to this error
+         * message. But the [`taskchampion::Server`] trait does not provide us this
+         * information.   <2024-10-26> */
+        self.source
+            .sync(&mut self.server, self.constraint_environment)
+            .await
+            .map_err(error::Error::from)?;
+
+        Ok(())
+    }
 }
 
 impl Backend for TaskchampionBackend {
@@ -221,20 +244,8 @@ impl Backend for TaskchampionBackend {
     }
 
     fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
-        for task in db.all_tasks()? {
-            self.add(task)?;
-        }
-
-        /* PERF(@bpeetz): We should probably not always force a commit. <2024-10-26> */
-        self.commit()?;
-
-        self.source
-            /* TODO(@bpeetz): It would be wonderful, if we could add the server URL to this error
-             * message. But the [`taskchampion::Server`] trait does not provide us this
-             * information.   <2024-10-26> */
-            .sync(&mut self.server, self.constraint_environment)
-            .map_err(error::Error::from)?;
-
+        let runtime = tokio::runtime::Runtime::new().expect("cannot create tokio runtime");
+        runtime.block_on(self.sync(db))?;
         Ok(())
     }
 }
