@@ -77,10 +77,14 @@ fn main() -> anyhow::Result<ExitCode> {
     // };
     let args = CliArgs::parse();
 
-    let cache_dir =
-        choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
-    let support_dir =
-        choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
+    let (support_dir, cache_dir) = match std::env::var("STRIDE_HOME") {
+        Ok(path) => (PathBuf::from(&path), Path::new(&path).join("cache")),
+        Err(std::env::VarError::NotPresent) => (
+            choose_path_suffix(&dirs::data_dir().context("could not get data directory")?),
+            choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?),
+        ),
+        Err(err) => return Err(err.into()),
+    };
 
     let mut settings = Settings::load(ApplicationPaths {
         support_path: support_dir.to_string_lossy().to_string(),
@@ -106,6 +110,8 @@ fn main() -> anyhow::Result<ExitCode> {
     } else {
         let repository = RepositorySpecification::default();
         let uuid = repository.uuid;
+        std::fs::create_dir_all(support_dir.join("repository").join(uuid.to_string()))?;
+
         settings.repositories.push(repository);
         settings.current_repository = Some(uuid);
         Settings::save(settings.clone())?;
