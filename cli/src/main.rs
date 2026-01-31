@@ -8,7 +8,7 @@ use std::{
     process::ExitCode,
 };
 use stride_backend::{Backend, registry::Registry};
-use stride_backend_git::{GitBackend, known_hosts::KnownHosts};
+use stride_backend_git::{GitBackend, known_hosts::KnownHosts, ssh_key::SshKey};
 use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
     event::{HostEvent, PluginEvent},
@@ -16,9 +16,7 @@ use stride_core::{
     task::{Task, TaskStatus},
 };
 use stride_database::{Database, operation::OperationKind};
-use stride_flutter_bridge::api::settings::{
-    ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys,
-};
+use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
 use crate::cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand};
@@ -422,20 +420,20 @@ fn main() -> anyhow::Result<ExitCode> {
         },
         Mode::Ssh { command } => match command {
             SshCommand::Key { command: None } => {
-                for key in ssh_keys()? {
-                    println!("{} {}", key.uuid(), key.public_key());
+                for key in SshKey::load_keys(&known_paths.ssh_keys)? {
+                    println!("{} {}", key.id, key.public_key);
                 }
             }
             SshCommand::Key {
                 command: Some(SshKeyCommand::Generate),
             } => {
-                let key = SshKey::generate()?;
-                println!("{} {}", key.uuid(), key.public_key());
+                let key = SshKey::generate(&known_paths.ssh_keys)?;
+                println!("{} {}", key.id, key.public_key);
             }
             SshCommand::Key {
                 command: Some(SshKeyCommand::Remove { id }),
             } => {
-                SshKey::remove_key(id)?;
+                SshKey::remove_key(&known_paths.ssh_keys, id)?;
             }
             SshCommand::KnownHosts { command: None } => {
                 let hosts = KnownHosts::load()?;
