@@ -8,6 +8,7 @@ mod tests;
 #[must_use]
 pub(crate) fn task_to_data(task: &Task) -> Vec<u8> {
     let mut result = Vec::new();
+    result.extend_from_slice(b"\0".as_slice());
     result.extend_from_slice(task.uuid.as_bytes());
     result.extend_from_slice(&task.entry.timestamp_micros().to_be_bytes());
     result.extend_from_slice(&(task.title.len() as u32).to_be_bytes());
@@ -77,6 +78,11 @@ pub(crate) fn task_to_data(task: &Task) -> Vec<u8> {
 #[allow(clippy::too_many_lines)]
 #[must_use]
 pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
+    let (version, input) = input.split_first_chunk::<1>()?;
+    if version[0] != 0 {
+        return None;
+    }
+
     let (uuid_bytes, input) = input.split_first_chunk::<16>()?;
     let uuid = Uuid::from_bytes(*uuid_bytes);
 

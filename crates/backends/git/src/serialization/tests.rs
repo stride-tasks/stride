@@ -40,6 +40,7 @@ fn serialize_simple_task() {
     assert_eq!(
         data,
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -52,6 +53,7 @@ fn serialize_simple_task() {
 fn deserialize_simple_task() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -70,6 +72,7 @@ fn serialize_title_with_emoji() {
     assert_eq!(
         data,
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -82,6 +85,7 @@ fn serialize_title_with_emoji() {
 fn deserialize_title_with_emoji() {
     let title = "do something... maybe 🤔";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -100,6 +104,7 @@ fn serialize_title_with_escape_sequence() {
     assert_eq!(
         data,
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -112,6 +117,7 @@ fn serialize_title_with_escape_sequence() {
 fn deserialize_title_with_escape_sequence() {
     let title = "descri\tion wit\t\"\0\n";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -130,6 +136,7 @@ fn serialize_task_with_dates() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -143,6 +150,7 @@ fn serialize_task_with_dates() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -159,6 +167,7 @@ fn serialize_task_with_dates() {
 fn deserialize_task_with_dates() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -188,6 +197,7 @@ fn serialize_task_with_tags() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -209,6 +219,7 @@ fn serialize_task_with_tags() {
 fn deserialize_task_with_tags() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -239,6 +250,7 @@ fn serialize_task_with_project() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -254,6 +266,7 @@ fn serialize_task_with_project() {
 fn deserialize_task_with_project() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -278,6 +291,7 @@ fn serialize_task_with_priority() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -291,6 +305,7 @@ fn serialize_task_with_priority() {
 fn deserialize_task_with_priority() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -314,6 +329,7 @@ fn serialize_task_with_depends() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -330,6 +346,7 @@ fn serialize_task_with_depends() {
 fn deserialize_task_with_depends() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -363,6 +380,7 @@ fn serialize_task_with_annotations() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -383,6 +401,7 @@ fn serialize_task_with_annotations() {
 fn deserialize_task_with_annotations() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -428,6 +447,7 @@ fn serialize_task_with_udas() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -454,6 +474,7 @@ fn serialize_task_with_udas() {
 fn deserialize_task_with_udas() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -523,6 +544,7 @@ fn serialize_task_with_all_attributes() {
     assert_eq!(
         task_to_data(&task),
         concat(&[
+            b"\0",
             CONSTANT_UUID_BYTES,
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -582,6 +604,7 @@ fn serialize_task_with_all_attributes() {
 fn deserialize_task_with_all_attributes() {
     let title = "Hello there!";
     let task = task_from_data(&concat(&[
+        b"\0",
         CONSTANT_UUID_BYTES,
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),

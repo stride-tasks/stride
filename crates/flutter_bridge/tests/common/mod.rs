@@ -74,7 +74,6 @@ pub(crate) fn setup(test_name: &str) -> Result<TestFixture, std::io::Error> {
 
     Settings::load(stride_flutter_bridge::api::settings::ApplicationPaths {
         cache_path: cache_dir.clone().to_string_lossy().to_string(),
-        document_path: document_dir.clone().to_string_lossy().to_string(),
         support_path: support_dir.clone().to_string_lossy().to_string(),
         log_path: cache_dir
             .join("logs")

@@ -142,7 +142,10 @@ impl KeyStore {
         let data = task_to_data(task);
 
         let iv = iv.unwrap_or_else(generate_iv);
-        let encrypted = key.encrypt_with_iv(&iv, &data[16..], task.uuid.as_bytes())?;
+
+        let mut aad = vec![0];
+        aad.extend_from_slice(task.uuid.as_bytes());
+        let encrypted = key.encrypt_with_iv(&iv, &data[(1 + 16)..], &aad)?;
         let base64 = base64_encode(encrypted);
 
         drop(keys);
@@ -171,7 +174,7 @@ impl KeyStore {
             return Ok((generate_iv(), task));
         };
 
-        let (aad, iv, decrypted) = key.decrypt(&base64, Uuid::max().as_bytes().len())?;
+        let (aad, iv, decrypted) = key.decrypt(&base64, 1 + Uuid::max().as_bytes().len())?;
 
         let mut data = aad.to_vec();
         data.extend_from_slice(&decrypted);
