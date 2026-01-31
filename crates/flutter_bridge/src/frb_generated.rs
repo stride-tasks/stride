@@ -29,7 +29,7 @@ use crate::api::error::*;
 use crate::api::repository::*;
 use crate::api::settings::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 use stride_core::event::*;
 use stride_plugin_manager::manifest::*;
@@ -3844,12 +3844,10 @@ impl SseDecode for crate::api::settings::ApplicationPaths {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_supportPath = <String>::sse_decode(deserializer);
-        let mut var_documentPath = <String>::sse_decode(deserializer);
         let mut var_cachePath = <String>::sse_decode(deserializer);
         let mut var_logPath = <String>::sse_decode(deserializer);
         return crate::api::settings::ApplicationPaths {
             support_path: var_supportPath,
-            document_path: var_documentPath,
             cache_path: var_cachePath,
             log_path: var_logPath,
         };
@@ -5080,7 +5078,6 @@ impl flutter_rust_bridge::IntoDart for crate::api::settings::ApplicationPaths {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.support_path.into_into_dart().into_dart(),
-            self.document_path.into_into_dart().into_dart(),
             self.cache_path.into_into_dart().into_dart(),
             self.log_path.into_into_dart().into_dart(),
         ]
@@ -5832,7 +5829,6 @@ impl SseEncode for crate::api::settings::ApplicationPaths {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.support_path, serializer);
-        <String>::sse_encode(self.document_path, serializer);
         <String>::sse_encode(self.cache_path, serializer);
         <String>::sse_encode(self.log_path, serializer);
     }
@@ -6528,7 +6524,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
     use stride_core::event::*;
     use stride_plugin_manager::manifest::*;

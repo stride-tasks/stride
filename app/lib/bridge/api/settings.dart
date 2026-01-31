@@ -19,7 +19,7 @@ import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_document_path`, `application_log_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_log_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `State`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
@@ -60,13 +60,11 @@ abstract class SshKey implements RustOpaqueInterface {
 
 class ApplicationPaths {
   final String supportPath;
-  final String documentPath;
   final String cachePath;
   final String logPath;
 
   const ApplicationPaths({
     required this.supportPath,
-    required this.documentPath,
     required this.cachePath,
     required this.logPath,
   });
@@ -76,10 +74,7 @@ class ApplicationPaths {
 
   @override
   int get hashCode =>
-      supportPath.hashCode ^
-      documentPath.hashCode ^
-      cachePath.hashCode ^
-      logPath.hashCode;
+      supportPath.hashCode ^ cachePath.hashCode ^ logPath.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -87,7 +82,6 @@ class ApplicationPaths {
       other is ApplicationPaths &&
           runtimeType == other.runtimeType &&
           supportPath == other.supportPath &&
-          documentPath == other.documentPath &&
           cachePath == other.cachePath &&
           logPath == other.logPath;
 }

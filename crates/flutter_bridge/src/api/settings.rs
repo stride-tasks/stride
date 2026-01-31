@@ -31,7 +31,6 @@ pub(crate) struct State {
 #[derive(Debug, Default, Clone)]
 pub struct ApplicationPaths {
     pub support_path: String,
-    pub document_path: String,
     pub cache_path: String,
 
     pub log_path: String,
@@ -45,18 +44,6 @@ pub(crate) fn application_support_path() -> PathBuf {
             .unwrap()
             .paths
             .support_path
-            .clone(),
-    )
-}
-
-#[allow(dead_code)]
-pub(crate) fn application_document_path() -> PathBuf {
-    PathBuf::from(
-        APPLICATION_STATE_INSTANCE
-            .lock()
-            .unwrap()
-            .paths
-            .document_path
             .clone(),
     )
 }

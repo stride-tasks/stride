@@ -3390,13 +3390,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ApplicationPaths dco_decode_application_paths(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return ApplicationPaths(
       supportPath: dco_decode_String(arr[0]),
-      documentPath: dco_decode_String(arr[1]),
-      cachePath: dco_decode_String(arr[2]),
-      logPath: dco_decode_String(arr[3]),
+      cachePath: dco_decode_String(arr[1]),
+      logPath: dco_decode_String(arr[2]),
     );
   }
 
@@ -4331,12 +4330,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ApplicationPaths sse_decode_application_paths(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_supportPath = sse_decode_String(deserializer);
-    final var_documentPath = sse_decode_String(deserializer);
     final var_cachePath = sse_decode_String(deserializer);
     final var_logPath = sse_decode_String(deserializer);
     return ApplicationPaths(
       supportPath: var_supportPath,
-      documentPath: var_documentPath,
       cachePath: var_cachePath,
       logPath: var_logPath,
     );
@@ -5502,7 +5499,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.supportPath, serializer);
-    sse_encode_String(self.documentPath, serializer);
     sse_encode_String(self.cachePath, serializer);
     sse_encode_String(self.logPath, serializer);
   }

@@ -79,14 +79,11 @@ fn main() -> anyhow::Result<ExitCode> {
 
     let cache_dir =
         choose_path_suffix(&dirs::cache_dir().context("could not get cache directory")?);
-    let document_dir =
-        choose_path_suffix(&dirs::document_dir().context("could not get document directory")?);
     let support_dir =
         choose_path_suffix(&dirs::data_dir().context("could not get data directory")?);
 
     let mut settings = Settings::load(ApplicationPaths {
         support_path: support_dir.to_string_lossy().to_string(),
-        document_path: document_dir.to_string_lossy().to_string(),
         cache_path: cache_dir.to_string_lossy().to_string(),
         log_path: cache_dir
             .join("logs")

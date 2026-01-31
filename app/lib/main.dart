@@ -20,14 +20,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final supportPath = await getApplicationSupportDirectory();
-  final documentPath = await getApplicationDocumentsDirectory();
   final cachePath = await getApplicationCacheDirectory();
 
   await RustLib.init();
   final settings = await Settings.load(
     paths: ApplicationPaths(
       supportPath: supportPath.path,
-      documentPath: documentPath.path,
       cachePath: cachePath.path,
       logPath: path.joinAll([cachePath.path, 'logs', 'log.txt']),
     ),
