@@ -68,6 +68,7 @@ impl BackendHandler for Handler {
                 SchemaValue::SshKey { default: None },
                 false,
             )
+            .method("force.push", "Force Push")
             .build()
     }
 

@@ -994,6 +994,18 @@ impl Backend for GitBackend {
             self.sync(db)
         }
     }
+
+    fn invoke(&mut self, id: &str, _db: &mut Database) -> stride_backend::Result<()> {
+        if id == "force.push" {
+            let repository =
+                Repository::open(self.config.repository_path()).map_err(Error::LibGit2)?;
+            log::info!("Force pushing tasks...");
+            self.push(&repository, true)?;
+            return Ok(());
+        }
+
+        panic!("method not found: {id}")
+    }
 }
 impl GitBackend {
     pub fn clear(&mut self) -> Result<()> {

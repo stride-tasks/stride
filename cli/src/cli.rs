@@ -136,6 +136,14 @@ pub enum BackendCommand {
         /// Property name.
         property_value: Option<String>,
     },
+    /// Invoke an operation that the backend provides
+    Invoke {
+        /// Name of backend to invoke a method.
+        backend_name: String,
+
+        /// Method Id.
+        method_id: Option<String>,
+    },
 }
 
 /// Plugin command/action to apply.

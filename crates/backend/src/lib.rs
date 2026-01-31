@@ -48,4 +48,5 @@ pub trait Backend {
         Self: Sized;
 
     fn sync(&mut self, db: &mut Database) -> Result<()>;
+    fn invoke(&mut self, id: &str, db: &mut Database) -> Result<()>;
 }

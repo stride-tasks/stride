@@ -248,4 +248,8 @@ impl Backend for TaskchampionBackend {
         runtime.block_on(self.sync(db))?;
         Ok(())
     }
+
+    fn invoke(&mut self, id: &str, _db: &mut Database) -> stride_backend::Result<()> {
+        panic!("method not found: {id}")
+    }
 }

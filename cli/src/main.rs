@@ -408,7 +408,13 @@ fn main() -> anyhow::Result<ExitCode> {
             Settings::save(settings)?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), &backend_registry, &mut database)?;
+            backend::handle_command(
+                command.as_ref(),
+                &backend_registry,
+                &mut database,
+                &repository_path,
+                &known_paths,
+            )?;
         }
         Mode::Plugin { command } => match command {
             None => {

@@ -13,6 +13,7 @@ use uuid::Uuid;
 pub struct SchemaBuilder {
     id: Box<str>,
     fields: HashMap<Box<str>, SchemaField>,
+    methods: HashMap<Box<str>, SchemaMethod>,
 }
 
 impl SchemaBuilder {
@@ -23,6 +24,7 @@ impl SchemaBuilder {
         Self {
             id: id.into(),
             fields: HashMap::default(),
+            methods: HashMap::default(),
         }
     }
 
@@ -51,11 +53,29 @@ impl SchemaBuilder {
         self
     }
 
+    /// # Panics
+    ///
+    /// If the same is field is passed twice.
+    #[must_use]
+    pub fn method<T, U>(mut self, id: T, name: U) -> Self
+    where
+        T: Into<Box<str>>,
+        U: Into<Box<str>>,
+    {
+        let id = id.into();
+        let name = name.into();
+
+        let inserted = self.methods.insert(id.clone(), SchemaMethod { name });
+        assert!(inserted.is_none(), "field added twice: {id}");
+        self
+    }
+
     #[must_use]
     pub fn build(self) -> Schema {
         Schema {
             name: self.id,
             fields: self.fields,
+            methods: self.methods,
         }
     }
 }
@@ -64,6 +84,7 @@ impl SchemaBuilder {
 pub struct Schema {
     pub name: Box<str>,
     pub fields: HashMap<Box<str>, SchemaField>,
+    pub methods: HashMap<Box<str>, SchemaMethod>,
 }
 
 impl Schema {
@@ -196,6 +217,12 @@ pub struct SchemaField {
     #[serde(flatten)]
     pub value: SchemaValue,
     pub show_qr_code: bool,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct SchemaMethod {
+    pub name: Box<str>,
 }
 
 #[derive(thiserror::Error, Debug)]
