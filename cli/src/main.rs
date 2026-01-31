@@ -16,9 +16,8 @@ use stride_core::{
     task::{Task, TaskStatus},
 };
 use stride_database::{Database, operation::OperationKind};
-use stride_flutter_bridge::api::{
-    filter::Filter,
-    settings::{ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys},
+use stride_flutter_bridge::api::settings::{
+    ApplicationPaths, RepositorySpecification, Settings, SshKey, ssh_keys,
 };
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
@@ -133,14 +132,10 @@ fn main() -> anyhow::Result<ExitCode> {
 
     match args.mode {
         Mode::Search { filter } => {
-            let filter = Filter {
-                search: filter.join(" "),
-                status: [TaskStatus::Pending].into(),
-                ..Default::default()
-            };
+            let search = filter.join(" ").to_lowercase();
+            let status = [TaskStatus::Pending].into();
 
-            let search = filter.search.to_lowercase();
-            let mut tasks = database.tasks_by_status(&filter.status)?;
+            let mut tasks = database.tasks_by_status(&status)?;
             tasks.retain(|task| task.title.to_lowercase().contains(&search));
             print_tasks(&tasks);
         }
