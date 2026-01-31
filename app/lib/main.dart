@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
@@ -19,19 +21,32 @@ import 'package:stride/utils/functions.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final supportPath = await getApplicationSupportDirectory();
-  final cachePath = await getApplicationCacheDirectory();
+  String supportPath;
+  String cachePath;
+  if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+    final environment = Platform.environment['STRIDE_HOME'];
+    if (environment != null) {
+      supportPath = environment;
+      cachePath = path.join(environment, 'cache');
+    } else {
+      supportPath = (await getApplicationSupportDirectory()).path;
+      cachePath = (await getApplicationCacheDirectory()).path;
+    }
+  } else {
+    supportPath = (await getApplicationSupportDirectory()).path;
+    cachePath = (await getApplicationCacheDirectory()).path;
+  }
 
   await RustLib.init();
   final settings = await Settings.load(
     paths: ApplicationPaths(
-      supportPath: supportPath.path,
-      cachePath: cachePath.path,
-      logPath: path.joinAll([cachePath.path, 'logs', 'log.txt']),
+      supportPath: supportPath,
+      cachePath: cachePath,
+      logPath: path.joinAll([cachePath, 'logs', 'log.txt']),
     ),
   );
 
-  final pluginPath = path.join(supportPath.path, 'plugins');
+  final pluginPath = path.join(supportPath, 'plugins');
   await pm.load(pluginPath: pluginPath);
   final plugins = await pm.pluginManifests();
   final pluginManagerState = PluginManagerState(plugins: plugins);
