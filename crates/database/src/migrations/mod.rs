@@ -15,7 +15,7 @@ trait Migration {
     fn apply(&self, db: &mut Database) -> Result<()> {
         let sql = self.sql();
         let sql = format!("BEGIN;\n\n{sql}\n\nCOMMIT;\n");
-        db.execute_batch(&sql)?;
+        db.connection.execute_batch(&sql)?;
         Ok(())
     }
 
@@ -31,7 +31,7 @@ trait Migration {
 
 fn table_exists(db: &Database, table_name: &str) -> Result<bool, rusqlite::Error> {
     const QUERY: &str = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?";
-    let mut stmt = db.prepare(QUERY)?;
+    let mut stmt = db.connection.prepare(QUERY)?;
     let mut rows = stmt.query([table_name])?;
 
     if let Some(row) = rows.next()? {
@@ -50,6 +50,7 @@ pub(crate) fn apply_migrations(db: &mut Database) -> Result<()> {
     let mut last_migration_index: usize = 0;
     if table_exists(db, TABLE_NAME)? {
         last_migration_index = db
+            .connection
             .query_row(SELECT_LAST_MIGRATION_INDEX, (), |row| row.get(0))
             .optional()?
             .unwrap_or(0)
@@ -59,7 +60,8 @@ pub(crate) fn apply_migrations(db: &mut Database) -> Result<()> {
     for (index, migration) in MIGRATIONS.iter().enumerate().skip(last_migration_index) {
         migration.pre_apply(db)?;
         migration.apply(db)?;
-        db.execute(INSERT_MIGRATION_SQL, (index, migration.sql()))?;
+        db.connection
+            .execute(INSERT_MIGRATION_SQL, (index, migration.sql()))?;
         migration.post_apply(db)?;
     }
     Ok(())

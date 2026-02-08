@@ -1,5 +1,5 @@
 use anyhow::{Context, bail};
-use chrono::Local;
+use chrono::{Local, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
@@ -59,7 +59,8 @@ fn print_tasks(tasks: &[Task]) {
             tags.push(')');
         }
         println!(
-            "{tags}{i:4}: {}",
+            "{tags}{i:4} {}: {}",
+            task.uuid,
             task.title.as_deref().unwrap_or("<missing title>")
         );
     }
@@ -181,7 +182,8 @@ fn main() -> anyhow::Result<ExitCode> {
                     PluginEvent::TaskCreate { task } => {
                         database.insert_task(&task)?;
                     }
-                    PluginEvent::TaskModify { task } => {
+                    PluginEvent::TaskModify { mut task } => {
+                        task.modified = Some(Utc::now());
                         database.update_task(&task)?;
                     }
                     PluginEvent::TaskSync => {
@@ -201,6 +203,14 @@ fn main() -> anyhow::Result<ExitCode> {
                     }
                 }
             }
+        }
+        Mode::Done { id } => {
+            let Some(mut task) = database.task_by_id(id)? else {
+                bail!("could not find task with ID: {id}");
+            };
+            task.status = TaskStatus::Complete;
+            task.modified = Some(Utc::now());
+            database.update_task(&task)?;
         }
         Mode::Undo { count } => {
             let count = count.unwrap_or(1);

@@ -4,6 +4,7 @@ use std::{
     sync::Mutex,
 };
 
+use chrono::Utc;
 use flutter_rust_bridge::frb;
 use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::GitBackend;
@@ -85,7 +86,10 @@ impl Repository {
 
     pub fn update_task(&mut self, task: &Task) -> Result<(), RustError> {
         self.db.clear_poison();
-        self.db.lock().unwrap().update_task(task)?;
+
+        let mut task = task.clone();
+        task.modified = Some(Utc::now());
+        self.db.lock().unwrap().update_task(&task)?;
         Ok(())
     }
 

@@ -8,13 +8,14 @@ use base64::{DecodeError, Engine};
 use config::GitConfig;
 use git2::{
     AnnotatedCommit, Branch, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
-    Oid, RebaseOptions, RemoteCallbacks, Repository, Signature, build::CheckoutBuilder,
+    Oid, RebaseOptions, RemoteCallbacks, Repository, ResetType, Signature, build::CheckoutBuilder,
 };
 use known_hosts::{Host, HostKeyType, KnownHosts};
 use serialization::task_to_data;
 use ssh_key::SshKey;
 use std::{
     cell::RefCell,
+    collections::HashSet,
     fs::File,
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
@@ -27,10 +28,14 @@ use stride_core::{
     task::{Task, TaskStatus},
 };
 use stride_crypto::crypter::Crypter;
-use stride_database::Database;
+use stride_database::{
+    Database,
+    operation::{OperationKind, difference::push_operations_diff_task},
+};
 use uuid::Uuid;
 
 pub mod error;
+pub mod operation_iterator;
 
 pub use error::{Error, Result};
 
@@ -69,7 +74,7 @@ pub mod ssh_key;
 
 use key_store::KeyStore;
 
-use crate::config::Handler;
+use crate::{config::Handler, operation_iterator::OperationIterator};
 
 pub(crate) const IV_LEN: usize = 12;
 
@@ -86,7 +91,7 @@ pub(crate) struct TaskDiff {
     content: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 struct DecryptedTask {
     task: Task,
@@ -179,13 +184,9 @@ impl Storage {
         Ok(())
     }
 
-    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&Task>> {
+    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&DecryptedTask>> {
         self.load()?;
-        Ok(self
-            .tasks
-            .iter()
-            .find(|task| &task.task.uuid == uuid)
-            .map(|et| &et.task))
+        Ok(self.tasks.iter().find(|task| &task.task.uuid == uuid))
     }
 
     #[allow(unused)]
@@ -216,7 +217,7 @@ impl Storage {
         match query {
             TaskQuery::Uuid { uuid } => {
                 if let Some(task) = self.get_by_id(uuid)? {
-                    result.push(task.clone());
+                    result.push(task.task.clone());
                 }
             }
             TaskQuery::Title {
@@ -476,11 +477,7 @@ impl GitBackend {
 
         let mut checkout = CheckoutBuilder::new();
         checkout.force();
-        repository.reset(
-            commit.as_object(),
-            git2::ResetType::Hard,
-            Some(&mut checkout),
-        )?;
+        repository.reset(commit.as_object(), ResetType::Hard, Some(&mut checkout))?;
 
         Ok(())
     }
@@ -602,7 +599,7 @@ impl GitBackend {
             };
 
             #[allow(clippy::match_same_arms)]
-            let first = match (previous.modified, current.modified) {
+            let first = match (previous.task.modified, current.modified) {
                 (Some(previous_modified), Some(current_modified)) => {
                     previous_modified >= current_modified
                 }
@@ -620,11 +617,12 @@ impl GitBackend {
                 continue;
             }
 
-            if previous.status == current.status {
+            if previous.task.status == current.status {
                 self.update2(&current)?;
                 continue;
             }
 
+            let previous = previous.task.clone();
             self.remove_task2(&previous)?;
             self.storage_mut()[status as usize].append(current)?;
         }
@@ -893,12 +891,12 @@ impl GitBackend {
         Ok(false)
     }
 
-    fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
+    fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<&DecryptedTask>> {
         for storage in self.storage_mut() {
             let task = storage.get_by_id(uuid)?;
 
             if let Some(task) = task {
-                return Ok(Some(task.clone()));
+                return Ok(Some(task));
             }
         }
         Ok(None)
@@ -919,8 +917,8 @@ impl GitBackend {
 
     fn update(&mut self, task: &Task) -> Result<bool> {
         let mut updated = false;
-        if let Some(found_task) = self.task_by_uuid(&task.uuid)? {
-            updated |= self.change_category(&found_task, task.status)?;
+        if let Some(found_task) = self.task_by_uuid(&task.uuid)?.cloned() {
+            updated |= self.change_category(&found_task.task, task.status)?;
         }
 
         updated |= self.update2(task)?;
@@ -928,6 +926,71 @@ impl GitBackend {
             self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
         }
         Ok(updated)
+    }
+
+    pub fn fetch(&mut self, repository: &Repository) -> Result<()> {
+        let mut callbacks = RemoteCallbacks::new();
+        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        callbacks.push_update_reference(|name, status| {
+            println!("{name}: {status:?}");
+            Ok(())
+        });
+
+        let remote = repository.remote("origin", &self.config.origin);
+        if let Err(error) = remote
+            && (error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists)
+        {
+            log::warn!("Couldn't create remote origin: {error}");
+            return Err(error.into());
+        }
+        repository.remote_set_url("origin", &self.config.origin)?;
+
+        let mut origin = repository.find_remote("origin")?;
+        let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
+
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
+        let mut connection = connection?;
+
+        let mut fetch_options = FetchOptions::new();
+        let remote_result = connection.remote().fetch(
+            &[self.config.branch.as_ref()],
+            Some(&mut fetch_options),
+            Some(&format!("fetch {} branch", self.config.branch)),
+        );
+
+        if let Some(callback_error) = callback_error.borrow_mut().take() {
+            return Err(callback_error);
+        }
+
+        remote_result?;
+
+        let mut local = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
+        let remote = match local.upstream() {
+            Ok(remote) => remote.into_reference(),
+            Err(error)
+                if error.class() == ErrorClass::Config && error.code() == ErrorCode::NotFound =>
+            {
+                local.set_upstream(Some(&format!("origin/{}", self.config.branch)))?;
+                local.upstream()?.into_reference()
+            }
+            Err(error) => return Err(error.into()),
+        };
+
+        // Checkout main
+        let branch = &self.config.branch;
+        repository.set_head(&format!("refs/heads/{branch}"))?;
+        repository.checkout_head(None)?;
+
+        // Hard reset main to origin/main
+        repository.reset(
+            &remote.peel(git2::ObjectType::Commit)?,
+            ResetType::Hard,
+            None,
+        )?;
+        Ok(())
     }
 }
 
@@ -939,40 +1002,196 @@ impl Backend for GitBackend {
         Box::new(Handler)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
-        let tasks = db.all_tasks()?;
-
-        if self.config.repository_path().join(".git").exists() {
-            for task in tasks {
-                if self.task_by_uuid(&task.uuid)?.is_some() {
-                    self.update(&task)?;
-                } else {
-                    self.add(task)?;
-                }
-            }
-            let repository =
-                Repository::open(self.config.repository_path()).map_err(Error::LibGit2)?;
-            log::info!("Pulling tasks...");
-            if self.pull(&repository)? {
-                log::info!("Pulled tasks");
-                self.unload();
-            }
-            log::info!("Pushing tasks...");
-            self.push(&repository, false)?;
-
-            log::info!("Task sync finished!");
-            Ok(())
-        } else {
+        let repository_path = self.config.repository_path();
+        if !repository_path.join(".git").exists() {
+            log::info!("Cloning repository...");
             self.clone_repository()?;
-            for task in tasks {
-                if self.task_by_uuid(&task.uuid)?.is_some() {
-                    self.update(&task)?;
-                } else {
+        }
+
+        let repository = Repository::open(repository_path).map_err(Error::LibGit2)?;
+
+        self.fetch(&repository)?;
+
+        for iterator in OperationIterator::new(&repository, &self.key_store)? {
+            dbg!(iterator?);
+        }
+
+        // todo!();
+        let local_tasks = db.all_tasks()?;
+
+        let mut local_operations = Vec::new();
+        let mut remote_operations = Vec::new();
+        for local_task in &local_tasks {
+            let Some(remote) = self.task_by_uuid(&local_task.uuid)? else {
+                push_operations_diff_task(Some(local_task), None, &mut remote_operations);
+                continue;
+            };
+
+            if local_task.modified > remote.task.modified {
+                push_operations_diff_task(
+                    Some(&remote.task),
+                    Some(local_task),
+                    &mut remote_operations,
+                );
+            } else {
+                push_operations_diff_task(
+                    Some(&remote.task),
+                    Some(local_task),
+                    &mut local_operations,
+                );
+            }
+        }
+
+        let db_task_ids = local_tasks
+            .iter()
+            .map(|task| task.uuid)
+            .collect::<HashSet<_>>();
+        for storage in self.storage_mut() {
+            storage.load()?;
+            for task in &storage.tasks {
+                if db_task_ids.contains(&task.task.uuid) {
+                    continue;
+                }
+                push_operations_diff_task(Some(&task.task), None, &mut local_operations);
+            }
+            storage.unload();
+        }
+
+        dbg!(&local_operations);
+        dbg!(&remote_operations);
+
+        let mut transaction = db.transaction()?;
+        transaction.apply(local_operations)?;
+
+        for operation in remote_operations {
+            let Some(kind) = operation.kind else {
+                panic!("There shoult not be any undo-points");
+            };
+            match kind {
+                OperationKind::TaskCreate { id } => {
+                    let task = Task {
+                        uuid: id,
+                        ..Default::default()
+                    };
                     self.add(task)?;
                 }
+                OperationKind::TaskModifyEntry { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.entry = old;
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyStatus { id, old, .. } => {
+                    let task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    self.change_category(&task.task, old)?;
+                }
+                OperationKind::TaskPurge { id } => {
+                    todo!("task purge: {id}")
+                }
+                OperationKind::TaskModifyTitle { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.title = old.map(str::into_string);
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyPriority { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.priority = old;
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyProject { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.project = old.map(Into::into);
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyModified { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.modified = old;
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyDue { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.due = old;
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyWait { id, old, .. } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.wait = old;
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyAddTag { id, tag } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.tags.push(tag.into());
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyRemoveTag { id, ref tag } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    if let Some(index) = task
+                        .task
+                        .tags
+                        .iter()
+                        .position(|value| value.as_str() == tag.as_ref())
+                    {
+                        task.task.tags.remove(index);
+                    }
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyAddDependency { id, depend } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.depends.push(depend);
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyRemoveDependency { id, depend } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    if let Some(index) = task.task.depends.iter().position(|value| *value == depend)
+                    {
+                        task.task.depends.remove(index);
+                    }
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyAddAnnotation { id, annotation } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.annotations.push(*annotation);
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    if let Some(index) = task
+                        .task
+                        .annotations
+                        .iter()
+                        .position(|value| value.entry == annotation.entry)
+                    {
+                        task.task.annotations.remove(index);
+                    }
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyAddUda { id, uda } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    task.task.udas.push(*uda);
+                    self.update(&task.task)?;
+                }
+                OperationKind::TaskModifyRemoveUda { id, uda } => {
+                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
+                    if let Some(index) =
+                        task.task.udas.iter().position(|value| {
+                            value.key == uda.key && value.namespace == uda.namespace
+                        })
+                    {
+                        task.task.udas.remove(index);
+                    }
+                    self.update(&task.task)?;
+                }
             }
-            self.sync(db)
         }
+
+        log::info!("Pushing tasks...");
+        self.push(&repository, false)?;
+
+        transaction.commit()?;
+
+        log::info!("Task sync finished!");
+        Ok(())
     }
 }
 impl GitBackend {

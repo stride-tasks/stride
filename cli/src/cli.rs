@@ -44,6 +44,12 @@ pub enum Mode {
         content: Vec<String>,
     },
 
+    /// Complete the task.
+    Done {
+        /// ID of the task to complete.
+        id: Uuid,
+    },
+
     /// Undo previous change.
     Undo {
         /// Undo `count` changes.
