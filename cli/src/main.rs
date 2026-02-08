@@ -1,5 +1,5 @@
 use anyhow::{Context, bail};
-use chrono::Local;
+use chrono::{Local, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
@@ -62,7 +62,7 @@ fn print_tasks(tasks: &[Task]) {
             }
             tags.push(')');
         }
-        println!("{active_char}{tags}{i:4}: {}", task.title);
+        println!("{active_char}{tags}{i:4} {}: {}", task.uuid, task.title);
     }
 }
 
@@ -178,7 +178,8 @@ fn main() -> anyhow::Result<ExitCode> {
                     PluginEvent::TaskCreate { task } => {
                         database.insert_task(&task)?;
                     }
-                    PluginEvent::TaskModify { task } => {
+                    PluginEvent::TaskModify { mut task } => {
+                        task.modified = Some(Utc::now());
                         database.update_task(&task)?;
                     }
                     PluginEvent::TaskSync => {
@@ -199,6 +200,14 @@ fn main() -> anyhow::Result<ExitCode> {
                 }
             }
         }
+        Mode::Done { id } => {
+            let Some(mut task) = database.task_by_id(id)? else {
+                bail!("could not find task with ID: {id}");
+            };
+            task.status = TaskStatus::Complete;
+            task.modified = Some(Utc::now());
+            database.update_task(&task)?;
+        }
         Mode::Undo { count } => {
             let count = count.unwrap_or(1);
 
@@ -217,8 +226,8 @@ fn main() -> anyhow::Result<ExitCode> {
                 };
 
                 match &kind {
-                    OperationKind::TaskCreate { id, title } => {
-                        println!("task({id}): create(\"{title}\")");
+                    OperationKind::TaskCreate { id, title, entry } => {
+                        println!("task({id}): create(\"{title}\", entry: {entry})");
                     }
                     OperationKind::TaskPurge { id } => {
                         println!("task({id}): purge");

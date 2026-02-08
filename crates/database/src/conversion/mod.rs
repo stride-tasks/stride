@@ -496,9 +496,10 @@ impl ToBlob<'_> for OperationKind {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         blob.push(0x00); // version
         match self {
-            OperationKind::TaskCreate { id, title } => {
+            OperationKind::TaskCreate { id, title, entry } => {
                 blob.push(OPERATION_TASK_CREATE);
                 id.to_blob(blob);
+                entry.to_blob(blob);
                 title.as_ref().to_blob(blob);
             }
             OperationKind::TaskPurge { id } => {
@@ -619,10 +620,12 @@ impl FromBlob<'_> for OperationKind {
         Ok(match ty {
             OPERATION_TASK_CREATE => {
                 let id = Uuid::from_blob(blob)?;
+                let entry = Date::from_blob(blob)?;
                 let title = <&str>::from_blob(blob)?;
                 OperationKind::TaskCreate {
                     id,
                     title: title.into(),
+                    entry,
                 }
             }
             OPERATION_TASK_PURGE => {

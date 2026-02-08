@@ -56,9 +56,9 @@ CREATE TABLE IF NOT EXISTS operation_table (
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS backend_table (
-    id BLOB NOT NULL PRIMARY KEY,
+    `id` BLOB NOT NULL PRIMARY KEY,
     `name` TEXT NOT NULL CHECK (length(`name`) != 0),
-    enabled INTEGER NOT NULL CHECK (`enabled` = 0 OR `enabled` = 1)
+    `enabled` INTEGER NOT NULL CHECK (`enabled` = 0 OR `enabled` = 1)
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS backend_config_table (
