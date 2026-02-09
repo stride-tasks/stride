@@ -25,7 +25,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   freezed_annotation: ^3.1.0
   font_awesome_flutter: ^10.12.0
-  file_picker: ^10.3.8
+  file_picker: ^10.3.10
   qr_flutter: ^4.1.0
   url_launcher: ^6.3.2
   intersperse: ^2.0.0
@@ -40,8 +40,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   mocktail: ^1.0.4
 
-  freezed: ^3.2.4
-  build_runner: ^2.10.5
+  freezed: ^3.2.5
+  build_runner: ^2.11.0
 
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.7
