@@ -13,13 +13,16 @@ publish = false
 
 [dependencies]
 stride_core = { workspace = true, features = ["backend"] }
+stride_crdt.workspace = true
+stride_serialize.workspace = true
 
 url.workspace = true
-rusqlite.workspace = true
+rusqlite = { workspace = true, features = ["functions"] }
 uuid.workspace = true
 thiserror.workspace = true
 chrono.workspace = true
 indoc.workspace = true
+log.workspace = true
 
 [lints]
 workspace = true

@@ -109,10 +109,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
       if (error.isOutOfFuelTrapCode()) {
         final pluginName = error.pluginName();
         if (pluginName != null) {
-          disable(
-            pluginName,
-            reason: 'plugin exceeded computation limit',
-          );
+          disable(pluginName, reason: 'plugin exceeded computation limit');
 
           logBloc.add(
             LogErrorEvent(
@@ -149,7 +146,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
                 TaskAddEvent(
                   task: task.copyWith(
                     // Make sure to give a new UUID that what the plugin provided.
-                    uuid: UuidValue.fromString(const Uuid().v7()),
+                    id: UuidValue.fromString(const Uuid().v7()),
                   ),
                 ),
               );
@@ -168,21 +165,23 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
                 ty == NetworkRequestType.get_,
                 'expected network request to have GET method',
               );
-              http.get(Uri.parse(host)).then(
-                (value) async {
-                  await pm.emit(
-                    pluginName: pluginName,
-                    event: HostEvent.networkResponse(
-                      host: host,
-                      content: value.bodyBytes,
-                    ),
+              http
+                  .get(Uri.parse(host))
+                  .then(
+                    (value) async {
+                      await pm.emit(
+                        pluginName: pluginName,
+                        event: HostEvent.networkResponse(
+                          host: host,
+                          content: value.bodyBytes,
+                        ),
+                      );
+                    },
+                    onError: (error) {
+                      // TODO: Log error/notify
+                      print(error);
+                    },
                   );
-                },
-                onError: (error) {
-                  // TODO: Log error/notify
-                  print(error);
-                },
-              );
           }
         case PluginAction_Disable(:final pluginName, :final reason):
           logBloc.add(

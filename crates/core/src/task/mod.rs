@@ -21,10 +21,10 @@ pub enum TaskStatus {
     #[default]
     #[serde(rename = "pending")]
     Pending,
+    #[serde(rename = "done")]
+    Done,
     #[serde(rename = "deleted")]
     Deleted,
-    #[serde(rename = "complete")]
-    Complete,
 }
 
 impl TaskStatus {
@@ -60,15 +60,15 @@ impl TaskPriority {
 /// flutter_rust_bridge:dart_metadata=("freezed")
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
-    pub uuid: Uuid,
+    pub id: Uuid,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entry: Option<Date>,
 
     #[serde(default)]
-    #[serde(skip_serializing_if = "TaskStatus::is_pending")]
-    pub status: TaskStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<TaskStatus>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -114,8 +114,8 @@ pub struct Task {
 impl Default for Task {
     fn default() -> Self {
         Self {
-            uuid: Uuid::now_v7(),
-            status: TaskStatus::Pending,
+            id: Uuid::now_v7(),
+            status: None,
             title: None,
             entry: None,
             modified: None,
@@ -138,16 +138,18 @@ impl Task {
         Task {
             title: Some(title),
             entry: Some(Utc::now()),
+            status: Some(TaskStatus::Pending),
             ..Default::default()
         }
     }
 
     #[must_use]
-    pub fn with_uuid(uuid: Uuid, title: String) -> Self {
+    pub fn with_id(id: Uuid, title: String) -> Self {
         Task {
-            uuid,
+            id,
             title: Some(title),
             entry: Some(Utc::now()),
+            status: Some(TaskStatus::Pending),
             ..Default::default()
         }
     }
@@ -202,9 +204,9 @@ impl From<taskchampion::Task> for Task {
             title = Some(description.to_string());
         }
         Self {
-            uuid: v.get_uuid(),
+            id: v.get_uuid(),
             entry: v.get_entry(),
-            status: v.get_status().into(),
+            status: Some(v.get_status().into()),
             title,
             modified: v.get_modified(),
             due: v.get_due(),
@@ -232,11 +234,12 @@ impl From<taskchampion::Task> for Task {
 }
 #[cfg(feature = "taskchampion")]
 impl From<taskchampion::Annotation> for Annotation {
-    fn from(value: taskchampion::Annotation) -> Self {
-        Self {
-            entry: value.entry,
-            description: value.description,
-        }
+    fn from(_value: taskchampion::Annotation) -> Self {
+        // Self {
+        //     entry: value.entry,
+        //     description: value.description,
+        // }
+        todo!()
     }
 }
 #[cfg(feature = "taskchampion")]
@@ -244,7 +247,7 @@ impl From<taskchampion::Status> for TaskStatus {
     fn from(value: taskchampion::Status) -> Self {
         match value {
             taskchampion::Status::Pending | taskchampion::Status::Recurring => Self::Pending,
-            taskchampion::Status::Completed => Self::Complete,
+            taskchampion::Status::Completed => Self::Done,
             taskchampion::Status::Deleted => Self::Deleted,
             taskchampion::Status::Unknown(other) => {
                 todo!("No implementation for unknown status: {other}")
@@ -259,7 +262,7 @@ impl From<TaskStatus> for taskchampion::Status {
             // TODO: this should take the task for
             TaskStatus::Pending => Self::Pending,
             TaskStatus::Deleted => Self::Deleted,
-            TaskStatus::Complete => Self::Completed,
+            TaskStatus::Done => Self::Completed,
         }
     }
 }

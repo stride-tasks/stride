@@ -2,6 +2,8 @@
 resolver = "3"
 members = [
   "crates/core",
+  "crates/crdt",
+  "crates/serialization",
   "crates/logging",
   "crates/database",
   "crates/backend",
@@ -28,6 +30,8 @@ description = "An extensible task menagment application that uses git as it's da
 [workspace.dependencies]
 # Repository Crates
 stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
+stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
+stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
 stride_logging = { version = "~0.1.0", path = "crates/logging" }
 stride_database = { version = "~0.1.0", path = "crates/database" }
 stride_backend = { version = "~0.1.0", path = "crates/backend" }
@@ -84,6 +88,7 @@ clap = { version = "4.5.54", features = ["derive"] }
 url = { version = "2.5.8", features = ["serde"] }
 thiserror = "2.0.18"
 indoc = "2.0.7"
+vint64 = "=1.0.1"
 
 [profile.release]
 # strip = "debug"

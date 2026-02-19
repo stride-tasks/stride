@@ -65,9 +65,8 @@ class TaskItem extends StatelessWidget {
 
     void Function()? onTap;
     if (task.annotations.isNotEmpty) {
-      final description = task.annotations.first.description;
       try {
-        final uri = Uri.parse(description);
+        final uri = Uri.parse(task.annotations.first.text);
         // TODO: Maybe allow other link types, example: email?
         if (uri.isScheme('HTTP') || uri.isScheme('HTTPS')) {
           onTap = () async {
@@ -99,7 +98,7 @@ class TaskItem extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 TextSpan(text: ' '),
-                TextSpan(text: annotation.description),
+                TextSpan(text: annotation.text),
               ],
             ),
           ),
@@ -141,7 +140,7 @@ class TaskItem extends StatelessWidget {
 
     if (onSwipeLeft != null || onSwipeRight != null) {
       widget = Dismissible(
-        key: Key('${task.uuid}-${task.status.index}'),
+        key: Key('${task.id}-${task.status?.index ?? -1}'),
         direction: switch ((onSwipeLeft != null, onSwipeRight != null)) {
           (true, true) => DismissDirection.horizontal,
           (true, false) => DismissDirection.endToStart,
@@ -178,7 +177,7 @@ class TaskItem extends StatelessWidget {
             swipeRightIcon,
             const SizedBox(width: 5),
             Text(
-              swipeRightText == null ? 'Complete' : swipeRightText!,
+              swipeRightText == null ? 'Done' : swipeRightText!,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,

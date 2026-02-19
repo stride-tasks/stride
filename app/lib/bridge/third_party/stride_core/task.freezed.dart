@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Task {
 
- UuidValue get uuid; DateTime? get entry; TaskStatus get status; String? get title; DateTime? get modified; DateTime? get due; String? get project; List<String> get tags; List<Annotation> get annotations; TaskPriority? get priority; DateTime? get wait; List<UuidValue> get depends; List<Uda> get udas;
+ UuidValue get id; DateTime? get entry; TaskStatus? get status; String? get title; DateTime? get modified; DateTime? get due; String? get project; List<String> get tags; List<Annotation> get annotations; TaskPriority? get priority; DateTime? get wait; List<UuidValue> get depends; List<Uda> get udas;
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TaskCopyWith<Task> get copyWith => _$TaskCopyWithImpl<Task>(this as Task, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Task&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.entry, entry) || other.entry == entry)&&(identical(other.status, status) || other.status == status)&&(identical(other.title, title) || other.title == title)&&(identical(other.modified, modified) || other.modified == modified)&&(identical(other.due, due) || other.due == due)&&(identical(other.project, project) || other.project == project)&&const DeepCollectionEquality().equals(other.tags, tags)&&const DeepCollectionEquality().equals(other.annotations, annotations)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.wait, wait) || other.wait == wait)&&const DeepCollectionEquality().equals(other.depends, depends)&&const DeepCollectionEquality().equals(other.udas, udas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Task&&(identical(other.id, id) || other.id == id)&&(identical(other.entry, entry) || other.entry == entry)&&(identical(other.status, status) || other.status == status)&&(identical(other.title, title) || other.title == title)&&(identical(other.modified, modified) || other.modified == modified)&&(identical(other.due, due) || other.due == due)&&(identical(other.project, project) || other.project == project)&&const DeepCollectionEquality().equals(other.tags, tags)&&const DeepCollectionEquality().equals(other.annotations, annotations)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.wait, wait) || other.wait == wait)&&const DeepCollectionEquality().equals(other.depends, depends)&&const DeepCollectionEquality().equals(other.udas, udas));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uuid,entry,status,title,modified,due,project,const DeepCollectionEquality().hash(tags),const DeepCollectionEquality().hash(annotations),priority,wait,const DeepCollectionEquality().hash(depends),const DeepCollectionEquality().hash(udas));
+int get hashCode => Object.hash(runtimeType,id,entry,status,title,modified,due,project,const DeepCollectionEquality().hash(tags),const DeepCollectionEquality().hash(annotations),priority,wait,const DeepCollectionEquality().hash(depends),const DeepCollectionEquality().hash(udas));
 
 @override
 String toString() {
-  return 'Task(uuid: $uuid, entry: $entry, status: $status, title: $title, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, udas: $udas)';
+  return 'Task(id: $id, entry: $entry, status: $status, title: $title, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, udas: $udas)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TaskCopyWith<$Res>  {
   factory $TaskCopyWith(Task value, $Res Function(Task) _then) = _$TaskCopyWithImpl;
 @useResult
 $Res call({
- UuidValue uuid, DateTime? entry, TaskStatus status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
+ UuidValue id, DateTime? entry, TaskStatus? status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
 });
 
 
@@ -62,12 +62,12 @@ class _$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? entry = freezed,Object? status = null,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? entry = freezed,Object? status = freezed,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
   return _then(_self.copyWith(
-uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as UuidValue,entry: freezed == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
-as DateTime?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as TaskStatus,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as DateTime?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as TaskStatus?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,modified: freezed == modified ? _self.modified : modified // ignore: cast_nullable_to_non_nullable
 as DateTime?,due: freezed == due ? _self.due : due // ignore: cast_nullable_to_non_nullable
 as DateTime?,project: freezed == project ? _self.project : project // ignore: cast_nullable_to_non_nullable
@@ -159,10 +159,10 @@ return raw(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( UuidValue uuid,  DateTime? entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( UuidValue id,  DateTime? entry,  TaskStatus? status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Task() when raw != null:
-return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);case _:
+return raw(_that.id,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);case _:
   return orElse();
 
 }
@@ -180,10 +180,10 @@ return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( UuidValue uuid,  DateTime? entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)  raw,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( UuidValue id,  DateTime? entry,  TaskStatus? status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)  raw,}) {final _that = this;
 switch (_that) {
 case _Task():
-return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);}
+return raw(_that.id,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -197,10 +197,10 @@ return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( UuidValue uuid,  DateTime? entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( UuidValue id,  DateTime? entry,  TaskStatus? status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,}) {final _that = this;
 switch (_that) {
 case _Task() when raw != null:
-return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);case _:
+return raw(_that.id,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);case _:
   return null;
 
 }
@@ -212,12 +212,12 @@ return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.
 
 
 class _Task extends Task {
-  const _Task({required this.uuid, this.entry, required this.status, this.title, this.modified, this.due, this.project, required final  List<String> tags, required final  List<Annotation> annotations, this.priority, this.wait, required final  List<UuidValue> depends, required final  List<Uda> udas}): _tags = tags,_annotations = annotations,_depends = depends,_udas = udas,super._();
+  const _Task({required this.id, this.entry, this.status, this.title, this.modified, this.due, this.project, required final  List<String> tags, required final  List<Annotation> annotations, this.priority, this.wait, required final  List<UuidValue> depends, required final  List<Uda> udas}): _tags = tags,_annotations = annotations,_depends = depends,_udas = udas,super._();
   
 
-@override final  UuidValue uuid;
+@override final  UuidValue id;
 @override final  DateTime? entry;
-@override final  TaskStatus status;
+@override final  TaskStatus? status;
 @override final  String? title;
 @override final  DateTime? modified;
 @override final  DateTime? due;
@@ -263,16 +263,16 @@ _$TaskCopyWith<_Task> get copyWith => __$TaskCopyWithImpl<_Task>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Task&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.entry, entry) || other.entry == entry)&&(identical(other.status, status) || other.status == status)&&(identical(other.title, title) || other.title == title)&&(identical(other.modified, modified) || other.modified == modified)&&(identical(other.due, due) || other.due == due)&&(identical(other.project, project) || other.project == project)&&const DeepCollectionEquality().equals(other._tags, _tags)&&const DeepCollectionEquality().equals(other._annotations, _annotations)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.wait, wait) || other.wait == wait)&&const DeepCollectionEquality().equals(other._depends, _depends)&&const DeepCollectionEquality().equals(other._udas, _udas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Task&&(identical(other.id, id) || other.id == id)&&(identical(other.entry, entry) || other.entry == entry)&&(identical(other.status, status) || other.status == status)&&(identical(other.title, title) || other.title == title)&&(identical(other.modified, modified) || other.modified == modified)&&(identical(other.due, due) || other.due == due)&&(identical(other.project, project) || other.project == project)&&const DeepCollectionEquality().equals(other._tags, _tags)&&const DeepCollectionEquality().equals(other._annotations, _annotations)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.wait, wait) || other.wait == wait)&&const DeepCollectionEquality().equals(other._depends, _depends)&&const DeepCollectionEquality().equals(other._udas, _udas));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uuid,entry,status,title,modified,due,project,const DeepCollectionEquality().hash(_tags),const DeepCollectionEquality().hash(_annotations),priority,wait,const DeepCollectionEquality().hash(_depends),const DeepCollectionEquality().hash(_udas));
+int get hashCode => Object.hash(runtimeType,id,entry,status,title,modified,due,project,const DeepCollectionEquality().hash(_tags),const DeepCollectionEquality().hash(_annotations),priority,wait,const DeepCollectionEquality().hash(_depends),const DeepCollectionEquality().hash(_udas));
 
 @override
 String toString() {
-  return 'Task.raw(uuid: $uuid, entry: $entry, status: $status, title: $title, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, udas: $udas)';
+  return 'Task.raw(id: $id, entry: $entry, status: $status, title: $title, modified: $modified, due: $due, project: $project, tags: $tags, annotations: $annotations, priority: $priority, wait: $wait, depends: $depends, udas: $udas)';
 }
 
 
@@ -283,7 +283,7 @@ abstract mixin class _$TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
   factory _$TaskCopyWith(_Task value, $Res Function(_Task) _then) = __$TaskCopyWithImpl;
 @override @useResult
 $Res call({
- UuidValue uuid, DateTime? entry, TaskStatus status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
+ UuidValue id, DateTime? entry, TaskStatus? status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
 });
 
 
@@ -300,12 +300,12 @@ class __$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? entry = freezed,Object? status = null,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? entry = freezed,Object? status = freezed,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
   return _then(_Task(
-uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as UuidValue,entry: freezed == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
-as DateTime?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as TaskStatus,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as DateTime?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as TaskStatus?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,modified: freezed == modified ? _self.modified : modified // ignore: cast_nullable_to_non_nullable
 as DateTime?,due: freezed == due ? _self.due : due // ignore: cast_nullable_to_non_nullable
 as DateTime?,project: freezed == project ? _self.project : project // ignore: cast_nullable_to_non_nullable

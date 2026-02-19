@@ -94,9 +94,8 @@ class _TasksRouteState extends State<TasksRoute> {
 
   TaskItem _taskItem(Task task, BuildContext context) {
     Future<bool> onSwipeRight() async {
-      var status = TaskStatus.complete;
-      if (task.status == TaskStatus.complete ||
-          task.status == TaskStatus.deleted) {
+      var status = TaskStatus.done;
+      if (task.status == TaskStatus.done || task.status == TaskStatus.deleted) {
         status = TaskStatus.pending;
       }
       context.read<TaskBloc>().add(
@@ -135,18 +134,15 @@ class _TasksRouteState extends State<TasksRoute> {
       task: task,
       onSwipeRight: onSwipeRight,
       swipeRightIcon:
-          (task.status == TaskStatus.complete ||
-              task.status == TaskStatus.deleted)
+          (task.status == TaskStatus.done || task.status == TaskStatus.deleted)
           ? const Icon(Icons.calendar_month, color: Colors.white)
           : const Icon(Icons.check, color: Colors.white),
       swipeRightColor:
-          (task.status == TaskStatus.complete ||
-              task.status == TaskStatus.deleted)
+          (task.status == TaskStatus.done || task.status == TaskStatus.deleted)
           ? Colors.purpleAccent
           : Colors.greenAccent,
       swipeRightText:
-          (task.status == TaskStatus.complete ||
-              task.status == TaskStatus.deleted)
+          (task.status == TaskStatus.done || task.status == TaskStatus.deleted)
           ? 'Pending'
           : null,
       onSwipeLeft: onSwipeLeft,

@@ -123,6 +123,11 @@ impl GitConfig {
     }
 
     #[must_use]
+    pub fn actors_path(&self) -> PathBuf {
+        self.repository_path().join("stride").join("actors")
+    }
+
+    #[must_use]
     pub fn keys_filepath(&self) -> PathBuf {
         self.tasks_path().join("keys")
     }

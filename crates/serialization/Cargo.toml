@@ -1,0 +1,29 @@
+[package]
+name = "stride_serialize"
+description = "Stride's serialization implementation"
+keywords = ["stride"]
+categories = []
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+stride_core.workspace = true
+
+uuid.workspace = true
+thiserror.workspace = true
+vint64 = { workspace = true, features = ["std"] }
+
+[dev-dependencies]
+
+[features]
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

@@ -16,6 +16,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 stride_core = { workspace = true, features = ["taskchampion"] }
+stride_crdt.workspace = true
 stride_logging.workspace = true
 stride_database.workspace = true
 stride_backend.workspace = true

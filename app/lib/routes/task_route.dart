@@ -25,7 +25,7 @@ class _TaskRouteState extends State<TaskRoute> {
   DateTime? entry;
   DateTime? due;
   Set<String> _tags = {};
-  List<(DateTime, TextEditingController)> annotations = [];
+  List<(UuidValue, DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
   bool active = false;
@@ -45,8 +45,9 @@ class _TaskRouteState extends State<TaskRoute> {
         widget.task?.annotations
             .map(
               (annotation) => (
+                annotation.id,
                 annotation.entry,
-                TextEditingController(text: annotation.description),
+                TextEditingController(text: annotation.text),
               ),
             )
             .toList() ??
@@ -155,8 +156,7 @@ class _TaskRouteState extends State<TaskRoute> {
 
           if (context.mounted) {
             final task = Task.raw(
-              uuid:
-                  widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
+              id: widget.task?.id ?? UuidValue.fromString(const Uuid().v7()),
               entry: entry ?? DateTime.now().toUtc(),
               title: title,
               tags: _tags.toList(),
@@ -165,8 +165,9 @@ class _TaskRouteState extends State<TaskRoute> {
               annotations: annotations
                   .map<Annotation>(
                     (annotation) => Annotation(
-                      entry: annotation.$1,
-                      description: annotation.$2.text,
+                      id: annotation.$1,
+                      entry: annotation.$2,
+                      text: annotation.$3.text,
                     ),
                   )
                   .toList(),
@@ -201,7 +202,7 @@ class _TaskRouteState extends State<TaskRoute> {
     final children = annotations
         .map<Widget>(
           (annotation) => ListTile(
-            title: TextField(controller: annotation.$2, maxLines: null),
+            title: TextField(controller: annotation.$3, maxLines: null),
             trailing: IconButton(
               onPressed: () => setState(() {
                 annotations.remove(annotation);
@@ -209,7 +210,7 @@ class _TaskRouteState extends State<TaskRoute> {
               icon: const Icon(Icons.remove),
             ),
             subtitle: Text(
-              annotation.$1.toHumanString(),
+              annotation.$2.toHumanString(),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -219,6 +220,7 @@ class _TaskRouteState extends State<TaskRoute> {
             trailing: IconButton(
               onPressed: () => setState(() {
                 annotations.add((
+                  UuidValue.fromString(Uuid().v7()),
                   // NOTE: Dates are stored in UTC.
                   DateTime.now().toUtc(),
                   TextEditingController(),

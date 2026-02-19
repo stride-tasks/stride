@@ -137,7 +137,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskRemoveEvent>((event, emit) async {
       if (event.task.status == TaskStatus.deleted) {
-        await repository()?.purgeTaskById(id: event.task.uuid);
+        await repository()?.purgeTaskById(id: event.task.id);
       } else {
         await repository()?.updateTask(
           task: event.task.copyWith(status: TaskStatus.deleted),
@@ -223,18 +223,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
                 );
               });
               if (context.mounted) Navigator.pop(context);
-              return true;
-            },
-          ),
-        );
-      } else if (error.isKeyStoreVerification()) {
-        dialogBloc.add(
-          DialogAlertEvent(
-            title: "Couldn't decrypt tasks using encryption key",
-            content: 'Are you sure the encryption key is correct?',
-            onConfirm: (context) async {
-              Navigator.pop(context);
-              // TODO: Send user to encryption key.
               return true;
             },
           ),
