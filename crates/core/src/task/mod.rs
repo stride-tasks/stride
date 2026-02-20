@@ -61,8 +61,10 @@ impl TaskPriority {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub uuid: Uuid,
-    #[serde(default = "Utc::now")]
-    pub entry: Date,
+
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entry: Option<Date>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "TaskStatus::is_pending")]
@@ -115,7 +117,7 @@ impl Default for Task {
             uuid: Uuid::now_v7(),
             status: TaskStatus::Pending,
             title: None,
-            entry: Utc::now(),
+            entry: None,
             modified: None,
             due: None,
             project: None,
@@ -135,6 +137,7 @@ impl Task {
     pub fn new(title: String) -> Self {
         Task {
             title: Some(title),
+            entry: Some(Utc::now()),
             ..Default::default()
         }
     }
@@ -144,6 +147,7 @@ impl Task {
         Task {
             uuid,
             title: Some(title),
+            entry: Some(Utc::now()),
             ..Default::default()
         }
     }
@@ -199,7 +203,7 @@ impl From<taskchampion::Task> for Task {
         }
         Self {
             uuid: v.get_uuid(),
-            entry: v.get_entry().unwrap_or_else(Utc::now),
+            entry: v.get_entry(),
             status: v.get_status().into(),
             title,
             modified: v.get_modified(),

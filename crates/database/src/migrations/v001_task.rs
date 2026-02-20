@@ -7,7 +7,7 @@ const SQL: &str = r"
 CREATE TABLE IF NOT EXISTS task_table (
     `id` BLOB PRIMARY KEY, -- UUID
     `title` TEXT,
-    `entry` INTEGER NOT NULL,
+    `entry` INTEGER,
     `status` INTEGER NOT NULL DEFAULT 0, -- Default: pending
     `priority` INTEGER,
     `project` TEXT,

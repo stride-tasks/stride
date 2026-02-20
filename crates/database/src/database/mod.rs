@@ -204,7 +204,7 @@ impl TaskTransaction {
             .with_now(),
         );
     }
-    pub fn set_entry(&mut self, entry: Date, ops: &mut Vec<Operation>) {
+    pub fn set_entry(&mut self, entry: Option<Date>, ops: &mut Vec<Operation>) {
         let new = entry;
         let old = std::mem::replace(&mut self.task.entry, entry);
         ops.push(
@@ -316,7 +316,7 @@ impl Database {
     fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
         let uuid = row.get::<_, Uuid>("id")?;
         let title = row.get::<_, Option<String>>("title")?;
-        let entry = row.get::<_, Sql<Date>>("entry")?.value;
+        let entry = row.get::<_, Sql<Option<Date>>>("entry")?.value;
         let status = row.get::<_, Sql<TaskStatus>>("status")?.value;
         let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
         let project = row.get::<_, Option<String>>("project")?;

@@ -26,7 +26,7 @@ fn concat(data: &[&[u8]]) -> Vec<u8> {
 
 fn create_task(title: &str) -> Task {
     let mut task = Task::with_uuid(CONSTANT_UUID, title.to_string());
-    task.entry = CONSTANT_DATETIME;
+    task.entry = Some(CONSTANT_DATETIME);
     task
 }
 
@@ -42,6 +42,7 @@ fn serialize_simple_task() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -56,6 +57,7 @@ fn deserialize_simple_task() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -70,7 +72,7 @@ fn deserialize_simple_task() {
 fn serialize_task_without_title() {
     let task = Task {
         uuid: CONSTANT_UUID,
-        entry: CONSTANT_DATETIME,
+        entry: Some(CONSTANT_DATETIME),
         ..Default::default()
     };
 
@@ -78,7 +80,7 @@ fn serialize_task_without_title() {
 
     assert_eq!(
         data,
-        concat(&[b"\0", CONSTANT_UUID_BYTES, CONSTANT_DATETIME_BYTES,])
+        concat(&[b"\0", CONSTANT_UUID_BYTES, b"e", CONSTANT_DATETIME_BYTES,])
     );
 }
 
@@ -87,13 +89,14 @@ fn deserialize_task_without_title() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
     ]))
     .unwrap();
 
     let expected = Task {
         uuid: CONSTANT_UUID,
-        entry: CONSTANT_DATETIME,
+        entry: Some(CONSTANT_DATETIME),
         ..Default::default()
     };
     assert_eq!(task, expected);
@@ -109,6 +112,7 @@ fn serialize_title_with_emoji() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -123,6 +127,7 @@ fn deserialize_title_with_emoji() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -143,6 +148,7 @@ fn serialize_title_with_escape_sequence() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -157,6 +163,7 @@ fn deserialize_title_with_escape_sequence() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -177,6 +184,7 @@ fn serialize_task_with_dates() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -192,6 +200,7 @@ fn serialize_task_with_dates() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -210,6 +219,7 @@ fn deserialize_task_with_dates() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -241,6 +251,7 @@ fn serialize_task_with_tags() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -264,6 +275,7 @@ fn deserialize_task_with_tags() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -296,6 +308,7 @@ fn serialize_task_with_project() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -313,6 +326,7 @@ fn deserialize_task_with_project() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -339,6 +353,7 @@ fn serialize_task_with_priority() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -354,6 +369,7 @@ fn deserialize_task_with_priority() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -379,6 +395,7 @@ fn serialize_task_with_depends() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -397,6 +414,7 @@ fn deserialize_task_with_depends() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -432,6 +450,7 @@ fn serialize_task_with_annotations() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -454,6 +473,7 @@ fn deserialize_task_with_annotations() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -501,6 +521,7 @@ fn serialize_task_with_udas() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -529,6 +550,7 @@ fn deserialize_task_with_udas() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),
@@ -599,6 +621,7 @@ fn serialize_task_with_all_attributes() {
         concat(&[
             b"\0",
             CONSTANT_UUID_BYTES,
+            b"e",
             CONSTANT_DATETIME_BYTES,
             b"T",
             (title.len() as u32).to_be_bytes().as_slice(),
@@ -659,6 +682,7 @@ fn deserialize_task_with_all_attributes() {
     let task = task_from_data(&concat(&[
         b"\0",
         CONSTANT_UUID_BYTES,
+        b"e",
         CONSTANT_DATETIME_BYTES,
         b"T",
         (title.len() as u32).to_be_bytes().as_slice(),

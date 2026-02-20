@@ -15,8 +15,8 @@ pub enum OperationKind {
     },
     TaskModifyEntry {
         id: Uuid,
-        new: Date,
-        old: Date,
+        new: Option<Date>,
+        old: Option<Date>,
     },
     TaskModifyTitle {
         id: Uuid,

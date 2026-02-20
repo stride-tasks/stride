@@ -227,7 +227,7 @@ fn main() -> anyhow::Result<ExitCode> {
                         println!("task({id}): purge");
                     }
                     OperationKind::TaskModifyEntry { id, new, old } => {
-                        println!("task({id}): entry(new:{new}, old:{old})");
+                        println!("task({id}): entry(new:{new:?}, old:{old:?})");
                     }
                     OperationKind::TaskModifyTitle { id, new, old } => {
                         println!("task({id}): title(new:{new:?}, old:{old:?})");

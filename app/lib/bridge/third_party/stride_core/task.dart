@@ -29,7 +29,7 @@ sealed class Task with _$Task {
   const Task._();
   const factory Task.raw({
     required UuidValue uuid,
-    required DateTime entry,
+    DateTime? entry,
     required TaskStatus status,
     String? title,
     DateTime? modified,

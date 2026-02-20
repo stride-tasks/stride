@@ -4003,7 +4003,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return Task.raw(
       uuid: dco_decode_Uuid(arr[0]),
-      entry: dco_decode_Chrono_Utc(arr[1]),
+      entry: dco_decode_opt_box_autoadd_Chrono_Utc(arr[1]),
       status: dco_decode_task_status(arr[2]),
       title: dco_decode_opt_String(arr[3]),
       modified: dco_decode_opt_box_autoadd_Chrono_Utc(arr[4]),
@@ -5119,7 +5119,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Task sse_decode_task(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_uuid = sse_decode_Uuid(deserializer);
-    final var_entry = sse_decode_Chrono_Utc(deserializer);
+    final var_entry = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     final var_status = sse_decode_task_status(deserializer);
     final var_title = sse_decode_opt_String(deserializer);
     final var_modified = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
@@ -6225,7 +6225,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_task(Task self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_Uuid(self.uuid, serializer);
-    sse_encode_Chrono_Utc(self.entry, serializer);
+    sse_encode_opt_box_autoadd_Chrono_Utc(self.entry, serializer);
     sse_encode_task_status(self.status, serializer);
     sse_encode_opt_String(self.title, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.modified, serializer);

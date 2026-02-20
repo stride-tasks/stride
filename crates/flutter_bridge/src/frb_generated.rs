@@ -3609,7 +3609,7 @@ const _: fn() = || {
     {
         let Task = None::<stride_core::task::Task>.unwrap();
         let _: uuid::Uuid = Task.uuid;
-        let _: chrono::DateTime<chrono::Utc> = Task.entry;
+        let _: Option<chrono::DateTime<chrono::Utc>> = Task.entry;
         let _: stride_core::task::TaskStatus = Task.status;
         let _: Option<String> = Task.title;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.modified;
@@ -4533,7 +4533,7 @@ impl SseDecode for stride_core::task::Task {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
-        let mut var_entry = <chrono::DateTime<chrono::Utc>>::sse_decode(deserializer);
+        let mut var_entry = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_status = <stride_core::task::TaskStatus>::sse_decode(deserializer);
         let mut var_title = <Option<String>>::sse_decode(deserializer);
         let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
@@ -6385,7 +6385,7 @@ impl SseEncode for stride_core::task::Task {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <uuid::Uuid>::sse_encode(self.uuid, serializer);
-        <chrono::DateTime<chrono::Utc>>::sse_encode(self.entry, serializer);
+        <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.entry, serializer);
         <stride_core::task::TaskStatus>::sse_encode(self.status, serializer);
         <Option<String>>::sse_encode(self.title, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);

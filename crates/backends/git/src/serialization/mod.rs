@@ -10,7 +10,10 @@ pub(crate) fn task_to_data(task: &Task) -> Vec<u8> {
     let mut result = Vec::new();
     result.extend_from_slice(b"\0".as_slice());
     result.extend_from_slice(task.uuid.as_bytes());
-    result.extend_from_slice(&task.entry.timestamp_micros().to_be_bytes());
+    if let Some(entry) = task.entry {
+        result.push(b'e');
+        result.extend_from_slice(&entry.timestamp_micros().to_be_bytes());
+    }
     if let Some(title) = &task.title {
         result.push(b'T');
         result.extend_from_slice(&(title.len() as u32).to_be_bytes());
@@ -86,10 +89,7 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
     let (uuid_bytes, input) = input.split_first_chunk::<16>()?;
     let uuid = Uuid::from_bytes(*uuid_bytes);
 
-    let (entry_bytes, input) = input.split_first_chunk::<8>()?;
-    let entry_timestamp = i64::from_be_bytes(*entry_bytes);
-    let entry = Date::from_timestamp_micros(entry_timestamp)?;
-
+    let mut entry = None;
     let mut title = None;
     let mut modified = None;
     let mut due = None;
@@ -118,7 +118,7 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
 
                 title = Some(value);
             }
-            b'm' | b'd' | b'w' => {
+            b'e' | b'm' | b'd' | b'w' => {
                 let timestamp = input.get(i..(i + size_of::<i64>()))?;
                 let timestamp = i64::from_be_bytes(timestamp.try_into().ok()?);
                 let datetime = Date::from_timestamp_micros(timestamp)?;
@@ -126,6 +126,7 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
                 i += size_of::<i64>();
 
                 match typ {
+                    b'e' => entry = Some(datetime),
                     b'm' => modified = Some(datetime),
                     b'd' => due = Some(datetime),
                     b'w' => wait = Some(datetime),

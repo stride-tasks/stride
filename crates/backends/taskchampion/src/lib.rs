@@ -166,7 +166,7 @@ impl TaskchampionBackend {
             .create_task(task.uuid, &mut self.operations)
             .await?;
 
-        champion_task.set_entry(Some(task.entry), &mut self.operations)?;
+        champion_task.set_entry(task.entry, &mut self.operations)?;
         if let Some(title) = task.title {
             champion_task.set_description(title, &mut self.operations)?;
         }

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Task {
 
- UuidValue get uuid; DateTime get entry; TaskStatus get status; String? get title; DateTime? get modified; DateTime? get due; String? get project; List<String> get tags; List<Annotation> get annotations; TaskPriority? get priority; DateTime? get wait; List<UuidValue> get depends; List<Uda> get udas;
+ UuidValue get uuid; DateTime? get entry; TaskStatus get status; String? get title; DateTime? get modified; DateTime? get due; String? get project; List<String> get tags; List<Annotation> get annotations; TaskPriority? get priority; DateTime? get wait; List<UuidValue> get depends; List<Uda> get udas;
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $TaskCopyWith<$Res>  {
   factory $TaskCopyWith(Task value, $Res Function(Task) _then) = _$TaskCopyWithImpl;
 @useResult
 $Res call({
- UuidValue uuid, DateTime entry, TaskStatus status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
+ UuidValue uuid, DateTime? entry, TaskStatus status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
 });
 
 
@@ -62,11 +62,11 @@ class _$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? entry = null,Object? status = null,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? entry = freezed,Object? status = null,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
   return _then(_self.copyWith(
 uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
-as UuidValue,entry: null == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
-as DateTime,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as UuidValue,entry: freezed == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
+as DateTime?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TaskStatus,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,modified: freezed == modified ? _self.modified : modified // ignore: cast_nullable_to_non_nullable
 as DateTime?,due: freezed == due ? _self.due : due // ignore: cast_nullable_to_non_nullable
@@ -159,7 +159,7 @@ return raw(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( UuidValue uuid,  DateTime entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( UuidValue uuid,  DateTime? entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Task() when raw != null:
 return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);case _:
@@ -180,7 +180,7 @@ return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( UuidValue uuid,  DateTime entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)  raw,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( UuidValue uuid,  DateTime? entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)  raw,}) {final _that = this;
 switch (_that) {
 case _Task():
 return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);}
@@ -197,7 +197,7 @@ return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( UuidValue uuid,  DateTime entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( UuidValue uuid,  DateTime? entry,  TaskStatus status,  String? title,  DateTime? modified,  DateTime? due,  String? project,  List<String> tags,  List<Annotation> annotations,  TaskPriority? priority,  DateTime? wait,  List<UuidValue> depends,  List<Uda> udas)?  raw,}) {final _that = this;
 switch (_that) {
 case _Task() when raw != null:
 return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.due,_that.project,_that.tags,_that.annotations,_that.priority,_that.wait,_that.depends,_that.udas);case _:
@@ -212,11 +212,11 @@ return raw(_that.uuid,_that.entry,_that.status,_that.title,_that.modified,_that.
 
 
 class _Task extends Task {
-  const _Task({required this.uuid, required this.entry, required this.status, this.title, this.modified, this.due, this.project, required final  List<String> tags, required final  List<Annotation> annotations, this.priority, this.wait, required final  List<UuidValue> depends, required final  List<Uda> udas}): _tags = tags,_annotations = annotations,_depends = depends,_udas = udas,super._();
+  const _Task({required this.uuid, this.entry, required this.status, this.title, this.modified, this.due, this.project, required final  List<String> tags, required final  List<Annotation> annotations, this.priority, this.wait, required final  List<UuidValue> depends, required final  List<Uda> udas}): _tags = tags,_annotations = annotations,_depends = depends,_udas = udas,super._();
   
 
 @override final  UuidValue uuid;
-@override final  DateTime entry;
+@override final  DateTime? entry;
 @override final  TaskStatus status;
 @override final  String? title;
 @override final  DateTime? modified;
@@ -283,7 +283,7 @@ abstract mixin class _$TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
   factory _$TaskCopyWith(_Task value, $Res Function(_Task) _then) = __$TaskCopyWithImpl;
 @override @useResult
 $Res call({
- UuidValue uuid, DateTime entry, TaskStatus status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
+ UuidValue uuid, DateTime? entry, TaskStatus status, String? title, DateTime? modified, DateTime? due, String? project, List<String> tags, List<Annotation> annotations, TaskPriority? priority, DateTime? wait, List<UuidValue> depends, List<Uda> udas
 });
 
 
@@ -300,11 +300,11 @@ class __$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? entry = null,Object? status = null,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? entry = freezed,Object? status = null,Object? title = freezed,Object? modified = freezed,Object? due = freezed,Object? project = freezed,Object? tags = null,Object? annotations = null,Object? priority = freezed,Object? wait = freezed,Object? depends = null,Object? udas = null,}) {
   return _then(_Task(
 uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
-as UuidValue,entry: null == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
-as DateTime,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as UuidValue,entry: freezed == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
+as DateTime?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TaskStatus,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,modified: freezed == modified ? _self.modified : modified // ignore: cast_nullable_to_non_nullable
 as DateTime?,due: freezed == due ? _self.due : due // ignore: cast_nullable_to_non_nullable

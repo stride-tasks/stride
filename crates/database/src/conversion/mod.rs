@@ -615,8 +615,8 @@ impl FromBlob<'_> for OperationKind {
             }
             OPERATION_TASK_MODIFY_ENTRY => {
                 let id = Uuid::from_blob(blob)?;
-                let new = Date::from_blob(blob)?;
-                let old = Date::from_blob(blob)?;
+                let new = Option::<Date>::from_blob(blob)?;
+                let old = Option::<Date>::from_blob(blob)?;
                 OperationKind::TaskModifyEntry { id, new, old }
             }
             OPERATION_TASK_MODIFY_TITLE => {
