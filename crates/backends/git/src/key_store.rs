@@ -40,8 +40,6 @@ impl KeyStore {
             keys.insert(TaskStatus::Pending, Arc::new(Crypter::generate()));
             keys.insert(TaskStatus::Complete, Arc::new(Crypter::generate()));
             keys.insert(TaskStatus::Deleted, Arc::new(Crypter::generate()));
-            keys.insert(TaskStatus::Waiting, Arc::new(Crypter::generate()));
-            keys.insert(TaskStatus::Recurring, Arc::new(Crypter::generate()));
             drop(keys);
             self.loaded.store(true, std::sync::atomic::Ordering::SeqCst);
 
@@ -66,8 +64,6 @@ impl KeyStore {
                 b'p' => TaskStatus::Pending,
                 b'c' => TaskStatus::Complete,
                 b'd' => TaskStatus::Deleted,
-                b'w' => TaskStatus::Waiting,
-                b'r' => TaskStatus::Recurring,
                 identifier => return Err(KeyStoreError::InvalidTaskStatus { identifier }.into()),
             };
 
@@ -101,8 +97,6 @@ impl KeyStore {
                 TaskStatus::Pending => b'p',
                 TaskStatus::Complete => b'c',
                 TaskStatus::Deleted => b'd',
-                TaskStatus::Waiting => b'w',
-                TaskStatus::Recurring => b'r',
             };
 
             let encrypted = self.master_key.encrypt(key.encryption_key(), &[aad])?;

@@ -21,10 +21,6 @@ pub enum TaskStatus {
     #[default]
     #[serde(rename = "pending")]
     Pending,
-    #[serde(rename = "waiting")]
-    Waiting,
-    #[serde(rename = "recurring")]
-    Recurring,
     #[serde(rename = "deleted")]
     Deleted,
     #[serde(rename = "complete")]
@@ -244,10 +240,9 @@ impl From<taskchampion::Annotation> for Annotation {
 impl From<taskchampion::Status> for TaskStatus {
     fn from(value: taskchampion::Status) -> Self {
         match value {
-            taskchampion::Status::Pending => Self::Pending,
+            taskchampion::Status::Pending | taskchampion::Status::Recurring => Self::Pending,
             taskchampion::Status::Completed => Self::Complete,
             taskchampion::Status::Deleted => Self::Deleted,
-            taskchampion::Status::Recurring => Self::Recurring,
             taskchampion::Status::Unknown(other) => {
                 todo!("No implementation for unknown status: {other}")
             }
@@ -258,12 +253,8 @@ impl From<taskchampion::Status> for TaskStatus {
 impl From<TaskStatus> for taskchampion::Status {
     fn from(value: TaskStatus) -> Self {
         match value {
+            // TODO: this should take the task for
             TaskStatus::Pending => Self::Pending,
-
-            /* FIXME(@bpeetz): This can't be correct <2024-10-26> */
-            TaskStatus::Waiting => Self::Unknown("Waiting".to_owned()),
-
-            TaskStatus::Recurring => Self::Recurring,
             TaskStatus::Deleted => Self::Deleted,
             TaskStatus::Complete => Self::Completed,
         }

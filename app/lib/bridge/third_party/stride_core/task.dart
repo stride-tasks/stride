@@ -71,8 +71,6 @@ enum TaskPriority {
 
 enum TaskStatus {
   pending,
-  waiting,
-  recurring,
   deleted,
   complete;
 

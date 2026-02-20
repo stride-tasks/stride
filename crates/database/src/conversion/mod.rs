@@ -65,7 +65,7 @@ impl FromSql for Sql<Option<Date>> {
 
 pub(crate) fn task_status_to_sql(status: TaskStatus) -> i64 {
     match status {
-        TaskStatus::Pending | TaskStatus::Waiting | TaskStatus::Recurring => 0,
+        TaskStatus::Pending => 0,
         TaskStatus::Complete => 1,
         TaskStatus::Deleted => 2,
     }
@@ -341,8 +341,6 @@ impl ToBlob<'_> for TaskStatus {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         let value = match self {
             TaskStatus::Pending | TaskStatus::Complete | TaskStatus::Deleted => 0,
-            TaskStatus::Waiting => 1,
-            TaskStatus::Recurring => 2,
         };
         blob.push(value);
     }
@@ -352,8 +350,6 @@ impl FromBlob<'_> for TaskStatus {
         let value = u8::from_blob(blob)?;
         Ok(match value {
             0 => TaskStatus::Pending,
-            1 => TaskStatus::Waiting,
-            2 => TaskStatus::Recurring,
             _ => return Err(BlobError::UnknownTaskStatus { kind: value }),
         })
     }

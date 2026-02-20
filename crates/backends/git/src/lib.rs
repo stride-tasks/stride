@@ -306,16 +306,12 @@ pub struct GitBackend {
     pending: Storage,
     complete: Storage,
     deleted: Storage,
-    waiting: Storage,
-    recurring: Storage,
 }
 
 impl GitBackend {
     const PENDING_DATA_FILENAME: &'static str = "pending";
     const COMPLETE_DATA_FILENAME: &'static str = "complete";
     const DELETED_DATA_FILENAME: &'static str = "deleted";
-    const WAITING_DATA_FILENAME: &'static str = "waiting";
-    const RECURRING_DATA_FILENAME: &'static str = "recurring";
 
     pub fn new(config: GitConfig) -> Result<Self> {
         let repository_path = config.repository_path();
@@ -346,29 +342,13 @@ impl GitBackend {
                 TaskStatus::Deleted,
                 key_store.clone(),
             ),
-            waiting: Storage::new(
-                tasks_path.join(Self::WAITING_DATA_FILENAME),
-                TaskStatus::Waiting,
-                key_store.clone(),
-            ),
-            recurring: Storage::new(
-                tasks_path.join(Self::RECURRING_DATA_FILENAME),
-                TaskStatus::Recurring,
-                key_store.clone(),
-            ),
             tasks_path,
             key_store,
         })
     }
 
-    fn storage_mut(&mut self) -> [&mut Storage; 5] {
-        [
-            &mut self.pending,
-            &mut self.waiting,
-            &mut self.recurring,
-            &mut self.deleted,
-            &mut self.complete,
-        ]
+    fn storage_mut(&mut self) -> [&mut Storage; 3] {
+        [&mut self.pending, &mut self.deleted, &mut self.complete]
     }
 
     pub(crate) fn update2(&mut self, task: &Task) -> Result<bool> {
@@ -429,8 +409,6 @@ impl GitBackend {
         found_task.task.status = status;
         let transition = match status {
             TaskStatus::Pending => "PEND",
-            TaskStatus::Waiting => "WAIT",
-            TaskStatus::Recurring => "RECUR",
             TaskStatus::Deleted => "DELETE",
             TaskStatus::Complete => "DONE",
         };

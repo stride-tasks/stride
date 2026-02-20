@@ -29,7 +29,7 @@ use crate::api::error::*;
 use crate::api::repository::*;
 use crate::api::settings::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
+use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 use stride_core::event::*;
 use stride_plugin_manager::manifest::*;
@@ -4615,10 +4615,8 @@ impl SseDecode for stride_core::task::TaskStatus {
         let mut inner = <i32>::sse_decode(deserializer);
         return match inner {
             0 => stride_core::task::TaskStatus::Pending,
-            1 => stride_core::task::TaskStatus::Waiting,
-            2 => stride_core::task::TaskStatus::Recurring,
-            3 => stride_core::task::TaskStatus::Deleted,
-            4 => stride_core::task::TaskStatus::Complete,
+            1 => stride_core::task::TaskStatus::Deleted,
+            2 => stride_core::task::TaskStatus::Complete,
             _ => unreachable!("Invalid variant for TaskStatus: {}", inner),
         };
     }
@@ -5629,10 +5627,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::task::TaskStatus>
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self.0 {
             stride_core::task::TaskStatus::Pending => 0.into_dart(),
-            stride_core::task::TaskStatus::Waiting => 1.into_dart(),
-            stride_core::task::TaskStatus::Recurring => 2.into_dart(),
-            stride_core::task::TaskStatus::Deleted => 3.into_dart(),
-            stride_core::task::TaskStatus::Complete => 4.into_dart(),
+            stride_core::task::TaskStatus::Deleted => 1.into_dart(),
+            stride_core::task::TaskStatus::Complete => 2.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -6459,10 +6455,8 @@ impl SseEncode for stride_core::task::TaskStatus {
         <i32>::sse_encode(
             match self {
                 stride_core::task::TaskStatus::Pending => 0,
-                stride_core::task::TaskStatus::Waiting => 1,
-                stride_core::task::TaskStatus::Recurring => 2,
-                stride_core::task::TaskStatus::Deleted => 3,
-                stride_core::task::TaskStatus::Complete => 4,
+                stride_core::task::TaskStatus::Deleted => 1,
+                stride_core::task::TaskStatus::Complete => 2,
                 _ => {
                     unimplemented!("");
                 }
@@ -6524,7 +6518,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
+    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
     use stride_core::event::*;
     use stride_plugin_manager::manifest::*;

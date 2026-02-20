@@ -323,7 +323,7 @@ impl Database {
         let uuid = row.get::<_, Uuid>("id")?;
         let title = row.get::<_, String>("title")?;
         let entry = row.get::<_, Sql<Date>>("entry")?.value;
-        let mut status = row.get::<_, Sql<TaskStatus>>("status")?.value;
+        let status = row.get::<_, Sql<TaskStatus>>("status")?.value;
         let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
         let project = row.get::<_, Option<String>>("project")?;
         let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
@@ -336,10 +336,6 @@ impl Database {
             .get::<_, Option<String>>("tags")?
             .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
             .unwrap_or_default();
-
-        if wait.is_some() {
-            status = TaskStatus::Waiting;
-        }
 
         Ok(Task {
             uuid,
@@ -365,8 +361,6 @@ impl Database {
                 TaskStatus::Pending,
                 TaskStatus::Complete,
                 TaskStatus::Deleted,
-                TaskStatus::Waiting,
-                TaskStatus::Recurring,
             ]
             .into(),
         )
