@@ -142,8 +142,8 @@ pub(crate) fn push_operations_diff_task(current: &Task, previous: &Task, ops: &m
         ops.push(
             OperationKind::TaskModifyTitle {
                 id: current.uuid,
-                new: current.title.clone().into_boxed_str(),
-                old: previous.title.clone().into_boxed_str(),
+                new: current.title.clone().map(String::into_boxed_str),
+                old: previous.title.clone().map(String::into_boxed_str),
             }
             .with_now(),
         );
@@ -162,13 +162,7 @@ pub(crate) fn push_operations_diff_task(current: &Task, previous: &Task, ops: &m
 }
 
 pub(crate) fn push_operations_diff_task_with_default(current: &Task, ops: &mut Vec<Operation>) {
-    ops.push(
-        OperationKind::TaskCreate {
-            id: current.uuid,
-            title: current.title.clone().into(),
-        }
-        .with_now(),
-    );
+    ops.push(OperationKind::TaskCreate { id: current.uuid }.with_now());
 
     let previous = Task::default();
     push_operations_diff_task_common(current, &previous, ops);

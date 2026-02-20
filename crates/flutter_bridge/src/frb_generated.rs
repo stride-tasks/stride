@@ -3611,7 +3611,7 @@ const _: fn() = || {
         let _: uuid::Uuid = Task.uuid;
         let _: chrono::DateTime<chrono::Utc> = Task.entry;
         let _: stride_core::task::TaskStatus = Task.status;
-        let _: String = Task.title;
+        let _: Option<String> = Task.title;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.modified;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.due;
         let _: Option<String> = Task.project;
@@ -4535,7 +4535,7 @@ impl SseDecode for stride_core::task::Task {
         let mut var_uuid = <uuid::Uuid>::sse_decode(deserializer);
         let mut var_entry = <chrono::DateTime<chrono::Utc>>::sse_decode(deserializer);
         let mut var_status = <stride_core::task::TaskStatus>::sse_decode(deserializer);
-        let mut var_title = <String>::sse_decode(deserializer);
+        let mut var_title = <Option<String>>::sse_decode(deserializer);
         let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_due = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_project = <Option<String>>::sse_decode(deserializer);
@@ -6387,7 +6387,7 @@ impl SseEncode for stride_core::task::Task {
         <uuid::Uuid>::sse_encode(self.uuid, serializer);
         <chrono::DateTime<chrono::Utc>>::sse_encode(self.entry, serializer);
         <stride_core::task::TaskStatus>::sse_encode(self.status, serializer);
-        <String>::sse_encode(self.title, serializer);
+        <Option<String>>::sse_encode(self.title, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.due, serializer);
         <Option<String>>::sse_encode(self.project, serializer);

@@ -173,26 +173,20 @@ pub struct TaskTransaction {
 
 impl TaskTransaction {
     pub fn create(id: Uuid, title: String, ops: &mut Vec<Operation>) -> Self {
-        ops.push(
-            OperationKind::TaskCreate {
-                id,
-                title: title.clone().into_boxed_str(),
-            }
-            .with_now(),
-        );
+        ops.push(OperationKind::TaskCreate { id }.with_now());
         Self {
             task: Task::with_uuid(id, title),
         }
     }
 
-    pub fn set_title(&mut self, title: String, ops: &mut Vec<Operation>) {
+    pub fn set_title(&mut self, title: Option<String>, ops: &mut Vec<Operation>) {
         let new = title.clone();
         let old = std::mem::replace(&mut self.task.title, title);
         ops.push(
             OperationKind::TaskModifyTitle {
                 id: self.task.uuid,
-                new: new.into_boxed_str(),
-                old: old.into_boxed_str(),
+                new: new.map(String::into_boxed_str),
+                old: old.map(String::into_boxed_str),
             }
             .with_now(),
         );
@@ -321,7 +315,7 @@ impl Database {
 
     fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
         let uuid = row.get::<_, Uuid>("id")?;
-        let title = row.get::<_, String>("title")?;
+        let title = row.get::<_, Option<String>>("title")?;
         let entry = row.get::<_, Sql<Date>>("entry")?.value;
         let status = row.get::<_, Sql<TaskStatus>>("status")?.value;
         let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
@@ -379,9 +373,9 @@ impl Database {
                 limit,
             } => {
                 // TODO: Optimize this by using sql directly.
-                let title = title.to_lowercase();
+                let title = Some(title.to_lowercase());
                 let mut tasks = self.tasks_by_status(status)?;
-                tasks.retain(|task| task.title.to_lowercase() == title);
+                tasks.retain(|task| task.title.as_deref().map(str::to_uppercase) == title);
                 tasks.truncate(limit.unwrap_or(u32::MAX) as usize);
                 tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
                 Ok(tasks)
@@ -418,7 +412,11 @@ impl Database {
         let task_iter = sql.query_map([], Self::row_to_task)?;
         for task in task_iter {
             let task = task?;
-            if task.title.to_lowercase() == title {
+            if task
+                .title
+                .as_ref()
+                .is_some_and(|task_title| task_title.to_lowercase() == title)
+            {
                 tasks.push(task);
             }
         }

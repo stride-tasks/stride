@@ -69,7 +69,11 @@ impl Repository {
         let search = filter.search.to_lowercase();
         self.db.clear_poison();
         let mut tasks = self.db.lock().unwrap().tasks_by_status(&filter.status)?;
-        tasks.retain(|task| task.title.to_lowercase().contains(&search));
+        tasks.retain(|task| {
+            task.title
+                .as_ref()
+                .is_some_and(|title| title.to_lowercase().contains(&search))
+        });
         Ok(tasks)
     }
 

@@ -9,7 +9,6 @@ pub mod difference;
 pub enum OperationKind {
     TaskCreate {
         id: Uuid,
-        title: Box<str>,
     },
     TaskPurge {
         id: Uuid,
@@ -21,8 +20,8 @@ pub enum OperationKind {
     },
     TaskModifyTitle {
         id: Uuid,
-        new: Box<str>,
-        old: Box<str>,
+        new: Option<Box<str>>,
+        old: Option<Box<str>>,
     },
     TaskModifyStatus {
         id: Uuid,

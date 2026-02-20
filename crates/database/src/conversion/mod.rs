@@ -491,10 +491,9 @@ impl ToBlob<'_> for OperationKind {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         blob.push(0x00); // version
         match self {
-            OperationKind::TaskCreate { id, title } => {
+            OperationKind::TaskCreate { id } => {
                 blob.push(OPERATION_TASK_CREATE);
                 id.to_blob(blob);
-                title.as_ref().to_blob(blob);
             }
             OperationKind::TaskPurge { id } => {
                 blob.push(OPERATION_TASK_PURGE);
@@ -509,8 +508,8 @@ impl ToBlob<'_> for OperationKind {
             OperationKind::TaskModifyTitle { id, new, old } => {
                 blob.push(OPERATION_TASK_MODIFY_TITLE);
                 id.to_blob(blob);
-                new.as_ref().to_blob(blob);
-                old.as_ref().to_blob(blob);
+                new.as_ref().map(Box::as_ref).to_blob(blob);
+                old.as_ref().map(Box::as_ref).to_blob(blob);
             }
             OperationKind::TaskModifyStatus { id, new, old } => {
                 blob.push(OPERATION_TASK_MODIFY_STATUS);
@@ -608,11 +607,7 @@ impl FromBlob<'_> for OperationKind {
         Ok(match ty {
             OPERATION_TASK_CREATE => {
                 let id = Uuid::from_blob(blob)?;
-                let title = <&str>::from_blob(blob)?;
-                OperationKind::TaskCreate {
-                    id,
-                    title: title.into(),
-                }
+                OperationKind::TaskCreate { id }
             }
             OPERATION_TASK_PURGE => {
                 let id = Uuid::from_blob(blob)?;
@@ -626,12 +621,12 @@ impl FromBlob<'_> for OperationKind {
             }
             OPERATION_TASK_MODIFY_TITLE => {
                 let id = Uuid::from_blob(blob)?;
-                let new = <&str>::from_blob(blob)?;
-                let old = <&str>::from_blob(blob)?;
+                let new = Option::<&str>::from_blob(blob)?;
+                let old = Option::<&str>::from_blob(blob)?;
                 OperationKind::TaskModifyTitle {
                     id,
-                    new: new.into(),
-                    old: old.into(),
+                    new: new.map(Into::into),
+                    old: old.map(Into::into),
                 }
             }
             OPERATION_TASK_MODIFY_STATUS => {

@@ -11,8 +11,11 @@ pub(crate) fn task_to_data(task: &Task) -> Vec<u8> {
     result.extend_from_slice(b"\0".as_slice());
     result.extend_from_slice(task.uuid.as_bytes());
     result.extend_from_slice(&task.entry.timestamp_micros().to_be_bytes());
-    result.extend_from_slice(&(task.title.len() as u32).to_be_bytes());
-    result.extend_from_slice(task.title.as_bytes());
+    if let Some(title) = &task.title {
+        result.push(b'T');
+        result.extend_from_slice(&(title.len() as u32).to_be_bytes());
+        result.extend_from_slice(title.as_bytes());
+    }
     if let Some(modified) = task.modified {
         result.push(b'm');
         result.extend(&modified.timestamp_micros().to_be_bytes());
@@ -87,11 +90,7 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
     let entry_timestamp = i64::from_be_bytes(*entry_bytes);
     let entry = Date::from_timestamp_micros(entry_timestamp)?;
 
-    let (title_len, input) = input.split_first_chunk::<4>()?;
-    let title_len = u32::from_be_bytes(*title_len) as usize;
-    let (title_bytes, input) = input.split_at_checked(title_len)?;
-    let title = std::str::from_utf8(title_bytes).ok()?;
-
+    let mut title = None;
     let mut modified = None;
     let mut due = None;
     let mut project = None;
@@ -108,6 +107,17 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
         };
         i += 1;
         match typ {
+            b'T' => {
+                let len = u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
+                    as usize;
+                i += size_of::<u32>();
+
+                let bytes = input.get(i..i + len)?;
+                i += len;
+                let value = std::str::from_utf8(bytes).ok()?.to_string();
+
+                title = Some(value);
+            }
             b'm' | b'd' | b'w' => {
                 let timestamp = input.get(i..(i + size_of::<i64>()))?;
                 let timestamp = i64::from_be_bytes(timestamp.try_into().ok()?);
@@ -234,7 +244,7 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
     Some(Task {
         uuid,
         entry,
-        title: title.to_string(),
+        title,
         status: TaskStatus::Pending,
         modified,
         due,

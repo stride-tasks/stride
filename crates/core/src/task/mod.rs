@@ -63,10 +63,14 @@ pub struct Task {
     pub uuid: Uuid,
     #[serde(default = "Utc::now")]
     pub entry: Date,
+
     #[serde(default)]
     #[serde(skip_serializing_if = "TaskStatus::is_pending")]
     pub status: TaskStatus,
-    pub title: String,
+
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -110,7 +114,7 @@ impl Default for Task {
         Self {
             uuid: Uuid::now_v7(),
             status: TaskStatus::Pending,
-            title: String::new(),
+            title: None,
             entry: Utc::now(),
             modified: None,
             due: None,
@@ -130,7 +134,7 @@ impl Task {
     #[must_use]
     pub fn new(title: String) -> Self {
         Task {
-            title,
+            title: Some(title),
             ..Default::default()
         }
     }
@@ -139,7 +143,7 @@ impl Task {
     pub fn with_uuid(uuid: Uuid, title: String) -> Self {
         Task {
             uuid,
-            title,
+            title: Some(title),
             ..Default::default()
         }
     }
@@ -189,12 +193,15 @@ fn taskchampion_priority_to_task_status(priority: &str) -> Option<TaskPriority> 
 #[cfg(feature = "taskchampion")]
 impl From<taskchampion::Task> for Task {
     fn from(v: taskchampion::Task) -> Self {
-        /* TODO(@bpeetz): Remove the `None`s and `Vec`s with their actually conversion <2024-10-26> */
+        let mut title = None;
+        if let Some(description) = v.get_value("description") {
+            title = Some(description.to_string());
+        }
         Self {
             uuid: v.get_uuid(),
             entry: v.get_entry().unwrap_or_else(Utc::now),
             status: v.get_status().into(),
-            title: v.get_description().into(),
+            title,
             modified: v.get_modified(),
             due: v.get_due(),
             project: v.get_value("project").map(Into::into),

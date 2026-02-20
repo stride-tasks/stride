@@ -233,7 +233,9 @@ impl Storage {
                 self.load()?;
                 for DecryptedTask { task, .. } in
                     self.tasks.iter().filter(|DecryptedTask { task, .. }| {
-                        task.title.to_lowercase().contains(&search)
+                        task.title
+                            .as_ref()
+                            .is_some_and(|title| title.to_lowercase().contains(&search))
                     })
                 {
                     #[allow(clippy::cast_possible_truncation)]

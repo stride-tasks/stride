@@ -58,7 +58,10 @@ fn print_tasks(tasks: &[Task]) {
             }
             tags.push(')');
         }
-        println!("{tags}{i:4}: {}", task.title);
+        println!(
+            "{tags}{i:4}: {}",
+            task.title.as_deref().unwrap_or("<missing title>")
+        );
     }
 }
 
@@ -133,7 +136,11 @@ fn main() -> anyhow::Result<ExitCode> {
             let status = [TaskStatus::Pending].into();
 
             let mut tasks = database.tasks_by_status(&status)?;
-            tasks.retain(|task| task.title.to_lowercase().contains(&search));
+            tasks.retain(|task| {
+                task.title
+                    .as_ref()
+                    .is_some_and(|title| title.to_lowercase().contains(&search))
+            });
             print_tasks(&tasks);
         }
         Mode::Add { content } => {
@@ -213,8 +220,8 @@ fn main() -> anyhow::Result<ExitCode> {
                 };
 
                 match &kind {
-                    OperationKind::TaskCreate { id, title } => {
-                        println!("task({id}): create(\"{title}\")");
+                    OperationKind::TaskCreate { id } => {
+                        println!("task({id}): create");
                     }
                     OperationKind::TaskPurge { id } => {
                         println!("task({id}): purge");
@@ -223,7 +230,7 @@ fn main() -> anyhow::Result<ExitCode> {
                         println!("task({id}): entry(new:{new}, old:{old})");
                     }
                     OperationKind::TaskModifyTitle { id, new, old } => {
-                        println!("task({id}): title(new:\"{new}\", old:\"{old}\")");
+                        println!("task({id}): title(new:{new:?}, old:{old:?})");
                     }
                     OperationKind::TaskModifyStatus { id, new, old } => {
                         println!("task({id}): status(new:{new:?}, old:{old:?})");

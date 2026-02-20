@@ -167,7 +167,9 @@ impl TaskchampionBackend {
             .await?;
 
         champion_task.set_entry(Some(task.entry), &mut self.operations)?;
-        champion_task.set_description(task.title, &mut self.operations)?;
+        if let Some(title) = task.title {
+            champion_task.set_description(title, &mut self.operations)?;
+        }
         champion_task.set_due(task.due, &mut self.operations)?;
         champion_task.set_wait(task.wait, &mut self.operations)?;
         if let Some(modified) = task.modified {

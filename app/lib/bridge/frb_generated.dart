@@ -4005,7 +4005,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       uuid: dco_decode_Uuid(arr[0]),
       entry: dco_decode_Chrono_Utc(arr[1]),
       status: dco_decode_task_status(arr[2]),
-      title: dco_decode_String(arr[3]),
+      title: dco_decode_opt_String(arr[3]),
       modified: dco_decode_opt_box_autoadd_Chrono_Utc(arr[4]),
       due: dco_decode_opt_box_autoadd_Chrono_Utc(arr[5]),
       project: dco_decode_opt_String(arr[6]),
@@ -5121,7 +5121,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_uuid = sse_decode_Uuid(deserializer);
     final var_entry = sse_decode_Chrono_Utc(deserializer);
     final var_status = sse_decode_task_status(deserializer);
-    final var_title = sse_decode_String(deserializer);
+    final var_title = sse_decode_opt_String(deserializer);
     final var_modified = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     final var_due = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
     final var_project = sse_decode_opt_String(deserializer);
@@ -6227,7 +6227,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_Uuid(self.uuid, serializer);
     sse_encode_Chrono_Utc(self.entry, serializer);
     sse_encode_task_status(self.status, serializer);
-    sse_encode_String(self.title, serializer);
+    sse_encode_opt_String(self.title, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.modified, serializer);
     sse_encode_opt_box_autoadd_Chrono_Utc(self.due, serializer);
     sse_encode_opt_String(self.project, serializer);

@@ -31,7 +31,7 @@ sealed class Task with _$Task {
     required UuidValue uuid,
     required DateTime entry,
     required TaskStatus status,
-    required String title,
+    String? title,
     DateTime? modified,
     DateTime? due,
     String? project,
