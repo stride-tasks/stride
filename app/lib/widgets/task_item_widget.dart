@@ -51,10 +51,7 @@ class TaskItem extends StatelessWidget {
               (tag) => Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: InputChip(
-                  label: Text(
-                    tag,
-                    style: const TextStyle(fontSize: 10),
-                  ),
+                  label: Text(tag, style: const TextStyle(fontSize: 10)),
                   labelPadding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -83,7 +80,6 @@ class TaskItem extends StatelessWidget {
 
     Widget widget = ListTile(
       title: Text(task.title),
-      selected: task.active,
       onLongPress: onLongPress,
       subtitle: subtitle,
       onTap: onTap,
@@ -121,32 +117,23 @@ class TaskItem extends StatelessWidget {
       const borderRadius = BorderRadius.all(Radius.circular(5));
       final decoration = switch (task.priority!) {
         TaskPriority.h => const BoxDecoration(
-            borderRadius: borderRadius,
-            border: Border(
-              left: BorderSide(
-                color: Colors.red,
-                width: borderWidth,
-              ),
-            ),
+          borderRadius: borderRadius,
+          border: Border(
+            left: BorderSide(color: Colors.red, width: borderWidth),
           ),
+        ),
         TaskPriority.m => const BoxDecoration(
-            borderRadius: borderRadius,
-            border: Border(
-              left: BorderSide(
-                color: Color(0xAAfd8c00),
-                width: borderWidth,
-              ),
-            ),
+          borderRadius: borderRadius,
+          border: Border(
+            left: BorderSide(color: Color(0xAAfd8c00), width: borderWidth),
           ),
+        ),
         TaskPriority.l => const BoxDecoration(
-            borderRadius: borderRadius,
-            border: Border(
-              left: BorderSide(
-                color: Colors.green,
-                width: borderWidth,
-              ),
-            ),
+          borderRadius: borderRadius,
+          border: Border(
+            left: BorderSide(color: Colors.green, width: borderWidth),
           ),
+        ),
       };
 
       widget = DecoratedBox(decoration: decoration, child: widget);

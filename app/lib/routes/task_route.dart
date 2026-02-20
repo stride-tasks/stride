@@ -14,10 +14,7 @@ import 'package:uuid/uuid.dart';
 
 class TaskRoute extends StatefulWidget {
   final Task? task;
-  const TaskRoute({
-    super.key,
-    this.task,
-  });
+  const TaskRoute({super.key, this.task});
 
   @override
   State<TaskRoute> createState() => _TaskRouteState();
@@ -44,7 +41,8 @@ class _TaskRouteState extends State<TaskRoute> {
     entry = widget.task?.entry;
     due = widget.task?.due;
     _tags = widget.task?.tags.toSet() ?? _tags;
-    annotations = widget.task?.annotations
+    annotations =
+        widget.task?.annotations
             .map(
               (annotation) => (
                 annotation.entry,
@@ -55,7 +53,6 @@ class _TaskRouteState extends State<TaskRoute> {
         annotations;
     depends = widget.task?.depends.toList() ?? depends;
     priority = widget.task?.priority;
-    active = widget.task?.active ?? false;
     udas = widget.task?.udas ?? udas;
   }
 
@@ -72,10 +69,7 @@ class _TaskRouteState extends State<TaskRoute> {
     return Scaffold(
       appBar: AppBar(title: const Text('Tasks')),
       body: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 10,
-          horizontal: 20,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -133,18 +127,16 @@ class _TaskRouteState extends State<TaskRoute> {
                     selected: priority == null ? {} : {priority!},
                     onSelectionChanged: (newSelection) {
                       setState(() {
-                        priority =
-                            newSelection.isEmpty ? null : newSelection.first;
+                        priority = newSelection.isEmpty
+                            ? null
+                            : newSelection.first;
                       });
                     },
                     emptySelectionAllowed: true,
                     selectedIcon: const Icon(Icons.check),
                   ),
                 ),
-                TagsWidget(
-                  tags: _tags,
-                  onSubmit: (tags) => _tags = tags,
-                ),
+                TagsWidget(tags: _tags, onSubmit: (tags) => _tags = tags),
                 const SizedBox(height: 10),
                 _annotations(),
               ],
@@ -167,7 +159,6 @@ class _TaskRouteState extends State<TaskRoute> {
                   widget.task?.uuid ?? UuidValue.fromString(const Uuid().v7()),
               entry: entry ?? DateTime.now().toUtc(),
               title: title,
-              active: active,
               tags: _tags.toList(),
               due: due,
               status: TaskStatus.pending,
@@ -186,22 +177,16 @@ class _TaskRouteState extends State<TaskRoute> {
 
             if (widget.task == null) {
               context.read<TaskBloc>().add(TaskAddEvent(task: task));
-              context
-                  .read<PluginManagerBloc>()
-                  .emitHostEvent(HostEvent.taskCreate(task: task));
+              context.read<PluginManagerBloc>().emitHostEvent(
+                HostEvent.taskCreate(task: task),
+              );
             } else {
               context.read<TaskBloc>().add(
-                    TaskUpdateEvent(
-                      current: task,
-                      previous: widget.task,
-                    ),
-                  );
+                TaskUpdateEvent(current: task, previous: widget.task),
+              );
               context.read<PluginManagerBloc>().emitHostEvent(
-                    HostEvent.taskModify(
-                      current: task,
-                      previous: widget.task,
-                    ),
-                  );
+                HostEvent.taskModify(current: task, previous: widget.task),
+              );
             }
 
             Navigator.pop(context);
@@ -215,44 +200,35 @@ class _TaskRouteState extends State<TaskRoute> {
   Widget _annotations() {
     final children = annotations
         .map<Widget>(
-      (annotation) => ListTile(
-        title: TextField(
-          controller: annotation.$2,
-          maxLines: null,
-        ),
-        trailing: IconButton(
-          onPressed: () => setState(() {
-            annotations.remove(annotation);
-          }),
-          icon: const Icon(Icons.remove),
-        ),
-        subtitle: Text(
-          annotation.$1.toHumanString(),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-    )
-        .followedBy(
-      [
-        ListTile(
-          trailing: IconButton(
-            onPressed: () => setState(() {
-              annotations.add(
-                (
+          (annotation) => ListTile(
+            title: TextField(controller: annotation.$2, maxLines: null),
+            trailing: IconButton(
+              onPressed: () => setState(() {
+                annotations.remove(annotation);
+              }),
+              icon: const Icon(Icons.remove),
+            ),
+            subtitle: Text(
+              annotation.$1.toHumanString(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        )
+        .followedBy([
+          ListTile(
+            trailing: IconButton(
+              onPressed: () => setState(() {
+                annotations.add((
                   // NOTE: Dates are stored in UTC.
                   DateTime.now().toUtc(),
                   TextEditingController(),
-                ),
-              );
-            }),
-            icon: const Icon(Icons.add),
+                ));
+              }),
+              icon: const Icon(Icons.add),
+            ),
           ),
-        ),
-      ],
-    ).map((widget) => Card(child: widget));
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: children.toList(),
-    );
+        ])
+        .map((widget) => Card(child: widget));
+    return Column(mainAxisSize: MainAxisSize.min, children: children.toList());
   }
 }

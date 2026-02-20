@@ -514,7 +514,6 @@ fn deserialize_task_with_udas() {
 fn serialize_task_with_all_attributes() {
     let title = "Hello there!";
     let mut task = create_task(title);
-    task.active = true;
     task.depends.push(CONSTANT_UUID);
     task.depends.push(CONSTANT_UUID);
     task.modified = Some(CONSTANT_DATETIME);
@@ -549,7 +548,6 @@ fn serialize_task_with_all_attributes() {
             CONSTANT_DATETIME_BYTES,
             (title.len() as u32).to_be_bytes().as_slice(),
             title.as_bytes(),
-            b"A",
             b"m",
             CONSTANT_DATETIME_BYTES,
             b"d",
@@ -609,7 +607,6 @@ fn deserialize_task_with_all_attributes() {
         CONSTANT_DATETIME_BYTES,
         (title.len() as u32).to_be_bytes().as_slice(),
         title.as_bytes(),
-        b"A",
         b"m",
         CONSTANT_DATETIME_BYTES,
         b"d",
@@ -659,7 +656,6 @@ fn deserialize_task_with_all_attributes() {
     .unwrap();
 
     let mut expected = create_task("Hello there!");
-    expected.active = true;
     expected.depends.push(CONSTANT_UUID);
     expected.depends.push(CONSTANT_UUID);
     expected.modified = Some(CONSTANT_DATETIME);

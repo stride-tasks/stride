@@ -69,10 +69,6 @@ pub struct Task {
     pub title: String,
 
     #[serde(default)]
-    #[serde(skip_serializing_if = "std::ops::Not::not")]
-    pub active: bool,
-
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub modified: Option<Date>,
 
@@ -116,7 +112,6 @@ impl Default for Task {
             status: TaskStatus::Pending,
             title: String::new(),
             entry: Utc::now(),
-            active: false,
             modified: None,
             due: None,
             project: None,
@@ -156,7 +151,6 @@ impl Task {
         const THREE_DAYS: i64 = 3 * 24 * 60 * 60;
 
         let mut urgency = 0.0;
-        urgency += f32::from(self.active) * 15.0;
         if let Some(due) = self.due {
             let today = Utc::now();
             let delta = due - today;
@@ -201,7 +195,6 @@ impl From<taskchampion::Task> for Task {
             entry: v.get_entry().unwrap_or_else(Utc::now),
             status: v.get_status().into(),
             title: v.get_description().into(),
-            active: v.get_status() == taskchampion::Status::Pending,
             modified: v.get_modified(),
             due: v.get_due(),
             project: v.get_value("project").map(Into::into),

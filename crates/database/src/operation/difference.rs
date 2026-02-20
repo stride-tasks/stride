@@ -46,16 +46,6 @@ fn push_operations_diff_task_common(current: &Task, previous: &Task, ops: &mut V
             .with_now(),
         );
     }
-    if current.active != previous.active {
-        ops.push(
-            OperationKind::TaskModifyActive {
-                id: current.uuid,
-                new: current.active,
-                old: previous.active,
-            }
-            .with_now(),
-        );
-    }
     if current.modified != previous.modified {
         ops.push(
             OperationKind::TaskModifyModified {

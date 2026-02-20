@@ -46,10 +46,6 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
 
 fn print_tasks(tasks: &[Task]) {
     for (i, task) in tasks.iter().enumerate() {
-        let mut active_char = ' ';
-        if task.active {
-            active_char = '>';
-        }
         let mut tags = String::new();
         if !task.tags.is_empty() {
             tags.push('(');
@@ -62,7 +58,7 @@ fn print_tasks(tasks: &[Task]) {
             }
             tags.push(')');
         }
-        println!("{active_char}{tags}{i:4}: {}", task.title);
+        println!("{tags}{i:4}: {}", task.title);
     }
 }
 
@@ -231,9 +227,6 @@ fn main() -> anyhow::Result<ExitCode> {
                     }
                     OperationKind::TaskModifyStatus { id, new, old } => {
                         println!("task({id}): status(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyActive { id, new, old } => {
-                        println!("task({id}): active(new:{new}, old:{old})");
                     }
                     OperationKind::TaskModifyPriority { id, new, old } => {
                         println!("task({id}): priority(new:{new:?}, old:{old:?})");

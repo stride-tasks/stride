@@ -29,7 +29,7 @@ use crate::api::error::*;
 use crate::api::repository::*;
 use crate::api::settings::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 use stride_core::event::*;
 use stride_plugin_manager::manifest::*;
@@ -3612,7 +3612,6 @@ const _: fn() = || {
         let _: chrono::DateTime<chrono::Utc> = Task.entry;
         let _: stride_core::task::TaskStatus = Task.status;
         let _: String = Task.title;
-        let _: bool = Task.active;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.modified;
         let _: Option<chrono::DateTime<chrono::Utc>> = Task.due;
         let _: Option<String> = Task.project;
@@ -4537,7 +4536,6 @@ impl SseDecode for stride_core::task::Task {
         let mut var_entry = <chrono::DateTime<chrono::Utc>>::sse_decode(deserializer);
         let mut var_status = <stride_core::task::TaskStatus>::sse_decode(deserializer);
         let mut var_title = <String>::sse_decode(deserializer);
-        let mut var_active = <bool>::sse_decode(deserializer);
         let mut var_modified = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_due = <Option<chrono::DateTime<chrono::Utc>>>::sse_decode(deserializer);
         let mut var_project = <Option<String>>::sse_decode(deserializer);
@@ -4553,7 +4551,6 @@ impl SseDecode for stride_core::task::Task {
             entry: var_entry,
             status: var_status,
             title: var_title,
-            active: var_active,
             modified: var_modified,
             due: var_due,
             project: var_project,
@@ -5540,7 +5537,6 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::task::Task> {
             self.0.entry.into_into_dart().into_dart(),
             self.0.status.into_into_dart().into_dart(),
             self.0.title.into_into_dart().into_dart(),
-            self.0.active.into_into_dart().into_dart(),
             self.0.modified.into_into_dart().into_dart(),
             self.0.due.into_into_dart().into_dart(),
             self.0.project.into_into_dart().into_dart(),
@@ -6392,7 +6388,6 @@ impl SseEncode for stride_core::task::Task {
         <chrono::DateTime<chrono::Utc>>::sse_encode(self.entry, serializer);
         <stride_core::task::TaskStatus>::sse_encode(self.status, serializer);
         <String>::sse_encode(self.title, serializer);
-        <bool>::sse_encode(self.active, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.modified, serializer);
         <Option<chrono::DateTime<chrono::Utc>>>::sse_encode(self.due, serializer);
         <Option<String>>::sse_encode(self.project, serializer);
@@ -6518,7 +6513,7 @@ mod io {
     use flutter_rust_bridge::for_generated::byteorder::{
         NativeEndian, ReadBytesExt, WriteBytesExt,
     };
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
     use stride_core::event::*;
     use stride_plugin_manager::manifest::*;

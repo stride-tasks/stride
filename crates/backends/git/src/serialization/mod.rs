@@ -13,9 +13,6 @@ pub(crate) fn task_to_data(task: &Task) -> Vec<u8> {
     result.extend_from_slice(&task.entry.timestamp_micros().to_be_bytes());
     result.extend_from_slice(&(task.title.len() as u32).to_be_bytes());
     result.extend_from_slice(task.title.as_bytes());
-    if task.active {
-        result.push(b'A');
-    }
     if let Some(modified) = task.modified {
         result.push(b'm');
         result.extend(&modified.timestamp_micros().to_be_bytes());
@@ -95,7 +92,6 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
     let (title_bytes, input) = input.split_at_checked(title_len)?;
     let title = std::str::from_utf8(title_bytes).ok()?;
 
-    let mut active = false;
     let mut modified = None;
     let mut due = None;
     let mut project = None;
@@ -112,9 +108,6 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
         };
         i += 1;
         match typ {
-            b'A' => {
-                active = true;
-            }
             b'm' | b'd' | b'w' => {
                 let timestamp = input.get(i..(i + size_of::<i64>()))?;
                 let timestamp = i64::from_be_bytes(timestamp.try_into().ok()?);
@@ -243,7 +236,6 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
         entry,
         title: title.to_string(),
         status: TaskStatus::Pending,
-        active,
         modified,
         due,
         project,

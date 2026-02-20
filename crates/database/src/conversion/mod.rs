@@ -472,20 +472,19 @@ const OPERATION_TASK_PURGE: u8 = 0x01;
 const OPERATION_TASK_MODIFY_ENTRY: u8 = 0x02;
 const OPERATION_TASK_MODIFY_TITLE: u8 = 0x03;
 const OPERATION_TASK_MODIFY_STATUS: u8 = 0x04;
-const OPERATION_TASK_MODIFY_ACTIVE: u8 = 0x05;
-const OPERATION_TASK_MODIFY_PRIORITY: u8 = 0x06;
-const OPERATION_TASK_MODIFY_PROJECT: u8 = 0x07;
-const OPERATION_TASK_MODIFY_MODIFIED: u8 = 0x08;
-const OPERATION_TASK_MODIFY_DUE: u8 = 0x09;
-const OPERATION_TASK_MODIFY_WAIT: u8 = 0x0A;
-const OPERATION_TASK_MODIFY_ADD_TAG: u8 = 0x0B;
-const OPERATION_TASK_MODIFY_REMOVE_TAG: u8 = 0x0C;
-const OPERATION_TASK_MODIFY_ADD_DEPENDENCY: u8 = 0x0D;
-const OPERATION_TASK_MODIFY_REMOVE_DEPENDENCY: u8 = 0x0E;
-const OPERATION_TASK_MODIFY_ADD_ANNOTATION: u8 = 0x0F;
-const OPERATION_TASK_MODIFY_REMOVE_ANNOTATION: u8 = 0x10;
-const OPERATION_TASK_MODIFY_ADD_UDA: u8 = 0x11;
-const OPERATION_TASK_MODIFY_REMOVE_UDA: u8 = 0x12;
+const OPERATION_TASK_MODIFY_PRIORITY: u8 = 0x05;
+const OPERATION_TASK_MODIFY_PROJECT: u8 = 0x06;
+const OPERATION_TASK_MODIFY_MODIFIED: u8 = 0x07;
+const OPERATION_TASK_MODIFY_DUE: u8 = 0x08;
+const OPERATION_TASK_MODIFY_WAIT: u8 = 0x09;
+const OPERATION_TASK_MODIFY_ADD_TAG: u8 = 0x0A;
+const OPERATION_TASK_MODIFY_REMOVE_TAG: u8 = 0x0B;
+const OPERATION_TASK_MODIFY_ADD_DEPENDENCY: u8 = 0x0C;
+const OPERATION_TASK_MODIFY_REMOVE_DEPENDENCY: u8 = 0x0D;
+const OPERATION_TASK_MODIFY_ADD_ANNOTATION: u8 = 0x0E;
+const OPERATION_TASK_MODIFY_REMOVE_ANNOTATION: u8 = 0x0F;
+const OPERATION_TASK_MODIFY_ADD_UDA: u8 = 0x10;
+const OPERATION_TASK_MODIFY_REMOVE_UDA: u8 = 0x11;
 
 impl ToBlob<'_> for OperationKind {
     #[allow(clippy::too_many_lines)]
@@ -515,12 +514,6 @@ impl ToBlob<'_> for OperationKind {
             }
             OperationKind::TaskModifyStatus { id, new, old } => {
                 blob.push(OPERATION_TASK_MODIFY_STATUS);
-                id.to_blob(blob);
-                new.to_blob(blob);
-                old.to_blob(blob);
-            }
-            OperationKind::TaskModifyActive { id, new, old } => {
-                blob.push(OPERATION_TASK_MODIFY_ACTIVE);
                 id.to_blob(blob);
                 new.to_blob(blob);
                 old.to_blob(blob);
@@ -646,12 +639,6 @@ impl FromBlob<'_> for OperationKind {
                 let new = TaskStatus::from_blob(blob)?;
                 let old = TaskStatus::from_blob(blob)?;
                 OperationKind::TaskModifyStatus { id, new, old }
-            }
-            OPERATION_TASK_MODIFY_ACTIVE => {
-                let id = Uuid::from_blob(blob)?;
-                let new = bool::from_blob(blob)?;
-                let old = bool::from_blob(blob)?;
-                OperationKind::TaskModifyActive { id, new, old }
             }
             OPERATION_TASK_MODIFY_PRIORITY => {
                 let id = Uuid::from_blob(blob)?;

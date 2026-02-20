@@ -342,7 +342,6 @@ impl Database {
             entry,
             status,
             title,
-            active: false,
             modified,
             due,
             project,
@@ -678,7 +677,6 @@ impl Database {
                     )?;
                     Self::update_task_modified_property(&transaction, id, Some(timestamp))?;
                 }
-                OperationKind::TaskModifyActive { .. } => todo!(),
                 OperationKind::TaskModifyPriority { id, old, .. } => {
                     transaction.execute(
                         "UPDATE task_table SET priority = ?2 WHERE id = ?1",

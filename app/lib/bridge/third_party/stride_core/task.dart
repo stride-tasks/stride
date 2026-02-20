@@ -32,7 +32,6 @@ sealed class Task with _$Task {
     required DateTime entry,
     required TaskStatus status,
     required String title,
-    required bool active,
     DateTime? modified,
     DateTime? due,
     String? project,

@@ -29,11 +29,6 @@ pub enum OperationKind {
         new: TaskStatus,
         old: TaskStatus,
     },
-    TaskModifyActive {
-        id: Uuid,
-        new: bool,
-        old: bool,
-    },
     TaskModifyPriority {
         id: Uuid,
         new: Option<TaskPriority>,
