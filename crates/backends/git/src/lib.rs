@@ -1174,9 +1174,7 @@ impl Backend for GitBackend {
                 OperationKind::TaskModifyRemoveUda { id, uda } => {
                     let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
                     if let Some(index) =
-                        task.task.udas.iter().position(|value| {
-                            value.key == uda.key && value.namespace == uda.namespace
-                        })
+                        task.task.udas.iter().position(|value| value.key == uda.key)
                     {
                         task.task.udas.remove(index);
                     }

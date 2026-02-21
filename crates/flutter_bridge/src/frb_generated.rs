@@ -3638,9 +3638,8 @@ const _: fn() = || {
     }
     {
         let Uda = None::<stride_core::task::uda::Uda>.unwrap();
-        let _: String = Uda.namespace;
         let _: String = Uda.key;
-        let _: Vec<u8> = Uda.value;
+        let _: String = Uda.value;
     }
 };
 
@@ -4636,11 +4635,9 @@ impl SseDecode for u8 {
 impl SseDecode for stride_core::task::uda::Uda {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_namespace = <String>::sse_decode(deserializer);
         let mut var_key = <String>::sse_decode(deserializer);
-        let mut var_value = <Vec<u8>>::sse_decode(deserializer);
+        let mut var_value = <String>::sse_decode(deserializer);
         return stride_core::task::uda::Uda {
-            namespace: var_namespace,
             key: var_key,
             value: var_value,
         };
@@ -5644,7 +5641,6 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<stride_core::task::TaskStatus>
 impl flutter_rust_bridge::IntoDart for FrbWrapper<stride_core::task::uda::Uda> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
-            self.0.namespace.into_into_dart().into_dart(),
             self.0.key.into_into_dart().into_dart(),
             self.0.value.into_into_dart().into_dart(),
         ]
@@ -6478,9 +6474,8 @@ impl SseEncode for u8 {
 impl SseEncode for stride_core::task::uda::Uda {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.namespace, serializer);
         <String>::sse_encode(self.key, serializer);
-        <Vec<u8>>::sse_encode(self.value, serializer);
+        <String>::sse_encode(self.value, serializer);
     }
 }
 

@@ -142,17 +142,15 @@ fn uda_to_and_from_blob() {
     let mut blob = Vec::new();
 
     let uda = Uda {
-        namespace: "stride".into(),
         key: "test".into(),
-        value: vec![10, 15],
+        value: "AB".into(),
     };
     uda.to_blob(&mut blob);
     assert_eq!(
         blob,
         vec![
             0, // version
-            0, 0, 0, 6, 115, 116, 114, 105, 100, 101, 0, 0, 0, 4, 116, 101, 115, 116, 0, 0, 0, 2,
-            10, 15
+            0, 0, 0, 4, 116, 101, 115, 116, 0, 0, 0, 2, 65, 66
         ]
     );
 

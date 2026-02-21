@@ -16,24 +16,22 @@ import 'package:stride/bridge/frb_generated.dart';
 
 /// A User Defined Attribute (aka UDA).
 class Uda {
-  final String namespace;
   final String key;
-  final Uint8List value;
+  final String value;
 
-  const Uda({required this.namespace, required this.key, required this.value});
+  const Uda({required this.key, required this.value});
 
   static Future<Uda> default_() =>
       RustLib.instance.api.strideCoreTaskUdaUdaDefault();
 
   @override
-  int get hashCode => namespace.hashCode ^ key.hashCode ^ value.hashCode;
+  int get hashCode => key.hashCode ^ value.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Uda &&
           runtimeType == other.runtimeType &&
-          namespace == other.namespace &&
           key == other.key &&
           value == other.value;
 }

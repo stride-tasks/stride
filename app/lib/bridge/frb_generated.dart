@@ -4063,12 +4063,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uda dco_decode_uda(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return Uda(
-      namespace: dco_decode_String(arr[0]),
-      key: dco_decode_String(arr[1]),
-      value: dco_decode_list_prim_u_8_strict(arr[2]),
+      key: dco_decode_String(arr[0]),
+      value: dco_decode_String(arr[1]),
     );
   }
 
@@ -5200,10 +5199,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Uda sse_decode_uda(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_namespace = sse_decode_String(deserializer);
     final var_key = sse_decode_String(deserializer);
-    final var_value = sse_decode_list_prim_u_8_strict(deserializer);
-    return Uda(namespace: var_namespace, key: var_key, value: var_value);
+    final var_value = sse_decode_String(deserializer);
+    return Uda(key: var_key, value: var_value);
   }
 
   @protected
@@ -6285,9 +6283,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_uda(Uda self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.namespace, serializer);
     sse_encode_String(self.key, serializer);
-    sse_encode_list_prim_u_8_strict(self.value, serializer);
+    sse_encode_String(self.value, serializer);
   }
 
   @protected

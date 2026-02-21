@@ -66,12 +66,10 @@ pub(crate) fn task_to_data(task: &Task) -> Vec<u8> {
         result.push(b'u');
         result.extend_from_slice(&(task.udas.len() as u32).to_be_bytes());
         for uda in &task.udas {
-            result.extend_from_slice(&(uda.namespace.len() as u32).to_be_bytes());
-            result.extend_from_slice(uda.namespace.as_bytes());
             result.extend_from_slice(&(uda.key.len() as u32).to_be_bytes());
             result.extend_from_slice(uda.key.as_bytes());
             result.extend_from_slice(&(uda.value.len() as u32).to_be_bytes());
-            result.extend_from_slice(&uda.value);
+            result.extend_from_slice(uda.value.as_bytes());
         }
     }
     result
@@ -203,16 +201,6 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
                 i += size_of::<u32>();
 
                 for _ in 0..len {
-                    let namespace_len =
-                        u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
-                            as usize;
-                    i += size_of::<u32>();
-
-                    let namespace_bytes = input.get(i..i + namespace_len)?;
-                    i += namespace_len;
-
-                    let namespace = std::str::from_utf8(namespace_bytes).ok()?;
-
                     let key_len =
                         u32::from_be_bytes(input.get(i..i + size_of::<u32>())?.try_into().ok()?)
                             as usize;
@@ -228,11 +216,12 @@ pub(crate) fn task_from_data(input: &[u8]) -> Option<Task> {
                             as usize;
                     i += size_of::<u32>();
 
-                    let value = input.get(i..i + value_len)?;
+                    let value_bytes = input.get(i..i + value_len)?;
                     i += value_len;
 
+                    let value = std::str::from_utf8(value_bytes).ok()?;
+
                     udas.push(Uda {
-                        namespace: namespace.into(),
                         key: key.into(),
                         value: value.into(),
                     });

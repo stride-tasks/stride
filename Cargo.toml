@@ -55,12 +55,7 @@ taskchampion = { version = "3.0.1", default-features = false, features = [
   "storage-sqlite",
   "tls-webpki-roots",
 ] }
-rusqlite = { version = "0.37.0", features = [
-  "bundled",
-  "uuid",
-  "array",
-  "functions",
-] }
+rusqlite = { version = "0.37.0", features = ["bundled", "uuid", "array"] }
 tokio = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "3.16"

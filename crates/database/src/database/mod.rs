@@ -1,10 +1,7 @@
-mod functions;
-
 #[cfg(test)]
 mod tests;
 
 use chrono::DateTime;
-use functions::init_stride_functions;
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql};
 use stride_core::{
@@ -56,6 +53,16 @@ task_annotations_cte AS (
         annotation_table
     GROUP BY
         task_id
+),
+task_udas_cte AS (
+    SELECT
+        task_id,
+        string_agg(key, char(0)) AS keys,
+        string_agg(value, char(0)) AS values_
+    FROM
+        uda_table
+    GROUP BY
+        task_id
 )
 
 SELECT
@@ -71,7 +78,8 @@ SELECT
     depends_cte.depends,
     annotations_cte.entries AS annotation_entries,
     annotations_cte.descriptions AS annotation_descriptions,
-    task.udas,
+    udas_cte.keys AS uda_keys,
+    udas_cte.values_ AS uda_values,
     tags_cte.tags
 FROM
     task_table task
@@ -81,6 +89,8 @@ LEFT JOIN
     task_tags_cte tags_cte ON tags_cte.task_id = task.id
 LEFT JOIN
     task_annotations_cte annotations_cte ON annotations_cte.task_id = task.id
+LEFT JOIN
+    task_udas_cte udas_cte ON udas_cte.task_id = task.id
 WHERE
     task.status IN rarray(?1)
 ";
@@ -113,6 +123,16 @@ task_annotations_cte AS (
         annotation_table
     GROUP BY
         task_id
+),
+task_udas_cte AS (
+    SELECT
+        task_id,
+        string_agg(key, char(0)) AS keys,
+        string_agg(value, char(0)) AS values_
+    FROM
+        uda_table
+    GROUP BY
+        task_id
 )
 
 SELECT
@@ -129,6 +149,8 @@ SELECT
     annotations_cte.entries AS annotation_entries,
     annotations_cte.descriptions AS annotation_descriptions,
     task.udas,
+    udas_cte.keys AS uda_keys,
+    udas_cte.values_ AS uda_values,
     tags_cte.tags
 FROM
     task_table task
@@ -138,6 +160,8 @@ LEFT JOIN
     task_tags_cte tags_cte ON tags_cte.task_id = task.id
 LEFT JOIN
     task_annotations_cte annotations_cte ON annotations_cte.task_id = task.id
+LEFT JOIN
+    task_udas_cte udas_cte ON udas_cte.task_id = task.id
 WHERE
     task.id = ?1
 ";
@@ -152,8 +176,7 @@ INSERT INTO task_table (
     project,
     modified,
     due,
-    wait,
-    udas
+    wait
 )
 VALUES
 (
@@ -165,8 +188,7 @@ VALUES
     :project,
     :modified,
     :due,
-    :wait,
-    :udas
+    :wait
 );
 ";
 
@@ -180,8 +202,7 @@ SET
     project = :project,
     modified = :modified,
     due = :due,
-    wait = :wait,
-    udas = :udas
+    wait = :wait
 WHERE id = :id;
 ";
 
@@ -439,24 +460,22 @@ impl Transaction<'_> {
             }
             OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
                 self.transaction.execute(
-                    "DELETE FROM annotation_table WHERE task_id = ?1, entry = ?2",
+                    "DELETE FROM annotation_table WHERE task_id = ?1 AND entry = ?2",
                     (id, &Sql::from(annotation.entry)),
                 )?;
             }
             OperationKind::TaskModifyAddUda { id, uda } => {
-                let mut uda_blob = Vec::new();
-                uda.to_blob(&mut uda_blob);
                 self.transaction.execute(
-                    "UPDATE task_table SET udas = stride_uda_array_insert(udas, ?2) WHERE id = ?1",
-                    (id, &uda_blob),
+                    indoc! {"
+                        INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2, ?3)
+                    "},
+                    (id, &uda.key, &uda.value),
                 )?;
             }
             OperationKind::TaskModifyRemoveUda { id, uda } => {
-                let mut uda_blob = Vec::new();
-                uda.to_blob(&mut uda_blob);
                 self.transaction.execute(
-                    "UPDATE task_table SET udas = stride_uda_array_remove(udas, ?2) WHERE id = ?1",
-                    (id, &uda_blob),
+                    "DELETE FROM uda_table WHERE task_id = ?1, key = ?2",
+                    (id, &uda.key),
                 )?;
             }
         }
@@ -479,7 +498,6 @@ impl Database {
     pub fn open(path: &Path) -> Result<Self> {
         let connection = Connection::open(path)?;
         rusqlite::vtab::array::load_module(&connection)?;
-        init_stride_functions(&connection)?;
         Ok(Self { connection })
     }
 
@@ -487,7 +505,6 @@ impl Database {
     pub fn open_in_memory() -> Result<Self> {
         let connection = Connection::open_in_memory()?;
         rusqlite::vtab::array::load_module(&connection)?;
-        init_stride_functions(&connection)?;
         Ok(Self { connection })
     }
 
@@ -516,7 +533,8 @@ impl Database {
         let depends = row.get::<_, Sql<Vec<Uuid>>>("depends")?.value;
         let annoation_entries = row.get::<_, Option<String>>("annotation_entries")?;
         let annoation_descriptions = row.get::<_, Option<String>>("annotation_descriptions")?;
-        let udas = row.get::<_, Sql<Vec<Uda>>>("udas")?.value;
+        let uda_keys = row.get::<_, Option<String>>("uda_keys")?;
+        let uda_values = row.get::<_, Option<String>>("uda_values")?;
         let tags = row
             .get::<_, Option<String>>("tags")?
             .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
@@ -530,6 +548,16 @@ impl Database {
                     entry: DateTime::from_timestamp_millis(entry)
                         .expect("should be a valid entry timestamp"),
                     description: description.into(),
+                });
+            }
+        }
+
+        let mut udas = Vec::new();
+        if let (Some(keys), Some(values)) = (uda_keys, uda_values) {
+            for (key, value) in keys.split('\0').zip(values.split('\0')) {
+                udas.push(Uda {
+                    key: key.into(),
+                    value: value.into(),
                 });
             }
         }
@@ -673,7 +701,6 @@ impl Database {
             (":modified", &Sql::from(task.modified)),
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
-            (":udas", &Sql::from(task.udas.as_slice())),
         ])?;
 
         if !task.tags.is_empty() {
@@ -692,10 +719,18 @@ impl Database {
 
         if !task.annotations.is_empty() {
             let mut sql = transaction.prepare_cached(indoc! {"
-                INSERT INTO annotation_table (entry, description) VALUES (?1, ?2)
+                INSERT INTO annotation_table (task_id, entry, description) VALUES (?1, ?2, ?3)
             "})?;
             for Annotation { entry, description } in &task.annotations {
-                sql.execute((&Sql::from(*entry), description))?;
+                sql.execute((task.uuid, &Sql::from(*entry), description))?;
+            }
+        }
+        if !task.udas.is_empty() {
+            let mut sql = transaction.prepare_cached(indoc! {"
+                INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2)
+            "})?;
+            for Uda { key, value } in &task.udas {
+                sql.execute((task.uuid, key, value))?;
             }
         }
 
@@ -747,7 +782,6 @@ impl Database {
             (":modified", &Sql::from(task.modified)),
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
-            (":udas", &Sql::from(task.udas.as_slice())),
         ])?;
         drop(sql);
 
@@ -783,6 +817,18 @@ impl Database {
             "})?;
             for Annotation { entry, description } in &task.annotations {
                 sql.execute((task.uuid, &Sql::from(*entry), description))?;
+            }
+        }
+        if !task.udas.is_empty() {
+            // TODO: Maybe instead of deleting them all,
+            // figure out a nice way to delete only the tags that are old.
+            transaction.execute("DELETE FROM uda_table WHERE task_id = ?1", (task.uuid,))?;
+
+            let mut sql = transaction.prepare_cached(indoc! {"
+                INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2)
+            "})?;
+            for Uda { key, value } in &task.udas {
+                sql.execute((task.uuid, key, value))?;
             }
         }
 

@@ -506,14 +506,12 @@ fn serialize_task_with_udas() {
     let title = "Hello there!";
     let mut task = create_task(title);
     task.udas.push(Uda {
-        namespace: "Hello".into(),
         key: "World".into(),
         value: "!!".into(),
     });
     task.udas.push(Uda {
-        namespace: "namespace".into(),
         key: "key".into(),
-        value: b"value".into(),
+        value: "value".into(),
     });
 
     assert_eq!(
@@ -529,13 +527,9 @@ fn serialize_task_with_udas() {
             b"u",
             &2u32.to_be_bytes(),
             &5u32.to_be_bytes(),
-            b"Hello",
-            &5u32.to_be_bytes(),
             b"World",
             &2u32.to_be_bytes(),
             b"!!",
-            &9u32.to_be_bytes(),
-            b"namespace",
             &3u32.to_be_bytes(),
             b"key",
             &5u32.to_be_bytes(),
@@ -558,13 +552,9 @@ fn deserialize_task_with_udas() {
         b"u",
         &2u32.to_be_bytes(),
         &5u32.to_be_bytes(),
-        b"Hello",
-        &5u32.to_be_bytes(),
         b"World",
         &2u32.to_be_bytes(),
         b"!!",
-        &9u32.to_be_bytes(),
-        b"namespace",
         &3u32.to_be_bytes(),
         b"key",
         &5u32.to_be_bytes(),
@@ -574,14 +564,12 @@ fn deserialize_task_with_udas() {
 
     let mut expected = create_task(title);
     expected.udas.push(Uda {
-        namespace: "Hello".into(),
         key: "World".into(),
         value: "!!".into(),
     });
     expected.udas.push(Uda {
-        namespace: "namespace".into(),
         key: "key".into(),
-        value: b"value".into(),
+        value: "value".into(),
     });
     assert_eq!(task, expected);
 }
@@ -607,14 +595,12 @@ fn serialize_task_with_all_attributes() {
         description: String::from("World"),
     });
     task.udas.push(Uda {
-        namespace: "Hello".into(),
         key: "World".into(),
         value: "!!".into(),
     });
     task.udas.push(Uda {
-        namespace: "namespace".into(),
         key: "key".into(),
-        value: b"value".into(),
+        value: "value".into(),
     });
     assert_eq!(
         task_to_data(&task),
@@ -660,13 +646,9 @@ fn serialize_task_with_all_attributes() {
             b"u",
             &2u32.to_be_bytes(),
             &5u32.to_be_bytes(),
-            b"Hello",
-            &5u32.to_be_bytes(),
             b"World",
             &2u32.to_be_bytes(),
             b"!!",
-            &9u32.to_be_bytes(),
-            b"namespace",
             &3u32.to_be_bytes(),
             b"key",
             &5u32.to_be_bytes(),
@@ -721,13 +703,9 @@ fn deserialize_task_with_all_attributes() {
         b"u",
         &2u32.to_be_bytes(),
         &5u32.to_be_bytes(),
-        b"Hello",
-        &5u32.to_be_bytes(),
         b"World",
         &2u32.to_be_bytes(),
         b"!!",
-        &9u32.to_be_bytes(),
-        b"namespace",
         &3u32.to_be_bytes(),
         b"key",
         &5u32.to_be_bytes(),
@@ -753,14 +731,12 @@ fn deserialize_task_with_all_attributes() {
         description: String::from("World"),
     });
     expected.udas.push(Uda {
-        namespace: "Hello".into(),
         key: "World".into(),
         value: "!!".into(),
     });
     expected.udas.push(Uda {
-        namespace: "namespace".into(),
         key: "key".into(),
-        value: b"value".into(),
+        value: "value".into(),
     });
     assert_eq!(task, expected);
 }

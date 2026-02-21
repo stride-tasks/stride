@@ -221,9 +221,8 @@ impl From<taskchampion::Task> for Task {
             // TODO: Remove use of deprecated function.
             #[allow(deprecated)]
             udas: v
-                .get_udas()
-                .map(|((namespace, key), value)| Uda {
-                    namespace: namespace.into(),
+                .get_user_defined_attributes()
+                .map(|(key, value)| Uda {
                     key: key.into(),
                     value: value.into(),
                 })

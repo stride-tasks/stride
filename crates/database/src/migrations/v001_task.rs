@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS task_table (
     `modified` INTEGER,
     `due` INTEGER,
     `wait` INTEGER,
-    `udas` BLOB,
 
     FOREIGN KEY (project) REFERENCES project_table (id) ON DELETE SET NULL
 ) STRICT;
@@ -49,9 +48,19 @@ CREATE TABLE IF NOT EXISTS annotation_table (
     `id` INTEGER NOT NULL PRIMARY KEY,
     `task_id` BLOB NOT NULL,
     `entry` INTEGER NOT NULL,
-    `description` TEXT NOT NULL
+    `description` TEXT NOT NULL,
+
+    FOREIGN KEY (`task_id`) REFERENCES task_table (`id`) ON DELETE CASCADE
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS uda_table (
+    `id` INTEGER NOT NULL PRIMARY KEY,
+    `task_id` BLOB NOT NULL,
+    `key` TEXT NOT NULL,
+    `value` TEXT NOT NULL,
+
+    FOREIGN KEY (`task_id`) REFERENCES task_table (`id`) ON DELETE CASCADE
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS operation_table (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

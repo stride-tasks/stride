@@ -412,9 +412,8 @@ impl ToBlob<'_> for Uda {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         blob.push(0x00); // version
 
-        self.namespace.as_str().to_blob(blob);
         self.key.as_str().to_blob(blob);
-        self.value.as_slice().to_blob(blob);
+        self.value.as_str().to_blob(blob);
     }
 }
 impl FromBlob<'_> for Uda {
@@ -426,13 +425,11 @@ impl FromBlob<'_> for Uda {
                 kind: BlobVersionedKind::Uda,
             });
         }
-        let namespace = <&str>::from_blob(blob)?;
         let key = <&str>::from_blob(blob)?;
-        let value = <&[u8]>::from_blob(blob)?;
+        let value = <&str>::from_blob(blob)?;
         Ok(Self {
-            namespace: namespace.to_string(),
             key: key.to_string(),
-            value: value.to_vec(),
+            value: value.to_string(),
         })
     }
 }
