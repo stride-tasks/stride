@@ -14,13 +14,9 @@ CREATE TABLE IF NOT EXISTS task_table (
     `modified` INTEGER,
     `due` INTEGER,
     `wait` INTEGER,
-    `annotations` BLOB,
     `udas` BLOB,
-    -- Where does this task originate from, null implies stride.
-    `backend` BLOB,
 
-    FOREIGN KEY (project) REFERENCES project_table (id) ON DELETE SET NULL,
-    FOREIGN KEY (backend) REFERENCES backend_table (id) ON DELETE SET NULL
+    FOREIGN KEY (project) REFERENCES project_table (id) ON DELETE SET NULL
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS task_dependency_table (
@@ -48,6 +44,14 @@ CREATE TABLE IF NOT EXISTS task_tag_table (
     FOREIGN KEY (task_id) REFERENCES task_table (id) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES tag_table (id) ON DELETE CASCADE
 ) STRICT;
+
+CREATE TABLE IF NOT EXISTS annotation_table (
+    `id` INTEGER NOT NULL PRIMARY KEY,
+    `task_id` BLOB NOT NULL,
+    `entry` INTEGER NOT NULL,
+    `description` TEXT NOT NULL
+) STRICT;
+
 
 CREATE TABLE IF NOT EXISTS operation_table (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

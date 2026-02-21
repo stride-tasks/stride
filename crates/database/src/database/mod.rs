@@ -3,6 +3,7 @@ mod functions;
 #[cfg(test)]
 mod tests;
 
+use chrono::DateTime;
 use functions::init_stride_functions;
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, ToSql};
@@ -45,6 +46,16 @@ task_tags_cte AS (
         task_tag_table
     GROUP BY
         task_id
+),
+task_annotations_cte AS (
+    SELECT
+        task_id,
+        string_agg(entry, ' ') AS entries,
+        string_agg(description, char(0)) AS descriptions
+    FROM
+        annotation_table
+    GROUP BY
+        task_id
 )
 
 SELECT
@@ -58,7 +69,8 @@ SELECT
     task.due,
     task.wait,
     depends_cte.depends,
-    task.annotations,
+    annotations_cte.entries AS annotation_entries,
+    annotations_cte.descriptions AS annotation_descriptions,
     task.udas,
     tags_cte.tags
 FROM
@@ -67,6 +79,8 @@ LEFT JOIN
     task_depends_cte depends_cte ON depends_cte.id = task.id
 LEFT JOIN
     task_tags_cte tags_cte ON tags_cte.task_id = task.id
+LEFT JOIN
+    task_annotations_cte annotations_cte ON annotations_cte.task_id = task.id
 WHERE
     task.status IN rarray(?1)
 ";
@@ -89,6 +103,16 @@ task_tags_cte AS (
         task_tag_table
     GROUP BY
         task_id
+),
+task_annotations_cte AS (
+    SELECT
+        task_id,
+        string_agg(entry, ' ') AS entries,
+        string_agg(description, char(0)) AS descriptions
+    FROM
+        annotation_table
+    GROUP BY
+        task_id
 )
 
 SELECT
@@ -102,7 +126,8 @@ SELECT
     task.due,
     task.wait,
     depends_cte.depends,
-    task.annotations,
+    annotations_cte.entries AS annotation_entries,
+    annotations_cte.descriptions AS annotation_descriptions,
     task.udas,
     tags_cte.tags
 FROM
@@ -111,6 +136,8 @@ LEFT JOIN
     task_depends_cte depends_cte ON depends_cte.id = task.id
 LEFT JOIN
     task_tags_cte tags_cte ON tags_cte.task_id = task.id
+LEFT JOIN
+    task_annotations_cte annotations_cte ON annotations_cte.task_id = task.id
 WHERE
     task.id = ?1
 ";
@@ -126,7 +153,6 @@ INSERT INTO task_table (
     modified,
     due,
     wait,
-    annotations,
     udas
 )
 VALUES
@@ -140,7 +166,6 @@ VALUES
     :modified,
     :due,
     :wait,
-    :annotations,
     :udas
 );
 ";
@@ -156,7 +181,6 @@ SET
     modified = :modified,
     due = :due,
     wait = :wait,
-    annotations = :annotations,
     udas = :udas
 WHERE id = :id;
 ";
@@ -406,19 +430,17 @@ impl Transaction<'_> {
                 )?;
             }
             OperationKind::TaskModifyAddAnnotation { id, annotation } => {
-                let mut annotation_blob = Vec::new();
-                annotation.to_blob(&mut annotation_blob);
                 self.transaction.execute(
-                    "UPDATE task_table SET annotations = stride_annotation_array_insert(annotations, ?2) WHERE id = ?1",
-                    (id, &annotation_blob),
+                    indoc! {"
+                        INSERT INTO annotation_table (task_id, entry, description) VALUES (?1, ?2, ?3)
+                    "},
+                    (id, &Sql::from(annotation.entry), &annotation.description),
                 )?;
             }
             OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
-                let mut annotation_blob = Vec::new();
-                annotation.to_blob(&mut annotation_blob);
                 self.transaction.execute(
-                    "UPDATE task_table SET annotations = stride_annotation_array_remove(annotations, ?2) WHERE id = ?1",
-                    (id, &annotation_blob),
+                    "DELETE FROM annotation_table WHERE task_id = ?1, entry = ?2",
+                    (id, &Sql::from(annotation.entry)),
                 )?;
             }
             OperationKind::TaskModifyAddUda { id, uda } => {
@@ -492,12 +514,25 @@ impl Database {
         let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
         let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
         let depends = row.get::<_, Sql<Vec<Uuid>>>("depends")?.value;
-        let annotations = row.get::<_, Sql<Vec<Annotation>>>("annotations")?.value;
+        let annoation_entries = row.get::<_, Option<String>>("annotation_entries")?;
+        let annoation_descriptions = row.get::<_, Option<String>>("annotation_descriptions")?;
         let udas = row.get::<_, Sql<Vec<Uda>>>("udas")?.value;
         let tags = row
             .get::<_, Option<String>>("tags")?
             .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
             .unwrap_or_default();
+
+        let mut annotations = Vec::new();
+        if let (Some(entries), Some(descriptions)) = (annoation_entries, annoation_descriptions) {
+            for (entry, description) in entries.split(' ').zip(descriptions.split('\0')) {
+                let entry = entry.parse::<i64>().expect("should be a valid integer");
+                annotations.push(Annotation {
+                    entry: DateTime::from_timestamp_millis(entry)
+                        .expect("should be a valid entry timestamp"),
+                    description: description.into(),
+                });
+            }
+        }
 
         Ok(Task {
             uuid,
@@ -638,7 +673,6 @@ impl Database {
             (":modified", &Sql::from(task.modified)),
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
-            (":annotations", &Sql::from(task.annotations.as_slice())),
             (":udas", &Sql::from(task.udas.as_slice())),
         ])?;
 
@@ -655,6 +689,16 @@ impl Database {
             }
         }
         drop(sql);
+
+        if !task.annotations.is_empty() {
+            let mut sql = transaction.prepare_cached(indoc! {"
+                INSERT INTO annotation_table (entry, description) VALUES (?1, ?2)
+            "})?;
+            for Annotation { entry, description } in &task.annotations {
+                sql.execute((&Sql::from(*entry), description))?;
+            }
+        }
+
         let mut sql = transaction
             .prepare_cached("INSERT INTO operation_table (timestamp, kind) VALUES (?1, ?2)")?;
 
@@ -703,7 +747,6 @@ impl Database {
             (":modified", &Sql::from(task.modified)),
             (":due", &Sql::from(task.due)),
             (":wait", &Sql::from(task.wait)),
-            (":annotations", &Sql::from(task.annotations.as_slice())),
             (":udas", &Sql::from(task.udas.as_slice())),
         ])?;
         drop(sql);
@@ -724,6 +767,22 @@ impl Database {
                 .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING")?;
             for tag in &task.tags {
                 sql.execute((task.uuid, tag))?;
+            }
+        }
+
+        if !task.annotations.is_empty() {
+            // TODO: Maybe instead of deleting them all,
+            // figure out a nice way to delete only the tags that are old.
+            transaction.execute(
+                "DELETE FROM annotation_table WHERE task_id = ?1",
+                (task.uuid,),
+            )?;
+
+            let mut sql = transaction.prepare_cached(indoc! {"
+                INSERT INTO annotation_table (task_id, entry, description) VALUES (?1, ?2, ?3)
+            "})?;
+            for Annotation { entry, description } in &task.annotations {
+                sql.execute((task.uuid, &Sql::from(*entry), description))?;
             }
         }
 
