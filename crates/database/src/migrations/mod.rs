@@ -1,21 +1,16 @@
 use rusqlite::OptionalExtension;
-use v000_migration::InitialMigration;
-use v001_task::TaskMigration;
 
 use crate::{Database, Result};
 
-mod v000_migration;
-mod v001_task;
+mod v000_initial;
 
-const MIGRATIONS: &[&dyn Migration] = &[&InitialMigration, &TaskMigration];
+const MIGRATIONS: &[&dyn Migration] = &[&v000_initial::InitialMigration];
 
 trait Migration {
     fn sql(&self) -> &str;
 
     fn apply(&self, db: &mut Database) -> Result<()> {
-        let sql = self.sql();
-        let sql = format!("BEGIN;\n\n{sql}\n\nCOMMIT;\n");
-        db.connection.execute_batch(&sql)?;
+        db.connection.execute_batch(self.sql())?;
         Ok(())
     }
 
