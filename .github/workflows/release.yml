@@ -43,6 +43,22 @@ jobs:
           echo "$ANDROID_HOME/build-tools"/*/ | awk -F' ' '{ print $1 }' >>
           $GITHUB_PATH
 
+      - name: Cache Flutter pub
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            **/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle
+
       - name: Build APKs
         run: |
           # Use the same build dir, this speeds up the build process
