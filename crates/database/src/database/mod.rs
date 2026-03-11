@@ -3,12 +3,13 @@ mod tests;
 
 use chrono::DateTime;
 use indoc::indoc;
-use rusqlite::{Connection, OptionalExtension, Row, ToSql};
+use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
 use stride_core::{
     backend::{BackendRecord, Config, Value},
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
+use stride_crdt::{actor::ActorId, hlc::Clock};
 use url::Url;
 use uuid::Uuid;
 
@@ -19,11 +20,10 @@ use std::{
 };
 
 use crate::{
-    Result, Sql, apply_migrations,
-    conversion::{FromBlob, ToBlob, task_priority_to_sql},
-    operation::{Operation, OperationKind, difference::push_operations_diff_task},
-    task_status_to_sql,
+    Result, Sql, apply_migrations, database::transaction::Transaction, task_status_to_sql,
 };
+
+pub(crate) mod transaction;
 
 const SQL_ALL: &str = r"
 WITH task_depends_cte AS (
@@ -47,10 +47,13 @@ task_tags_cte AS (
 task_annotations_cte AS (
     SELECT
         task_id,
+        stride_blob_concat(id) AS ids,
         string_agg(entry, ' ') AS entries,
-        string_agg(description, char(0)) AS descriptions
+        string_agg(text, char(0)) AS texts
     FROM
         annotation_table
+    WHERE
+        tombstone = 0
     GROUP BY
         task_id
 ),
@@ -76,8 +79,9 @@ SELECT
     task.due,
     task.wait,
     depends_cte.depends,
+    annotations_cte.ids AS annotation_ids,
     annotations_cte.entries AS annotation_entries,
-    annotations_cte.descriptions AS annotation_descriptions,
+    annotations_cte.texts AS annotation_texts,
     udas_cte.keys AS uda_keys,
     udas_cte.values_ AS uda_values,
     tags_cte.tags
@@ -92,7 +96,8 @@ LEFT JOIN
 LEFT JOIN
     task_udas_cte udas_cte ON udas_cte.task_id = task.id
 WHERE
-    task.status IN rarray(?1)
+    task.tombstone = 0
+    AND task.status IN rarray(?1)
 ";
 
 const SQL_BY_ID: &str = r"
@@ -117,10 +122,13 @@ task_tags_cte AS (
 task_annotations_cte AS (
     SELECT
         task_id,
+        stride_blob_concat(id) AS ids,
         string_agg(entry, ' ') AS entries,
-        string_agg(description, char(0)) AS descriptions
+        string_agg(text, char(0)) AS texts
     FROM
         annotation_table
+    WHERE
+        tombstone = 0
     GROUP BY
         task_id
 ),
@@ -146,9 +154,9 @@ SELECT
     task.due,
     task.wait,
     depends_cte.depends,
+    annotations_cte.ids AS annotation_ids,
     annotations_cte.entries AS annotation_entries,
-    annotations_cte.descriptions AS annotation_descriptions,
-    task.udas,
+    annotations_cte.texts AS annotation_texts,
     udas_cte.keys AS uda_keys,
     udas_cte.values_ AS uda_values,
     tags_cte.tags
@@ -164,354 +172,69 @@ LEFT JOIN
     task_udas_cte udas_cte ON udas_cte.task_id = task.id
 WHERE
     task.id = ?1
+    AND task.tombstone = 0
 ";
-
-const SQL_INSERT: &str = r"
-INSERT INTO task_table (
-    id,
-    title,
-    entry,
-    status,
-    priority,
-    project,
-    modified,
-    due,
-    wait
-)
-VALUES
-(
-    :id,
-    :title,
-    :entry,
-    :status,
-    :priority,
-    :project,
-    :modified,
-    :due,
-    :wait
-);
-";
-
-const SQL_UPDATE: &str = r"
-UPDATE task_table
-SET
-    title = :title,
-    entry = :entry,
-    status = :status,
-    priority = :priority,
-    project = :project,
-    modified = :modified,
-    due = :due,
-    wait = :wait
-WHERE id = :id;
-";
-
-const SQL_DELETE: &str = r"DELETE FROM task_table WHERE id = ?1";
-
-const SQL_PROJECT_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO project_table (id) VALUES (?1);";
-const SQL_TAG_INSERT_OR_IGNORE: &str = "INSERT OR IGNORE INTO tag_table (id) VALUES (?1);";
-
-#[derive(Debug)]
-pub struct TaskTransaction {
-    task: Task,
-}
-
-impl TaskTransaction {
-    pub fn create(id: Uuid, title: String, ops: &mut Vec<Operation>) -> Self {
-        ops.push(OperationKind::TaskCreate { id }.with_now());
-        ops.push(
-            OperationKind::TaskModifyTitle {
-                id,
-                new: Some(title.clone().into_boxed_str()),
-                old: None,
-            }
-            .with_now(),
-        );
-        Self {
-            task: Task::with_uuid(id, title),
-        }
-    }
-
-    pub fn set_title(&mut self, title: Option<String>, ops: &mut Vec<Operation>) {
-        let new = title.clone();
-        let old = std::mem::replace(&mut self.task.title, title);
-        ops.push(
-            OperationKind::TaskModifyTitle {
-                id: self.task.uuid,
-                new: new.map(String::into_boxed_str),
-                old: old.map(String::into_boxed_str),
-            }
-            .with_now(),
-        );
-    }
-
-    pub fn set_status(&mut self, status: TaskStatus, ops: &mut Vec<Operation>) {
-        let new = status;
-        let old = std::mem::replace(&mut self.task.status, status);
-        ops.push(
-            OperationKind::TaskModifyStatus {
-                id: self.task.uuid,
-                new,
-                old,
-            }
-            .with_now(),
-        );
-    }
-    pub fn set_entry(&mut self, entry: Option<Date>, ops: &mut Vec<Operation>) {
-        let new = entry;
-        let old = std::mem::replace(&mut self.task.entry, entry);
-        ops.push(
-            OperationKind::TaskModifyEntry {
-                id: self.task.uuid,
-                new,
-                old,
-            }
-            .with_now(),
-        );
-    }
-    pub fn set_modified(&mut self, modified: Option<Date>, ops: &mut Vec<Operation>) {
-        let new = modified;
-        let old = std::mem::replace(&mut self.task.modified, modified);
-        ops.push(
-            OperationKind::TaskModifyModified {
-                id: self.task.uuid,
-                new,
-                old,
-            }
-            .with_now(),
-        );
-    }
-    pub fn set_due(&mut self, due: Option<Date>, ops: &mut Vec<Operation>) {
-        let new = due;
-        let old = std::mem::replace(&mut self.task.due, due);
-        ops.push(
-            OperationKind::TaskModifyDue {
-                id: self.task.uuid,
-                new,
-                old,
-            }
-            .with_now(),
-        );
-    }
-    pub fn set_project(&mut self, project: Option<String>, ops: &mut Vec<Operation>) {
-        let new = project.clone();
-        let old = std::mem::replace(&mut self.task.project, project);
-        ops.push(
-            OperationKind::TaskModifyProject {
-                id: self.task.uuid,
-                new: new.map(String::into_boxed_str),
-                old: old.map(String::into_boxed_str),
-            }
-            .with_now(),
-        );
-    }
-    pub fn set_priority(&mut self, priority: Option<TaskPriority>, ops: &mut Vec<Operation>) {
-        let new = priority;
-        let old = std::mem::replace(&mut self.task.priority, priority);
-        ops.push(
-            OperationKind::TaskModifyPriority {
-                id: self.task.uuid,
-                new,
-                old,
-            }
-            .with_now(),
-        );
-    }
-    pub fn set_wait(&mut self, wait: Option<Date>, ops: &mut Vec<Operation>) {
-        let new = wait;
-        let old = std::mem::replace(&mut self.task.wait, wait);
-        ops.push(
-            OperationKind::TaskModifyWait {
-                id: self.task.uuid,
-                new,
-                old,
-            }
-            .with_now(),
-        );
-    }
-}
-
-#[derive(Debug)]
-pub struct Transaction<'a> {
-    transaction: rusqlite::Transaction<'a>,
-}
-
-impl Transaction<'_> {
-    pub fn apply(&mut self, mut operations: Vec<Operation>) -> Result<()> {
-        if operations.is_empty() {
-            return Ok(());
-        }
-
-        let mut sql = self
-            .transaction
-            .prepare_cached("INSERT INTO operation_table (timestamp, kind) VALUES (?1, ?2)")?;
-
-        let undo_point = Operation {
-            kind: None,
-            timestamp: operations[0].timestamp,
-        };
-
-        operations.insert(0, undo_point);
-        for operation in &operations {
-            sql.execute((
-                &Sql::from(operation.timestamp),
-                &operation.kind.as_ref().map(|kind| {
-                    let mut blob = Vec::new();
-                    kind.to_blob(&mut blob);
-                    blob
-                }),
-            ))?;
-        }
-        drop(sql);
-
-        for operation in operations {
-            if let Some(kind) = operation.kind {
-                self.apply_operation(&kind)?;
-            }
-        }
-        Ok(())
-    }
-
-    #[allow(clippy::too_many_lines)]
-    fn apply_operation(&mut self, operation: &OperationKind) -> Result<()> {
-        match operation {
-            OperationKind::TaskCreate { id } => {
-                self.transaction
-                    .execute("INSERT INTO task_table (id) VALUES (?1)", (id,))?;
-            }
-            OperationKind::TaskPurge { .. } => todo!(),
-            OperationKind::TaskModifyEntry { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET entry = ?2 WHERE id = ?1",
-                    (id, &Sql::from(*new)),
-                )?;
-            }
-            OperationKind::TaskModifyTitle { id, new, .. } => {
-                self.transaction
-                    .execute("UPDATE task_table SET title = ?2 WHERE id = ?1", (id, new))?;
-            }
-            OperationKind::TaskModifyStatus { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET status = ?2 WHERE id = ?1",
-                    (id, &task_status_to_sql(*new)),
-                )?;
-            }
-            OperationKind::TaskModifyPriority { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET priority = ?2 WHERE id = ?1",
-                    (id, &new.map(task_priority_to_sql)),
-                )?;
-            }
-            OperationKind::TaskModifyProject { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET project = ?2 WHERE id = ?1",
-                    (id, &new),
-                )?;
-            }
-            OperationKind::TaskModifyModified { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET modified = ?2 WHERE id = ?1",
-                    (id, &Sql::from(*new)),
-                )?;
-            }
-            OperationKind::TaskModifyDue { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET due = ?2 WHERE id = ?1",
-                    (id, &Sql::from(*new)),
-                )?;
-            }
-            OperationKind::TaskModifyWait { id, new, .. } => {
-                self.transaction.execute(
-                    "UPDATE task_table SET wait = ?2 WHERE id = ?1",
-                    (id, &Sql::from(*new)),
-                )?;
-            }
-            OperationKind::TaskModifyAddTag { id, tag } => {
-                self.transaction.execute(
-                    "INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2)",
-                    (id, tag),
-                )?;
-            }
-            OperationKind::TaskModifyRemoveTag { id, tag } => {
-                self.transaction.execute(
-                    "DELETE FROM task_tag_table WHERE task_id = ?1 AND tag_id = ?2",
-                    (id, tag),
-                )?;
-            }
-            OperationKind::TaskModifyAddDependency { id, depend } => {
-                self.transaction.execute(
-                    "INSERT INTO task_dependency_table (parent_task_id, child_task_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING",
-                    (&id, &depend),
-                )?;
-            }
-            OperationKind::TaskModifyRemoveDependency { id, depend } => {
-                self.transaction.execute(
-                    "DELETE FROM task_dependency_table WHERE parent_task_id = ?1 AND child_task_id = ?2",
-                    (&id, &depend),
-                )?;
-            }
-            OperationKind::TaskModifyAddAnnotation { id, annotation } => {
-                self.transaction.execute(
-                    indoc! {"
-                        INSERT INTO annotation_table (task_id, entry, description) VALUES (?1, ?2, ?3)
-                    "},
-                    (id, &Sql::from(annotation.entry), &annotation.description),
-                )?;
-            }
-            OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
-                self.transaction.execute(
-                    "DELETE FROM annotation_table WHERE task_id = ?1 AND entry = ?2",
-                    (id, &Sql::from(annotation.entry)),
-                )?;
-            }
-            OperationKind::TaskModifyAddUda { id, uda } => {
-                self.transaction.execute(
-                    indoc! {"
-                        INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2, ?3)
-                    "},
-                    (id, &uda.key, &uda.value),
-                )?;
-            }
-            OperationKind::TaskModifyRemoveUda { id, uda } => {
-                self.transaction.execute(
-                    "DELETE FROM uda_table WHERE task_id = ?1, key = ?2",
-                    (id, &uda.key),
-                )?;
-            }
-        }
-        Ok(())
-    }
-
-    pub fn commit(self) -> Result<()> {
-        self.transaction.commit()?;
-        Ok(())
-    }
-}
 
 #[derive(Debug)]
 pub struct Database {
+    actor_id: ActorId,
+    pub clock: Clock,
     pub(crate) connection: Connection,
 }
 
 impl Database {
     #[inline]
-    pub fn open(path: &Path) -> Result<Self> {
+    pub fn open(path: &Path, actor_id: ActorId, clock: Clock) -> Result<Self> {
         let connection = Connection::open(path)?;
-        rusqlite::vtab::array::load_module(&connection)?;
-        Ok(Self { connection })
+        Self::init(connection, actor_id, clock)
     }
 
     #[inline]
-    pub fn open_in_memory() -> Result<Self> {
+    pub fn open_in_memory(actor_id: ActorId, clock: Clock) -> Result<Self> {
         let connection = Connection::open_in_memory()?;
+        Self::init(connection, actor_id, clock)
+    }
+
+    #[inline]
+    fn init(connection: Connection, actor_id: ActorId, clock: Clock) -> Result<Self> {
+        struct BlobConcat;
+        impl rusqlite::functions::Aggregate<Vec<u8>, Vec<u8>> for BlobConcat {
+            fn init(&self, _: &mut rusqlite::functions::Context<'_>) -> rusqlite::Result<Vec<u8>> {
+                Ok(Vec::new())
+            }
+            fn step(
+                &self,
+                ctx: &mut rusqlite::functions::Context<'_>,
+                acc: &mut Vec<u8>,
+            ) -> rusqlite::Result<()> {
+                let arg = ctx.get::<Vec<u8>>(0)?;
+                acc.extend_from_slice(&arg);
+                Ok(())
+            }
+            fn finalize(
+                &self,
+                _: &mut rusqlite::functions::Context<'_>,
+                acc: Option<Vec<u8>>,
+            ) -> rusqlite::Result<Vec<u8>> {
+                Ok(acc.unwrap_or_default())
+            }
+        }
+        connection.create_aggregate_function(
+            "stride_blob_concat",
+            1,
+            FunctionFlags::SQLITE_DETERMINISTIC,
+            BlobConcat,
+        )?;
         rusqlite::vtab::array::load_module(&connection)?;
-        Ok(Self { connection })
+        Ok(Self {
+            actor_id,
+            clock,
+            connection,
+        })
     }
 
     pub fn transaction(&mut self) -> Result<Transaction<'_>> {
-        Ok(Transaction {
-            transaction: self.connection.transaction()?,
-        })
+        Transaction::new(self)
     }
 
     #[inline]
@@ -521,18 +244,19 @@ impl Database {
     }
 
     fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
-        let uuid = row.get::<_, Uuid>("id")?;
+        let id = row.get::<_, Uuid>("id")?;
         let title = row.get::<_, Option<String>>("title")?;
         let entry = row.get::<_, Sql<Option<Date>>>("entry")?.value;
-        let status = row.get::<_, Sql<TaskStatus>>("status")?.value;
+        let status = row.get::<_, Sql<Option<TaskStatus>>>("status")?.value;
         let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
         let project = row.get::<_, Option<String>>("project")?;
         let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
         let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
         let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
         let depends = row.get::<_, Sql<Vec<Uuid>>>("depends")?.value;
+        let annoation_ids = row.get::<_, Option<Vec<u8>>>("annotation_ids")?;
         let annoation_entries = row.get::<_, Option<String>>("annotation_entries")?;
-        let annoation_descriptions = row.get::<_, Option<String>>("annotation_descriptions")?;
+        let annoation_texts = row.get::<_, Option<String>>("annotation_texts")?;
         let uda_keys = row.get::<_, Option<String>>("uda_keys")?;
         let uda_values = row.get::<_, Option<String>>("uda_values")?;
         let tags = row
@@ -541,13 +265,20 @@ impl Database {
             .unwrap_or_default();
 
         let mut annotations = Vec::new();
-        if let (Some(entries), Some(descriptions)) = (annoation_entries, annoation_descriptions) {
-            for (entry, description) in entries.split(' ').zip(descriptions.split('\0')) {
+        if let (Some(ids), Some(entries), Some(text)) =
+            (annoation_ids, annoation_entries, annoation_texts)
+        {
+            for (id, (entry, description)) in ids
+                .chunks_exact(16)
+                .zip(entries.split(' ').zip(text.split('\0')))
+            {
+                let id = Uuid::from_bytes(id.try_into().expect("should be 16 bytes"));
                 let entry = entry.parse::<i64>().expect("should be a valid integer");
                 annotations.push(Annotation {
+                    id,
                     entry: DateTime::from_timestamp_millis(entry)
                         .expect("should be a valid entry timestamp"),
-                    description: description.into(),
+                    text: description.into(),
                 });
             }
         }
@@ -563,7 +294,7 @@ impl Database {
         }
 
         Ok(Task {
-            uuid,
+            id,
             entry,
             status,
             title,
@@ -580,14 +311,7 @@ impl Database {
     }
 
     pub fn all_tasks(&mut self) -> Result<Vec<Task>> {
-        self.tasks_by_status(
-            &[
-                TaskStatus::Pending,
-                TaskStatus::Complete,
-                TaskStatus::Deleted,
-            ]
-            .into(),
-        )
+        self.tasks_by_status(&[TaskStatus::Pending, TaskStatus::Done, TaskStatus::Deleted].into())
     }
 
     pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>> {
@@ -628,7 +352,9 @@ impl Database {
         let task_iter = sql.query_map([statys_array], Self::row_to_task)?;
         for task in task_iter {
             let task = task?;
-            if status.contains(&task.status) {
+            if let Some(task_status) = &task.status
+                && status.contains(task_status)
+            {
                 tasks.push(task);
             }
         }
@@ -660,290 +386,6 @@ impl Database {
             .query_row(SQL_BY_ID, (id,), Self::row_to_task)
             .optional()
             .map_err(Into::into)
-    }
-
-    pub fn task_create(
-        &mut self,
-        id: Uuid,
-        title: String,
-        ops: &mut Vec<Operation>,
-    ) -> Result<TaskTransaction> {
-        Ok(TaskTransaction::create(id, title, ops))
-    }
-
-    pub fn insert_task(&mut self, task: &Task) -> Result<()> {
-        let mut operations = Vec::new();
-
-        operations.push(Operation::undo_point_with_now());
-        push_operations_diff_task(Some(task), None, &mut operations);
-
-        let transaction = self.connection.transaction()?;
-
-        if let Some(project) = &task.project {
-            let mut sql = transaction.prepare_cached(SQL_PROJECT_INSERT_OR_IGNORE)?;
-            sql.execute((project,))?;
-        }
-
-        let mut sql = transaction.prepare_cached(SQL_INSERT)?;
-
-        let mut task_uuid = task.uuid;
-        if task.uuid == Uuid::nil() {
-            task_uuid = Uuid::now_v7();
-        }
-
-        sql.execute::<&[(&str, &dyn ToSql)]>(&[
-            (":id", &task_uuid),
-            (":title", &task.title),
-            (":entry", &Sql::from(task.entry)),
-            (":status", &Sql::from(task.status)),
-            (":priority", &Sql::from(task.priority)),
-            (":project", &task.project),
-            (":modified", &Sql::from(task.modified)),
-            (":due", &Sql::from(task.due)),
-            (":wait", &Sql::from(task.wait)),
-        ])?;
-
-        if !task.tags.is_empty() {
-            let mut sql = transaction.prepare_cached(SQL_TAG_INSERT_OR_IGNORE)?;
-            for tag in &task.tags {
-                sql.execute((tag,))?;
-            }
-
-            let mut sql = transaction
-                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING")?;
-            for tag in &task.tags {
-                sql.execute((task_uuid, tag))?;
-            }
-        }
-        drop(sql);
-
-        if !task.annotations.is_empty() {
-            let mut sql = transaction.prepare_cached(indoc! {"
-                INSERT INTO annotation_table (task_id, entry, description) VALUES (?1, ?2, ?3)
-            "})?;
-            for Annotation { entry, description } in &task.annotations {
-                sql.execute((task.uuid, &Sql::from(*entry), description))?;
-            }
-        }
-        if !task.udas.is_empty() {
-            let mut sql = transaction.prepare_cached(indoc! {"
-                INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2)
-            "})?;
-            for Uda { key, value } in &task.udas {
-                sql.execute((task.uuid, key, value))?;
-            }
-        }
-
-        let mut sql = transaction
-            .prepare_cached("INSERT INTO operation_table (timestamp, kind) VALUES (?1, ?2)")?;
-
-        for operation in operations {
-            sql.execute((
-                &Sql::from(operation.timestamp),
-                &operation.kind.as_ref().map(|kind| {
-                    let mut blob = Vec::new();
-                    kind.to_blob(&mut blob);
-                    blob
-                }),
-            ))?;
-        }
-
-        drop(sql);
-        transaction.commit()?;
-        Ok(())
-    }
-
-    pub fn update_task(&mut self, task: &Task) -> Result<()> {
-        let Some(previous) = self.task_by_id(task.uuid)? else {
-            return self.insert_task(task);
-        };
-
-        let mut operations = Vec::new();
-        push_operations_diff_task(Some(task), Some(&previous), &mut operations);
-        if !operations.is_empty() {
-            operations.insert(0, Operation::undo_point_with_now());
-        }
-
-        let transaction = self.connection.transaction()?;
-
-        if let Some(project) = &task.project {
-            let mut sql = transaction.prepare_cached(SQL_PROJECT_INSERT_OR_IGNORE)?;
-            sql.execute((project,))?;
-        }
-
-        let mut sql = transaction.prepare_cached(SQL_UPDATE)?;
-        sql.execute::<&[(&str, &dyn ToSql)]>(&[
-            (":id", &task.uuid),
-            (":title", &task.title),
-            (":entry", &Sql::from(task.entry)),
-            (":status", &Sql::from(task.status)),
-            (":priority", &Sql::from(task.priority)),
-            (":project", &task.project),
-            (":modified", &Sql::from(task.modified)),
-            (":due", &Sql::from(task.due)),
-            (":wait", &Sql::from(task.wait)),
-        ])?;
-        drop(sql);
-
-        if !task.tags.is_empty() {
-            let mut sql = transaction.prepare_cached(SQL_TAG_INSERT_OR_IGNORE)?;
-            for tag in &task.tags {
-                sql.execute((tag,))?;
-            }
-
-            // TODO: Maybe instead of deleting them all,
-            // figure out a nice way to delete only the tags that are old.
-            transaction.execute(
-                "DELETE FROM task_tag_table WHERE task_id = ?1",
-                (task.uuid,),
-            )?;
-            let mut sql = transaction
-                .prepare_cached("INSERT INTO task_tag_table (task_id, tag_id) VALUES (?1, ?2) ON CONFLICT DO NOTHING")?;
-            for tag in &task.tags {
-                sql.execute((task.uuid, tag))?;
-            }
-        }
-
-        if !task.annotations.is_empty() {
-            // TODO: Maybe instead of deleting them all,
-            // figure out a nice way to delete only the tags that are old.
-            transaction.execute(
-                "DELETE FROM annotation_table WHERE task_id = ?1",
-                (task.uuid,),
-            )?;
-
-            let mut sql = transaction.prepare_cached(indoc! {"
-                INSERT INTO annotation_table (task_id, entry, description) VALUES (?1, ?2, ?3)
-            "})?;
-            for Annotation { entry, description } in &task.annotations {
-                sql.execute((task.uuid, &Sql::from(*entry), description))?;
-            }
-        }
-        if !task.udas.is_empty() {
-            // TODO: Maybe instead of deleting them all,
-            // figure out a nice way to delete only the tags that are old.
-            transaction.execute("DELETE FROM uda_table WHERE task_id = ?1", (task.uuid,))?;
-
-            let mut sql = transaction.prepare_cached(indoc! {"
-                INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2)
-            "})?;
-            for Uda { key, value } in &task.udas {
-                sql.execute((task.uuid, key, value))?;
-            }
-        }
-
-        let mut sql = transaction
-            .prepare_cached("INSERT INTO operation_table (timestamp, kind) VALUES (?1, ?2)")?;
-
-        for operation in operations {
-            sql.execute((
-                &Sql::from(operation.timestamp),
-                &operation.kind.as_ref().map(|kind| {
-                    let mut blob = Vec::new();
-                    kind.to_blob(&mut blob);
-                    blob
-                }),
-            ))?;
-        }
-
-        drop(sql);
-        transaction.commit()?;
-        Ok(())
-    }
-
-    pub fn purge_task_by_id(&mut self, id: Uuid) -> Result<Option<Task>> {
-        let task = self.task_by_id(id)?;
-        if task.is_some() {
-            self.connection.execute(SQL_DELETE, (id,))?;
-        }
-        Ok(task)
-    }
-
-    pub fn update_task_modified_property(
-        transaction: &rusqlite::Transaction<'_>,
-        id: Uuid,
-        timestamp: Option<Date>,
-    ) -> Result<()> {
-        transaction.execute(
-            "UPDATE task_table SET modified = ?2 WHERE id = ?1",
-            (id, &Sql::from(timestamp)),
-        )?;
-        Ok(())
-    }
-
-    pub fn undoable_operation(&mut self, undo_count: usize) -> Result<Vec<(i64, Operation)>> {
-        let transaction = self.connection.transaction()?;
-        Self::get_undoable_operation(&transaction, undo_count)
-    }
-
-    pub fn get_undoable_operation(
-        transaction: &rusqlite::Transaction<'_>,
-        mut limit: usize,
-    ) -> Result<Vec<(i64, Operation)>> {
-        let mut operations = Vec::new();
-
-        let mut sql = transaction
-            .prepare("SELECT id, timestamp, kind FROM operation_table ORDER BY id DESC")?;
-        let operations_rows = sql.query_map((), |row| {
-            let id = row.get::<_, i64>("id")?;
-            let timestamp = row.get::<_, Sql<Date>>("timestamp")?;
-            let kind = row.get::<_, Option<Vec<u8>>>("kind")?;
-
-            Ok((
-                id,
-                kind.as_deref()
-                    .map(|mut blob| OperationKind::from_blob(&mut blob))
-                    .transpose()
-                    .map(|kind| Operation {
-                        timestamp: timestamp.value,
-                        kind,
-                    })
-                    .map_err(|e| rusqlite::types::FromSqlError::Other(e.into()))?,
-            ))
-        })?;
-        for operation in operations_rows {
-            let (id, operation) = operation?;
-            let is_undo_point = operation.is_undo_point();
-            if is_undo_point {
-                limit = limit.saturating_sub(1);
-                if limit == 0 {
-                    break;
-                }
-            } else {
-                operations.push((id, operation));
-            }
-        }
-        Ok(operations)
-    }
-
-    #[allow(clippy::too_many_lines)]
-    pub fn undo(&mut self, undo_count: usize) -> Result<()> {
-        let mut transaction = self.transaction()?;
-
-        let operations = Self::get_undoable_operation(&transaction.transaction, undo_count)?;
-        for (id, Operation { kind, .. }) in operations {
-            transaction
-                .transaction
-                .execute("DELETE FROM operation_table WHERE id = ?1", (id,))?;
-            let Some(kind) = kind else {
-                continue;
-            };
-            match kind {
-                OperationKind::TaskCreate { id } => {
-                    transaction
-                        .transaction
-                        .execute("DELETE FROM task_table WHERE id = ?1", (id,))?;
-                }
-                operation @ OperationKind::TaskPurge { .. } => todo!("{operation:#?}"),
-                _ => {}
-            }
-            if let Some(kind) = kind.invert() {
-                transaction.apply_operation(&kind)?;
-            }
-        }
-
-        transaction.commit()?;
-        Ok(())
     }
 
     pub fn add_backend(&mut self, backend: &BackendRecord) -> Result<()> {

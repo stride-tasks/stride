@@ -20,8 +20,6 @@ import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 abstract class RustError implements RustOpaqueInterface {
   Host? asUnknownHost();
 
-  bool isKeyStoreVerification();
-
   bool isOutOfFuelTrapCode();
 
   String? pluginName();

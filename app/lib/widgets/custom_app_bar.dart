@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
@@ -13,11 +12,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final Widget? leading;
 
-  const CustomAppBar({
-    super.key,
-    this.leading,
-    required this.title,
-  });
+  const CustomAppBar({super.key, this.leading, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -48,24 +43,26 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   if (!hasFilter) {
                     return;
                   }
-                  final newSettings =
-                      state.settings.copyWith(selectedFilter: null);
-                  context
-                      .read<SettingsBloc>()
-                      .add(SettingsUpdateEvent(settings: newSettings));
+                  final newSettings = state.settings.copyWith(
+                    selectedFilter: null,
+                  );
+                  context.read<SettingsBloc>().add(
+                    SettingsUpdateEvent(settings: newSettings),
+                  );
                   context.read<TaskBloc>().add(TaskFilterEvent());
                 },
               ),
-            if (hasRepositories)
-              IconButton(
-                icon: const Icon(Icons.undo),
-                onPressed: () async {
-                  context.read<LogBloc>().catch_(
-                        message: 'undo',
-                        () async => context.read<TaskBloc>().undo(),
-                      );
-                },
-              ),
+            // TODO: Implemnt undo
+            // if (hasRepositories)
+            //   IconButton(
+            //     icon: const Icon(Icons.undo),
+            //     onPressed: () async {
+            //       context.read<LogBloc>().catch_(
+            //             message: 'undo',
+            //             () async => context.read<TaskBloc>().undo(),
+            //           );
+            //     },
+            //   ),
             if (hasRepositories)
               IconButton(
                 icon: BlocBuilder<TaskBloc, TaskState>(
@@ -82,9 +79,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 onPressed: () {
                   context.read<TaskBloc>().add(TaskSyncEvent());
-                  context
-                      .read<PluginManagerBloc>()
-                      .emitHostEvent(HostEvent.taskSync());
+                  context.read<PluginManagerBloc>().emitHostEvent(
+                    HostEvent.taskSync(),
+                  );
                 },
               ),
             IconButton(

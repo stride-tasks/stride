@@ -163,7 +163,7 @@ impl TaskchampionBackend {
 
         let mut champion_task = self
             .source
-            .create_task(task.uuid, &mut self.operations)
+            .create_task(task.id, &mut self.operations)
             .await?;
 
         champion_task.set_entry(task.entry, &mut self.operations)?;
@@ -175,7 +175,9 @@ impl TaskchampionBackend {
         if let Some(modified) = task.modified {
             champion_task.set_modified(modified, &mut self.operations)?;
         }
-        champion_task.set_status(task.status.into(), &mut self.operations)?;
+        if let Some(status) = task.status {
+            champion_task.set_status(status.into(), &mut self.operations)?;
+        }
         for tag in &task.tags {
             champion_task.add_tag(
                 &tag.parse::<taskchampion::Tag>().unwrap(),
@@ -189,7 +191,7 @@ impl TaskchampionBackend {
             champion_task.add_annotation(
                 taskchampion::Annotation {
                     entry: annotation.entry,
-                    description: annotation.description,
+                    description: annotation.text,
                 },
                 &mut self.operations,
             )?;

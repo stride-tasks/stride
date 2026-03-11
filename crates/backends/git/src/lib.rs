@@ -8,34 +8,34 @@ use base64::{DecodeError, Engine};
 use config::GitConfig;
 use git2::{
     AnnotatedCommit, Branch, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
-    Oid, RebaseOptions, RemoteCallbacks, Repository, ResetType, Signature, build::CheckoutBuilder,
+    Oid, Reference, RemoteCallbacks, Repository, ResetType, Signature, StatusOptions,
+    build::CheckoutBuilder,
 };
 use known_hosts::{Host, HostKeyType, KnownHosts};
-use serialization::task_to_data;
 use ssh_key::SshKey;
 use std::{
     cell::RefCell,
-    collections::HashSet,
     fs::File,
-    io::{BufRead, BufReader, Write},
-    path::{Path, PathBuf},
+    io::{BufRead, BufReader, BufWriter, Lines, Seek, Write},
+    iter::{FusedIterator, Skip},
+    path::Path,
     rc::Rc,
     sync::Arc,
 };
 use stride_backend::{Backend, BackendHandler};
-use stride_core::{
-    event::TaskQuery,
-    task::{Task, TaskStatus},
+use stride_crdt::{
+    actor::{Actor, ActorId},
+    change::{Change, Sequence},
+    hlc::{Microsecond, Timestamp},
+    version_vector::{ChangeLocation, VersionVector},
 };
 use stride_crypto::crypter::Crypter;
-use stride_database::{
-    Database,
-    operation::{OperationKind, difference::push_operations_diff_task},
-};
+use stride_database::Database;
 use uuid::Uuid;
 
+mod serialization;
+
 pub mod error;
-pub mod operation_iterator;
 
 pub use error::{Error, Result};
 
@@ -53,376 +53,236 @@ pub(crate) fn base64_decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, DecodeE
     inner(input.as_ref())
 }
 
-pub(crate) trait ToBase64 {
-    fn to_base64(&self) -> String;
-}
-
-impl ToBase64 for Uuid {
-    fn to_base64(&self) -> String {
-        base64_encode(self.as_bytes())
-    }
-}
-
-mod key_store;
-mod serialization;
-
 /// flutter_rust_bridge:ignore
 pub mod config;
 
 pub mod known_hosts;
 pub mod ssh_key;
 
-use key_store::KeyStore;
+use crate::{
+    config::Handler,
+    serialization::{change_from_data, change_to_data},
+};
 
-use crate::{config::Handler, operation_iterator::OperationIterator};
-
-pub(crate) const IV_LEN: usize = 12;
-
-pub(crate) fn generate_iv() -> [u8; IV_LEN] {
-    let mut iv = [0u8; IV_LEN];
-    getrandom::fill(&mut iv).unwrap();
-    iv
+struct ChangeIter<'a> {
+    actor_id: ActorId,
+    lines: Skip<Lines<BufReader<&'a mut File>>>,
+    key: &'a Crypter,
 }
-
-pub(crate) struct TaskDiff {
-    path: PathBuf,
-    adding: bool,
-    // TODO: content no longer has to be a String, it can be a &[u8]
-    content: String,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(transparent)]
-struct DecryptedTask {
-    task: Task,
-    #[serde(skip, default = "generate_iv")]
-    iv: [u8; IV_LEN],
-}
-
-struct Storage {
-    loaded: bool,
-    tasks: Vec<DecryptedTask>,
-    path: PathBuf,
-    kind: TaskStatus,
-    key_store: Arc<KeyStore>,
-}
-
-impl Storage {
-    fn new(path: PathBuf, kind: TaskStatus, key_store: Arc<KeyStore>) -> Self {
-        Self {
-            loaded: false,
-            tasks: Vec::new(),
-            path,
-            kind,
-            key_store,
-        }
-    }
-
-    fn load(&mut self) -> Result<()> {
-        if self.loaded {
-            return Ok(());
-        }
-
-        if !self.path.exists() {
-            return Ok(());
-        }
-
-        let file: File = File::open(&self.path)?;
-        let buf = BufReader::new(file);
-        let mut tasks = Vec::new();
-        for line in buf.lines() {
-            let line = line?;
-            if line.is_empty() {
-                continue;
-            }
-            let (iv, mut task) = self.key_store.decrypt(self.kind, &line)?;
-            task.status = self.kind;
-
-            tasks.push(DecryptedTask { task, iv });
-        }
-
-        self.tasks = tasks;
-        self.loaded = true;
-        Ok(())
-    }
-
-    fn append(&mut self, mut task: Task) -> Result<()> {
-        task.status = self.kind;
-
-        let mut file = File::options().append(true).create(true).open(&self.path)?;
-
-        if self.key_store.has_key_for(self.kind)? {
-            let (iv, mut content) = self.key_store.encrypt(&task, None)?;
-            content.push('\n');
-            file.write_all(content.as_bytes())?;
-            self.tasks.push(DecryptedTask { task, iv });
-        } else {
-            let mut content = task_to_data(&task);
-            content.push(b'\n');
-            file.write_all(&content)?;
-
-            drop(file);
-
-            let iv = generate_iv();
-            self.tasks.push(DecryptedTask { task, iv });
-            self.key_store.save()?;
-            self.save()?;
-        }
-
-        Ok(())
-    }
-
-    fn save(&mut self) -> Result<()> {
-        let mut content = String::new();
-        for DecryptedTask { task, iv } in &self.tasks {
-            let (_, data) = self.key_store.encrypt(task, Some(*iv))?;
-            content += &data;
-            content.push('\n');
-        }
-
-        std::fs::write(&self.path, content)?;
-        Ok(())
-    }
-
-    fn get_by_id(&mut self, uuid: &Uuid) -> Result<Option<&DecryptedTask>> {
-        self.load()?;
-        Ok(self.tasks.iter().find(|task| &task.task.uuid == uuid))
-    }
-
-    #[allow(unused)]
-    fn get_index(&mut self, uuid: &Uuid) -> Result<Option<usize>> {
-        self.load()?;
-        Ok(self.tasks.iter().position(|task| &task.task.uuid == uuid))
-    }
-
-    // fn filter(&mut self, filter: &Filter, result: &mut Vec<Task>) -> Result<()> {
-    //     if !filter.status.contains(&self.kind) {
-    //         return Ok(());
-    //     }
-
-    //     let search = filter.search.to_lowercase();
-
-    //     self.load()?;
-    //     for DecryptedTask { task, .. } in self
-    //         .tasks
-    //         .iter()
-    //         .filter(|DecryptedTask { task, .. }| task.title.to_lowercase().contains(&search))
-    //     {
-    //         result.push(task.clone());
-    //     }
-
-    //     Ok(())
-    // }
-    fn query(&mut self, query: &TaskQuery, result: &mut Vec<Task>) -> Result<()> {
-        match query {
-            TaskQuery::Uuid { uuid } => {
-                if let Some(task) = self.get_by_id(uuid)? {
-                    result.push(task.task.clone());
-                }
-            }
-            TaskQuery::Title {
-                title,
-                status,
-                limit,
-            } => {
-                if !status.is_empty() && !status.contains(&self.kind) {
-                    return Ok(());
-                }
-
-                let search = title.to_lowercase();
-
-                self.load()?;
-                for DecryptedTask { task, .. } in
-                    self.tasks.iter().filter(|DecryptedTask { task, .. }| {
-                        task.title
-                            .as_ref()
-                            .is_some_and(|title| title.to_lowercase().contains(&search))
-                    })
-                {
-                    #[allow(clippy::cast_possible_truncation)]
-                    if Some(result.len() as u32) == *limit {
-                        break;
-                    }
-                    result.push(task.clone());
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn update(&mut self, task: &Task) -> Result<bool> {
-        if task.status != self.kind {
-            return Ok(false);
-        }
-
-        self.load()?;
-        let current = self
-            .tasks
-            .iter_mut()
-            .find(|DecryptedTask { task: element, .. }| element.uuid == task.uuid);
-
-        let Some(current) = current else {
-            return Ok(false);
-        };
-
-        if current.task == *task {
-            return Ok(false);
-        }
-
-        current.task = task.clone();
-        current.iv = generate_iv();
-
-        self.save()?;
-        Ok(true)
-    }
-
-    fn remove(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
-        let index = self.get_index(uuid)?;
-        let Some(index) = index else {
+impl ChangeIter<'_> {
+    fn next_impl(&mut self) -> Result<Option<Change>> {
+        let Some(change) = self.lines.next().transpose()? else {
             return Ok(None);
         };
 
-        let DecryptedTask { task, .. } = self.tasks.remove(index);
-        self.save()?;
-        Ok(Some(task))
+        if change.is_empty() {
+            unreachable!("should not contain any empty newlines");
+        }
+
+        let change = base64_decode(change)?;
+        let (_, _, data) = self.key.decrypt(&change, 0)?;
+        Ok(Some(change_from_data(self.actor_id, &data)?))
+    }
+}
+
+impl Iterator for ChangeIter<'_> {
+    type Item = Result<Change>;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_impl().transpose()
+    }
+}
+
+impl FusedIterator for ChangeIter<'_> {}
+
+/// Actor change log storage
+struct ActorStorage {
+    actor_id: ActorId,
+    sequence: Sequence,
+    file: File,
+    master_key: Arc<Crypter>,
+    key: Crypter,
+}
+
+impl ActorStorage {
+    const KEY_VERSION_LEN: usize = 1;
+    const KEY_SEQUENCE_LEN: usize = size_of::<u64>();
+    const KEY_AAD_LEN: usize = Self::KEY_VERSION_LEN + Self::KEY_SEQUENCE_LEN;
+
+    fn load(
+        actor_id: ActorId,
+        changelog_filepath: &Path,
+        master_key: Arc<Crypter>,
+    ) -> Result<Option<Self>> {
+        if !changelog_filepath.exists() {
+            return Ok(None);
+        }
+
+        let file = File::options()
+            .read(true)
+            .write(true)
+            .open(changelog_filepath)?;
+        let mut reader = BufReader::new(file);
+
+        let mut key = String::new();
+        reader.read_line(&mut key)?;
+
+        // NOTE: read_line includes the newline as well.
+        let key = key.trim();
+
+        if key.is_empty() {
+            return Ok(None);
+        }
+
+        let key = base64::engine::general_purpose::URL_SAFE.decode(key)?;
+
+        let (aad, _, data) = master_key.decrypt(&key, Self::KEY_AAD_LEN)?;
+
+        let ([version], aad) = aad
+            .split_first_chunk::<{ Self::KEY_VERSION_LEN }>()
+            .expect("shoud contain version");
+        if *version != 0 {
+            return Err(Error::UnsupportedVersion {
+                actor_id,
+                version: *version,
+            });
+        }
+
+        let (sequence_bytes, aad) = aad
+            .split_first_chunk::<{ Self::KEY_SEQUENCE_LEN }>()
+            .expect("shoud contain sequence");
+        let sequence = Sequence::new(u64::from_be_bytes(*sequence_bytes));
+
+        assert_eq!(aad.len(), 0, "should not contain any remaining data");
+
+        let key = Crypter::new(data.try_into().unwrap());
+
+        Ok(Some(Self {
+            actor_id,
+            sequence,
+            file: reader.into_inner(),
+            master_key,
+            key,
+        }))
     }
 
-    fn clear(&mut self) -> Result<()> {
-        self.loaded = true;
-        self.tasks.clear();
-        self.save()?;
-        Ok(())
+    fn create(
+        actor_id: ActorId,
+        changelog_filepath: &Path,
+        master_key: Arc<Crypter>,
+    ) -> Result<Self> {
+        let mut file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(changelog_filepath)?;
+
+        let sequence = Sequence::new(0);
+
+        let mut aad = Vec::new();
+        aad.push(0);
+        aad.extend_from_slice(&sequence.get().to_be_bytes());
+        assert_eq!(aad.len(), Self::KEY_AAD_LEN);
+
+        let key = Crypter::generate();
+        let key_encrypted = master_key.encrypt(key.encryption_key(), &aad)?;
+        let key_base64 = base64::engine::general_purpose::URL_SAFE.encode(key_encrypted);
+
+        file.write_all(key_base64.as_bytes())?;
+
+        Ok(Self {
+            actor_id,
+            sequence,
+            file,
+            master_key,
+            key,
+        })
     }
-    fn unload(&mut self) {
-        self.loaded = false;
-        self.tasks.clear();
+
+    #[allow(clippy::iter_not_returning_iterator)]
+    fn iter(&mut self, skip: usize) -> Result<ChangeIter<'_>> {
+        self.file.seek(std::io::SeekFrom::Start(0))?;
+        Ok(ChangeIter {
+            actor_id: self.actor_id,
+            // Note: +1 for encrypted key.
+            lines: BufReader::new(&mut self.file).lines().skip(skip + 1),
+            key: &self.key,
+        })
+    }
+
+    fn append(&mut self, changes: &[Change]) -> Result<()> {
+        self.file.seek(std::io::SeekFrom::End(0))?;
+
+        let mut writer = BufWriter::new(&mut self.file);
+        for change in changes {
+            if change.actor_id != self.actor_id {
+                return Err(Error::ActorMissmatch {
+                    change_log_actor_id: self.actor_id,
+                    change_actor_id: change.actor_id,
+                });
+            }
+            if change.sequence.get() != self.sequence.get() + 1 {
+                return Err(Error::ApplyingChangeOutOfOrder {
+                    actor_id: self.actor_id,
+                    expected_sequence: Sequence::new(self.sequence.get() + 1),
+                    actual_sequence: change.sequence,
+                });
+            }
+
+            let mut blob = Vec::new();
+            change_to_data(change, &mut blob);
+
+            let change_encrypted = self.key.encrypt(&blob, &[])?;
+            let change_base64 = base64_encode(change_encrypted);
+
+            writer.write_all(b"\n")?;
+            writer.write_all(change_base64.as_bytes())?;
+
+            self.sequence = Sequence::new(self.sequence.get() + 1);
+        }
+
+        writer.seek(std::io::SeekFrom::Start(0))?;
+
+        {
+            let mut aad = Vec::new();
+            aad.push(0);
+            aad.extend_from_slice(&self.sequence.get().to_be_bytes());
+
+            assert_eq!(aad.len(), Self::KEY_AAD_LEN);
+
+            let key_encrypted = self.master_key.encrypt(self.key.encryption_key(), &aad)?;
+            let key_base64 = base64::engine::general_purpose::URL_SAFE.encode(key_encrypted);
+
+            writer.write_all(key_base64.as_bytes())?;
+        }
+
+        writer.flush()?;
+        Ok(())
     }
 }
 
 #[allow(missing_debug_implementations)]
 pub struct GitBackend {
     config: GitConfig,
-
-    tasks_path: PathBuf,
-    key_store: Arc<KeyStore>,
-
-    pending: Storage,
-    complete: Storage,
-    deleted: Storage,
+    master_key: Arc<Crypter>,
 }
 
 impl GitBackend {
-    const PENDING_DATA_FILENAME: &'static str = "pending";
-    const COMPLETE_DATA_FILENAME: &'static str = "complete";
-    const DELETED_DATA_FILENAME: &'static str = "deleted";
-
     pub fn new(config: GitConfig) -> Result<Self> {
         let repository_path = config.repository_path();
-        let keys_filepath = config.keys_filepath();
 
         std::fs::create_dir_all(&repository_path)?;
 
         let key = config.encryption_key.as_ref();
         let crypter = Arc::new(Crypter::new(key.try_into().unwrap()));
-        let key_store = Arc::new(KeyStore::new(&keys_filepath, crypter));
-
-        let tasks_path = config.tasks_path();
 
         Ok(Self {
             config,
-            pending: Storage::new(
-                tasks_path.join(Self::PENDING_DATA_FILENAME),
-                TaskStatus::Pending,
-                key_store.clone(),
-            ),
-            complete: Storage::new(
-                tasks_path.join(Self::COMPLETE_DATA_FILENAME),
-                TaskStatus::Complete,
-                key_store.clone(),
-            ),
-            deleted: Storage::new(
-                tasks_path.join(Self::DELETED_DATA_FILENAME),
-                TaskStatus::Deleted,
-                key_store.clone(),
-            ),
-            tasks_path,
-            key_store,
+            master_key: crypter,
         })
     }
 
-    fn storage_mut(&mut self) -> [&mut Storage; 3] {
-        [&mut self.pending, &mut self.deleted, &mut self.complete]
-    }
-
-    pub(crate) fn update2(&mut self, task: &Task) -> Result<bool> {
-        let mut updated = false;
-        for storage in self.storage_mut() {
-            if storage.update(task)? {
-                updated = true;
-                break;
-            }
-        }
-        Ok(updated)
-    }
-
-    pub(crate) fn remove_task2(&mut self, task: &Task) -> Result<Option<Task>> {
-        let mut found_task = None;
-        for storage in self.storage_mut() {
-            if task.status != storage.kind {
-                continue;
-            }
-
-            let index = storage.get_index(&task.uuid)?;
-            let Some(index) = index else {
-                break;
-            };
-
-            found_task = Some(storage.tasks.remove(index));
-
-            storage.save()?;
-        }
-        Ok(found_task.map(|DecryptedTask { task, .. }| task))
-    }
-
-    fn change_category(&mut self, task: &Task, status: TaskStatus) -> Result<bool> {
-        if task.status == status {
-            return Ok(false);
-        }
-
-        let mut found_task = None;
-        for storage in self.storage_mut() {
-            if task.status != storage.kind {
-                continue;
-            }
-
-            let index = storage.get_index(&task.uuid)?;
-            let Some(index) = index else {
-                break;
-            };
-
-            found_task = Some(storage.tasks.remove(index));
-
-            storage.save()?;
-        }
-
-        let Some(mut found_task) = found_task else {
-            return Ok(false);
-        };
-
-        found_task.task.status = status;
-        let transition = match status {
-            TaskStatus::Pending => "PEND",
-            TaskStatus::Deleted => "DELETE",
-            TaskStatus::Complete => "DONE",
-        };
-
-        let message = format!("${transition} {}", found_task.task.uuid.to_base64());
-        self.storage_mut()[status as usize].append(found_task.task)?;
-        self.add_and_commit(&message)?;
-        Ok(true)
-    }
-
-    pub fn clone_repository(&mut self) -> Result<()> {
+    fn clone_repository(&mut self) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
         let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
 
@@ -451,62 +311,10 @@ impl GitBackend {
         }
 
         log::info!("Repository {} cloned successfully!", &self.config.origin);
-
-        self.unload();
-
-        if !self.tasks_path.exists() {
-            std::fs::create_dir(&self.tasks_path)
-                .expect("creating the tasks directory should not fail");
-        }
-
         Ok(())
     }
 
-    pub fn force_hard_reset(&mut self, commit: Oid) -> Result<()> {
-        let repository = Repository::open(self.config.repository_path())?;
-        let commit = repository.find_commit(commit)?;
-
-        let branch = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
-
-        let mut reference = branch.into_reference();
-
-        reference.set_target(
-            commit.id(),
-            &format!("Force hard reset to commit: {}", commit.id()),
-        )?;
-
-        let mut checkout = CheckoutBuilder::new();
-        checkout.force();
-        repository.reset(commit.as_object(), ResetType::Hard, Some(&mut checkout))?;
-
-        Ok(())
-    }
-
-    // pub fn checkout(&mut self) -> Result<()> {
-    //     self.init_repository_if_needed()?;
-
-    //     self.sync()?;
-    //     self.unload();
-
-    //     let git_repository = Repository::open(&self.config.repository_path())?;
-    //     let branch = git_repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
-    //     let reference = branch.into_reference();
-    //     let tree = reference.peel_to_tree()?;
-    //     git_repository.checkout_tree(tree.as_object(), None)?;
-
-    //     let name = reference
-    //         .name()
-    //         .expect("invalid UTF-8 reference name of branch");
-    //     git_repository.set_head(name)?;
-
-    //     if !self.tasks_path.exists() {
-    //         std::fs::create_dir(&self.tasks_path)?;
-    //     }
-
-    //     Ok(())
-    // }
-
-    pub(crate) fn init_repotitory<'a>(&self, repository: &'a Repository) -> Result<Branch<'a>> {
+    fn init_repotitory<'a>(&self, repository: &'a Repository) -> Result<Branch<'a>> {
         let mut index = repository.index()?;
 
         let tree = index.write_tree()?;
@@ -531,7 +339,7 @@ impl GitBackend {
         Ok(repository.find_branch(&self.config.branch, git2::BranchType::Local)?)
     }
 
-    pub fn add_and_commit(&self, message: &str) -> Result<bool> {
+    fn add_and_commit(&self, message: &str) -> Result<bool> {
         let repository = Repository::open(self.config.repository_path())?;
 
         if repository.statuses(None)?.is_empty() {
@@ -569,148 +377,7 @@ impl GitBackend {
         Ok(true)
     }
 
-    fn resolve_conflicts(&mut self, diffs: &[TaskDiff]) -> Result<()> {
-        for TaskDiff {
-            path,
-            adding,
-            content,
-        } in diffs
-        {
-            if !adding {
-                continue;
-            }
-
-            let status = if path == Path::new("tasks/pending") {
-                TaskStatus::Pending
-            } else if path == Path::new("tasks/complete") {
-                TaskStatus::Complete
-            } else if path == Path::new("tasks/deleted") {
-                TaskStatus::Deleted
-            } else {
-                log::warn!("skipping unknown path: {}", path.display());
-                continue;
-            };
-
-            let (_, current) = self.key_store.decrypt(status, content)?;
-
-            let Some(previous) = self.task_by_uuid(&current.uuid)? else {
-                self.storage_mut()[status as usize].append(current)?;
-                continue;
-            };
-
-            #[allow(clippy::match_same_arms)]
-            let first = match (previous.task.modified, current.modified) {
-                (Some(previous_modified), Some(current_modified)) => {
-                    previous_modified >= current_modified
-                }
-                (None, Some(_)) => false,
-                (Some(_), None) => true,
-                (None, None) => {
-                    // TODO: This should not be possible in normal circumstances.
-                    //       For now choose the current.
-                    true
-                }
-            };
-
-            // First is already set to the working dir and tasks are loaded.
-            if first {
-                continue;
-            }
-
-            if previous.task.status == current.status {
-                self.update2(&current)?;
-                continue;
-            }
-
-            let previous = previous.task.clone();
-            self.remove_task2(&previous)?;
-            self.storage_mut()[status as usize].append(current)?;
-        }
-        Ok(())
-    }
-
-    #[allow(clippy::similar_names)]
-    fn rebase(&mut self, repository: &Repository, remote: &AnnotatedCommit<'_>) -> Result<()> {
-        let mut opts = RebaseOptions::new();
-
-        let mut rebase = repository.rebase(None, Some(remote), None, Some(&mut opts))?;
-
-        let remote_commit = repository.find_commit(remote.id())?;
-        let mut patch = remote_commit.id();
-
-        while let Some(step) = rebase.next() {
-            let step = step?;
-
-            let cid = step.id();
-            let commit = repository.find_commit(cid)?;
-
-            let base_commit = repository.find_commit(patch)?;
-            let base_commit_tree = base_commit.tree()?;
-
-            let mut checkout_options = CheckoutBuilder::new();
-            checkout_options.force();
-            repository.checkout_tree(base_commit_tree.as_object(), Some(&mut checkout_options))?;
-
-            self.unload();
-
-            let mut diffs = Vec::new();
-
-            let diff = repository.diff_tree_to_tree(
-                Some(&base_commit.tree()?),
-                Some(&commit.tree()?),
-                None,
-            )?;
-            diff.print(git2::DiffFormat::Patch, |delta, _, line| {
-                if !matches!(
-                    line.origin_value(),
-                    git2::DiffLineType::Addition | git2::DiffLineType::Deletion
-                ) {
-                    return true;
-                }
-                let path = delta.new_file().path().unwrap();
-                let content = std::str::from_utf8(line.content())
-                    .unwrap()
-                    .trim_end_matches('\n');
-                // println!("AT:{} {} {content}", path.display(), line.origin());
-
-                diffs.push(TaskDiff {
-                    path: path.to_owned(),
-                    adding: line.origin_value() == git2::DiffLineType::Addition,
-                    content: content.to_owned(),
-                });
-
-                true
-            })?;
-
-            self.resolve_conflicts(&diffs)?;
-
-            // Skip the commit if it's empty.
-            if repository.statuses(None)?.is_empty() {
-                log::info!(
-                    "Skipping commit (empty) {cid}{}",
-                    commit
-                        .message()
-                        .map(|x| format!(": {x}"))
-                        .unwrap_or_default()
-                );
-                continue;
-            }
-
-            let mut index = repository.index()?;
-
-            index.add_all(["."], git2::IndexAddOption::DEFAULT, None)?;
-            index.write()?;
-
-            let committer = Signature::now(&self.config.author, &self.config.email)?;
-            patch = rebase.commit(None, &committer, None)?;
-        }
-
-        rebase.finish(None)?;
-
-        Ok(())
-    }
-
-    pub fn pull(&mut self, repository: &Repository) -> Result<bool> {
+    fn pull(&mut self, repository: &Repository) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
         let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
@@ -766,15 +433,23 @@ impl GitBackend {
             remote.peel_to_commit()?.id(),
         )?;
 
-        if behind == 0 {
-            return Ok(false);
-        }
-
-        let remote = repository.reference_to_annotated_commit(&remote)?;
+        log::trace!("git sync ahead: {ahead}, behind: {behind}");
 
         if ahead != 0 {
-            self.rebase(repository, &remote)?;
-            return Ok(true);
+            return self.reset(repository, &remote);
+        }
+
+        let mut status_opts = StatusOptions::new();
+        status_opts.include_untracked(true); // Ensure we see new files
+
+        let statuses = repository.statuses(Some(&mut status_opts))?;
+
+        if !statuses.is_empty() {
+            return self.reset(repository, &remote);
+        }
+
+        if behind == 0 {
+            return Ok(());
         }
 
         let fetch_head = repository.find_reference("FETCH_HEAD")?;
@@ -783,10 +458,10 @@ impl GitBackend {
         let remote_branch = &self.config.branch;
         do_merge(repository, remote_branch, &fetch_commit)?;
 
-        Ok(true)
+        Ok(())
     }
 
-    pub fn push(&self, repository: &Repository, force: bool) -> Result<()> {
+    fn push(&self, repository: &Repository, force: bool) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
         let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
         callbacks.push_update_reference(|name, status| {
@@ -845,151 +520,132 @@ impl GitBackend {
         Ok(())
     }
 
-    pub fn delete_all(&mut self) -> Result<()> {
-        for storage in self.storage_mut() {
-            storage.clear()?;
-        }
-        // delete repository root directory.
-        std::fs::remove_dir_all(&self.config.root_path)?;
-        Ok(())
-    }
-}
-
-impl GitBackend {
-    fn unload(&mut self) {
-        for storage in self.storage_mut() {
-            storage.unload();
-        }
-    }
-
-    fn add(&mut self, task: Task) -> Result<()> {
-        let message = format!("$ADD {}", task.uuid.to_base64());
-        self.pending.append(task)?;
-        self.add_and_commit(&message)?;
-        Ok(())
-    }
-
-    pub fn remove_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<Task>> {
-        for storage in self.storage_mut() {
-            if let Some(task) = storage.remove(uuid)? {
-                return Ok(Some(task));
-            }
-        }
-        Ok(None)
-    }
-
-    pub fn remove_by_task(&mut self, task: &Task) -> Result<bool> {
-        let found_task = self.remove_task2(task)?;
-
-        let Some(found_task) = found_task else {
-            return Ok(false);
-        };
-
-        let message = format!("$PURGE {}", found_task.uuid.to_base64());
-
-        self.add_and_commit(&message)?;
-        Ok(false)
-    }
-
-    fn task_by_uuid(&mut self, uuid: &Uuid) -> Result<Option<&DecryptedTask>> {
-        for storage in self.storage_mut() {
-            let task = storage.get_by_id(uuid)?;
-
-            if let Some(task) = task {
-                return Ok(Some(task));
-            }
-        }
-        Ok(None)
-    }
-
-    // fn tasks_with_filter(&mut self, filter: &Filter) -> Result<Vec<Task>> {
-    //     let mut tasks = Vec::new();
-    //     for storage in self.storage_mut() {
-    //         storage.filter(filter, &mut tasks)?;
-    //     }
-    //     tasks.sort_unstable_by(|a, b| {
-    //         b.urgency()
-    //             .partial_cmp(&a.urgency())
-    //             .expect("should never be NaN")
-    //     });
-    //     Ok(tasks)
-    // }
-
-    fn update(&mut self, task: &Task) -> Result<bool> {
-        let mut updated = false;
-        if let Some(found_task) = self.task_by_uuid(&task.uuid)?.cloned() {
-            updated |= self.change_category(&found_task.task, task.status)?;
-        }
-
-        updated |= self.update2(task)?;
-        if updated {
-            self.add_and_commit(&format!("$UPDATE {}", task.uuid.to_base64()))?;
-        }
-        Ok(updated)
-    }
-
-    pub fn fetch(&mut self, repository: &Repository) -> Result<()> {
-        let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
-        callbacks.push_update_reference(|name, status| {
-            println!("{name}: {status:?}");
-            Ok(())
-        });
-
-        let remote = repository.remote("origin", &self.config.origin);
-        if let Err(error) = remote
-            && (error.class() != ErrorClass::Config || error.code() != ErrorCode::Exists)
-        {
-            log::warn!("Couldn't create remote origin: {error}");
-            return Err(error.into());
-        }
-        repository.remote_set_url("origin", &self.config.origin)?;
-
-        let mut origin = repository.find_remote("origin")?;
-        let connection = origin.connect_auth(git2::Direction::Fetch, Some(callbacks), None);
-
-        if let Some(callback_error) = callback_error.borrow_mut().take() {
-            return Err(callback_error);
-        }
-
-        let mut connection = connection?;
-
-        let mut fetch_options = FetchOptions::new();
-        let remote_result = connection.remote().fetch(
-            &[self.config.branch.as_ref()],
-            Some(&mut fetch_options),
-            Some(&format!("fetch {} branch", self.config.branch)),
-        );
-
-        if let Some(callback_error) = callback_error.borrow_mut().take() {
-            return Err(callback_error);
-        }
-
-        remote_result?;
-
-        let mut local = repository.find_branch(&self.config.branch, git2::BranchType::Local)?;
-        let remote = match local.upstream() {
-            Ok(remote) => remote.into_reference(),
-            Err(error)
-                if error.class() == ErrorClass::Config && error.code() == ErrorCode::NotFound =>
-            {
-                local.set_upstream(Some(&format!("origin/{}", self.config.branch)))?;
-                local.upstream()?.into_reference()
-            }
-            Err(error) => return Err(error.into()),
-        };
-
+    fn reset(&mut self, repository: &Repository, remote: &Reference<'_>) -> Result<()> {
         // Checkout main
         let branch = &self.config.branch;
         repository.set_head(&format!("refs/heads/{branch}"))?;
         repository.checkout_head(None)?;
 
+        let mut checkout = CheckoutBuilder::new();
+        checkout.force();
+        checkout.remove_untracked(true);
+
         // Hard reset main to origin/main
         repository.reset(
             &remote.peel(git2::ObjectType::Commit)?,
             ResetType::Hard,
-            None,
+            Some(&mut checkout),
         )?;
+        Ok(())
+    }
+
+    fn sync_impl(&mut self, db: &mut Database) -> Result<()> {
+        let repository_path = self.config.repository_path();
+        let mut cloned = false;
+        if !repository_path.join(".git").exists() {
+            log::info!("Cloning repository...");
+            self.clone_repository()?;
+            cloned = true;
+        }
+
+        let repository = Repository::open(repository_path)?;
+
+        if !cloned {
+            self.pull(&repository)?;
+        }
+
+        let actors_dir = self.config.actors_path();
+        std::fs::create_dir_all(&actors_dir)?;
+
+        let mut remote_version_vector = VersionVector::default();
+
+        let mut transaction = db.transaction()?;
+        for actor_path in std::fs::read_dir(&actors_dir)? {
+            let actor_path = actor_path?;
+            let metadata = actor_path.metadata()?;
+            if !metadata.file_type().is_dir() {
+                continue;
+            }
+            let Ok(filename) = actor_path.file_name().into_string() else {
+                continue;
+            };
+            let Ok(id) = Uuid::parse_str(&filename) else {
+                continue;
+            };
+            let actor_id = ActorId::new(id);
+
+            let changelog_filepath = actors_dir
+                .join(actor_id.get().to_string())
+                .join("changelog");
+
+            if let Some(actor_storage) =
+                ActorStorage::load(actor_id, &changelog_filepath, self.master_key.clone())?
+            {
+                remote_version_vector.insert(Actor {
+                    id: actor_storage.actor_id,
+                    sequence: actor_storage.sequence,
+                    timestamp: Timestamp::new(Microsecond::new(0), 0),
+                });
+            }
+        }
+
+        let diff = transaction.version_vector().merge(&remote_version_vector);
+
+        log::trace!("Version Difference: {diff:#?}");
+        for (actor_id, change_range) in diff {
+            let actor_id_dir = actors_dir.join(actor_id.get().to_string());
+            let changelog_filepath = actor_id_dir.join("changelog");
+            match change_range.location {
+                ChangeLocation::Local => {
+                    let mut actor_storage = if let Some(actor_storage) =
+                        ActorStorage::load(actor_id, &changelog_filepath, self.master_key.clone())?
+                    {
+                        actor_storage
+                    } else {
+                        std::fs::create_dir_all(&actor_id_dir)?;
+                        ActorStorage::create(
+                            actor_id,
+                            &changelog_filepath,
+                            self.master_key.clone(),
+                        )?
+                    };
+
+                    let changes = transaction.changes(actor_id, change_range)?;
+                    actor_storage.append(&changes)?;
+
+                    self.add_and_commit(&format!(
+                        "${} ({},{})",
+                        actor_id.get(),
+                        change_range.from,
+                        change_range.from + change_range.count
+                    ))?;
+                }
+                ChangeLocation::Remote => {
+                    let Some(mut actor_storage) =
+                        ActorStorage::load(actor_id, &changelog_filepath, self.master_key.clone())?
+                    else {
+                        unreachable!("");
+                    };
+
+                    transaction.get_or_insert_actor(actor_id)?;
+
+                    #[allow(clippy::cast_possible_truncation)]
+                    for change in actor_storage
+                        .iter(change_range.from as usize)?
+                        .take(change_range.count as usize)
+                    {
+                        let change = change?;
+                        transaction.apply_change(&change)?;
+                    }
+                }
+            }
+        }
+        transaction.commit()?;
+
+        log::info!("Pushing tasks...");
+        self.push(&repository, false)?;
+
+        log::info!("Task sync finished!");
         Ok(())
     }
 }
@@ -1004,280 +660,13 @@ impl Backend for GitBackend {
 
     #[allow(clippy::too_many_lines)]
     fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
-        let repository_path = self.config.repository_path();
-        if !repository_path.join(".git").exists() {
-            log::info!("Cloning repository...");
-            self.clone_repository()?;
-        }
-
-        let repository = Repository::open(repository_path).map_err(Error::LibGit2)?;
-
-        self.fetch(&repository)?;
-
-        for iterator in OperationIterator::new(&repository, &self.key_store)? {
-            dbg!(iterator?);
-        }
-
-        // todo!();
-        let local_tasks = db.all_tasks()?;
-
-        let mut local_operations = Vec::new();
-        let mut remote_operations = Vec::new();
-        for local_task in &local_tasks {
-            let Some(remote) = self.task_by_uuid(&local_task.uuid)? else {
-                push_operations_diff_task(Some(local_task), None, &mut remote_operations);
-                continue;
-            };
-
-            if local_task.modified > remote.task.modified {
-                push_operations_diff_task(
-                    Some(&remote.task),
-                    Some(local_task),
-                    &mut remote_operations,
-                );
-            } else {
-                push_operations_diff_task(
-                    Some(&remote.task),
-                    Some(local_task),
-                    &mut local_operations,
-                );
-            }
-        }
-
-        let db_task_ids = local_tasks
-            .iter()
-            .map(|task| task.uuid)
-            .collect::<HashSet<_>>();
-        for storage in self.storage_mut() {
-            storage.load()?;
-            for task in &storage.tasks {
-                if db_task_ids.contains(&task.task.uuid) {
-                    continue;
-                }
-                push_operations_diff_task(Some(&task.task), None, &mut local_operations);
-            }
-            storage.unload();
-        }
-
-        dbg!(&local_operations);
-        dbg!(&remote_operations);
-
-        let mut transaction = db.transaction()?;
-        transaction.apply(local_operations)?;
-
-        for operation in remote_operations {
-            let Some(kind) = operation.kind else {
-                panic!("There shoult not be any undo-points");
-            };
-            match kind {
-                OperationKind::TaskCreate { id } => {
-                    let task = Task {
-                        uuid: id,
-                        ..Default::default()
-                    };
-                    self.add(task)?;
-                }
-                OperationKind::TaskModifyEntry { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.entry = old;
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyStatus { id, old, .. } => {
-                    let task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    self.change_category(&task.task, old)?;
-                }
-                OperationKind::TaskPurge { id } => {
-                    todo!("task purge: {id}")
-                }
-                OperationKind::TaskModifyTitle { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.title = old.map(str::into_string);
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyPriority { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.priority = old;
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyProject { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.project = old.map(Into::into);
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyModified { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.modified = old;
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyDue { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.due = old;
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyWait { id, old, .. } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.wait = old;
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyAddTag { id, tag } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.tags.push(tag.into());
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyRemoveTag { id, ref tag } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    if let Some(index) = task
-                        .task
-                        .tags
-                        .iter()
-                        .position(|value| value.as_str() == tag.as_ref())
-                    {
-                        task.task.tags.remove(index);
-                    }
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyAddDependency { id, depend } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.depends.push(depend);
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyRemoveDependency { id, depend } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    if let Some(index) = task.task.depends.iter().position(|value| *value == depend)
-                    {
-                        task.task.depends.remove(index);
-                    }
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyAddAnnotation { id, annotation } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.annotations.push(*annotation);
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    if let Some(index) = task
-                        .task
-                        .annotations
-                        .iter()
-                        .position(|value| value.entry == annotation.entry)
-                    {
-                        task.task.annotations.remove(index);
-                    }
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyAddUda { id, uda } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    task.task.udas.push(*uda);
-                    self.update(&task.task)?;
-                }
-                OperationKind::TaskModifyRemoveUda { id, uda } => {
-                    let mut task = self.task_by_uuid(&id)?.cloned().unwrap();
-                    if let Some(index) =
-                        task.task.udas.iter().position(|value| value.key == uda.key)
-                    {
-                        task.task.udas.remove(index);
-                    }
-                    self.update(&task.task)?;
-                }
-            }
-        }
-
-        log::info!("Pushing tasks...");
-        self.push(&repository, false)?;
-
-        transaction.commit()?;
-
-        log::info!("Task sync finished!");
-        Ok(())
+        Ok(self.sync_impl(db)?)
     }
 }
 impl GitBackend {
     pub fn clear(&mut self) -> Result<()> {
-        for storage in self.storage_mut() {
-            storage.clear()?;
-        }
-        // delete repository root directory.
         std::fs::remove_dir_all(self.config.repository_path())?;
         Ok(())
-    }
-
-    // fn export(&mut self) -> Result<String> {
-    //     #[derive(serde::Serialize)]
-    //     struct ExportTask<'a> {
-    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    //         pending: &'a [DecryptedTask],
-    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    //         complete: &'a [DecryptedTask],
-    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    //         deleted: &'a [DecryptedTask],
-    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    //         waiting: &'a [DecryptedTask],
-    //         #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    //         recurring: &'a [DecryptedTask],
-    //     }
-
-    //     self.init_repository_if_needed()?;
-
-    //     for storage in self.storage_mut() {
-    //         storage.load()?;
-    //     }
-
-    //     let record = ExportTask {
-    //         pending: &self.pending.tasks,
-    //         complete: &self.complete.tasks,
-    //         deleted: &self.deleted.tasks,
-    //         waiting: &self.waiting.tasks,
-    //         recurring: &self.recurring.tasks,
-    //     };
-
-    //     Ok(serde_json::to_string(&record).map_err(ExportError::Serialize)?)
-    // }
-
-    // fn import(&mut self, content: &str) -> Result<()> {
-    //     #[derive(serde::Deserialize)]
-    //     struct ImportRecord {
-    //         #[serde(default)]
-    //         pending: Vec<DecryptedTask>,
-    //         #[serde(default)]
-    //         complete: Vec<DecryptedTask>,
-    //         #[serde(default)]
-    //         deleted: Vec<DecryptedTask>,
-    //         #[serde(default)]
-    //         waiting: Vec<DecryptedTask>,
-    //         #[serde(default)]
-    //         recurring: Vec<DecryptedTask>,
-    //     }
-
-    //     self.init_repository_if_needed()?;
-
-    //     let record: ImportRecord =
-    //         serde_json::from_str(content).map_err(ImportError::Deserialize)?;
-
-    //     self.pending.tasks = record.pending;
-    //     self.pending.loaded = true;
-    //     self.complete.tasks = record.complete;
-    //     self.complete.loaded = true;
-    //     self.deleted.tasks = record.deleted;
-    //     self.deleted.loaded = true;
-    //     self.waiting.tasks = record.waiting;
-    //     self.waiting.loaded = true;
-    //     self.recurring.tasks = record.recurring;
-    //     self.recurring.loaded = true;
-
-    //     for storage in self.storage_mut() {
-    //         storage.save()?;
-    //     }
-
-    //     Ok(())
-    // }
-
-    pub fn query(&mut self, query: &TaskQuery) -> Result<Vec<Task>> {
-        let mut result = Vec::new();
-        for storage in self.storage_mut() {
-            storage.query(query, &mut result)?;
-        }
-        Ok(result)
     }
 }
 
@@ -1376,7 +765,7 @@ fn with_authentication(
 
 fn fast_forward(
     repo: &Repository,
-    lb: &mut git2::Reference<'_>,
+    lb: &mut Reference<'_>,
     rc: &AnnotatedCommit<'_>,
 ) -> Result<(), git2::Error> {
     let name = match lb.name() {

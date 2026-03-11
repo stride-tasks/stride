@@ -11,29 +11,30 @@
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:uuid/uuid.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `clone`, `eq`, `fmt`, `hash`
 
 class Annotation {
+  final UuidValue id;
   final DateTime entry;
-  final String description;
+  final String text;
 
-  const Annotation({required this.entry, required this.description});
+  const Annotation({required this.id, required this.entry, required this.text});
 
   /// Construct annotation with now as the entry date.
-  static Future<Annotation> now({required String description}) => RustLib
-      .instance
-      .api
-      .strideCoreTaskAnnotationAnnotationNow(description: description);
+  static Future<Annotation> now({required String text}) =>
+      RustLib.instance.api.strideCoreTaskAnnotationAnnotationNow(text: text);
 
   @override
-  int get hashCode => entry.hashCode ^ description.hashCode;
+  int get hashCode => id.hashCode ^ entry.hashCode ^ text.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Annotation &&
           runtimeType == other.runtimeType &&
+          id == other.id &&
           entry == other.entry &&
-          description == other.description;
+          text == other.text;
 }

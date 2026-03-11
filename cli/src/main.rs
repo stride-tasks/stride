@@ -1,11 +1,11 @@
 use anyhow::{Context, bail};
-use chrono::{Local, Utc};
+use chrono::Utc;
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
-    io::Write,
     path::{Path, PathBuf},
     process::ExitCode,
+    sync::Arc,
 };
 use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::{GitBackend, known_hosts::KnownHosts, ssh_key::SshKey};
@@ -15,7 +15,11 @@ use stride_core::{
     state::KnownPaths,
     task::{Task, TaskStatus},
 };
-use stride_database::{Database, operation::OperationKind};
+use stride_crdt::{
+    actor::ActorId,
+    hlc::{Clock, SystemTimeProvider},
+};
+use stride_database::Database;
 use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
@@ -60,7 +64,7 @@ fn print_tasks(tasks: &[Task]) {
         }
         println!(
             "{tags}{i:4} {}: {}",
-            task.uuid,
+            task.id,
             task.title.as_deref().unwrap_or("<missing title>")
         );
     }
@@ -118,13 +122,18 @@ fn main() -> anyhow::Result<ExitCode> {
         uuid
     };
 
+    let time_provider = Arc::new(SystemTimeProvider::default());
+    let clock = Clock::new(time_provider);
+
     let plugins_path = support_dir.join("plugins");
     let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
     let repository_path = known_paths.repository_path(current_repository);
     let database_filepath = known_paths.database_filepath(current_repository);
-    let mut database = Database::open(&database_filepath)?;
+
+    let actor_id = ActorId::new(current_repository);
+    let mut database = Database::open(&database_filepath, actor_id, clock)?;
     database.apply_migrations()?;
 
     let mut backend_registry = Registry::new();
@@ -161,7 +170,10 @@ fn main() -> anyhow::Result<ExitCode> {
             let event = HostEvent::TaskCreate {
                 task: Some(Box::new(task.clone())),
             };
-            database.insert_task(&task)?;
+
+            let mut transaction = database.transaction()?;
+            transaction.insert_task(&task)?;
+            transaction.commit()?;
 
             plugin_manager.emit_event(None, &event)?;
             while plugin_manager.process_host_event()? {}
@@ -180,11 +192,17 @@ fn main() -> anyhow::Result<ExitCode> {
 
                 match event {
                     PluginEvent::TaskCreate { task } => {
-                        database.insert_task(&task)?;
+                        let mut transaction = database.transaction()?;
+                        transaction.insert_task(&task)?;
+                        transaction.commit()?;
                     }
                     PluginEvent::TaskModify { mut task } => {
-                        task.modified = Some(Utc::now());
-                        database.update_task(&task)?;
+                        let mut transaction = database.transaction()?;
+                        transaction.update_task_with(task.id, |_| {
+                            task.modified = Some(Utc::now());
+                            Ok(task)
+                        })?;
+                        transaction.commit()?;
                     }
                     PluginEvent::TaskSync => {
                         backend_registry.sync_all(
@@ -205,101 +223,16 @@ fn main() -> anyhow::Result<ExitCode> {
             }
         }
         Mode::Done { id } => {
-            let Some(mut task) = database.task_by_id(id)? else {
-                bail!("could not find task with ID: {id}");
-            };
-            task.status = TaskStatus::Complete;
-            task.modified = Some(Utc::now());
-            database.update_task(&task)?;
+            let mut transaction = database.transaction()?;
+            transaction.update_task_with(id, |mut task| {
+                task.status = Some(TaskStatus::Done);
+                task.modified = Some(Utc::now());
+                Ok(task)
+            })?;
+            transaction.commit()?;
         }
-        Mode::Undo { count } => {
-            let count = count.unwrap_or(1);
-
-            let operations = database.undoable_operation(count)?;
-
-            for (i, (_, operation)) in operations.iter().rev().enumerate() {
-                let date_time = operation
-                    .timestamp
-                    .with_timezone(&Local)
-                    .format("%Y-%m-%dT%H:%M:%S");
-
-                print!("{:3} | {date_time} | ", i + 1);
-                let Some(kind) = &operation.kind else {
-                    println!("Undo Point");
-                    continue;
-                };
-
-                match &kind {
-                    OperationKind::TaskCreate { id } => {
-                        println!("task({id}): create");
-                    }
-                    OperationKind::TaskPurge { id } => {
-                        println!("task({id}): purge");
-                    }
-                    OperationKind::TaskModifyEntry { id, new, old } => {
-                        println!("task({id}): entry(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyTitle { id, new, old } => {
-                        println!("task({id}): title(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyStatus { id, new, old } => {
-                        println!("task({id}): status(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyPriority { id, new, old } => {
-                        println!("task({id}): priority(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyProject { id, new, old } => {
-                        println!("task({id}): project(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyModified { id, new, old } => {
-                        println!("task({id}): modified(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyDue { id, new, old } => {
-                        println!("task({id}): due(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyWait { id, new, old } => {
-                        println!("task({id}): wait(new:{new:?}, old:{old:?})");
-                    }
-                    OperationKind::TaskModifyAddTag { id, tag } => {
-                        println!("task({id}): +tag:{tag}");
-                    }
-                    OperationKind::TaskModifyRemoveTag { id, tag } => {
-                        println!("task({id}): -tag:{tag}");
-                    }
-                    OperationKind::TaskModifyAddDependency { id, depend } => {
-                        println!("task({id}): +dep:{depend:?}");
-                    }
-                    OperationKind::TaskModifyRemoveDependency { id, depend } => {
-                        println!("task({id}): -dep:{depend:?}");
-                    }
-                    OperationKind::TaskModifyAddAnnotation { id, annotation } => {
-                        println!("task({id}): +{annotation:?}");
-                    }
-                    OperationKind::TaskModifyRemoveAnnotation { id, annotation } => {
-                        println!("task({id}): -{annotation:?}");
-                    }
-                    OperationKind::TaskModifyAddUda { id, uda } => {
-                        println!("task({id}): +{uda:?}");
-                    }
-                    OperationKind::TaskModifyRemoveUda { id, uda } => {
-                        println!("task({id}): -{uda:?}");
-                    }
-                }
-            }
-
-            if !operations.is_empty() {
-                print!("Undo operations? [y/n] ");
-                std::io::stdout().flush()?;
-
-                let mut line = String::new();
-                std::io::stdin().read_line(&mut line)?;
-                let line = line.trim().to_ascii_lowercase();
-                let undo = matches!(line.as_str(), "y" | "yes");
-
-                if undo {
-                    database.undo(count)?;
-                }
-            }
+        Mode::Undo { .. } => {
+            todo!("undo")
         }
         Mode::Sync { backend: name } => {
             let handler = backend_registry.get_or_error(name.as_str())?;

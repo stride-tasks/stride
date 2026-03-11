@@ -28,9 +28,9 @@ sealed class Task with _$Task {
       RustLib.instance.api.strideCoreTaskTaskNew(title: title);
   const Task._();
   const factory Task.raw({
-    required UuidValue uuid,
+    required UuidValue id,
     DateTime? entry,
-    required TaskStatus status,
+    TaskStatus? status,
     String? title,
     DateTime? modified,
     DateTime? due,
@@ -49,11 +49,8 @@ sealed class Task with _$Task {
   double urgency() =>
       RustLib.instance.api.strideCoreTaskTaskUrgency(that: this);
 
-  static Future<Task> withUuid({
-    required UuidValue uuid,
-    required String title,
-  }) =>
-      RustLib.instance.api.strideCoreTaskTaskWithUuid(uuid: uuid, title: title);
+  static Future<Task> withId({required UuidValue id, required String title}) =>
+      RustLib.instance.api.strideCoreTaskTaskWithId(id: id, title: title);
 }
 
 enum TaskPriority {
@@ -70,8 +67,8 @@ enum TaskPriority {
 
 enum TaskStatus {
   pending,
-  deleted,
-  complete;
+  done,
+  deleted;
 
   static Future<TaskStatus> default_() =>
       RustLib.instance.api.strideCoreTaskTaskStatusDefault();

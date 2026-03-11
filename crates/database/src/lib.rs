@@ -11,7 +11,6 @@ mod database;
 
 use conversion::{Sql, task_status_to_sql};
 pub use error::{Error, Result};
-pub mod operation;
 
 use migrations::apply_migrations;
 

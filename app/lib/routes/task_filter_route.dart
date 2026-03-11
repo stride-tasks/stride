@@ -67,10 +67,10 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
                       tooltip: 'Pending',
                     ),
                     ButtonSegment<TaskStatus>(
-                      value: TaskStatus.complete,
+                      value: TaskStatus.done,
                       icon: const Icon(Icons.check_box),
-                      label: isMobilePlatform ? null : const Text('Completed'),
-                      tooltip: 'Completed',
+                      label: isMobilePlatform ? null : const Text('Done'),
+                      tooltip: 'Done',
                     ),
                     ButtonSegment<TaskStatus>(
                       value: TaskStatus.deleted,

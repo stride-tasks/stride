@@ -1758,7 +1758,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -2286,15 +2286,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64",
- "chrono",
- "getrandom 0.3.4",
  "git2",
  "log",
  "serde",
  "stride_backend",
  "stride_core",
+ "stride_crdt",
  "stride_crypto",
  "stride_database",
+ "stride_serialize",
  "thiserror 2.0.18",
  "uuid",
 ]
@@ -2325,6 +2325,7 @@ dependencies = [
  "stride_backend_git",
  "stride_backend_taskchampion",
  "stride_core",
+ "stride_crdt",
  "stride_database",
  "stride_flutter_bridge",
  "stride_plugin_manager",
@@ -2348,6 +2349,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_crdt"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "stride_core",
+ "stride_serialize",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
 name = "stride_crypto"
 version = "0.1.0"
 dependencies = [
@@ -2363,8 +2375,11 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "indoc",
+ "log",
  "rusqlite",
  "stride_core",
+ "stride_crdt",
+ "stride_serialize",
  "thiserror 2.0.18",
  "url",
  "uuid",
@@ -2384,6 +2399,7 @@ dependencies = [
  "stride_backend_git",
  "stride_backend_taskchampion",
  "stride_core",
+ "stride_crdt",
  "stride_database",
  "stride_logging",
  "stride_plugin_manager",
@@ -2421,6 +2437,16 @@ dependencies = [
  "wasmi",
  "wasmi_wasi",
  "zip",
+]
+
+[[package]]
+name = "stride_serialize"
+version = "0.1.0"
+dependencies = [
+ "stride_core",
+ "thiserror 2.0.18",
+ "uuid",
+ "vint64",
 ]
 
 [[package]]
@@ -2880,6 +2906,12 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "vint64"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0b3dd7987b5df43ec8f5a1050d608b4d9c78a5785c70549635870b9cad9442c"
 
 [[package]]
 name = "want"

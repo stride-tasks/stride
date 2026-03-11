@@ -1,7 +1,7 @@
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
-    sync::Mutex,
+    sync::{Arc, Mutex},
 };
 
 use chrono::Utc;
@@ -14,6 +14,10 @@ use stride_core::{
     event::TaskQuery,
     state::KnownPaths,
     task::{Task, TaskStatus},
+};
+use stride_crdt::{
+    actor::ActorId,
+    hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
 use uuid::Uuid;
@@ -43,8 +47,12 @@ impl Repository {
             .join("repository")
             .join(uuid.to_string());
         std::fs::create_dir_all(&root_path)?;
+
+        let time_provider = Arc::new(SystemTimeProvider::default());
+        let clock = Clock::new(time_provider);
         let db_path = root_path.join("db.sqlite");
-        let mut db = Database::open(&db_path).map_err(Into::<stride_database::Error>::into)?;
+        let mut db = Database::open(&db_path, ActorId::new(uuid), clock)
+            .map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
 
         let mut backend_registry = Registry::new();
@@ -80,22 +88,33 @@ impl Repository {
 
     pub fn insert_task(&mut self, task: &Task) -> Result<(), RustError> {
         self.db.clear_poison();
-        self.db.lock().unwrap().insert_task(task)?;
+        let mut db = self.db.lock().unwrap();
+        let mut transaction = db.transaction()?;
+        transaction.insert_task(task)?;
+        transaction.commit()?;
         Ok(())
     }
 
     pub fn update_task(&mut self, task: &Task) -> Result<(), RustError> {
-        self.db.clear_poison();
-
         let mut task = task.clone();
         task.modified = Some(Utc::now());
-        self.db.lock().unwrap().update_task(&task)?;
+
+        self.db.clear_poison();
+        let mut db = self.db.lock().unwrap();
+        let mut transaction = db.transaction()?;
+        transaction.update_task_with(task.id, |_| Ok(task))?;
+        transaction.commit()?;
         Ok(())
     }
 
     pub fn purge_task_by_id(&mut self, id: Uuid) -> Result<Option<Task>, RustError> {
         self.db.clear_poison();
-        Ok(self.db.lock().unwrap().purge_task_by_id(id)?)
+        let mut db = self.db.lock().unwrap();
+        let mut transaction = db.transaction()?;
+        transaction.delete_task(id)?;
+        transaction.commit()?;
+        // TODO: maybe this should return Ok(())
+        Ok(None)
     }
 
     pub fn tasks_by_status(
@@ -127,8 +146,7 @@ impl Repository {
     }
 
     pub fn undo(&self) -> Result<(), RustError> {
-        self.db.lock().unwrap().undo(1)?;
-        Ok(())
+        todo!("undo")
     }
 
     /// flutter_rust_bridge:ignore
