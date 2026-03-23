@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
@@ -9,10 +10,12 @@ import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/git.dart';
 import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:uuid/uuid.dart';
+import 'package:workmanager/workmanager.dart' hide TaskStatus;
 
 @immutable
 abstract class TaskEvent {}
@@ -76,27 +79,32 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Repository? database;
   Filter? filter;
 
-  Timer? syncTimer;
-
   void _initializeSettingsStream() {
-    if (settingsBloc.settings.periodicSync) {
-      syncTimer = Timer.periodic(
-        const Duration(minutes: 5),
-        (timer) => add(TaskSyncEvent()),
-      );
-    }
-
     repositoryUuid ??= settingsBloc.settings.currentRepositoryUuidOrFirst();
 
+    _registerPeriodicTasks(settingsBloc.settings);
+
+    var previousSettings = settingsBloc.settings;
+
     settingsSubscription = settingsBloc.stream.listen((event) {
-      if (event.settings.periodicSync) {
-        syncTimer ??= Timer.periodic(
-          const Duration(minutes: 5),
-          (timer) => add(TaskSyncEvent()),
-        );
+      final previous = previousSettings;
+      final next = event.settings;
+      previousSettings = next;
+
+      if (!next.periodicSync && previous.periodicSync) {
+        // Sync was turned off — cancel all repository tasks.
+        _unregisterPeriodicTasks(previous.repositories);
       } else {
-        syncTimer?.cancel();
-        syncTimer = null;
+        // Sync is on — register/replace tasks for current repositories.
+        _registerPeriodicTasks(next);
+
+        // Cancel tasks for repositories that were removed.
+        final removedRepositories = previous.repositories
+            .where((r) => !next.repositories.any((n) => n.uuid == r.uuid))
+            .toList();
+        if (removedRepositories.isNotEmpty) {
+          await _unregisterPeriodicTasks(removedRepositories);
+        }
       }
 
       final nextRepositoryUuid = event.settings.currentRepositoryUuidOrFirst();
@@ -106,6 +114,24 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         add(TaskFetchEvent());
       }
     });
+  }
+
+  Future<void> _registerPeriodicTasks(Settings settings) async {
+    if (!settings.periodicSync) return;
+    for (final repository in settings.repositories.asMap().entries) {
+      await Background.periodic(
+        TaskSyncBackgroundTask(repositoryId: repository.value.uuid),
+        initialDelay: const Duration(seconds: 10),
+        frequency: Duration(minutes: 5, seconds: repository.key * 10),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+      );
+    }
+  }
+
+  Future<void> _unregisterPeriodicTasks(List<RepositorySpecification> repositories) async {
+    for (final repository in repositories) {
+      await Background.cancel(TaskSyncBackgroundTask(repositoryId: repository.uuid));
+    }
   }
 
   Repository? repository() {
@@ -168,7 +194,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskState(tasks: tasks, syncing: true));
 
       try {
-        await repository()?.sync_();
+        final uuid =
+            repositoryUuid ?? settingsBloc.settings.currentRepositoryUuidOrFirst();
+        if (uuid != null) {
+          await Background.run(
+            TaskSyncBackgroundTask(repositoryId: uuid),
+            existingWorkPolicy: ExistingWorkPolicy.replace,
+          );
+        }
       } catch (error) {
         emit(TaskState(tasks: tasks, syncingError: error));
         rethrow;

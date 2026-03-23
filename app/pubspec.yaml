@@ -31,6 +31,8 @@ dependencies:
   intersperse: ^2.0.0
   http: ^1.6.0
   flutter_native_splash: ^2.4.7
+  workmanager: ^0.9.0+3
+  async: ^2.13.0
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,7 @@ members = [
   "crates/serialization",
   "crates/logging",
   "crates/database",
+  "crates/background",
   "crates/backend",
   "crates/backends/git",
   "crates/backends/taskchampion",
@@ -34,6 +35,7 @@ stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
 stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
 stride_logging = { version = "~0.1.0", path = "crates/logging" }
 stride_database = { version = "~0.1.0", path = "crates/database" }
+stride_background = { version = "~0.1.0", path = "crates/background" }
 stride_backend = { version = "~0.1.0", path = "crates/backend" }
 stride_backend_git = { version = "~0.1.0", path = "crates/backends/git" }
 stride_backend_taskchampion = { version = "~0.1.0", path = "crates/backends/taskchampion" }
@@ -89,6 +91,7 @@ url = { version = "2.5.8", features = ["serde"] }
 thiserror = "2.0.18"
 indoc = "2.0.7"
 vint64 = "=1.0.1"
+async-trait = "0.1.89"
 
 [profile.release]
 # strip = "debug"

@@ -20,7 +20,6 @@ import 'package:uuid/uuid.dart';
 part 'settings.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_log_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `State`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
