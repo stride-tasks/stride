@@ -14,11 +14,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
   stride_flutter_bridge:
     path: rust_builder
   flutter_rust_bridge: 2.11.1
-  uuid: ^4.5.2
+  uuid: ^4.5.3
   path: ^1.9.1
   path_provider: ^2.1.5
   bloc: ^9.2.0
@@ -39,10 +39,10 @@ dev_dependencies:
   #   sdk: flutter
 
   flutter_lints: ^6.0.0
-  mocktail: ^1.0.4
+  mocktail: ^1.0.5
 
-  freezed: ^3.2.4
-  build_runner: ^2.10.5
+  freezed: ^3.2.5
+  build_runner: ^2.13.1
 
   flutter_launcher_icons: ^0.14.4
 
