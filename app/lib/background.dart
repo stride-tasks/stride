@@ -98,6 +98,7 @@ class Background {
     });
     _stream = _streamController?.stream.asBroadcastStream();
 
+    IsolateNameServer.removePortNameMapping(_GLOBAL_PORT_NAME);
     IsolateNameServer.registerPortWithName(
       _receivePort!.sendPort,
       _GLOBAL_PORT_NAME,
