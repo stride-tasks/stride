@@ -31,12 +31,11 @@ impl Reactor for BridgeHook {
             return;
         };
 
-        state
-            .stream_sink
-            .add(BackgroundResult::Start {
-                task: name.to_string(),
-            })
-            .unwrap();
+        let result = state.stream_sink.add(BackgroundResult::Start {
+             task: name.to_string(),
+        });
+
+        drop(result);
     }
 
     fn on_task_result(&self, name: Name, result: Result<bool, stride_background::Error>) {
