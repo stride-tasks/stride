@@ -36,18 +36,18 @@ pub trait Specification: Debug {
 #[async_trait]
 pub trait AsyncRunnable: Specification + Send + 'static {
     /// Run the task.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function returns an error if the task fails to run.
     async fn run(&mut self) -> Result<bool>;
 }
 
 pub trait Runnable: Specification + Send + 'static {
     /// Run the task.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function returns an error if the task fails to run.
     fn run(&mut self) -> Result<bool>;
 }
@@ -161,9 +161,9 @@ impl Background {
     }
 
     /// Enqueue a task to be run in the background.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function returns an error if the background thread has been closed.
     pub fn enqueue(&mut self, name: Name, task: Box<dyn AsyncRunnable>) -> Result<()> {
         self.sender
