@@ -8,7 +8,7 @@ use stride_background::{
 };
 use uuid::Uuid;
 
-use crate::{RustError, api::repository::Repository, frb_generated::StreamSink};
+use crate::{ErrorKind, RustError, api::repository::Repository, frb_generated::StreamSink};
 
 static STATE: LazyLock<Mutex<Option<State>>> = LazyLock::new(Mutex::default);
 
@@ -116,7 +116,11 @@ struct TaskSync {
 }
 
 pub fn execute(task: &str) -> Result<(), RustError> {
-    let task = serde_json::from_str::<BgTask>(task).unwrap();
+let task = serde_json::from_str::<BgTask>(task).map_err(|e| {
+         RustError::from(ErrorKind::Other {
+             message: format!("invalid background task payload: {e}").into(),
+         })
+     })?;
 
     match task.method {
         Method::TaskSync { repository } => {
