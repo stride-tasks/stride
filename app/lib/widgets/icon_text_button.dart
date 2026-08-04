@@ -24,20 +24,13 @@ class IconTextButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           icon,
-          Text(
-            text,
-            style: textStyle,
-          ),
+          Text(text, style: textStyle),
         ],
       ),
     );
 
     if (tooltip != null) {
-      widget = Tooltip(
-        message: tooltip!,
-        preferBelow: false,
-        child: widget,
-      );
+      widget = Tooltip(message: tooltip!, preferBelow: false, child: widget);
     }
 
     return widget;

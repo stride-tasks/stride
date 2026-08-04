@@ -25,7 +25,7 @@ stride_backend_git.workspace = true
 stride_backend_taskchampion.workspace = true
 stride_plugin_manager.workspace = true
 
-flutter_rust_bridge = { version = "=2.11.1", features = ["chrono", "uuid"] }
+flutter_rust_bridge = { version = "=2.12.0", features = ["chrono", "uuid"] }
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true

@@ -18,11 +18,11 @@ pub use api::error::{ErrorKind, RustError};
 #[allow(clippy::wildcard_imports)]
 #[allow(clippy::semicolon_if_nothing_returned)]
 #[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::uninlined_format_args)]
 #[allow(clippy::cast_possible_wrap)]
 #[allow(clippy::cast_lossless)]
 #[allow(clippy::too_many_lines)]
 #[allow(let_underscore_drop)]
 #[allow(clippy::match_same_arms)]
+#[allow(clippy::cast_sign_loss)]
 #[rustfmt::skip]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */

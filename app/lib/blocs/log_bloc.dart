@@ -62,13 +62,7 @@ class LogBloc extends Bloc<LogEvent, LogState> {
         message: event.message,
       );
       logging.error(message: message);
-      emit(
-        LogState(
-          message: message,
-          show: event.show,
-          isError: true,
-        ),
-      );
+      emit(LogState(message: message, show: event.show, isError: true));
     });
   }
 
@@ -101,11 +95,7 @@ class LogBloc extends Bloc<LogEvent, LogState> {
     final result = await Result.catch_<T, Object>(f);
     if (result case Err(error: (final error, final stackTrace))) {
       add(
-        LogErrorEvent(
-          error: error,
-          stackTrace: stackTrace,
-          message: message,
-        ),
+        LogErrorEvent(error: error, stackTrace: stackTrace, message: message),
       );
     }
     return result.mapErr((caughtError) => caughtError.$1);

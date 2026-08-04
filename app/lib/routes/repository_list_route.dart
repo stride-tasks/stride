@@ -6,10 +6,10 @@ import 'package:stride/widgets/settings_widget.dart';
 
 class RepositoryListRoute extends StatelessWidget {
   TextStyle get headingStyle => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.red,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.red,
+  );
 
   const RepositoryListRoute({super.key});
 
@@ -25,9 +25,8 @@ class RepositoryListRoute extends StatelessWidget {
             return SettingsTileNavigation(
               title: Text(repository.name),
               leading: const Icon(Icons.task),
-              builder: (context) => RepositoryRoute(
-                repositoryUuid: repository.uuid,
-              ),
+              builder: (context) =>
+                  RepositoryRoute(repositoryUuid: repository.uuid),
             );
           }).toList();
           return SettingsList(

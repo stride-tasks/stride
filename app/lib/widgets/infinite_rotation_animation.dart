@@ -46,10 +46,8 @@ class _InfiniteRotationAnimationState extends State<InfiniteRotationAnimation>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: animationController,
-      builder: (context, child) => Transform.rotate(
-        angle: animation.value,
-        child: widget.child,
-      ),
+      builder: (context, child) =>
+          Transform.rotate(angle: animation.value, child: widget.child),
     );
   }
 

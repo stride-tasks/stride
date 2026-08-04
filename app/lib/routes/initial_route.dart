@@ -29,8 +29,9 @@ class InitialRoute extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   elevation: 4,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(5), // Set the radius here
+                    borderRadius: BorderRadius.circular(
+                      5,
+                    ), // Set the radius here
                   ),
                 ),
               ),
@@ -43,9 +44,8 @@ class InitialRoute extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push<void>(
                     MaterialPageRoute(
-                      builder: (context) => const RepositoryNewRoute(
-                        cloning: true,
-                      ),
+                      builder: (context) =>
+                          const RepositoryNewRoute(cloning: true),
                     ),
                   );
                 },
@@ -54,8 +54,9 @@ class InitialRoute extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   elevation: 4,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(5), // Set the radius here
+                    borderRadius: BorderRadius.circular(
+                      5,
+                    ), // Set the radius here
                   ),
                 ),
               ),

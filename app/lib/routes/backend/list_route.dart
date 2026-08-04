@@ -85,7 +85,7 @@ class _BackendListRouteState extends State<BackendListRoute> {
                     ),
                   Switch(
                     value: backend.enabled,
-                    activeColor: Colors.redAccent,
+                    activeThumbColor: Colors.redAccent,
                     onChanged: (value) async {
                       await widget.repository.toggleBackend(id: backend.id);
                       setState(() {

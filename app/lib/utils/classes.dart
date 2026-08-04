@@ -51,8 +51,7 @@ class Ok<T, E> extends Result<T, E> {
   R match<R>({
     required R Function(T value) ok,
     required R Function(E error) err,
-  }) =>
-      ok(value);
+  }) => ok(value);
 
   @override
   T unwrapOr(T elseValue) => value;
@@ -77,8 +76,7 @@ class Err<T, E> extends Result<T, E> {
   R match<R>({
     required R Function(T value) ok,
     required R Function(E error) err,
-  }) =>
-      err(error);
+  }) => err(error);
 
   @override
   T unwrapOr(T elseValue) => elseValue;

@@ -20,10 +20,7 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
     return Scaffold(
       appBar: AppBar(title: const Text('SSH Key')),
       body: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 10,
-          horizontal: 20,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
         child: ListView(
           children: [
             SettingsTileText(

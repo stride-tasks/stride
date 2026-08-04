@@ -128,9 +128,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
-  Future<void> _unregisterPeriodicTasks(List<RepositorySpecification> repositories) async {
+  Future<void> _unregisterPeriodicTasks(
+    List<RepositorySpecification> repositories,
+  ) async {
     for (final repository in repositories) {
-      await Background.cancel(TaskSyncBackgroundTask(repositoryId: repository.uuid));
+      await Background.cancel(
+        TaskSyncBackgroundTask(repositoryId: repository.uuid),
+      );
     }
   }
 
@@ -195,7 +199,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       try {
         final uuid =
-            repositoryUuid ?? settingsBloc.settings.currentRepositoryUuidOrFirst();
+            repositoryUuid ??
+            settingsBloc.settings.currentRepositoryUuidOrFirst();
         if (uuid != null) {
           await Background.run(
             TaskSyncBackgroundTask(repositoryId: uuid),

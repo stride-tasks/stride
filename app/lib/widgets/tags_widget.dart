@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 class TagsWidget extends StatefulWidget {
   final Set<String> tags;
   final void Function(Set<String>) onSubmit;
-  const TagsWidget({
-    super.key,
-    required this.tags,
-    required this.onSubmit,
-  });
+  const TagsWidget({super.key, required this.tags, required this.onSubmit});
 
   @override
   State<TagsWidget> createState() => TagsWidgetState();
@@ -27,9 +23,7 @@ class TagsWidgetState extends State<TagsWidget> {
     return Column(
       children: [
         TextField(
-          decoration: const InputDecoration(
-            labelText: 'Tags',
-          ),
+          decoration: const InputDecoration(labelText: 'Tags'),
           onSubmitted: (text) {
             setState(() {
               items.add(text.toLowerCase());
@@ -59,10 +53,7 @@ class TagsWidgetState extends State<TagsWidget> {
   Widget _chip(String text) {
     return InputChip(
       label: Text(text),
-      labelStyle: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-      ),
+      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
       onDeleted: () => setState(() {
         items.remove(text);
         widget.onSubmit(items);

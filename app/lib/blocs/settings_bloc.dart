@@ -40,10 +40,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   late Stream<Settings> _stream;
   late StreamSubscription<Settings> _streamSubscription;
 
-  SettingsBloc({
-    required this.settings,
-    required this.logBloc,
-  }) : super(SettingsState(settings: settings)) {
+  SettingsBloc({required this.settings, required this.logBloc})
+    : super(SettingsState(settings: settings)) {
     _stream = Settings.createStream();
     _streamSubscription = _stream.listen(
       (event) => add(SettingsRefreshEvent(settings: event)),

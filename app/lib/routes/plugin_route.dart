@@ -14,10 +14,10 @@ class PluginRoute extends StatelessWidget {
   const PluginRoute({super.key, required this.plugin, this.importPath});
 
   TextStyle get headingStyle => const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.red,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.red,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +33,7 @@ class PluginRoute extends StatelessWidget {
             tiles: [
               SettingsTile(
                 title: Text('Name'),
-                description: Text(
-                  name,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                description: Text(name, overflow: TextOverflow.ellipsis),
               ),
             ],
           ),
@@ -167,8 +164,10 @@ class PluginRoute extends StatelessWidget {
             title: RichText(
               text: TextSpan(
                 text: 'GET $url',
-                style:
-                    const TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+                style: const TextStyle(
+                  fontStyle: FontStyle.italic,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),

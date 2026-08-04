@@ -114,7 +114,7 @@ class SettingsTileSwitch extends SettingsTile {
   }) : super(
          trailing: Switch(
            value: value,
-           activeColor: Colors.redAccent,
+           activeThumbColor: Colors.redAccent,
            onChanged: onChanged,
          ),
          onTap: (context) {
