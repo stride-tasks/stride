@@ -128,7 +128,7 @@ async fn background_main(hook: Arc<dyn Reactor>, mut receiver: UnboundedReceiver
 
     for (_, joins) in tasks {
         for join in joins {
-            join.await.unwrap();
+            join.abort();
         }
     }
 }
