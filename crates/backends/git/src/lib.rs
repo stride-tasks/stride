@@ -310,7 +310,7 @@ impl GitBackend {
             self.push(&repository, true)?;
         }
 
-        log::info!("Repository {} cloned successfully!", &self.config.origin);
+        log::info!("Repository {} cloned successfully!", self.config.origin);
         Ok(())
     }
 

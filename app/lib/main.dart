@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
@@ -45,6 +46,8 @@ Future<void> main() async {
       logPath: path.joinAll([cachePath, 'logs', 'log.txt']),
     ),
   );
+
+  await Background.init();
 
   final pluginPath = path.join(supportPath, 'plugins');
   await pm.load(pluginPath: pluginPath);

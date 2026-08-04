@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/background.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/filter.dart';
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -14,6 +16,7 @@ import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/routes/task_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
+import 'package:stride/widgets/infinite_rotation_animation.dart';
 import 'package:stride/widgets/task_item_widget.dart';
 
 class TasksRoute extends StatefulWidget {
@@ -157,7 +160,21 @@ class _TasksRouteState extends State<TasksRoute> {
     );
   }
 
-  Drawer _drawer() {
+  CustomDrawer _drawer() {
+    return CustomDrawer();
+  }
+}
+
+class CustomDrawer extends StatefulWidget {
+  const CustomDrawer({super.key});
+
+  @override
+  State<CustomDrawer> createState() => _CustomDrawerState();
+}
+
+class _CustomDrawerState extends State<CustomDrawer> {
+  @override
+  Widget build(BuildContext context) {
     final taskBloc = context.read<TaskBloc>();
     return Drawer(
       child: SingleChildScrollView(
@@ -194,110 +211,140 @@ class _TasksRouteState extends State<TasksRoute> {
                     ],
                   ),
                   const Divider(),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: repositories.length,
-                    itemBuilder: (context, index) {
-                      final repository = repositories[index];
-                      final selected =
-                          repository.uuid == taskBloc.repositoryUuid;
-                      return Card(
-                        child: ListTile(
-                          title: Text(repository.name),
-                          subtitle: Text(repository.uuid.toString()),
-                          subtitleTextStyle: const TextStyle(fontSize: 8),
-                          selected: selected,
-                          selectedColor: Colors.amber[900],
-                          onTap: selected
-                              ? null
-                              : () => context.read<SettingsBloc>().add(
-                                  SettingsUpdateEvent(
-                                    settings: settings.copyWith(
-                                      currentRepository: repository.uuid,
-                                    ),
-                                  ),
-                                ),
-                          onLongPress: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (context) => RepositoryRoute(
-                                  repositoryUuid: repository.uuid,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                  _repositories(repositories, taskBloc, settings),
                   const SizedBox(height: 16),
                   const Text(
                     'Filters',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const Divider(),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: filters.length,
-                    itemBuilder: (context, index) {
-                      final filter = filters[index];
-                      var selected = false;
-                      if (settings.selectedFilter
-                          is FilterSelection_Predefined) {
-                        final predefined =
-                            settings.selectedFilter!
-                                as FilterSelection_Predefined;
-                        selected = filter.uuid == predefined.uuid;
-                      }
-                      return Card(
-                        child: ListTile(
-                          title: Text(filter.name),
-                          selected: selected,
-                          selectedColor: Colors.amber[900],
-                          onLongPress: () {
-                            Navigator.of(context).push<void>(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    TaskFilterRoute(filter: filter),
-                              ),
-                            );
-                          },
-                          onTap: () {
-                            if (selected) {
-                              context.read<SettingsBloc>().add(
-                                SettingsUpdateEvent(
-                                  settings: settings.copyWith(
-                                    selectedFilter: null,
-                                  ),
-                                ),
-                              );
-                              context.read<TaskBloc>().add(TaskFilterEvent());
-                              return;
-                            }
-
-                            context.read<SettingsBloc>().add(
-                              SettingsUpdateEvent(
-                                settings: settings.copyWith(
-                                  selectedFilter: FilterSelection.predefined(
-                                    uuid: filter.uuid,
-                                  ),
-                                ),
-                              ),
-                            );
-                            context.read<TaskBloc>().add(
-                              TaskFilterEvent(filter: filter),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                  _filters(filters, settings),
                 ],
               ),
             );
           },
         ),
       ),
+    );
+  }
+
+  StreamBuilder _repositories(
+    List<RepositorySpecification> repositories,
+    TaskBloc taskBloc,
+    Settings settings,
+  ) {
+    return StreamBuilder<Set<Output>>(
+      stream: Background.stream(),
+      builder: (context, asyncSnapshot) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: repositories.length,
+          itemBuilder: (context, index) {
+            final repository = repositories[index];
+            final selected = repository.uuid == taskBloc.repositoryUuid;
+            return Card(
+              child: ListTile(
+                title: Wrap(
+                  children: [
+                    Text(repository.name),
+                    if (!(asyncSnapshot.data
+                            ?.lookup(
+                              Output(
+                                name: Name(
+                                  method: 'task.sync',
+                                  unique: repository.uuid.toString(),
+                                ),
+                                inputData: {},
+                              ),
+                            )
+                            ?.done ??
+                        true))
+                      IconButton(
+                        onPressed: () {},
+                        icon: const InfiniteRotationAnimation(
+                          child: Icon(Icons.sync),
+                        ),
+                      ),
+                  ],
+                ),
+                subtitle: Text(repository.uuid.toString()),
+                subtitleTextStyle: const TextStyle(fontSize: 8),
+                selected: selected,
+                selectedColor: Colors.amber[900],
+                onTap: selected
+                    ? null
+                    : () => context.read<SettingsBloc>().add(
+                        SettingsUpdateEvent(
+                          settings: settings.copyWith(
+                            currentRepository: repository.uuid,
+                          ),
+                        ),
+                      ),
+                onLongPress: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) =>
+                          RepositoryRoute(repositoryUuid: repository.uuid),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  ListView _filters(List<Filter> filters, Settings settings) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: filters.length,
+      itemBuilder: (context, index) {
+        final filter = filters[index];
+        var selected = false;
+        if (settings.selectedFilter is FilterSelection_Predefined) {
+          final predefined =
+              settings.selectedFilter! as FilterSelection_Predefined;
+          selected = filter.uuid == predefined.uuid;
+        }
+        return Card(
+          child: ListTile(
+            title: Text(filter.name),
+            selected: selected,
+            selectedColor: Colors.amber[900],
+            onLongPress: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (context) => TaskFilterRoute(filter: filter),
+                ),
+              );
+            },
+            onTap: () {
+              if (selected) {
+                context.read<SettingsBloc>().add(
+                  SettingsUpdateEvent(
+                    settings: settings.copyWith(selectedFilter: null),
+                  ),
+                );
+                context.read<TaskBloc>().add(TaskFilterEvent());
+                return;
+              }
+
+              context.read<SettingsBloc>().add(
+                SettingsUpdateEvent(
+                  settings: settings.copyWith(
+                    selectedFilter: FilterSelection.predefined(
+                      uuid: filter.uuid,
+                    ),
+                  ),
+                ),
+              );
+              context.read<TaskBloc>().add(TaskFilterEvent(filter: filter));
+            },
+          ),
+        );
+      },
     );
   }
 }

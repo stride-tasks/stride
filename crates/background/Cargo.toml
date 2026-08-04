@@ -1,0 +1,28 @@
+[package]
+name = "stride_background"
+description = "Stride's background task implementation"
+keywords = ["stride"]
+categories = []
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+log.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+tokio = { workspace = true, features = ["full"] }
+
+[dev-dependencies]
+
+[features]
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
