@@ -143,6 +143,7 @@ class Background {
       existingWorkPolicy: existingWorkPolicy,
     );
   }
+
   static Future<void> cancel(BackgroundTask task) async {
     return Workmanager().cancelByUniqueName(task.uniqueName());
   }
@@ -309,7 +310,12 @@ class BTask {
   final Map<String, dynamic> inputData;
   final String? tag;
 
-  const BTask({required this.name, required this.inputData, this.frequency, this.tag});
+  const BTask({
+    required this.name,
+    required this.inputData,
+    this.frequency,
+    this.tag,
+  });
 }
 
 @immutable
@@ -385,9 +391,15 @@ class _DesktopWorkmanager extends WorkmanagerPlatform {
     Duration? backoffPolicyDelay,
     String? tag,
     OutOfQuotaPolicy? outOfQuotaPolicy,
+    ForegroundServiceConfig? foregroundServiceConfig,
+    bool expedited = false,
   }) async {
     _sender.send(
-      BTask(name: Name.fromString(uniqueName), inputData: inputData ?? {}, tag: tag),
+      BTask(
+        name: Name.fromString(uniqueName),
+        inputData: inputData ?? {},
+        tag: tag,
+      ),
     );
   }
 
@@ -404,6 +416,7 @@ class _DesktopWorkmanager extends WorkmanagerPlatform {
     BackoffPolicy? backoffPolicy,
     Duration? backoffPolicyDelay,
     String? tag,
+    ForegroundServiceConfig? foregroundServiceConfig,
   }) async {
     _sender.send(
       BTask(

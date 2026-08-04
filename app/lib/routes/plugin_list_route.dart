@@ -44,7 +44,7 @@ class PluginListRoute extends StatelessWidget {
         onPressed: () async {
           final logBloc = context.read<LogBloc>();
           await logBloc.catch_(message: 'import plugin', () async {
-            final result = await FilePicker.platform.pickFiles(
+            final result = await FilePicker.pickFiles(
               dialogTitle: 'Import Plugin',
             );
 
