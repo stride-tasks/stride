@@ -86,17 +86,17 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     var previousSettings = settingsBloc.settings;
 
-    settingsSubscription = settingsBloc.stream.listen((event) {
+    settingsSubscription = settingsBloc.stream.listen((event) async {
       final previous = previousSettings;
       final next = event.settings;
       previousSettings = next;
 
       if (!next.periodicSync && previous.periodicSync) {
         // Sync was turned off — cancel all repository tasks.
-        _unregisterPeriodicTasks(previous.repositories);
+        await _unregisterPeriodicTasks(previous.repositories);
       } else {
         // Sync is on — register/replace tasks for current repositories.
-        _registerPeriodicTasks(next);
+        await _registerPeriodicTasks(next);
 
         // Cancel tasks for repositories that were removed.
         final removedRepositories = previous.repositories
