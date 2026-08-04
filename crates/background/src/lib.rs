@@ -175,7 +175,7 @@ impl Background {
 
 impl Drop for Background {
     fn drop(&mut self) {
-        self.sender.send(Message::Close).unwrap();
+        drop(self.sender.send(Message::Close));
         if let Some(join_handle) = self.join_handle.take() {
             join_handle.join().unwrap();
         }
