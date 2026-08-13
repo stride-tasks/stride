@@ -952,18 +952,18 @@ packages:
     dependency: "direct main"
     description:
       name: workmanager
-      sha256: "9930f564fc752a84aa868fbb848cb9a058314995a846071650f1c0c55ded10c7"
+      sha256: "06fc5bdd83e2da35f33b682e25167245d0ccb8b56e9a9ada5bfa079fa3af4b9c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.6"
+    version: "0.10.7"
   workmanager_android:
     dependency: transitive
     description:
       name: workmanager_android
-      sha256: d16b7b7b96d9ab4f91d0ecdc0a458cc1e7abe66c737e19c11adf6ca8b770428d
+      sha256: f89029cbcf0695c772287aa8fbbd7af776f1ea63bc95b60a00617f69468ddaa0
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.5"
+    version: "0.10.6"
   workmanager_apple:
     dependency: transitive
     description:
@@ -992,10 +992,10 @@ packages:
     dependency: transitive
     description:
       name: workmanager_web
-      sha256: bbe151a3fca59f8a150683c57d3e3d1cdbb68d5518025e03ca27ea9069a4c254
+      sha256: "2ac481ade599bdd957ee2891be09a0c34be87923a2c3ca4dfe36add6fc735ffd"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.3+1"
+    version: "0.2.0"
   xdg_directories:
     dependency: transitive
     description:

@@ -73,6 +73,15 @@ pub enum Error {
 
     #[error("ssh error: {0}")]
     Ssh(#[from] SshError),
+
+    #[error("remote actor storage not found for actor {actor_id}")]
+    RemoteActorStorageNotFound { actor_id: ActorId },
+
+    #[error("malformed actor key data")]
+    MalformedActorKeyData,
+
+    #[error("unexpected empty line in changelog")]
+    UnexpectedEmptyLine,
 }
 
 impl BackendError for Error {}

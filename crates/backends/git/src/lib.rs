@@ -76,7 +76,7 @@ impl ChangeIter<'_> {
         };
 
         if change.is_empty() {
-            unreachable!("should not contain any empty newlines");
+            return Err(Error::UnexpectedEmptyLine);
         }
 
         let change = base64_decode(change)?;
@@ -139,7 +139,7 @@ impl ActorStorage {
 
         let ([version], aad) = aad
             .split_first_chunk::<{ Self::KEY_VERSION_LEN }>()
-            .expect("shoud contain version");
+            .ok_or(Error::MalformedActorKeyData)?;
         if *version != 0 {
             return Err(Error::UnsupportedVersion {
                 actor_id,
@@ -149,12 +149,14 @@ impl ActorStorage {
 
         let (sequence_bytes, aad) = aad
             .split_first_chunk::<{ Self::KEY_SEQUENCE_LEN }>()
-            .expect("shoud contain sequence");
+            .ok_or(Error::MalformedActorKeyData)?;
         let sequence = Sequence::new(u64::from_be_bytes(*sequence_bytes));
 
-        assert_eq!(aad.len(), 0, "should not contain any remaining data");
+        if !aad.is_empty() {
+            return Err(Error::MalformedActorKeyData);
+        }
 
-        let key = Crypter::new(data.try_into().unwrap());
+        let key = Crypter::new(data.try_into().map_err(|_| Error::MalformedActorKeyData)?);
 
         Ok(Some(Self {
             actor_id,
@@ -624,7 +626,7 @@ impl GitBackend {
                     let Some(mut actor_storage) =
                         ActorStorage::load(actor_id, &changelog_filepath, self.master_key.clone())?
                     else {
-                        unreachable!("");
+                        return Err(Error::RemoteActorStorageNotFound { actor_id });
                     };
 
                     transaction.get_or_insert_actor(actor_id)?;

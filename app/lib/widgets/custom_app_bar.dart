@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/background.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
@@ -65,16 +66,31 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             //   ),
             if (hasRepositories)
               IconButton(
-                icon: BlocBuilder<TaskBloc, TaskState>(
-                  builder: (context, state) {
-                    if (state.syncing) {
+                icon: StreamBuilder<Set<Output>>(
+                  stream: Background.stream(),
+                  builder: (context, snapshot) {
+                    final output = snapshot.data?.lookup(
+                      Output(
+                        name: Name(
+                          method: 'task.sync',
+                          unique: context.read<TaskBloc>().repositoryUuid?.uuid,
+                        ),
+                        inputData: {},
+                        timestamp: DateTime.now(),
+                      ),
+                    );
+
+                    if (output == null) {
+                      return Icon(Icons.sync);
+                    } else if (output.error != null) {
+                      return Icon(Icons.sync_problem);
+                    } else if (output.done) {
+                      return Icon(Icons.sync);
+                    } else {
                       return const InfiniteRotationAnimation(
                         child: Icon(Icons.sync),
                       );
                     }
-                    return state.syncingError == null
-                        ? const Icon(Icons.sync)
-                        : const Icon(Icons.sync_problem);
                   },
                 ),
                 onPressed: () {

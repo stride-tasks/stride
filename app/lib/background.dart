@@ -6,9 +6,12 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:stride/bridge/api/background.dart' as background;
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart' as logging;
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart';
@@ -30,19 +33,22 @@ class TaskSyncBackgroundTask implements BackgroundTask {
 
   @override
   Map<String, dynamic> toInputData() {
+    // WorkManager Android doesn't support nested maps; encode params as JSON string
     return {
-      'repository': {'id': repositoryId.toString()},
+      'params': jsonEncode({
+        'repository': {'id': repositoryId.toString()},
+      }),
     };
   }
 
   @override
   String uniqueName() {
-    return '${taskName()}:$repositoryId';
+    return 'task.sync:$repositoryId';
   }
 
   @override
   String taskName() {
-    return 'task.sync';
+    return this.uniqueName();
   }
 }
 
@@ -52,19 +58,46 @@ class Output {
   final Map<String, dynamic> inputData;
   final Object? error;
   final bool done;
+  final DateTime timestamp;
   const Output({
     required this.name,
     required this.inputData,
+    required this.timestamp,
     this.error,
     this.done = false,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name.toString(),
+      'inputData': inputData,
+      'error': error?.toString(),
+      'done': done,
+      'timestamp': timestamp.toUtc().toIso8601String(),
+    };
+  }
+
+  factory Output.fromMap(Map<String, dynamic> map) {
+    return Output(
+      name: Name.fromString(map['name'] as String),
+      inputData: Map<String, dynamic>.from(
+        map['inputData'] as Map? ?? const {},
+      ),
+      timestamp: DateTime.parse(map['timestamp'] as String),
+      error: map['error'] as String?,
+      done: map['done'] as bool? ?? false,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
-    if (other is! Output) {
+    if (other is Name) {
+      return name == other;
+    } else if (other is! Output) {
       return false;
+    } else {
+      return name == other.name;
     }
-    return name == other.name;
   }
 
   @override
@@ -83,14 +116,15 @@ class Background {
 
   static Stream<Set<Output>> stream() => _stream!;
 
+  static WorkmanagerPlatform? instance;
+
   static Future<void> init() async {
     _outputs = {};
     _streamController = StreamController();
 
     _receivePort = ReceivePort('worker');
     _receivePort?.listen((message) {
-      final output = message as Output;
-      print('Background :: $output');
+      final output = Output.fromMap(Map<String, dynamic>.from(message as Map));
 
       _outputs?.remove(output);
       _outputs!.add(output);
@@ -105,7 +139,8 @@ class Background {
     );
 
     if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
-      WorkmanagerPlatform.instance = await _DesktopWorkmanager.create();
+      instance = await _DesktopWorkmanager.create();
+      WorkmanagerPlatform.instance = instance!;
     }
     await Workmanager().initialize(_callbackDispatcher);
   }
@@ -117,6 +152,17 @@ class Background {
   }) async {
     final uniqueName = task.uniqueName();
     final taskName = task.taskName();
+
+    if (instance != null) {
+      return instance!.registerOneOffTask(
+        uniqueName,
+        taskName,
+        inputData: task.toInputData(),
+        initialDelay: initialDelay,
+        existingWorkPolicy: existingWorkPolicy,
+      );
+    }
+
     return Workmanager().registerOneOffTask(
       uniqueName,
       taskName,
@@ -134,6 +180,18 @@ class Background {
   }) async {
     final uniqueName = task.uniqueName();
     final taskName = task.taskName();
+
+    if (instance != null) {
+      await instance!.registerPeriodicTask(
+        uniqueName,
+        taskName,
+        inputData: task.toInputData(),
+        initialDelay: initialDelay,
+        frequency: frequency,
+        existingWorkPolicy: existingWorkPolicy,
+      );
+    }
+
     return Workmanager().registerPeriodicTask(
       uniqueName,
       taskName,
@@ -145,10 +203,18 @@ class Background {
   }
 
   static Future<void> cancel(BackgroundTask task) async {
+    if (instance != null) {
+      return instance!.cancelByUniqueName(task.uniqueName());
+    }
+
     return Workmanager().cancelByUniqueName(task.uniqueName());
   }
 
   static Future<void> cancelAll() async {
+    if (instance != null) {
+      return instance!.cancelAll();
+    }
+
     return Workmanager().cancelAll();
   }
 }
@@ -162,34 +228,56 @@ const String _GLOBAL_PORT_NAME = 'worker-port';
 
 Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
   final input = inputData ?? {};
-
-  await RustLib.init();
-
-  logging.trace(message: 'Background task: $task, inputData: $inputData');
-
+  final name = Name.fromString(task);
   final port = IsolateNameServer.lookupPortByName(_GLOBAL_PORT_NAME);
 
-  final name = Name.fromString(task);
-
-  port?.send(Output(name: name, inputData: input));
   try {
-    await background.execute(
-      task: jsonEncode({'method': name.method, 'params': input}),
+    await RustLib.init();
+
+    logging.trace(message: 'Background task: $task, inputData: $inputData');
+
+    port?.send(
+      Output(name: name, inputData: input, timestamp: DateTime.now()).toMap(),
     );
-    port?.send(Output(name: name, inputData: input, done: true));
-  } on RustError catch (e) {
+
+    await background.execute(
+      task: jsonEncode({
+        'method': name.method,
+        'params': jsonDecode(input['params'] as String) as Map<String, dynamic>,
+      }),
+    );
     port?.send(
       Output(
         name: name,
         inputData: input,
+        timestamp: DateTime.now(),
+        done: true,
+      ).toMap(),
+    );
+  } on RustError catch (e) {
+    logging.trace(message: 'Background task error: ${e.toErrorString()}');
+    port?.send(
+      Output(
+        name: name,
+        inputData: input,
+        timestamp: DateTime.now(),
         error: e.toErrorString(),
         done: true,
-      ),
+      ).toMap(),
     );
   }
   // ignore: avoid_catches_without_on_clauses
   catch (error) {
-    port?.send(Output(name: name, inputData: input, error: error, done: true));
+    logging.trace(message: 'Background task error: ${error.toString()}');
+    port?.send(
+      Output(
+        name: name,
+        inputData: input,
+        timestamp: DateTime.now(),
+        error: error,
+        done: true,
+      ).toMap(),
+    );
   }
 
   return Future.value(true);
@@ -474,5 +562,6 @@ class _DesktopWorkmanager extends WorkmanagerPlatform {
     // await _taskStreamController.close();
     // await _streamSubscription.cancel();
     _isolate.kill();
+    _receiver.close();
   }
 }
