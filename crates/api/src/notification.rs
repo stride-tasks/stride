@@ -8,6 +8,27 @@ pub enum Value {
     Map(HashMap<Box<str>, Value>),
 }
 
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Number(value) => value.fmt(f),
+            Self::String(value) => std::fmt::Debug::fmt(value, f),
+            Self::Map(map) => {
+                f.write_str("{")?;
+                for (i, (key, value)) in map.iter().enumerate() {
+                    std::fmt::Debug::fmt(key, f)?;
+                    f.write_str(": ")?;
+                    value.fmt(f)?;
+                    if i + 1 != map.len() {
+                        f.write_str(", ")?;
+                    }
+                }
+                f.write_str("}")
+            }
+        }
+    }
+}
+
 pub const PROMPT_METHOD: &str = "stride.notification.prompt";
 
 pub trait Prompt: std::fmt::Debug + Any + 'static {

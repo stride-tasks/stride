@@ -29,9 +29,12 @@ impl api::Context for Engine {
         let handler = self
             .commands
             .get(method)
-            .expect("could not find command handler");
-
-        handler.handle(self.clone(), args)?;
+            .ok_or_else(|| api::Error::HandlerNotFound { method: method.into() })?;
+        handler.handle(self.clone(), args.clone()).map_err(|err| api::Error::HandlerFailed {
+            method: method.into(),
+            params: args,
+            cause: Box::new(err),
+        })?;
         Ok(())
     }
 }

@@ -38,6 +38,7 @@ use uuid::Uuid;
 mod serialization;
 
 pub mod error;
+pub mod method;
 
 pub use error::{Error, Result};
 
