@@ -25,5 +25,5 @@ pub trait Context: Send + Sync + 'static {
     /// # Errors
     ///
     /// Returns an error if the command could not be executed for any reason.
-    fn execute(self: Arc<Self>, method: &str, args: &str) -> Result<()>;
+    fn execute(self: Arc<Self>, method: &str, args: Value) -> Result<()>;
 }

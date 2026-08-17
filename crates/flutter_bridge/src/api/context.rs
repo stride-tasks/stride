@@ -5,11 +5,7 @@ use stride_backend_git::known_hosts::{Host, KnownHosts};
 use stride_engine as engine;
 use uuid::Uuid;
 
-use crate::{
-    ErrorKind, RustError,
-    api::repository::Repository,
-    frb_generated::StreamSink,
-};
+use crate::{ErrorKind, RustError, api::repository::Repository, frb_generated::StreamSink};
 
 static STATE: OnceLock<Arc<dyn api::Context + Send + Sync>> = OnceLock::new();
 static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex::default);
@@ -23,8 +19,9 @@ struct RepositorySpec {
 }
 
 impl api::CommandHandler for RepositorySyncHandler {
-    fn handle(&self, context: Arc<dyn api::Context>, args: &str) -> api::Result<Box<str>> {
-        let repository: RepositorySpec = serde_json::from_str(args).unwrap();
+    fn handle(&self, context: Arc<dyn api::Context>, args: api::Value) -> api::Result<Box<str>> {
+        let args = serde_json::to_string(&args).map_err(Box::new)?;
+        let repository: RepositorySpec = serde_json::from_str(&args).map_err(Box::new)?;
 
         let mut repository = Repository::open(repository.id).map_err(Box::new)?;
         repository.sync(&context).map_err(Box::new)?;
@@ -41,8 +38,9 @@ struct SshHostAddArgs {
 }
 
 impl api::CommandHandler for SshHostAddHandler {
-    fn handle(&self, _: Arc<dyn api::Context>, args: &str) -> api::Result<Box<str>> {
-        let ssh_host_add_args: SshHostAddArgs = serde_json::from_str(args).map_err(Box::new)?;
+    fn handle(&self, _: Arc<dyn api::Context>, args: api::Value) -> api::Result<Box<str>> {
+        let args = serde_json::to_string(&args).map_err(Box::new)?;
+        let ssh_host_add_args: SshHostAddArgs = serde_json::from_str(&args).map_err(Box::new)?;
         let mut known_hosts = KnownHosts::read_standard_file().map_err(Box::new)?;
         known_hosts.add(ssh_host_add_args.host);
         known_hosts.write_standard_file().map_err(Box::new)?;
@@ -88,7 +86,7 @@ pub fn create_context(stream: StreamSink<String>) {
 pub fn execute(method: &str, args: &str) -> Result<(), RustError> {
     #[derive(Debug, serde::Deserialize)]
     struct Params {
-        params: serde_json::Value,
+        params: api::Value,
     }
 
     let context = STATE.get_or_init(|| {
@@ -104,15 +102,17 @@ pub fn execute(method: &str, args: &str) -> Result<(), RustError> {
     let params: Params = serde_json::from_str(args).map_err(|e| ErrorKind::Other {
         message: format!("Failed to parse args: {e}").into(),
     })?;
-    let params = serde_json::to_string(&params.params).map_err(|e| ErrorKind::Other {
-        message: format!("Failed to serialize params: {e}").into(),
-    })?;
 
-    context.clone().execute(method, &params).map_err(|err| {
-        ErrorKind::Other {
-            message: format!("Failed to execute method: {method} with args: {args}. Error: {err}")
+    context
+        .clone()
+        .execute(method, params.params)
+        .map_err(|err| {
+            ErrorKind::Other {
+                message: format!(
+                    "Failed to execute method: {method} with args: {args}. Error: {err}"
+                )
                 .into(),
-        }
-        .into()
-    })
+            }
+            .into()
+        })
 }

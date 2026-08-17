@@ -25,11 +25,12 @@ impl api::Context for Engine {
         self.clone().notifier.notify(self, notification)
     }
 
-    fn execute(self: Arc<Self>, method: &str, args: &str) -> api::Result<()> {
+    fn execute(self: Arc<Self>, method: &str, args: api::Value) -> api::Result<()> {
         let handler = self
             .commands
             .get(method)
             .expect("could not find command handler");
+
         handler.handle(self.clone(), args)?;
         Ok(())
     }
