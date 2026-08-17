@@ -15,6 +15,7 @@ use known_hosts::{Host, HostKeyType, KnownHosts};
 use ssh_key::SshKey;
 use std::{
     cell::RefCell,
+    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader, BufWriter, Lines, Seek, Write},
     iter::{FusedIterator, Skip},
@@ -22,6 +23,7 @@ use std::{
     rc::Rc,
     sync::Arc,
 };
+use stride_api as api;
 use stride_backend::{Backend, BackendHandler};
 use stride_crdt::{
     actor::{Actor, ActorId},
@@ -652,6 +654,46 @@ impl GitBackend {
     }
 }
 
+#[derive(Debug)]
+struct AddUnknownHostPrompt {
+    host: Host,
+}
+
+impl api::Prompt for AddUnknownHostPrompt {
+    fn target(&self) -> Box<str> {
+        "stride.ssh.host.add".into()
+    }
+
+    fn summary(&self) -> Box<str> {
+        format!(
+            "The host {} is unknown. Do you want to add it to the known hosts?",
+            self.host.hostname
+        )
+        .into()
+    }
+
+    fn inputs(&self) -> api::Value {
+        let mut map = HashMap::new();
+
+        let mut host = HashMap::new();
+        host.insert(
+            "hostname".into(),
+            api::Value::String(self.host.hostname.clone().into()),
+        );
+        host.insert(
+            "key-type".into(),
+            api::Value::String(self.host.key_type.name().into()),
+        );
+        host.insert(
+            "key".into(),
+            api::Value::String(self.host.key.clone().into()),
+        );
+
+        map.insert("host".into(), api::Value::Map(host));
+        api::Value::Map(map)
+    }
+}
+
 impl Backend for GitBackend {
     fn handler() -> Box<dyn BackendHandler>
     where
@@ -660,9 +702,21 @@ impl Backend for GitBackend {
         Box::new(Handler)
     }
 
-    #[allow(clippy::too_many_lines)]
-    fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
-        Ok(self.sync_impl(db)?)
+    fn sync(
+        &mut self,
+        context: Arc<dyn api::Context>,
+        db: &mut Database,
+    ) -> Result<(), stride_backend::Error> {
+        match self.sync_impl(db) {
+            Ok(()) => Ok(()),
+            Err(Error::UnknownHost { host }) => {
+                context.clone().notify(api::Notification::Prompt(Box::new(
+                    AddUnknownHostPrompt { host: host.clone() },
+                )))?;
+                Err(Error::UnknownHost { host }.into())
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 }
 impl GitBackend {

@@ -1,7 +1,7 @@
 [package]
-name = "stride_backend_taskchampion"
-description = "Stride's taskchampion backend"
-keywords = ["stride", "taskchampion"]
+name = "stride_engine"
+description = "Stride's Engine"
+keywords = ["stride"]
 categories = []
 version.workspace = true
 edition.workspace = true
@@ -13,14 +13,8 @@ publish = false
 
 [dependencies]
 stride_api.workspace = true
-stride_core = { workspace = true, features = ["taskchampion"] }
-stride_backend.workspace = true
-stride_database.workspace = true
 
-taskchampion.workspace = true
-uuid.workspace = true
 thiserror.workspace = true
-tokio.workspace = true
 
 [lints]
 workspace = true

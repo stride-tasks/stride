@@ -2393,9 +2393,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
+name = "stride_api"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 2.0.19",
+]
+
+[[package]]
 name = "stride_backend"
 version = "0.1.0"
 dependencies = [
+ "stride_api",
  "stride_core",
  "stride_database",
  "thiserror 2.0.19",
@@ -2411,6 +2420,7 @@ dependencies = [
  "git2",
  "log",
  "serde",
+ "stride_api",
  "stride_backend",
  "stride_core",
  "stride_crdt",
@@ -2425,6 +2435,7 @@ dependencies = [
 name = "stride_backend_taskchampion"
 version = "0.1.0"
 dependencies = [
+ "stride_api",
  "stride_backend",
  "stride_core",
  "stride_database",
@@ -2453,12 +2464,14 @@ dependencies = [
  "clap",
  "dirs",
  "log",
+ "stride_api",
  "stride_backend",
  "stride_backend_git",
  "stride_backend_taskchampion",
  "stride_core",
  "stride_crdt",
  "stride_database",
+ "stride_engine",
  "stride_flutter_bridge",
  "stride_plugin_manager",
  "uuid",
@@ -2518,6 +2531,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_engine"
+version = "0.1.0"
+dependencies = [
+ "stride_api",
+ "thiserror 2.0.19",
+]
+
+[[package]]
 name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
@@ -2527,6 +2548,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "stride_api",
  "stride_backend",
  "stride_backend_git",
  "stride_backend_taskchampion",
@@ -2534,6 +2556,7 @@ dependencies = [
  "stride_core",
  "stride_crdt",
  "stride_database",
+ "stride_engine",
  "stride_logging",
  "stride_plugin_manager",
  "thiserror 2.0.19",

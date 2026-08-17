@@ -7,6 +7,7 @@ use std::{
     process::ExitCode,
     sync::Arc,
 };
+use stride_api as api;
 use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::{GitBackend, known_hosts::KnownHosts, ssh_key::SshKey};
 use stride_backend_taskchampion::TaskchampionBackend;
@@ -20,6 +21,7 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
+use stride_engine::Engine;
 use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
@@ -67,6 +69,15 @@ fn print_tasks(tasks: &[Task]) {
             task.id,
             task.title.as_deref().unwrap_or("<missing title>")
         );
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct CliNotifier;
+
+impl api::Notifier for CliNotifier {
+    fn notify(&self, _: Arc<dyn api::Context>, _: api::Notification) -> api::Result<()> {
+        Ok(())
     }
 }
 
@@ -140,6 +151,9 @@ fn main() -> anyhow::Result<ExitCode> {
     backend_registry.insert(GitBackend::handler());
     backend_registry.insert(TaskchampionBackend::handler());
 
+    let notifier = Box::new(CliNotifier);
+    let engine: Arc<dyn api::Context> = Engine::new(notifier);
+
     match args.mode {
         Mode::Search { filter } => {
             let search = filter.join(" ").to_lowercase();
@@ -209,6 +223,7 @@ fn main() -> anyhow::Result<ExitCode> {
                             current_repository,
                             &mut database,
                             &known_paths,
+                            &engine,
                         )?;
                     }
                     PluginEvent::TaskQuery { query } => {
@@ -259,7 +274,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let config = backend.config.fill(&schema)?;
             let mut backend = handler.create(&config, &path, &known_paths)?;
 
-            backend.sync(&mut database)?;
+            backend.sync(engine.clone(), &mut database)?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.

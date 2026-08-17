@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "stride.repository.sync.schema.json",
+    "title": "stride.repository.sync",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "stride.repository.sync",
+            "description": "The name of the method to be invoked."
+        },
+        "params": {
+            "type": "object",
+            "description": "The parameters for the method.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique identifier of the repository to be synchronized."
+                },
+                "backends": {
+                    "type": "array",
+                    "description": "A list of backends to synchronize with the repository.",
+                    "items": {
+                        "type": "string",
+                        "example": [
+                            "stride.git"
+                        ]
+                    }
+                }
+            },
+            "required": [ "id" ]
+        },
+        "result": {
+            "type": "object",
+            "const": {}
+        }
+    },
+    "required": [
+        "method",
+        "params"
+    ]
+}

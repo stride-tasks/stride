@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "stride.type.ssh.host.schema.json",
+	"title": "SSH Host",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"hostname",
+		"key"
+	],
+	"properties": {
+		"hostname": {
+            "type": "string",
+            "description": "The hostname or IP address of the SSH host."
+        },
+        "key": {
+            "$ref": "stride.type.ssh.key.public.schema.json",
+            "description": "The SSH key used for authentication."
+        }
+	}
+}

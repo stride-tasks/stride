@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/bridge/api/error.dart';
+import 'package:stride/context.dart';
 
 @immutable
 abstract class DialogEvent {}
@@ -40,6 +43,37 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
           onConfirm: (context) async => false,
         ),
       ) {
+    RustContext.stream().listen((event) {
+      final map = jsonDecode(event) as Map<String, dynamic>;
+      if (map['method'] == 'stride.notification.prompt') {
+        final params = map['params'] as Map<String, dynamic>;
+        add(
+          DialogAlertEvent(
+            title: params['summary'] as String,
+            content: 'Rust has requested a prompt. Do you want to continue?',
+            onConfirm: (context) async {
+              try {
+                await RustContext.execute(
+                  params['target'] as String,
+                  jsonEncode({'params': params['inputs']}),
+                );
+              } on RustError catch (e) {
+                print('Error executing Rust method: ${e.toErrorString()}');
+              }
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+              return true;
+            },
+            onCancel: (context) async {
+              Navigator.of(context).pop();
+              return false;
+            },
+          ),
+        );
+      }
+    });
+
     on<DialogAlertEvent>((event, emit) async {
       emit(
         DialogState(

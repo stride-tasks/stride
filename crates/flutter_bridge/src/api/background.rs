@@ -4,7 +4,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use stride_background::{Background, Name, Reactor};
 use uuid::Uuid;
 
-use crate::{ErrorKind, RustError, api::repository::Repository, frb_generated::StreamSink};
+use crate::{RustError, frb_generated::StreamSink};
 
 static STATE: LazyLock<Mutex<Option<State>>> = LazyLock::new(Mutex::default);
 
@@ -83,8 +83,8 @@ pub fn init(stream_sink: StreamSink<BackgroundResult>) {
 
 #[frb(ignore)]
 #[derive(Debug, Serialize, Deserialize)]
-struct RepositorySpec {
-    id: Uuid,
+pub(crate) struct RepositorySpec {
+    pub(crate) id: Uuid,
 }
 
 #[frb(ignore)]
@@ -105,24 +105,11 @@ struct BgTask {
 }
 
 #[frb(ignore)]
-#[derive(Debug)]
-struct TaskSync {
-    repository: RepositorySpec,
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct TaskSync {
+    pub(crate) repository: RepositorySpec,
 }
 
-pub fn execute(task: &str) -> Result<(), RustError> {
-    let task = serde_json::from_str::<BgTask>(task).map_err(|e| {
-        RustError::from(ErrorKind::Other {
-            message: format!("invalid background task payload: {e}").into(),
-        })
-    })?;
-
-    match task.method {
-        Method::TaskSync { repository } => {
-            let mut repository = Repository::open(repository.id)?;
-            repository.sync()?;
-        }
-    }
-
+pub fn execute(_: &str) -> Result<(), RustError> {
     Ok(())
 }

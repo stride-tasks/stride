@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
+use stride_api::Context;
 use stride_core::state::KnownPaths;
 use stride_database::Database;
 use uuid::Uuid;
@@ -44,6 +45,7 @@ impl Registry {
         repository_id: Uuid,
         database: &mut Database,
         known_paths: &KnownPaths,
+        context: &Arc<dyn Context>,
     ) -> Result<(), Error> {
         let backends = database.backends()?;
         for mut backend in backends {
@@ -72,7 +74,7 @@ impl Registry {
 
             let mut backend = handler.create(&backend.config, &path, known_paths)?;
 
-            backend.sync(database)?;
+            backend.sync(context.clone(), database)?;
         }
 
         Ok(())

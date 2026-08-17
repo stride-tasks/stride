@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "stride.notification.prompt.schema.json",
+    "title": "Prompt",
+    "description": "A prompt is a message or question that is presented to the user, often as part of an interactive system or application, and it may also include actions that the user can take in response to the prompt.",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "stride.notification.prompt.select",
+            "description": "A unique identifier for the method, used to resolve handler for the prompt."
+        },
+        "inputs": {
+            "type": "object",
+            "description": "A map of input names to their corresponding values.",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "summary": {
+            "type": "string",
+            "description": "A brief summary of the prompt."
+        },
+        "description": {
+            "type": "string",
+            "description": "A detailed description of the prompt."
+        },
+        "actions": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "description": "An action that the user can take in response to the prompt."
+            },
+            "description": "A list of actions that the user can take in response to the prompt."
+        }
+    },
+    "required": ["method", "summary", "actions"]
+}

@@ -1,5 +1,5 @@
 [package]
-name = "stride_backend"
+name = "stride_api"
 description = "Stride's database"
 keywords = ["stride", "wasm", "plugin"]
 categories = []
@@ -12,11 +12,7 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-stride_api.workspace = true
-stride_core = { workspace = true, features = ["taskchampion"] }
-stride_database.workspace = true
-
-uuid.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 
 [lints]

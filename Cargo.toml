@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+  "crates/api",
   "crates/core",
   "crates/crdt",
   "crates/serialization",
@@ -13,6 +14,7 @@ members = [
   "crates/crypto",
   "crates/plugin",
   "crates/plugin_manager",
+  "crates/engine",
   "crates/flutter_bridge",
   "cli",
 ]
@@ -30,6 +32,7 @@ description = "An extensible task menagment application that uses git as it's da
 
 [workspace.dependencies]
 # Repository Crates
+stride_api = { version = "~0.1.0", path = "crates/api" }
 stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
 stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
 stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
@@ -42,6 +45,7 @@ stride_backend_taskchampion = { version = "~0.1.0", path = "crates/backends/task
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
 stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
 stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
+stride_engine = { version = "~0.1.0", path = "crates/engine" }
 stride_flutter_bridge = { version = "~0.1.0", path = "crates/flutter_bridge" }
 
 # Shared Dependencies

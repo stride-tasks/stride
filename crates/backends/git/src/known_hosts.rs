@@ -14,11 +14,17 @@ use crate::Result;
 /// flutter_rust_bridge:ignore
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HostKeyType {
+    #[serde(rename = "ssh-rsa")]
     Rsa = SshHostKeyType::Rsa as isize,
+    #[serde(rename = "ssh-dss")]
     Dss = SshHostKeyType::Dss as isize,
+    #[serde(rename = "ecdsa-sha2-nistp256")]
     Ecdsa256 = SshHostKeyType::Ecdsa256 as isize,
+    #[serde(rename = "ecdsa-sha2-nistp384")]
     Ecdsa384 = SshHostKeyType::Ecdsa384 as isize,
+    #[serde(rename = "ecdsa-sha2-nistp521")]
     Ecdsa521 = SshHostKeyType::Ecdsa521 as isize,
+    #[serde(rename = "ssh-ed25519")]
     Ed255219 = SshHostKeyType::Ed255219 as isize,
 }
 
@@ -106,6 +112,7 @@ pub struct HostRef<'a> {
 
 /// flutter_rust_bridge:non_opaque
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Host {
     pub hostname: String,
     pub key_type: HostKeyType,

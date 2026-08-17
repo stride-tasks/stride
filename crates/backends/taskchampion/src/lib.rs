@@ -7,8 +7,10 @@
 use std::{
     mem,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
+use stride_api::Context;
 use stride_backend::{Backend, BackendHandler};
 use stride_core::{
     backend::{BytesCategory, Config, Schema, SchemaValue},
@@ -74,8 +76,7 @@ impl BackendHandler for Handler {
             constraint_environment: true,
         };
 
-        let runtime = tokio::runtime::Runtime::new()
-            .map_err(error::Error::Io)?;
+        let runtime = tokio::runtime::Runtime::new().map_err(error::Error::Io)?;
         let this = runtime.block_on(TaskchampionBackend::new(config))?;
 
         Ok(Box::new(this))
@@ -248,9 +249,12 @@ impl Backend for TaskchampionBackend {
         Box::new(Handler)
     }
 
-    fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
-        let runtime = tokio::runtime::Runtime::new()
-            .map_err(error::Error::Io)?;
+    fn sync(
+        &mut self,
+        _: Arc<dyn Context>,
+        db: &mut Database,
+    ) -> Result<(), stride_backend::Error> {
+        let runtime = tokio::runtime::Runtime::new().map_err(error::Error::Io)?;
         runtime.block_on(self.sync(db))?;
         Ok(())
     }

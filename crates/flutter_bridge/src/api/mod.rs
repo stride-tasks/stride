@@ -3,6 +3,7 @@
 //
 
 pub mod background;
+pub mod context;
 pub mod error;
 pub mod filter;
 pub mod git;
