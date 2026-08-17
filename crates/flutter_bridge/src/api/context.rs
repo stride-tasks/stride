@@ -78,8 +78,6 @@ pub fn execute(method: &str, args: &str) -> Result<(), RustError> {
             .build()
     });
 
-    println!("Executing method: {method} with args: {args}");
-
     let params: Params = serde_json::from_str(args).map_err(|e| ErrorKind::Other {
         message: format!("Failed to parse args: {e}").into(),
     })?;

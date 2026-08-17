@@ -7,10 +7,6 @@ class RustContext {
 
   static Future<void> init() async {
     _stream = context.createContext().asBroadcastStream();
-
-    _stream.listen((event) {
-      print('Received event from Rust: $event');
-    });
   }
 
   static Future<void> execute(String method, String args) async {

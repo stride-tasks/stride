@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/context.dart';
+import 'package:stride/bridge/api/logging.dart' as logging;
 
 @immutable
 abstract class DialogEvent {}
@@ -58,7 +59,9 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
                   jsonEncode({'params': params['inputs']}),
                 );
               } on RustError catch (e) {
-                print('Error executing Rust method: ${e.toErrorString()}');
+                logging.error(
+                  message: 'Error executing Rust method: ${e.toErrorString()}',
+                );
               }
               if (context.mounted) {
                 Navigator.of(context).pop();
