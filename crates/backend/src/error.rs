@@ -7,16 +7,38 @@ pub trait BackendError: Any + std::error::Error + Display + Sync + Send + 'stati
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("database error: {0}")]
-    Database(#[from] stride_database::Error),
+    Database(
+        #[from]
+        #[source]
+        stride_database::Error,
+    ),
 
     #[error("config error: {0}")]
-    Config(#[from] stride_core::backend::Error),
+    Config(
+        #[from]
+        #[source]
+        stride_core::backend::Error,
+    ),
 
     #[error("unknown backend: {name}")]
     UnknownBackend { name: Box<str> },
 
     #[error("{0}")]
+    Api(
+        #[from]
+        #[source]
+        stride_api::Error,
+    ),
+
+    #[error("{0}")]
     Other(Box<dyn BackendError>),
+
+    #[error("I/O error: {0}")]
+    Io(
+        #[from]
+        #[source]
+        std::io::Error,
+    ),
 }
 
 impl Error {

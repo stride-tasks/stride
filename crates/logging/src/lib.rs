@@ -91,3 +91,28 @@ pub fn init(path: &Path) {
         );
     }));
 }
+
+#[derive(Debug)]
+pub struct LogLevelGuard {
+    level: log::LevelFilter,
+}
+
+impl Drop for LogLevelGuard {
+    fn drop(&mut self) {
+        log::set_max_level(self.level);
+    }
+}
+
+impl LogLevelGuard {
+    pub fn new(level: log::LevelFilter) -> Self {
+        let current = log::max_level();
+        log::set_max_level(level);
+        Self {
+            level: current,
+        }
+    }
+
+    pub fn error() -> Self {
+        Self::new(log::LevelFilter::Error)
+    }
+}

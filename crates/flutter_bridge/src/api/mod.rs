@@ -2,7 +2,7 @@
 // Do not put code in `mod.rs`, but put in e.g. `simple.rs`.
 //
 
-pub mod background;
+pub mod context;
 pub mod error;
 pub mod filter;
 pub mod git;

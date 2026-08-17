@@ -12,6 +12,7 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
+stride_api.workspace = true
 stride_core.workspace = true
 stride_crdt = { workspace = true, features = ["serialize"] }
 stride_serialize.workspace = true
@@ -19,6 +20,7 @@ stride_crypto.workspace = true
 stride_database.workspace = true
 stride_backend.workspace = true
 
+serde_json.workspace = true
 uuid.workspace = true
 base64.workspace = true
 git2.workspace = true

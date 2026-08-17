@@ -14,7 +14,7 @@ import 'dart:convert';
 import 'dart:ffi' as ffi;
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
-import 'package:stride/bridge/api/background.dart';
+import 'package:stride/bridge/api/context.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/git.dart';
@@ -160,9 +160,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Set<TaskStatus> dco_decode_Set_task_status_None(dynamic raw);
 
   @protected
-  RustStreamSink<BackgroundResult> dco_decode_StreamSink_background_result_Sse(
-    dynamic raw,
-  );
+  RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw);
 
   @protected
   RustStreamSink<Settings> dco_decode_StreamSink_settings_Sse(dynamic raw);
@@ -184,9 +182,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BackendRecord dco_decode_backend_record(dynamic raw);
-
-  @protected
-  BackgroundResult dco_decode_background_result(dynamic raw);
 
   @protected
   bool dco_decode_bool(dynamic raw);
@@ -550,7 +545,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Set<TaskStatus> sse_decode_Set_task_status_None(SseDeserializer deserializer);
 
   @protected
-  RustStreamSink<BackgroundResult> sse_decode_StreamSink_background_result_Sse(
+  RustStreamSink<String> sse_decode_StreamSink_String_Sse(
     SseDeserializer deserializer,
   );
 
@@ -578,9 +573,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BackendRecord sse_decode_backend_record(SseDeserializer deserializer);
-
-  @protected
-  BackgroundResult sse_decode_background_result(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
@@ -1011,8 +1003,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_StreamSink_background_result_Sse(
-    RustStreamSink<BackgroundResult> self,
+  void sse_encode_StreamSink_String_Sse(
+    RustStreamSink<String> self,
     SseSerializer serializer,
   );
 
@@ -1045,12 +1037,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_backend_record(BackendRecord self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_background_result(
-    BackgroundResult self,
-    SseSerializer serializer,
-  );
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);

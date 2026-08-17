@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
@@ -46,6 +48,8 @@ Future<void> main() async {
       logPath: path.joinAll([cachePath, 'logs', 'log.txt']),
     ),
   );
+
+  await RustContext.init();
 
   await Background.init();
 

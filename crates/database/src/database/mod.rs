@@ -458,8 +458,10 @@ impl Database {
                     match typ.as_ref() {
                         typ @ ("string" | "url") => {
                             let value = row.get::<_, Vec<u8>>("value")?;
-                            let string = String::from_utf8(value)
-                                .map_err(|e| { let error = e.utf8_error(); rusqlite::Error::Utf8Error(error.valid_up_to(), error) })?;
+                            let string = String::from_utf8(value).map_err(|e| {
+                                let error = e.utf8_error();
+                                rusqlite::Error::Utf8Error(error.valid_up_to(), error)
+                            })?;
                             if typ == "string" {
                                 Value::String(string.into_boxed_str())
                             } else {

@@ -6,13 +6,10 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
-import 'package:stride/bridge/api/background.dart' as background;
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/api/logging.dart' as logging;
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
+import 'package:stride/context.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -35,15 +32,13 @@ class TaskSyncBackgroundTask implements BackgroundTask {
   Map<String, dynamic> toInputData() {
     // WorkManager Android doesn't support nested maps; encode params as JSON string
     return {
-      'params': jsonEncode({
-        'repository': {'id': repositoryId.toString()},
-      }),
+      'params': jsonEncode({'id': repositoryId.toString()}),
     };
   }
 
   @override
   String uniqueName() {
-    return 'task.sync:$repositoryId';
+    return 'stride.repository.sync:$repositoryId';
   }
 
   @override
@@ -240,9 +235,9 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
       Output(name: name, inputData: input, timestamp: DateTime.now()).toMap(),
     );
 
-    await background.execute(
-      task: jsonEncode({
-        'method': name.method,
+    await RustContext.execute(
+      name.method,
+      jsonEncode({
         'params': jsonDecode(input['params'] as String) as Map<String, dynamic>,
       }),
     );

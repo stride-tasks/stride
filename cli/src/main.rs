@@ -3,12 +3,16 @@ use chrono::Utc;
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     process::ExitCode,
     sync::Arc,
 };
+use stride_api as api;
 use stride_backend::{Backend, registry::Registry};
-use stride_backend_git::{GitBackend, known_hosts::KnownHosts, ssh_key::SshKey};
+use stride_backend_git::{
+    GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
+};
 use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
     event::{HostEvent, PluginEvent},
@@ -20,7 +24,9 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
+use stride_engine::EngineBuilder;
 use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
+use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
 use crate::cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand};
@@ -67,6 +73,37 @@ fn print_tasks(tasks: &[Task]) {
             task.id,
             task.title.as_deref().unwrap_or("<missing title>")
         );
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct CliNotifier;
+
+impl api::Notifier for CliNotifier {
+    fn notify(
+        &self,
+        context: Arc<dyn api::Context>,
+        notification: api::Notification,
+    ) -> api::Result<()> {
+        match notification {
+            api::Notification::Prompt(prompt) => {
+                let summary = prompt.summary();
+                let description = prompt.description();
+                let mut confirm = inquire::Confirm::new(&summary).with_default(true);
+                if let Some(description) = &description {
+                    confirm = confirm.with_help_message(description);
+                }
+
+                let input = {
+                    let _guard = LogLevelGuard::error();
+                    confirm.prompt_skippable().map_err(Box::new)?
+                };
+                if input == Some(true) {
+                    context.execute(&prompt.target(), prompt.inputs())?;
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -140,6 +177,12 @@ fn main() -> anyhow::Result<ExitCode> {
     backend_registry.insert(GitBackend::handler());
     backend_registry.insert(TaskchampionBackend::handler());
 
+    let notifier = Box::new(CliNotifier);
+    let engine: Arc<dyn api::Context> = EngineBuilder::new()
+        .notifier(notifier)
+        .command("stride.ssh.host.add", SshHostAddHandler)
+        .build();
+
     match args.mode {
         Mode::Search { filter } => {
             let search = filter.join(" ").to_lowercase();
@@ -209,6 +252,7 @@ fn main() -> anyhow::Result<ExitCode> {
                             current_repository,
                             &mut database,
                             &known_paths,
+                            &engine,
                         )?;
                     }
                     PluginEvent::TaskQuery { query } => {
@@ -259,7 +303,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let config = backend.config.fill(&schema)?;
             let mut backend = handler.create(&config, &path, &known_paths)?;
 
-            backend.sync(&mut database)?;
+            backend.sync(engine.clone(), &mut database)?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.

@@ -7,8 +7,10 @@
 use std::{
     fmt::Debug,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
+use stride_api::Context;
 use stride_core::{
     backend::{Config, Schema},
     state::KnownPaths,
@@ -47,5 +49,5 @@ pub trait Backend {
     where
         Self: Sized;
 
-    fn sync(&mut self, db: &mut Database) -> Result<()>;
+    fn sync(&mut self, context: Arc<dyn Context>, db: &mut Database) -> Result<()>;
 }

@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "stride.ssh.host.add.schema.json",
+    "title": "stride.ssh.host.add",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "stride.ssh.host.add"
+        },
+        "params": {
+            "type": "object",
+            "description": "The parameters for the method.",
+            "properties": {
+                "host": {
+                    "$ref": "stride.type.ssh.host.schema.json"
+                }
+            },
+            "required": [
+                "host"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "const": {}
+        }
+    }
+}
