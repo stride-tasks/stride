@@ -3,10 +3,11 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 use stride_api::{self as api, PROMPT_METHOD};
 use stride_backend_git::known_hosts::{Host, KnownHosts};
 use stride_engine as engine;
+use uuid::Uuid;
 
 use crate::{
     ErrorKind, RustError,
-    api::{background::RepositorySpec, repository::Repository},
+    api::repository::Repository,
     frb_generated::StreamSink,
 };
 
@@ -15,6 +16,11 @@ static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex
 
 #[derive(Debug)]
 struct RepositorySyncHandler;
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct RepositorySpec {
+    pub(crate) id: Uuid,
+}
 
 impl api::CommandHandler for RepositorySyncHandler {
     fn handle(&self, context: Arc<dyn api::Context>, args: &str) -> api::Result<Box<str>> {

@@ -82,8 +82,6 @@ pub enum ErrorKind {
     Backend(#[from] BackendError),
     #[error("ssh error: {0}")]
     Ssh(#[from] SshError),
-    #[error("background task: {0}")]
-    Background(#[from] stride_background::Error),
     #[error("other error: {message}")]
     Other { message: Box<str> },
 }
@@ -142,16 +140,6 @@ impl RustError {
         };
 
         error.plugin_name().map(Into::into)
-    }
-
-    #[frb(sync)]
-    #[must_use]
-    pub fn is_background(&self) -> bool {
-        let ErrorKind::Background(_) = self.repr.as_ref() else {
-            return false;
-        };
-
-        true
     }
 }
 

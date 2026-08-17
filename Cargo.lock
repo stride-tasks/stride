@@ -2552,7 +2552,6 @@ dependencies = [
  "stride_backend",
  "stride_backend_git",
  "stride_backend_taskchampion",
- "stride_background",
  "stride_core",
  "stride_crdt",
  "stride_database",
