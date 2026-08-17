@@ -107,9 +107,7 @@ impl LogLevelGuard {
     pub fn new(level: log::LevelFilter) -> Self {
         let current = log::max_level();
         log::set_max_level(level);
-        Self {
-            level: current,
-        }
+        Self { level: current }
     }
 
     pub fn error() -> Self {

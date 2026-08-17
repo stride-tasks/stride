@@ -15,6 +15,7 @@ use stride_core::{
     backend::{Config, Schema},
     state::KnownPaths,
 };
+use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
 
@@ -49,5 +50,5 @@ pub trait Backend {
     where
         Self: Sized;
 
-    fn sync(&mut self, context: Arc<dyn Context>, db: &mut Database) -> Result<()>;
+    fn sync(&mut self, context: Arc<dyn Context>, db: &mut Database) -> Result<VersionDifference>;
 }

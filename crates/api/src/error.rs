@@ -6,7 +6,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub enum Error {
     #[error("api handle not found: {method}")]
     HandlerNotFound { method: Box<str> },
-    #[error("api handle failed: {method}:{params}")]
+    #[error("api handle failed: {method}:{params} :: {cause}")]
     HandlerFailed {
         method: Box<str>,
         params: Value,

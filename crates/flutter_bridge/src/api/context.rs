@@ -1,33 +1,13 @@
 use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 
-use stride_api::{self as api, PROMPT_METHOD};
+use stride_api as api;
 use stride_backend_git::method::SshHostAddHandler;
 use stride_engine as engine;
-use uuid::Uuid;
 
-use crate::{ErrorKind, RustError, api::repository::Repository, frb_generated::StreamSink};
+use crate::{ErrorKind, RustError, frb_generated::StreamSink, method::RepositorySyncHandler};
 
 static STATE: OnceLock<Arc<dyn api::Context + Send + Sync>> = OnceLock::new();
 static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex::default);
-
-#[derive(Debug)]
-struct RepositorySyncHandler;
-
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-struct RepositorySpec {
-    pub(crate) id: Uuid,
-}
-
-impl api::CommandHandler for RepositorySyncHandler {
-    fn handle(&self, context: Arc<dyn api::Context>, args: api::Value) -> api::Result<Box<str>> {
-        let args = serde_json::to_string(&args).map_err(Box::new)?;
-        let repository: RepositorySpec = serde_json::from_str(&args).map_err(Box::new)?;
-
-        let mut repository = Repository::open(repository.id).map_err(Box::new)?;
-        repository.sync(&context).map_err(Box::new)?;
-        Ok("".into())
-    }
-}
 
 #[derive(Debug)]
 struct FlutterNotifier;
@@ -37,7 +17,7 @@ impl api::Notifier for FlutterNotifier {
         let map = match notification {
             api::Notification::Prompt(prompt) => {
                 let map = serde_json::json!({
-                    "method": PROMPT_METHOD,
+                    "method": api::PROMPT_METHOD,
                     "params": {
                         "target": prompt.target(),
                         "inputs": prompt.inputs(),
@@ -45,6 +25,14 @@ impl api::Notifier for FlutterNotifier {
                         "description": prompt.description(),
                     }
                 });
+                map
+            }
+            api::Notification::RepositoryChanged(changed) => {
+                let map = serde_json::json!({
+                    "method": "stride.notification.repository.changed",
+                    "params": changed,
+                });
+                println!("{}", serde_json::to_string_pretty(&map).unwrap());
                 map
             }
         };
@@ -82,16 +70,17 @@ pub fn execute(method: &str, args: &str) -> Result<(), RustError> {
         message: format!("Failed to parse args: {e}").into(),
     })?;
 
-    context
+    let result = context
         .clone()
         .execute(method, params.params)
-        .map_err(|err| {
-            ErrorKind::Other {
-                message: format!(
-                    "Failed to execute method: {method} with args: {args}. Error: {err}"
-                )
+        .map_err(|err| ErrorKind::Other {
+            message: format!("Failed to execute method: {method} with args: {args}. Error: {err}")
                 .into(),
-            }
-            .into()
-        })
+        })?;
+
+    let _result = serde_json::to_string(&result).map_err(|e| ErrorKind::Other {
+        message: format!("Failed to serialize result: {e}").into(),
+    })?;
+
+    Ok(())
 }

@@ -29,7 +29,7 @@ use stride_crdt::{
     actor::{Actor, ActorId},
     change::{Change, Sequence},
     hlc::{Microsecond, Timestamp},
-    version_vector::{ChangeLocation, VersionVector},
+    version_vector::{ChangeLocation, VersionDifference, VersionVector},
 };
 use stride_crypto::crypter::Crypter;
 use stride_database::Database;
@@ -544,7 +544,7 @@ impl GitBackend {
         Ok(())
     }
 
-    fn sync_impl(&mut self, db: &mut Database) -> Result<()> {
+    fn sync_impl(&mut self, db: &mut Database) -> Result<VersionDifference> {
         let repository_path = self.config.repository_path();
         let mut cloned = false;
         if !repository_path.join(".git").exists() {
@@ -598,7 +598,10 @@ impl GitBackend {
 
         log::trace!("Version Difference: {diff:#?}");
         let mut requires_push = false;
-        for (actor_id, change_range) in diff {
+        for (actor_id, change_range) in &diff {
+            let actor_id = *actor_id;
+            let change_range = *change_range;
+
             let actor_id_dir = actors_dir.join(actor_id.get().to_string());
             let changelog_filepath = actor_id_dir.join("changelog");
             match change_range.location {
@@ -656,7 +659,7 @@ impl GitBackend {
         }
 
         log::info!("Task sync finished!");
-        Ok(())
+        Ok(diff)
     }
 }
 
@@ -712,9 +715,9 @@ impl Backend for GitBackend {
         &mut self,
         context: Arc<dyn api::Context>,
         db: &mut Database,
-    ) -> Result<(), stride_backend::Error> {
+    ) -> Result<VersionDifference, stride_backend::Error> {
         match self.sync_impl(db) {
-            Ok(()) => Ok(()),
+            Ok(diff) => Ok(diff),
             Err(Error::UnknownHost { host }) => {
                 context.clone().notify(api::Notification::Prompt(Box::new(
                     AddUnknownHostPrompt { host: host.clone() },

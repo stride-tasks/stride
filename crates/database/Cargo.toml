@@ -13,6 +13,7 @@ publish = false
 
 [dependencies]
 stride_core = { workspace = true, features = ["backend"] }
+stride_api.workspace = true
 stride_crdt.workspace = true
 stride_serialize.workspace = true
 

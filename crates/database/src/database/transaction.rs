@@ -1,15 +1,18 @@
+use std::collections::HashMap;
+
 use indoc::{concatdoc, indoc};
 use rusqlite::OptionalExtension;
+use stride_api as api;
 use stride_core::task::Task;
 use stride_crdt::{
     actor::{Actor, ActorId},
     change::{
-        AnnotationOperation, Change, Operation, OperationKind, Sequence, TaskOperation,
+        AnnotationOperation, Change, Operation, OperationKind, RowId, Sequence, TaskOperation,
         serialize::{operation_from_data, operation_to_data, operation_type},
     },
     difference::push_task_diff_operations,
     hlc::{Clock, Microsecond, Timestamp},
-    version_vector::{ChangeRange, VersionVector},
+    version_vector::{ChangeLocation, ChangeRange, VersionDifference, VersionVector},
 };
 use uuid::Uuid;
 
@@ -370,6 +373,123 @@ impl<'a> Transaction<'a> {
             row_id: row_id.into(),
             kind: operation,
         })
+    }
+
+    fn field_before(
+        &mut self,
+        before: Timestamp,
+        task_id: &Uuid,
+        operation_kind: u32,
+    ) -> Result<Option<Box<str>>> {
+        let mut operation_sql = self.transaction.prepare_cached(indoc! {"
+            SELECT
+                ot.`row_id`,
+                ot.`type`,
+                ot.`data`
+            FROM operation_table ot
+            LEFT JOIN change_table ct ON ct.id = ot.change_id
+            WHERE
+                ot.`row_id` = ?1
+                AND ot.`type` = ?2
+                AND (ct.timestamp_logical < ?3 OR (ct.timestamp_logical = ?3 AND ct.timestamp_counter < ?4))
+            ORDER BY ct.timestamp_logical DESC, ct.timestamp_counter DESC
+            LIMIT 1
+        "})?;
+
+        let previous = operation_sql
+            .query_one(
+                (
+                    task_id,
+                    operation_kind,
+                    before.logical.get(),
+                    before.counter,
+                ),
+                Self::row_to_operation,
+            )
+            .optional()?;
+
+        Ok(if let Some(previous) = previous {
+            previous
+                .kind
+                .to_notification_field()
+                .and_then(|(_, value)| value)
+        } else {
+            None
+        })
+    }
+
+    /// Returns one entry per task touched by a remote actor, with the set of
+    /// field names that were modified.
+    pub fn task_changes_from_diff(
+        &mut self,
+        diff: &VersionDifference,
+    ) -> Result<Vec<api::TaskChange>> {
+        let own_actor = self.actor_id;
+        let mut by_task: HashMap<Uuid, Vec<api::FieldChange>> = HashMap::new();
+
+        let mut min_timestamp = Timestamp::MAX;
+        for (actor_id, change_range) in diff {
+            if change_range.location != ChangeLocation::Remote {
+                continue;
+            }
+            if *actor_id == own_actor {
+                continue;
+            }
+            for change in self.changes(*actor_id, *change_range)? {
+                min_timestamp = change.timestamp.min(min_timestamp);
+
+                for operation in change.operations {
+                    let RowId::Uuid(task_id) = operation.row_id else {
+                        continue;
+                    };
+
+                    let kind = operation_type(&operation.kind);
+                    let Some((field, current)) = operation.kind.to_notification_field() else {
+                        continue;
+                    };
+
+                    let previous = self.field_before(change.timestamp, &task_id, kind)?;
+
+                    let fields = by_task.entry(task_id).or_default();
+                    let field_change = api::FieldChange {
+                        typ: field.into(),
+                        current,
+                        previous,
+                    };
+                    fields.push(field_change);
+                }
+            }
+        }
+
+        let mut result = Vec::with_capacity(by_task.len());
+        for (task_id, fields) in by_task {
+            let title = if let Some(title_field) = fields.iter().find(|f| f.typ.as_ref() == "title")
+            {
+                if let Some(previous) = &title_field.previous {
+                    previous.clone()
+                } else {
+                    title_field
+                        .current
+                        .clone()
+                        .unwrap_or_else(|| task_id.to_string().into())
+                }
+            } else {
+                let kind = OperationKind::Task(TaskOperation::ModifyTitle {
+                    title: Box::default(),
+                });
+                let kind = operation_type(&kind);
+                self.field_before(min_timestamp, &task_id, kind)?
+                    .unwrap_or_else(|| task_id.to_string().into())
+            };
+
+            result.push(api::TaskChange {
+                task_id,
+                title,
+                fields,
+            });
+        }
+
+        Ok(result)
     }
 
     pub fn changes(&mut self, actor_id: ActorId, change_range: ChangeRange) -> Result<Vec<Change>> {

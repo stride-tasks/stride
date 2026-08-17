@@ -72,6 +72,43 @@ pub enum OperationKind {
     Annotation(AnnotationOperation),
 }
 
+impl OperationKind {
+    pub fn to_notification_field(&self) -> Option<(&'static str, Option<Box<str>>)> {
+        match &self {
+            // OperationKind::Task(TaskOperation::Delete) => ("status", None),
+            OperationKind::Task(TaskOperation::ModifyTitle { title }) => {
+                Some(("title", Some(title.clone())))
+            }
+            OperationKind::Task(TaskOperation::ModifyDue { due }) => {
+                Some(("due", due.as_ref().map(ToString::to_string).map(Box::from)))
+            }
+            OperationKind::Task(TaskOperation::ModifyPriority { priority }) => Some((
+                "priority",
+                priority.map(|priority| {
+                    match priority {
+                        TaskPriority::L => "low",
+                        TaskPriority::M => "medium",
+                        TaskPriority::H => "high",
+                    }
+                    .into()
+                }),
+            )),
+            OperationKind::Task(TaskOperation::ModifyStatus { status }) => Some((
+                "status",
+                Some(
+                    match status {
+                        TaskStatus::Pending => "pending",
+                        TaskStatus::Deleted => "deleted",
+                        TaskStatus::Done => "done",
+                    }
+                    .into(),
+                ),
+            )),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum TaskOperation {
     Delete,

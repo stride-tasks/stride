@@ -9,7 +9,10 @@ mod notifier;
 
 pub use command::{CommandHandler, registry::CommandRegistry};
 pub use error::{Error, Result};
-pub use notification::{Notification, PROMPT_METHOD, Prompt, Value};
+pub use notification::{
+    FieldChange, Notification, PROMPT_METHOD, Prompt, RepositoryChangedNotification, TaskChange,
+    Value,
+};
 pub use notifier::{NoopNotifier, Notifier};
 
 pub trait Context: Send + Sync + 'static {
@@ -25,5 +28,5 @@ pub trait Context: Send + Sync + 'static {
     /// # Errors
     ///
     /// Returns an error if the command could not be executed for any reason.
-    fn execute(self: Arc<Self>, method: &str, args: Value) -> Result<()>;
+    fn execute(self: Arc<Self>, method: &str, args: Value) -> Result<Value>;
 }
