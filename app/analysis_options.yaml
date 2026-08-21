@@ -18,6 +18,13 @@ analyzer:
     hack: ignore
   exclude:
     - "rust_builder"
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
   language:
     strict-casts: true
