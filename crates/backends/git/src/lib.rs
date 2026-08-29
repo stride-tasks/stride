@@ -597,11 +597,14 @@ impl GitBackend {
         let diff = transaction.version_vector().merge(&remote_version_vector);
 
         log::trace!("Version Difference: {diff:#?}");
+        let mut requires_push = false;
         for (actor_id, change_range) in diff {
             let actor_id_dir = actors_dir.join(actor_id.get().to_string());
             let changelog_filepath = actor_id_dir.join("changelog");
             match change_range.location {
                 ChangeLocation::Local => {
+                    requires_push = true;
+
                     let mut actor_storage = if let Some(actor_storage) =
                         ActorStorage::load(actor_id, &changelog_filepath, self.master_key.clone())?
                     {
@@ -647,8 +650,10 @@ impl GitBackend {
         }
         transaction.commit()?;
 
-        log::info!("Pushing tasks...");
-        self.push(&repository, false)?;
+        if requires_push {
+            log::info!("Pushing tasks...");
+            self.push(&repository, false)?;
+        }
 
         log::info!("Task sync finished!");
         Ok(())
