@@ -659,6 +659,12 @@ impl GitBackend {
         }
 
         log::info!("Task sync finished!");
+
+        if cloned {
+            // NOTE: Avoid creating a big diff when the repository is first cloned.
+            return Ok(VersionDifference::default());
+        }
+
         Ok(diff)
     }
 }
