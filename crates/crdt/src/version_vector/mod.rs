@@ -35,6 +35,32 @@ impl IntoIterator for VersionDifference {
     }
 }
 
+impl<'a> IntoIterator for &'a VersionDifference {
+    type Item = (&'a ActorId, &'a ChangeRange);
+    type IntoIter = <&'a BTreeMap<ActorId, ChangeRange> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.map.iter()
+    }
+}
+
+impl VersionDifference {
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
+
+    pub fn extend(&mut self, other: VersionDifference) {
+        for (actor_id, change_range) in other.map {
+            self.map.entry(actor_id).or_insert(change_range);
+        }
+    }
+
+    pub fn has_remote_changes(&self) -> bool {
+        self.map
+            .values()
+            .any(|r| r.location == ChangeLocation::Remote)
+    }
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct VersionVector {
     map: BTreeMap<ActorId, Actor>,

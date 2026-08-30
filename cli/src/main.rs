@@ -25,7 +25,10 @@ use stride_crdt::{
 };
 use stride_database::Database;
 use stride_engine::EngineBuilder;
-use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
+use stride_flutter_bridge::{
+    api::settings::{ApplicationPaths, RepositorySpecification, Settings},
+    method::RepositorySyncHandler,
+};
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
@@ -102,6 +105,9 @@ impl api::Notifier for CliNotifier {
                     context.execute(&prompt.target(), prompt.inputs())?;
                 }
             }
+            api::Notification::RepositoryChanged(changed) => {
+                println!("{:?}", changed);
+            }
         }
         Ok(())
     }
@@ -166,7 +172,7 @@ fn main() -> anyhow::Result<ExitCode> {
     let mut plugin_manager = PluginManager::new(&plugins_path)?;
     plugin_manager.load()?;
 
-    let repository_path = known_paths.repository_path(current_repository);
+    // let repository_path = known_paths.repository_path(current_repository);
     let database_filepath = known_paths.database_filepath(current_repository);
 
     let actor_id = ActorId::new(current_repository);
@@ -180,6 +186,7 @@ fn main() -> anyhow::Result<ExitCode> {
     let notifier = Box::new(CliNotifier);
     let engine: Arc<dyn api::Context> = EngineBuilder::new()
         .notifier(notifier)
+        .command("stride.repository.sync", RepositorySyncHandler)
         .command("stride.ssh.host.add", SshHostAddHandler)
         .build();
 
@@ -278,32 +285,39 @@ fn main() -> anyhow::Result<ExitCode> {
         Mode::Undo { .. } => {
             todo!("undo")
         }
-        Mode::Sync { backend: name } => {
-            let handler = backend_registry.get_or_error(name.as_str())?;
+        Mode::Sync { backend: _name } => {
+            // let handler = backend_registry.get_or_error(name.as_str())?;
 
-            let mut backends = database.backends()?;
+            // let mut backends = database.backends()?;
 
-            let backend = backends
-                .iter_mut()
-                .find(|backend_record| backend_record.name.contains(&name))
-                .with_context(|| format!("Could not find field with name: {name}"))?;
+            // let backend = backends
+            //     .iter_mut()
+            //     .find(|backend_record| backend_record.name.contains(&name))
+            //     .with_context(|| format!("Could not find field with name: {name}"))?;
 
-            let schema = handler.config_schema();
-            let config = backend.config.align(&schema)?;
-            if config != backend.config {
-                backend.config = config;
-                database.update_backend(backend)?;
-            }
+            // let schema = handler.config_schema();
+            // let config = backend.config.align(&schema)?;
+            // if config != backend.config {
+            //     backend.config = config;
+            //     database.update_backend(backend)?;
+            // }
 
-            let path = repository_path
-                .join("backend")
-                .join(handler.name().as_ref())
-                .join(backend.id.to_string());
+            // let path = repository_path
+            //     .join("backend")
+            //     .join(handler.name().as_ref())
+            //     .join(backend.id.to_string());
 
-            let config = backend.config.fill(&schema)?;
-            let mut backend = handler.create(&config, &path, &known_paths)?;
+            // let config = backend.config.fill(&schema)?;
+            // let mut backend = handler.create(&config, &path, &known_paths)?;
 
-            backend.sync(engine.clone(), &mut database)?;
+            let params = HashMap::from([(
+                "id".into(),
+                api::Value::String(current_repository.to_string().into()),
+            )]);
+
+            engine
+                .clone()
+                .execute("stride.repository.sync", api::Value::Map(params))?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.

@@ -18,22 +18,22 @@ impl Display for Microsecond {
 
 impl Microsecond {
     #[must_use]
-    pub fn new(value: i64) -> Self {
+    pub const fn new(value: i64) -> Self {
         Self(value)
     }
 
     #[must_use]
-    pub fn from_seconds(value: i64) -> Self {
+    pub const fn from_seconds(value: i64) -> Self {
         Self::new(value * 1000 * 1000)
     }
 
     #[must_use]
-    pub fn from_minutes(value: i64) -> Self {
+    pub const fn from_minutes(value: i64) -> Self {
         Self::from_seconds(value * 60)
     }
 
     #[must_use]
-    pub fn get(self) -> i64 {
+    pub const fn get(self) -> i64 {
         self.0
     }
 }
@@ -80,6 +80,11 @@ pub struct Timestamp {
 
 impl Timestamp {
     pub const MAX_COUNTER: Counter = Counter::MAX;
+
+    pub const MAX: Self = Self {
+        logical: Microsecond::new(i64::MAX),
+        counter: Self::MAX_COUNTER,
+    };
 
     #[must_use]
     pub fn new(logical: Microsecond, counter: Counter) -> Self {

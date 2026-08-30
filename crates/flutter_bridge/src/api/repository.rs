@@ -6,7 +6,7 @@ use std::{
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use stride_api::Context;
+use stride_api::{Context, TaskChange};
 use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::GitBackend;
 use stride_backend_taskchampion::TaskchampionBackend;
@@ -136,14 +136,18 @@ impl Repository {
         Ok(self.db.lock().unwrap().task_query(query)?)
     }
 
-    pub(crate) fn sync(&mut self, context: &Arc<dyn Context>) -> Result<(), stride_backend::Error> {
+    pub(crate) fn sync(
+        &mut self,
+        context: &Arc<dyn Context>,
+    ) -> Result<Vec<TaskChange>, stride_backend::Error> {
         let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
 
         let db = self.db.get_mut().unwrap();
-        self.backend_registry
+        let diff = self
+            .backend_registry
             .sync_all(self.uuid, db, &known_paths, context)?;
 
-        Ok(())
+        Ok(db.transaction()?.task_changes_from_diff(&diff)?)
     }
 
     pub fn undo(&self) -> Result<(), RustError> {

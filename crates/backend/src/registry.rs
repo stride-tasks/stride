@@ -2,6 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use stride_api::Context;
 use stride_core::state::KnownPaths;
+use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
 
@@ -46,8 +47,9 @@ impl Registry {
         database: &mut Database,
         known_paths: &KnownPaths,
         context: &Arc<dyn Context>,
-    ) -> Result<(), Error> {
+    ) -> Result<VersionDifference, Error> {
         let backends = database.backends()?;
+        let mut combined_diff = VersionDifference::default();
         for mut backend in backends {
             if !backend.enabled {
                 continue;
@@ -74,9 +76,10 @@ impl Registry {
 
             let mut backend = handler.create(&backend.config, &path, known_paths)?;
 
-            backend.sync(context.clone(), database)?;
+            let diff = backend.sync(context.clone(), database)?;
+            combined_diff.extend(diff);
         }
 
-        Ok(())
+        Ok(combined_diff)
     }
 }

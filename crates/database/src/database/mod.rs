@@ -233,6 +233,10 @@ impl Database {
         })
     }
 
+    pub fn actor_id(&self) -> ActorId {
+        self.actor_id
+    }
+
     pub fn transaction(&mut self) -> Result<Transaction<'_>> {
         Transaction::new(self)
     }

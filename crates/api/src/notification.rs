@@ -1,5 +1,31 @@
 use std::{any::Any, collections::HashMap};
 
+use uuid::Uuid;
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct FieldChange {
+    #[serde(rename = "type")]
+    pub typ: Box<str>,
+    pub current: Option<Box<str>>,
+    pub previous: Option<Box<str>>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TaskChange {
+    pub task_id: Uuid,
+    pub title: Box<str>,
+    pub fields: Vec<FieldChange>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct RepositoryChangedNotification {
+    pub repository_id: Uuid,
+    pub changes: Vec<TaskChange>,
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum Value {
@@ -46,4 +72,5 @@ pub trait Prompt: std::fmt::Debug + Any + 'static {
 #[derive(Debug)]
 pub enum Notification {
     Prompt(Box<dyn Prompt>),
+    RepositoryChanged(RepositoryChangedNotification),
 }

@@ -17,6 +17,7 @@ use stride_core::{
     state::KnownPaths,
     task::Task,
 };
+use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use taskchampion::{Operations, Replica, ServerConfig, SqliteStorage, storage::AccessMode};
 use uuid::Uuid;
@@ -221,7 +222,10 @@ impl TaskchampionBackend {
         Ok(())
     }
 
-    async fn sync(&mut self, db: &mut Database) -> Result<(), stride_backend::Error> {
+    async fn sync(
+        &mut self,
+        db: &mut Database,
+    ) -> Result<VersionDifference, stride_backend::Error> {
         for task in db.all_tasks()? {
             self.add(task).await?;
         }
@@ -237,7 +241,8 @@ impl TaskchampionBackend {
             .await
             .map_err(error::Error::from)?;
 
-        Ok(())
+        // TOOD: Fix this. We need to return the version difference between the local and remote replicas.
+        Ok(VersionDifference::default())
     }
 }
 
@@ -253,9 +258,9 @@ impl Backend for TaskchampionBackend {
         &mut self,
         _: Arc<dyn Context>,
         db: &mut Database,
-    ) -> Result<(), stride_backend::Error> {
+    ) -> Result<VersionDifference, stride_backend::Error> {
         let runtime = tokio::runtime::Runtime::new().map_err(error::Error::Io)?;
-        runtime.block_on(self.sync(db))?;
-        Ok(())
+        let diff = runtime.block_on(self.sync(db))?;
+        Ok(diff)
     }
 }

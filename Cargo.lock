@@ -2531,6 +2531,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "thiserror 2.0.19",
+ "uuid",
 ]
 
 [[package]]
@@ -2539,6 +2540,7 @@ version = "0.1.0"
 dependencies = [
  "stride_api",
  "stride_core",
+ "stride_crdt",
  "stride_database",
  "thiserror 2.0.19",
  "uuid",
@@ -2572,6 +2574,7 @@ dependencies = [
  "stride_api",
  "stride_backend",
  "stride_core",
+ "stride_crdt",
  "stride_database",
  "taskchampion",
  "thiserror 2.0.19",
@@ -2658,6 +2661,7 @@ dependencies = [
  "indoc",
  "log",
  "rusqlite",
+ "stride_api",
  "stride_core",
  "stride_crdt",
  "stride_serialize",
