@@ -59,7 +59,7 @@ pub enum Mode {
     /// Sync the task storage
     Sync {
         /// Choose backend to sync.
-        backend: String,
+        backend: Option<String>,
     },
 
     /// Output the git-log of the task storage
