@@ -84,6 +84,7 @@ impl Repository {
                 .as_ref()
                 .is_some_and(|title| title.to_lowercase().contains(&search))
         });
+        tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
         Ok(tasks)
     }
 
@@ -123,7 +124,9 @@ impl Repository {
         status: &HashSet<TaskStatus>,
     ) -> Result<Vec<Task>, RustError> {
         self.db.clear_poison();
-        Ok(self.db.lock().unwrap().tasks_by_status(status)?)
+        let mut tasks = self.db.lock().unwrap().tasks_by_status(status)?;
+        tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
+        Ok(tasks)
     }
 
     pub fn task_by_id(&mut self, id: Uuid) -> Result<Option<Task>, RustError> {

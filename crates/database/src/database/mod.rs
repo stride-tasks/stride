@@ -315,7 +315,11 @@ impl Database {
     }
 
     pub fn all_tasks(&mut self) -> Result<Vec<Task>> {
-        self.tasks_by_status(&[TaskStatus::Pending, TaskStatus::Done, TaskStatus::Deleted].into())
+        let mut tasks = self.tasks_by_status(
+            &[TaskStatus::Pending, TaskStatus::Done, TaskStatus::Deleted].into(),
+        )?;
+        tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
+        Ok(tasks)
     }
 
     pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>> {
@@ -362,7 +366,6 @@ impl Database {
                 tasks.push(task);
             }
         }
-        tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
         Ok(tasks)
     }
 

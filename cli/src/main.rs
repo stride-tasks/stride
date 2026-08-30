@@ -32,10 +32,14 @@ use stride_flutter_bridge::{
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 
-use crate::cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand};
+use crate::{
+    cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand},
+    display::{TaskField, TaskItem, TaskTable},
+};
 
 pub mod backend;
 pub mod cli;
+pub mod display;
 
 const APPLICATION_ID: &str = "org.stridetasks.stride";
 const APPLICATION_NAME: &str = "stride";
@@ -55,28 +59,6 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
     }
 
     path.join(APPLICATION_ID)
-}
-
-fn print_tasks(tasks: &[Task]) {
-    for (i, task) in tasks.iter().enumerate() {
-        let mut tags = String::new();
-        if !task.tags.is_empty() {
-            tags.push('(');
-            for (i, tag) in task.tags.iter().enumerate() {
-                tags.push_str(tag);
-
-                if i + 1 != task.tags.len() {
-                    tags.push_str(", ");
-                }
-            }
-            tags.push(')');
-        }
-        println!(
-            "{tags}{i:4} {}: {}",
-            task.id,
-            task.title.as_deref().unwrap_or("<missing title>")
-        );
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -217,13 +199,38 @@ fn main() -> anyhow::Result<ExitCode> {
             let search = filter.join(" ").to_lowercase();
             let status = [TaskStatus::Pending].into();
 
-            let mut tasks = database.tasks_by_status(&status)?;
-            tasks.retain(|task| {
-                task.title
+            let mut tasks = database
+                .tasks_by_status(&status)?
+                .into_iter()
+                .enumerate()
+                .map(|(index, task)| TaskItem {
+                    index: index + 1,
+                    task,
+                })
+                .collect::<Vec<_>>();
+
+            #[allow(clippy::cast_possible_truncation)]
+            tasks.sort_by_cached_key(|item| -(item.task.urgency() * 100.0) as i64);
+
+            tasks.retain(|item| {
+                item.task
+                    .title
                     .as_ref()
                     .is_some_and(|title| title.to_lowercase().contains(&search))
             });
-            print_tasks(&tasks);
+
+            let table = TaskTable::new()
+                .include("ID", TaskField::Index)
+                .include("UUID", TaskField::Id)
+                .include("Age", TaskField::Age)
+                .include("Tags", TaskField::Tags)
+                .include("Due", TaskField::Due)
+                .include("P", TaskField::Priority)
+                .include("Title", TaskField::Title)
+                .include("Urgency", TaskField::Urgency)
+                .build(&tasks);
+
+            println!("{table}");
         }
         Mode::Add { content } => {
             let mut content = content.join(" ");
