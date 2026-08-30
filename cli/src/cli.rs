@@ -14,7 +14,7 @@ use uuid::Uuid;
 pub struct CliArgs {
     #[command(subcommand)]
     /// The mode to operate in
-    pub mode: Mode,
+    pub mode: Option<Mode>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

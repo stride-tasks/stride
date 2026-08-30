@@ -141,14 +141,10 @@ impl api::Notifier for CliNotifier {
 
 #[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<ExitCode> {
-    // TODO(@bpeetz): Re-add the functionality of running `stride` without
-    // args or not one of the defined subcommands to search  <2024-10-24>
-    // else {
-    //     let tasks = repository.tasks()?;
-    //     print_tasks(&tasks);
-    //     return Ok(());
-    // };
     let args = CliArgs::parse();
+    let mode = args.mode.unwrap_or_else(|| Mode::Search {
+        filter: Vec::default(),
+    });
 
     let (support_dir, cache_dir) = match std::env::var("STRIDE_HOME") {
         Ok(path) => (PathBuf::from(&path), Path::new(&path).join("cache")),
@@ -216,7 +212,7 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("stride.ssh.host.add", SshHostAddHandler)
         .build();
 
-    match args.mode {
+    match mode {
         Mode::Search { filter } => {
             let search = filter.join(" ").to_lowercase();
             let status = [TaskStatus::Pending].into();
