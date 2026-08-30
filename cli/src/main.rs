@@ -105,8 +105,34 @@ impl api::Notifier for CliNotifier {
                     context.execute(&prompt.target(), prompt.inputs())?;
                 }
             }
-            api::Notification::RepositoryChanged(changed) => {
-                println!("{:?}", changed);
+            api::Notification::RepositoryChanged(notification) => {
+                for (
+                    i,
+                    api::TaskChange {
+                        title,
+                        task_id,
+                        fields,
+                    },
+                ) in notification.changes.iter().enumerate()
+                {
+                    println!("Task ({task_id}): '{title}':");
+                    for api::FieldChange {
+                        typ,
+                        previous,
+                        current,
+                    } in fields
+                    {
+                        println!(
+                            "  -- {typ}: {} => {}",
+                            previous.as_deref().unwrap_or("none"),
+                            current.as_deref().unwrap_or("none")
+                        );
+                    }
+
+                    if i + 1 != notification.changes.len() {
+                        println!();
+                    }
+                }
             }
         }
         Ok(())
@@ -286,30 +312,6 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!("undo")
         }
         Mode::Sync { backend: _name } => {
-            // let handler = backend_registry.get_or_error(name.as_str())?;
-
-            // let mut backends = database.backends()?;
-
-            // let backend = backends
-            //     .iter_mut()
-            //     .find(|backend_record| backend_record.name.contains(&name))
-            //     .with_context(|| format!("Could not find field with name: {name}"))?;
-
-            // let schema = handler.config_schema();
-            // let config = backend.config.align(&schema)?;
-            // if config != backend.config {
-            //     backend.config = config;
-            //     database.update_backend(backend)?;
-            // }
-
-            // let path = repository_path
-            //     .join("backend")
-            //     .join(handler.name().as_ref())
-            //     .join(backend.id.to_string());
-
-            // let config = backend.config.fill(&schema)?;
-            // let mut backend = handler.create(&config, &path, &known_paths)?;
-
             let params = HashMap::from([(
                 "id".into(),
                 api::Value::String(current_repository.to_string().into()),
