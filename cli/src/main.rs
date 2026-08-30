@@ -31,6 +31,7 @@ use stride_flutter_bridge::{
 };
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
+use uuid::Uuid;
 
 use crate::{
     cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand},
@@ -303,6 +304,24 @@ fn main() -> anyhow::Result<ExitCode> {
             }
         }
         Mode::Done { id } => {
+            let id = if let Ok(id) = id.parse::<Uuid>() {
+                id
+            } else if let Ok(index) = id.parse::<usize>() {
+                if index == 0 {
+                    bail!("zero is not a valid task index");
+                }
+                let status = [TaskStatus::Pending].into();
+                let tasks = database.tasks_by_status(&status)?;
+
+                let task = tasks
+                    .get(index - 1)
+                    .with_context(|| format!("unable to find task with index: {index}"))?;
+
+                task.id
+            } else {
+                bail!("invalid task identifier expected index or UUID");
+            };
+
             let mut transaction = database.transaction()?;
             transaction.update_task_with(id, |mut task| {
                 task.status = Some(TaskStatus::Done);

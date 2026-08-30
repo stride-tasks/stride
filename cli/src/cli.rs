@@ -47,7 +47,7 @@ pub enum Mode {
     /// Complete the task.
     Done {
         /// ID of the task to complete.
-        id: Uuid,
+        id: String,
     },
 
     /// Undo previous change.
