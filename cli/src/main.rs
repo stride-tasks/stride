@@ -31,11 +31,16 @@ use stride_flutter_bridge::{
 };
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
+use uuid::Uuid;
 
-use crate::cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand};
+use crate::{
+    cli::{SshCommand, SshKeyCommand, SshKnownHostsCommand},
+    display::{TaskField, TaskItem, TaskTable},
+};
 
 pub mod backend;
 pub mod cli;
+pub mod display;
 
 const APPLICATION_ID: &str = "org.stridetasks.stride";
 const APPLICATION_NAME: &str = "stride";
@@ -55,28 +60,6 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
     }
 
     path.join(APPLICATION_ID)
-}
-
-fn print_tasks(tasks: &[Task]) {
-    for (i, task) in tasks.iter().enumerate() {
-        let mut tags = String::new();
-        if !task.tags.is_empty() {
-            tags.push('(');
-            for (i, tag) in task.tags.iter().enumerate() {
-                tags.push_str(tag);
-
-                if i + 1 != task.tags.len() {
-                    tags.push_str(", ");
-                }
-            }
-            tags.push(')');
-        }
-        println!(
-            "{tags}{i:4} {}: {}",
-            task.id,
-            task.title.as_deref().unwrap_or("<missing title>")
-        );
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -105,8 +88,34 @@ impl api::Notifier for CliNotifier {
                     context.execute(&prompt.target(), prompt.inputs())?;
                 }
             }
-            api::Notification::RepositoryChanged(changed) => {
-                println!("{:?}", changed);
+            api::Notification::RepositoryChanged(notification) => {
+                for (
+                    i,
+                    api::TaskChange {
+                        title,
+                        task_id,
+                        fields,
+                    },
+                ) in notification.changes.iter().enumerate()
+                {
+                    println!("Task ({task_id}): '{title}':");
+                    for api::FieldChange {
+                        typ,
+                        previous,
+                        current,
+                    } in fields
+                    {
+                        println!(
+                            "  -- {typ}: {} => {}",
+                            previous.as_deref().unwrap_or("none"),
+                            current.as_deref().unwrap_or("none")
+                        );
+                    }
+
+                    if i + 1 != notification.changes.len() {
+                        println!();
+                    }
+                }
             }
         }
         Ok(())
@@ -115,14 +124,10 @@ impl api::Notifier for CliNotifier {
 
 #[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<ExitCode> {
-    // TODO(@bpeetz): Re-add the functionality of running `stride` without
-    // args or not one of the defined subcommands to search  <2024-10-24>
-    // else {
-    //     let tasks = repository.tasks()?;
-    //     print_tasks(&tasks);
-    //     return Ok(());
-    // };
     let args = CliArgs::parse();
+    let mode = args.mode.unwrap_or_else(|| Mode::Search {
+        filter: Vec::default(),
+    });
 
     let (support_dir, cache_dir) = match std::env::var("STRIDE_HOME") {
         Ok(path) => (PathBuf::from(&path), Path::new(&path).join("cache")),
@@ -190,18 +195,43 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("stride.ssh.host.add", SshHostAddHandler)
         .build();
 
-    match args.mode {
+    match mode {
         Mode::Search { filter } => {
             let search = filter.join(" ").to_lowercase();
             let status = [TaskStatus::Pending].into();
 
-            let mut tasks = database.tasks_by_status(&status)?;
-            tasks.retain(|task| {
-                task.title
+            let mut tasks = database
+                .tasks_by_status(&status)?
+                .into_iter()
+                .enumerate()
+                .map(|(index, task)| TaskItem {
+                    index: index + 1,
+                    task,
+                })
+                .collect::<Vec<_>>();
+
+            #[allow(clippy::cast_possible_truncation)]
+            tasks.sort_by_cached_key(|item| -(item.task.urgency() * 100.0) as i64);
+
+            tasks.retain(|item| {
+                item.task
+                    .title
                     .as_ref()
                     .is_some_and(|title| title.to_lowercase().contains(&search))
             });
-            print_tasks(&tasks);
+
+            let table = TaskTable::new()
+                .include("ID", TaskField::Index)
+                .include("UUID", TaskField::Id)
+                .include("Age", TaskField::Age)
+                .include("Tags", TaskField::Tags)
+                .include("Due", TaskField::Due)
+                .include("P", TaskField::Priority)
+                .include("Title", TaskField::Title)
+                .include("Urgency", TaskField::Urgency)
+                .build(&tasks);
+
+            println!("{table}");
         }
         Mode::Add { content } => {
             let mut content = content.join(" ");
@@ -274,6 +304,24 @@ fn main() -> anyhow::Result<ExitCode> {
             }
         }
         Mode::Done { id } => {
+            let id = if let Ok(id) = id.parse::<Uuid>() {
+                id
+            } else if let Ok(index) = id.parse::<usize>() {
+                if index == 0 {
+                    bail!("zero is not a valid task index");
+                }
+                let status = [TaskStatus::Pending].into();
+                let tasks = database.tasks_by_status(&status)?;
+
+                let task = tasks
+                    .get(index - 1)
+                    .with_context(|| format!("unable to find task with index: {index}"))?;
+
+                task.id
+            } else {
+                bail!("invalid task identifier expected index or UUID");
+            };
+
             let mut transaction = database.transaction()?;
             transaction.update_task_with(id, |mut task| {
                 task.status = Some(TaskStatus::Done);
@@ -286,30 +334,6 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!("undo")
         }
         Mode::Sync { backend: _name } => {
-            // let handler = backend_registry.get_or_error(name.as_str())?;
-
-            // let mut backends = database.backends()?;
-
-            // let backend = backends
-            //     .iter_mut()
-            //     .find(|backend_record| backend_record.name.contains(&name))
-            //     .with_context(|| format!("Could not find field with name: {name}"))?;
-
-            // let schema = handler.config_schema();
-            // let config = backend.config.align(&schema)?;
-            // if config != backend.config {
-            //     backend.config = config;
-            //     database.update_backend(backend)?;
-            // }
-
-            // let path = repository_path
-            //     .join("backend")
-            //     .join(handler.name().as_ref())
-            //     .join(backend.id.to_string());
-
-            // let config = backend.config.fill(&schema)?;
-            // let mut backend = handler.create(&config, &path, &known_paths)?;
-
             let params = HashMap::from([(
                 "id".into(),
                 api::Value::String(current_repository.to_string().into()),

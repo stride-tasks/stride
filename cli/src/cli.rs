@@ -14,7 +14,7 @@ use uuid::Uuid;
 pub struct CliArgs {
     #[command(subcommand)]
     /// The mode to operate in
-    pub mode: Mode,
+    pub mode: Option<Mode>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -47,7 +47,7 @@ pub enum Mode {
     /// Complete the task.
     Done {
         /// ID of the task to complete.
-        id: Uuid,
+        id: String,
     },
 
     /// Undo previous change.
@@ -59,7 +59,7 @@ pub enum Mode {
     /// Sync the task storage
     Sync {
         /// Choose backend to sync.
-        backend: String,
+        backend: Option<String>,
     },
 
     /// Output the git-log of the task storage
