@@ -33,6 +33,7 @@ dependencies:
   flutter_native_splash: ^2.4.8
   workmanager: ^0.10.7
   async: ^2.13.0
+  flutter_local_notifications: ^22.3.0
 
 dev_dependencies:
   flutter_test:

@@ -15,6 +15,7 @@ import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/context.dart';
+import 'package:stride/notifications.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
@@ -52,6 +53,7 @@ Future<void> main() async {
   await RustContext.init();
 
   await Background.init();
+  await NotificationService.init();
 
   final pluginPath = path.join(supportPath, 'plugins');
   await pm.load(pluginPath: pluginPath);
