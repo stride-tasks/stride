@@ -9,11 +9,11 @@ use uuid::Uuid;
 use crate::{BackendHandler, Error};
 
 #[derive(Debug, Default)]
-pub struct Registry {
+pub struct BackendRegistry {
     map: HashMap<Box<str>, Box<dyn BackendHandler>>,
 }
 
-impl Registry {
+impl BackendRegistry {
     #[must_use]
     pub fn new() -> Self {
         Self::default()

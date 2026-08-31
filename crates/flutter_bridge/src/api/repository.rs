@@ -7,7 +7,7 @@ use std::{
 use chrono::Utc;
 use flutter_rust_bridge::frb;
 use stride_api::{Context, TaskChange};
-use stride_backend::{Backend, registry::Registry};
+use stride_backend::{Backend, registry::BackendRegistry};
 use stride_backend_git::GitBackend;
 use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
@@ -38,7 +38,7 @@ pub struct Repository {
     pub(crate) root_path: PathBuf,
     pub(crate) db: Mutex<Database>,
 
-    pub(crate) backend_registry: Registry,
+    pub(crate) backend_registry: BackendRegistry,
 }
 
 impl Repository {
@@ -56,7 +56,7 @@ impl Repository {
             .map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
 
-        let mut backend_registry = Registry::new();
+        let mut backend_registry = BackendRegistry::new();
         backend_registry.insert(GitBackend::handler());
         backend_registry.insert(TaskchampionBackend::handler());
         Ok(Self {

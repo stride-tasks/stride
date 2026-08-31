@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
 use anyhow::{Context, bail};
-use stride_backend::registry::Registry;
+use stride_backend::registry::BackendRegistry;
 use stride_core::backend::{BackendRecord, Config, Value};
 use stride_database::Database;
 use uuid::Uuid;
@@ -13,7 +13,7 @@ use crate::cli::BackendCommand;
 #[allow(clippy::too_many_lines)]
 pub(crate) fn handle_command(
     command: Option<&BackendCommand>,
-    backend_registry: &Registry,
+    backend_registry: &BackendRegistry,
     database: &mut Database,
 ) -> anyhow::Result<ExitCode> {
     match command {
