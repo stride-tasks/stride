@@ -129,6 +129,8 @@ fn main() -> anyhow::Result<ExitCode> {
         filter: Vec::default(),
     });
 
+    stride_logging::print_logs(args.print_logs);
+
     let (support_dir, cache_dir) = match std::env::var("STRIDE_HOME") {
         Ok(path) => (PathBuf::from(&path), Path::new(&path).join("cache")),
         Err(std::env::VarError::NotPresent) => (

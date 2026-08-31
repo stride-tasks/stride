@@ -15,6 +15,10 @@ pub struct CliArgs {
     #[command(subcommand)]
     /// The mode to operate in
     pub mode: Option<Mode>,
+
+    /// Print incoming logs to stdout.
+    #[clap(long, default_value_t = false)]
+    pub print_logs: bool,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

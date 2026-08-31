@@ -1,8 +1,17 @@
 //! Logging crate used in the `stride`.
 
-use std::{borrow::Cow, fmt::Write as _, fs::File, io::Write, panic::Location, path::Path};
+use std::{
+    borrow::Cow, fmt::Write as _, fs::File, io::Write, panic::Location, path::Path,
+    sync::atomic::AtomicBool,
+};
 
 use chrono::Local;
+
+static PRINT_LOGS: AtomicBool = AtomicBool::new(false);
+
+pub fn print_logs(yes: bool) {
+    PRINT_LOGS.store(yes, std::sync::atomic::Ordering::SeqCst);
+}
 
 struct LogOutput {
     file: File,
@@ -10,12 +19,16 @@ struct LogOutput {
 
 impl Write for LogOutput {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        std::io::stdout().write_all(buf)?;
+        if PRINT_LOGS.load(std::sync::atomic::Ordering::SeqCst) {
+            std::io::stdout().write_all(buf)?;
+        }
         self.file.write(buf)
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        std::io::stdout().flush()?;
+        if PRINT_LOGS.load(std::sync::atomic::Ordering::SeqCst) {
+            std::io::stdout().flush()?;
+        }
         self.file.flush()
     }
 }
