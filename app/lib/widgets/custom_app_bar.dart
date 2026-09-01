@@ -85,6 +85,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     } else if (output.error != null) {
                       return Icon(Icons.sync_problem);
                     } else if (output.done) {
+                      context.read<TaskBloc>().add(TaskFetchEvent());
                       return Icon(Icons.sync);
                     } else {
                       return const InfiniteRotationAnimation(
