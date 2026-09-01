@@ -224,7 +224,6 @@ fn main() -> anyhow::Result<ExitCode> {
 
             let table = TaskTable::new()
                 .include("ID", TaskField::Index)
-                .include("UUID", TaskField::Id)
                 .include("Age", TaskField::Age)
                 .include("Tags", TaskField::Tags)
                 .include("Due", TaskField::Due)
