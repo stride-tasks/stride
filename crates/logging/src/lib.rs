@@ -117,12 +117,14 @@ impl Drop for LogLevelGuard {
 }
 
 impl LogLevelGuard {
+    #[must_use]
     pub fn new(level: log::LevelFilter) -> Self {
         let current = log::max_level();
         log::set_max_level(level);
         Self { level: current }
     }
 
+    #[must_use]
     pub fn error() -> Self {
         Self::new(log::LevelFilter::Error)
     }

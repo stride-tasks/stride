@@ -44,8 +44,13 @@ impl<'a> IntoIterator for &'a VersionDifference {
 }
 
 impl VersionDifference {
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&ActorId, &ChangeRange)> {
+        self.map.iter()
     }
 
     pub fn extend(&mut self, other: VersionDifference) {
@@ -54,6 +59,7 @@ impl VersionDifference {
         }
     }
 
+    #[must_use]
     pub fn has_remote_changes(&self) -> bool {
         self.map
             .values()

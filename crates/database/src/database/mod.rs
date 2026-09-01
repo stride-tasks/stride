@@ -273,10 +273,12 @@ impl Database {
             (annoation_ids, annoation_entries, annoation_texts)
         {
             for (id, (entry, description)) in ids
-                .chunks_exact(16)
+                .as_chunks::<16>()
+                .0
+                .iter()
                 .zip(entries.split(' ').zip(text.split('\0')))
             {
-                let id = Uuid::from_bytes(id.try_into().expect("should be 16 bytes"));
+                let id = Uuid::from_bytes(*id);
                 let entry = entry.parse::<i64>().expect("should be a valid integer");
                 annotations.push(Annotation {
                     id,

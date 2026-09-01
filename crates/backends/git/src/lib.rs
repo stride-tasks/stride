@@ -544,6 +544,7 @@ impl GitBackend {
         Ok(())
     }
 
+    #[allow(clippy::too_many_lines)]
     fn sync_impl(&mut self, db: &mut Database) -> Result<VersionDifference> {
         let repository_path = self.config.repository_path();
         let mut cloned = false;
