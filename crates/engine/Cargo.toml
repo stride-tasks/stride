@@ -13,6 +13,7 @@ publish = false
 
 [dependencies]
 stride_api.workspace = true
+stride_backend.workspace = true
 
 thiserror.workspace = true
 

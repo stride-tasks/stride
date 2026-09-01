@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use stride_api as api;
+use stride_backend::registry::BackendRegistry;
 
 pub(super) mod builder;
 
@@ -8,6 +9,7 @@ pub(super) mod builder;
 pub struct Engine {
     notifier: Box<dyn api::Notifier>,
     commands: api::CommandRegistry,
+    backends: BackendRegistry,
 }
 
 impl Engine {
@@ -16,6 +18,7 @@ impl Engine {
         Arc::new(Self {
             notifier,
             commands: api::CommandRegistry::default(),
+            backends: BackendRegistry::new(),
         })
     }
 }

@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 use stride_api as api;
-use stride_backend::{Backend, registry::BackendRegistry};
+use stride_backend::Backend;
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
 };
@@ -179,13 +179,11 @@ fn main() -> anyhow::Result<ExitCode> {
     let mut database = Database::open(&database_filepath, actor_id, clock)?;
     database.apply_migrations()?;
 
-    let mut backend_registry = BackendRegistry::new();
-    backend_registry.insert(GitBackend::handler());
-    backend_registry.insert(TaskchampionBackend::handler());
-
     let notifier = Box::new(CliNotifier);
     let engine: Arc<dyn api::Context> = EngineBuilder::new()
         .notifier(notifier)
+        .backend(GitBackend::handler())
+        .backend(TaskchampionBackend::handler())
         .command("stride.repository.sync", RepositorySyncHandler)
         .command("stride.ssh.host.add", SshHostAddHandler)
         .build();

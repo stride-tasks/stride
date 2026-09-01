@@ -2675,6 +2675,7 @@ name = "stride_engine"
 version = "0.1.0"
 dependencies = [
  "stride_api",
+ "stride_backend",
  "thiserror 2.0.19",
 ]
 
