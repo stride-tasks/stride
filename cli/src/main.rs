@@ -1,5 +1,5 @@
 use anyhow::{Context, bail};
-use chrono::Utc;
+use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
@@ -17,7 +17,7 @@ use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
     event::{HostEvent, PluginEvent},
     state::KnownPaths,
-    task::{Task, TaskStatus},
+    task::{Task, TaskPriority, TaskStatus},
 };
 use stride_crdt::{
     actor::ActorId,
@@ -327,6 +327,101 @@ fn main() -> anyhow::Result<ExitCode> {
             transaction.update_task_with(id, |mut task| {
                 task.status = Some(TaskStatus::Done);
                 task.modified = Some(Utc::now());
+                Ok(task)
+            })?;
+            transaction.commit()?;
+        }
+        Mode::Modify { modifiers } => {
+            let id = args
+                .task_id
+                .context("expected task id when calling modify")?;
+            let id = if let Ok(id) = id.parse::<Uuid>() {
+                id
+            } else if let Ok(index) = id.parse::<usize>() {
+                if index == 0 {
+                    bail!("zero is not a valid task index");
+                }
+                let status = [TaskStatus::Pending].into();
+                let tasks = database.tasks_by_status(&status)?;
+
+                let task = tasks
+                    .get(index - 1)
+                    .with_context(|| format!("unable to find task with index: {index}"))?;
+
+                task.id
+            } else {
+                bail!("invalid task identifier expected index or UUID");
+            };
+
+            let mut new_title: Option<String> = None;
+            let mut new_due = None;
+            let mut new_priority = None;
+            let mut tags = Vec::new();
+            for modifier in modifiers {
+                match modifier {
+                    cli::TaskModifier::Text(text) => {
+                        new_title = Some(new_title.unwrap_or_default() + &text + " ");
+                    }
+                    cli::TaskModifier::Due(due) => {
+                        if due.trim().is_empty() {
+                            new_due = Some(None);
+                        } else if let Ok(date) = NaiveDate::parse_from_str(&due, "%Y-%m-%d") {
+                            new_due = Some(Some(
+                                date.and_time(NaiveTime::default())
+                                    .and_local_timezone(chrono::Local)
+                                    .latest()
+                                    .context("")?
+                                    .to_utc(),
+                            ));
+                        }
+                    }
+                    cli::TaskModifier::TagAdd(tag) => {
+                        tags.push((false, tag));
+                    }
+                    cli::TaskModifier::TagRemove(tag) => {
+                        tags.push((true, tag));
+                    }
+                    cli::TaskModifier::Priority(priority) => {
+                        new_priority = match priority.as_str() {
+                            "" => Some(None),
+                            "L" => Some(Some(TaskPriority::L)),
+                            "M" => Some(Some(TaskPriority::M)),
+                            "H" => Some(Some(TaskPriority::H)),
+                            _ => bail!("unknown priority: {priority}"),
+                        };
+                    }
+                }
+            }
+
+            let mut transaction = database.transaction()?;
+            transaction.update_task_with(id, |mut task| {
+                let mut modified = false;
+                if let Some(new_title) = new_title {
+                    task.title = Some(new_title.trim().to_string());
+                    modified |= true;
+                }
+                if let Some(new_due) = new_due {
+                    task.due = new_due;
+                    modified |= true;
+                }
+                if let Some(new_priority) = new_priority {
+                    task.priority = new_priority;
+                    modified |= true;
+                }
+                for (remove, tag) in tags {
+                    if remove {
+                        if let Some(index) = task.tags.iter().position(|value| value == &tag) {
+                            task.tags.remove(index);
+                            modified |= true;
+                        }
+                    } else if !task.tags.iter().any(|value| value == &tag) {
+                        task.tags.push(tag);
+                        modified |= true;
+                    }
+                }
+                if modified {
+                    task.modified = Some(Utc::now());
+                }
                 Ok(task)
             })?;
             transaction.commit()?;
