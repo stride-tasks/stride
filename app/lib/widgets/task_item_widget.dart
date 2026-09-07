@@ -36,28 +36,18 @@ class TaskItem extends StatelessWidget {
     if (task.due != null || task.tags.isNotEmpty) {
       subtitle = Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 6.0,
+        runSpacing: 6.0,
         children: [
           if (task.due != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2.0),
-              child: Text(
-                task.due?.toUtc().toHumanString() ?? '',
-                style: const TextStyle(fontSize: 12),
-              ),
+            _metadataChip(
+              context,
+              icon: Icons.event,
+              label: task.due!.toUtc().toHumanString(),
             ),
-          if (task.tags.isNotEmpty) SizedBox(width: 8),
           if (task.tags.isNotEmpty)
             ...task.tags.map(
-              (tag) => Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: InputChip(
-                  label: Text(tag, style: const TextStyle(fontSize: 10)),
-                  labelPadding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
+              (tag) => _metadataChip(context, icon: Icons.sell, label: tag),
             ),
         ],
       );
@@ -97,7 +87,7 @@ class TaskItem extends StatelessWidget {
                   text: annotation.entry.toHumanString(),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                TextSpan(text: ' '),
+                const TextSpan(text: ' '),
                 TextSpan(text: annotation.text),
               ],
             ),
@@ -105,7 +95,7 @@ class TaskItem extends StatelessWidget {
         ),
       );
       widget = ExpansionTile(
-        tilePadding: EdgeInsets.all(0),
+        tilePadding: EdgeInsets.zero,
         title: widget,
         children: children.toList(),
       );
@@ -115,21 +105,21 @@ class TaskItem extends StatelessWidget {
       const borderWidth = 4.0;
       const borderRadius = BorderRadius.all(Radius.circular(5));
       final decoration = switch (task.priority!) {
-        TaskPriority.h => const BoxDecoration(
+        TaskPriority.h => BoxDecoration(
           borderRadius: borderRadius,
-          border: Border(
+          border: const Border(
             left: BorderSide(color: Colors.red, width: borderWidth),
           ),
         ),
-        TaskPriority.m => const BoxDecoration(
+        TaskPriority.m => BoxDecoration(
           borderRadius: borderRadius,
-          border: Border(
+          border: const Border(
             left: BorderSide(color: Color(0xAAfd8c00), width: borderWidth),
           ),
         ),
-        TaskPriority.l => const BoxDecoration(
+        TaskPriority.l => BoxDecoration(
           borderRadius: borderRadius,
-          border: Border(
+          border: const Border(
             left: BorderSide(color: Colors.green, width: borderWidth),
           ),
         ),
@@ -163,6 +153,36 @@ class TaskItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 2.0),
       child: widget,
+    );
+  }
+
+  Widget _metadataChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style:
+                theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ) ??
+                const TextStyle(fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 
