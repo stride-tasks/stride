@@ -122,6 +122,110 @@ impl api::Notifier for CliNotifier {
     }
 }
 
+#[derive(Default)]
+struct TaskModifications {
+    title_parts: Vec<String>,
+    due: Option<Option<chrono::DateTime<Utc>>>,
+    priority: Option<Option<TaskPriority>>,
+    project: Option<Option<String>>,
+    tag_operations: Vec<(bool, String)>,
+}
+
+fn parse_task_modifications(
+    modifiers: &[cli::TaskModifier]
+) -> anyhow::Result<TaskModifications> {
+    let mut modifications = TaskModifications::default();
+
+    for modifier in modifiers {
+        match modifier {
+            cli::TaskModifier::Text(text) => {
+                modifications.title_parts.push(text.clone());
+            }
+            cli::TaskModifier::Due(value) => {
+                modifications.due = if value.trim().is_empty() {
+                    Some(None)
+                } else if let Ok(date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
+                    Some(Some(
+                        date.and_time(NaiveTime::default())
+                            .and_local_timezone(chrono::Local)
+                            .latest()
+                            .context("")?
+                            .to_utc(),
+                    ))
+                } else {
+                    bail!("unable to parse due date: {value}");
+                };
+            }
+            cli::TaskModifier::TagAdd(tag) => {
+                modifications.tag_operations.push((false, tag.clone()));
+            }
+            cli::TaskModifier::TagRemove(tag) => {
+                modifications.tag_operations.push((true, tag.clone()));
+            }
+            cli::TaskModifier::Priority(value) => {
+                modifications.priority = match value.as_str() {
+                    "" => Some(None),
+                    "L" => Some(Some(TaskPriority::L)),
+                    "M" => Some(Some(TaskPriority::M)),
+                    "H" => Some(Some(TaskPriority::H)),
+                    _ => bail!("unknown priority: {value}"),
+                };
+            }
+            cli::TaskModifier::Project(value) => {
+                modifications.project = if value.trim().is_empty() {
+                     Some(None)
+                } else {
+                    Some(Some(value.clone()))
+                };
+            }
+        }
+    }
+
+    Ok(modifications)
+}
+
+fn task_title_from_modifications(modifications: &TaskModifications) -> Option<String> {
+    let title = modifications.title_parts.join(" ");
+    if title.trim().is_empty() {
+        None
+    } else {
+        Some(title.trim().to_string())
+    }
+}
+
+fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bool {
+    let mut modified = false;
+
+    if let Some(new_due) = modifications.due {
+        task.due = new_due;
+        modified = true;
+    }
+
+    if let Some(new_priority) = modifications.priority {
+        task.priority = new_priority;
+        modified = true;
+    }
+
+    if let Some(new_project) = &modifications.project {
+        task.project = new_project.clone();
+        modified = true;
+    }
+
+    for (remove, tag) in &modifications.tag_operations {
+        if *remove {
+            if let Some(index) = task.tags.iter().position(|value| value == tag) {
+                task.tags.remove(index);
+                modified = true;
+            }
+        } else if !task.tags.iter().any(|value| value == tag) {
+            task.tags.push(tag.clone());
+            modified = true;
+        }
+    }
+
+    modified
+}
+
 #[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<ExitCode> {
     let args = CliArgs::parse();
@@ -225,6 +329,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let table = TaskTable::new()
                 .include("ID", TaskField::Index)
                 .include("Age", TaskField::Age)
+                .include("Project", TaskField::Project)
                 .include("Tags", TaskField::Tags)
                 .include("Due", TaskField::Due)
                 .include("P", TaskField::Priority)
@@ -234,19 +339,24 @@ fn main() -> anyhow::Result<ExitCode> {
 
             println!("{table}");
         }
-        Mode::Add { content } => {
-            let mut content = content.join(" ");
-
-            if content == "-" {
-                content = String::new();
-                std::io::stdin().read_line(&mut content)?;
-            }
-
-            if content.trim().is_empty() {
+        Mode::Add { modifiers } => {
+            if modifiers.is_empty() {
                 bail!("Missing arguments");
             }
 
-            let task = Task::new(content.trim().to_string());
+            let modifications = parse_task_modifications(&modifiers)?;
+            let title = task_title_from_modifications(&modifications);
+            let title = if let Some(title) = title{title} else {
+                let mut content = String::new();
+                std::io::stdin().read_line(&mut content)?;
+                    content
+                        .split_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+            };
+
+            let mut task = Task::new(title);
+            apply_modifications(&mut task, &modifications);
 
             let event = HostEvent::TaskCreate {
                 task: Some(Box::new(task.clone())),
@@ -353,71 +463,15 @@ fn main() -> anyhow::Result<ExitCode> {
                 bail!("invalid task identifier expected index or UUID");
             };
 
-            let mut new_title: Option<String> = None;
-            let mut new_due = None;
-            let mut new_priority = None;
-            let mut tags = Vec::new();
-            for modifier in modifiers {
-                match modifier {
-                    cli::TaskModifier::Text(text) => {
-                        new_title = Some(new_title.unwrap_or_default() + &text + " ");
-                    }
-                    cli::TaskModifier::Due(due) => {
-                        if due.trim().is_empty() {
-                            new_due = Some(None);
-                        } else if let Ok(date) = NaiveDate::parse_from_str(&due, "%Y-%m-%d") {
-                            new_due = Some(Some(
-                                date.and_time(NaiveTime::default())
-                                    .and_local_timezone(chrono::Local)
-                                    .latest()
-                                    .context("")?
-                                    .to_utc(),
-                            ));
-                        }
-                    }
-                    cli::TaskModifier::TagAdd(tag) => {
-                        tags.push((false, tag));
-                    }
-                    cli::TaskModifier::TagRemove(tag) => {
-                        tags.push((true, tag));
-                    }
-                    cli::TaskModifier::Priority(priority) => {
-                        new_priority = match priority.as_str() {
-                            "" => Some(None),
-                            "L" => Some(Some(TaskPriority::L)),
-                            "M" => Some(Some(TaskPriority::M)),
-                            "H" => Some(Some(TaskPriority::H)),
-                            _ => bail!("unknown priority: {priority}"),
-                        };
-                    }
-                }
-            }
+            let modifications = parse_task_modifications(&modifiers)?;
+            let new_title = task_title_from_modifications(&modifications);
 
             let mut transaction = database.transaction()?;
             transaction.update_task_with(id, |mut task| {
-                let mut modified = false;
+                let mut modified = apply_modifications(&mut task, &modifications);
                 if let Some(new_title) = new_title {
-                    task.title = Some(new_title.trim().to_string());
-                    modified |= true;
-                }
-                if let Some(new_due) = new_due {
-                    task.due = new_due;
-                    modified |= true;
-                }
-                if let Some(new_priority) = new_priority {
-                    task.priority = new_priority;
-                    modified |= true;
-                }
-                for (remove, tag) in tags {
-                    if remove {
-                        if let Some(index) = task.tags.iter().position(|value| value == &tag) {
-                            task.tags.remove(index);
-                            modified |= true;
-                        }
-                    } else if !task.tags.iter().any(|value| value == &tag) {
-                        task.tags.push(tag);
-                        modified |= true;
-                    }
+                    task.title = Some(new_title);
+                    modified = true;
                 }
                 if modified {
                     task.modified = Some(Utc::now());

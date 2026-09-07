@@ -15,6 +15,7 @@ pub enum TaskField {
     Index,
     Id,
     Age,
+    Project,
     Tags,
     Due,
     Priority,
@@ -35,6 +36,7 @@ impl TaskField {
                     .or(item.task.modified)
                     .map(|date| format_date_difference(date, now))
             }
+            Self::Project => item.task.project.clone().map(Into::into),
             Self::Tags if item.task.tags.is_empty() => None,
             Self::Tags => Some(item.task.tags.join(" ").into()),
             Self::Due => item.task.due.map(|due| {

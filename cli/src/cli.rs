@@ -47,6 +47,9 @@ pub enum TaskModifier {
     /// A severity or order weighting for the task.
     Priority(String),
 
+    /// A project namespace for grouping tasks.
+    Project(String),
+
     /// An explicit tag to be attached to the task metadata.
     TagAdd(String),
 
@@ -70,6 +73,10 @@ impl FromStr for TaskModifier {
             Ok(TaskModifier::Priority(pri.to_string()))
         } else if let Some(pri) = s.strip_prefix("pri:") {
             Ok(TaskModifier::Priority(pri.to_string()))
+        } else if let Some(project) = s.strip_prefix("project:") {
+            Ok(TaskModifier::Project(project.to_string()))
+        } else if let Some(project) = s.strip_prefix("proj:") {
+            Ok(TaskModifier::Project(project.to_string()))
         } else if let Some(tag) = s.strip_prefix("+") {
             Ok(TaskModifier::TagAdd(tag.to_string()))
         } else if let Some(tag) = s.strip_prefix("-") {
@@ -94,7 +101,8 @@ pub enum Mode {
     Add {
         /// A description of the task.
         /// If this is equal to '-' we try to read it from `stdin`.
-        content: Vec<String>,
+        #[arg(value_parser = clap::value_parser!(TaskModifier), allow_hyphen_values = true)]
+        modifiers: Vec<TaskModifier>,
     },
 
     /// Complete the task.
