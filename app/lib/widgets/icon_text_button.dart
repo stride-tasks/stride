@@ -20,10 +20,14 @@ class IconTextButton extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget widget = ElevatedButton(
       onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           icon,
+          const SizedBox(width: 8),
           Text(text, style: textStyle),
         ],
       ),

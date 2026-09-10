@@ -28,7 +28,6 @@ class _TaskRouteState extends State<TaskRoute> {
   List<(UuidValue, DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
-  bool active = false;
   List<Uda> udas = [];
 
   final _formKey = GlobalKey<FormState>();
@@ -58,179 +57,358 @@ class _TaskRouteState extends State<TaskRoute> {
   }
 
   String _dueButtonText() {
-    const result = 'Due';
     if (due == null) {
-      return result;
+      return 'Select';
+    } else {
+      return due!.toHumanString();
     }
-    return '$result - ${due!.toHumanString()}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.task != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Tasks')),
-      body: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  initialValue: title,
-                  autofocus: true,
-                  decoration: const InputDecoration(hintText: 'Description'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Task must have a description';
-                    }
-                    return null;
-                  },
-                  onSaved: (newValue) {
-                    title = newValue!;
-                  },
-                  textCapitalization: TextCapitalization.sentences,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: IconTextButton(
-                    icon: const Icon(Icons.date_range),
-                    text: _dueButtonText(),
-                    onPressed: () async {
-                      final datetime = await showPickDateTime(context: context);
-                      setState(() {
-                        due = datetime;
-                      });
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SegmentedButton<TaskPriority>(
-                    segments: const <ButtonSegment<TaskPriority>>[
-                      ButtonSegment<TaskPriority>(
-                        value: TaskPriority.h,
-                        icon: Icon(Icons.priority_high),
-                        label: Text('High'),
-                      ),
-                      ButtonSegment<TaskPriority>(
-                        value: TaskPriority.m,
-                        icon: Icon(Icons.density_medium),
-                        label: Text('Medium'),
-                      ),
-                      ButtonSegment<TaskPriority>(
-                        value: TaskPriority.l,
-                        icon: Icon(Icons.low_priority),
-                        label: Text('Low'),
-                      ),
-                    ],
-                    selected: priority == null ? {} : {priority!},
-                    onSelectionChanged: (newSelection) {
-                      setState(() {
-                        priority = newSelection.isEmpty
-                            ? null
-                            : newSelection.first;
-                      });
-                    },
-                    emptySelectionAllowed: true,
-                    selectedIcon: const Icon(Icons.check),
-                  ),
-                ),
-                TagsWidget(tags: _tags, onSubmit: (tags) => _tags = tags),
-                const SizedBox(height: 10),
-                _annotations(),
-              ],
-            ),
-          ),
-        ),
-      ),
+      appBar: AppBar(title: Text(isEditing ? 'Edit task' : 'New task')),
+      body: SafeArea(child: _buildForm()),
       floatingActionButton: FloatingActionButton(
+        onPressed: _saveTask,
         shape: const CircleBorder(),
-        onPressed: () async {
-          if (!_formKey.currentState!.validate()) {
-            return;
-          }
-
-          _formKey.currentState!.save();
-
-          if (context.mounted) {
-            final task = Task.raw(
-              id: widget.task?.id ?? UuidValue.fromString(const Uuid().v7()),
-              entry: entry ?? DateTime.now().toUtc(),
-              title: title,
-              tags: _tags.toList(),
-              due: due,
-              status: TaskStatus.pending,
-              annotations: annotations
-                  .map<Annotation>(
-                    (annotation) => Annotation(
-                      id: annotation.$1,
-                      entry: annotation.$2,
-                      text: annotation.$3.text,
-                    ),
-                  )
-                  .toList(),
-              depends: depends,
-              priority: priority,
-              udas: udas,
-            );
-
-            if (widget.task == null) {
-              context.read<TaskBloc>().add(TaskAddEvent(task: task));
-              context.read<PluginManagerBloc>().emitHostEvent(
-                HostEvent.taskCreate(task: task),
-              );
-            } else {
-              context.read<TaskBloc>().add(
-                TaskUpdateEvent(current: task, previous: widget.task),
-              );
-              context.read<PluginManagerBloc>().emitHostEvent(
-                HostEvent.taskModify(current: task, previous: widget.task),
-              );
-            }
-
-            Navigator.pop(context);
-          }
-        },
-        child: const Icon(Icons.add_task_sharp, size: 50),
+        child: isEditing
+            ? const Icon(Icons.check_rounded)
+            : const Icon(Icons.add_rounded),
       ),
     );
   }
 
-  Widget _annotations() {
-    final children = annotations
-        .map<Widget>(
-          (annotation) => ListTile(
-            title: TextField(controller: annotation.$3, maxLines: null),
-            trailing: IconButton(
-              onPressed: () => setState(() {
-                annotations.remove(annotation);
-              }),
-              icon: const Icon(Icons.remove),
-            ),
-            subtitle: Text(
-              annotation.$2.toHumanString(),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        )
-        .followedBy([
-          ListTile(
-            trailing: IconButton(
-              onPressed: () => setState(() {
-                annotations.add((
-                  UuidValue.fromString(Uuid().v7()),
-                  // NOTE: Dates are stored in UTC.
-                  DateTime.now().toUtc(),
-                  TextEditingController(),
-                ));
-              }),
-              icon: const Icon(Icons.add),
+  Widget _buildForm() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: Padding(
+          padding: const .all(12),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: .stretch,
+                children: [
+                  _buildTitleField(),
+                  const SizedBox(height: 10),
+                  _buildDueSection(),
+                  const SizedBox(height: 10),
+                  _buildPrioritySection(),
+                  const SizedBox(height: 10),
+                  _buildTagsSection(),
+                  const SizedBox(height: 10),
+                  _buildAnnotations(),
+                ],
+              ),
             ),
           ),
-        ])
-        .map((widget) => Card(child: widget));
-    return Column(mainAxisSize: MainAxisSize.min, children: children.toList());
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleField() {
+    return _sectionCard(
+      child: TextFormField(
+        initialValue: title,
+        autofocus: true,
+        decoration: const InputDecoration(
+          border: .none,
+          hintText: 'What needs to be done?',
+          prefixIcon: Icon(Icons.task_alt_outlined),
+          contentPadding: .symmetric(vertical: 4),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Task must have a description';
+          }
+          return null;
+        },
+        onSaved: (newValue) {
+          title = newValue!;
+        },
+        textCapitalization: .sentences,
+        autovalidateMode: .onUserInteraction,
+      ),
+    );
+  }
+
+  Widget _buildDueSection() {
+    final theme = Theme.of(context);
+
+    return _sectionCard(
+      child: Row(
+        children: [
+          Icon(
+            Icons.event_available_rounded,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Due',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: .w600,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: TextButton(
+                    onPressed: _pickDueDate,
+                    child: Text(_dueButtonText()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrioritySection() {
+    final theme = Theme.of(context);
+
+    return _sectionCard(
+      child: Row(
+        children: [
+          Icon(Icons.flag_rounded, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SegmentedButton<TaskPriority>(
+              segments: const <ButtonSegment<TaskPriority>>[
+                ButtonSegment<TaskPriority>(
+                  value: TaskPriority.h,
+                  icon: Icon(Icons.priority_high),
+                  label: Text('High'),
+                ),
+                ButtonSegment<TaskPriority>(
+                  value: TaskPriority.m,
+                  icon: Icon(Icons.density_medium),
+                  label: Text('Medium'),
+                ),
+                ButtonSegment<TaskPriority>(
+                  value: TaskPriority.l,
+                  icon: Icon(Icons.low_priority),
+                  label: Text('Low'),
+                ),
+              ],
+              selected: priority == null ? {} : {priority!},
+              onSelectionChanged: (newSelection) {
+                setState(() {
+                  priority = newSelection.isEmpty ? null : newSelection.first;
+                });
+              },
+              emptySelectionAllowed: true,
+              selectedIcon: const Icon(Icons.check),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagsSection() {
+    final theme = Theme.of(context);
+
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: .start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.sell_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Tags',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: .w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TagsWidget(tags: _tags, onSubmit: (tags) => _tags = tags),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickDueDate() async {
+    final datetime = await showPickDateTime(context: context);
+    setState(() {
+      due = datetime;
+    });
+  }
+
+  Future<void> _saveTask() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    _formKey.currentState!.save();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    final task = Task.raw(
+      id: widget.task?.id ?? UuidValue.fromString(const Uuid().v7()),
+      entry: entry ?? DateTime.now().toUtc(),
+      title: title,
+      tags: _tags.toList(),
+      due: due,
+      status: .pending,
+      annotations: annotations
+          .map<Annotation>(
+            (annotation) => Annotation(
+              id: annotation.$1,
+              entry: annotation.$2,
+              text: annotation.$3.text,
+            ),
+          )
+          .toList(),
+      depends: depends,
+      priority: priority,
+      udas: udas,
+    );
+
+    if (widget.task == null) {
+      context.read<TaskBloc>().add(TaskAddEvent(task: task));
+      context.read<PluginManagerBloc>().emitHostEvent(
+        HostEvent.taskCreate(task: task),
+      );
+    } else {
+      context.read<TaskBloc>().add(
+        TaskUpdateEvent(current: task, previous: widget.task),
+      );
+      context.read<PluginManagerBloc>().emitHostEvent(
+        HostEvent.taskModify(current: task, previous: widget.task),
+      );
+    }
+
+    if (context.mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  Widget _sectionCard({required Widget child}) {
+    return Container(
+      padding: const .symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: .circular(8),
+        border: .all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          width: 1.0,
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildAnnotations() {
+    final theme = Theme.of(context);
+
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: .start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.note_alt_outlined,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Annotations',
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: .w600),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: () => setState(() {
+                  annotations.add((
+                    UuidValue.fromString(Uuid().v7()),
+                    DateTime.now().toUtc(),
+                    TextEditingController(),
+                  ));
+                }),
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                tooltip: 'Add annotation',
+                visualDensity: .compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (annotations.isNotEmpty) ...annotations.map(_buildAnnotationRow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnnotationRow(
+    (UuidValue, DateTime, TextEditingController) annotation,
+  ) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const .only(top: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const .symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: .circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: annotation.$3,
+                      decoration: InputDecoration(
+                        border: .none,
+                        hintText: 'Note',
+                        isDense: true,
+                        contentPadding: .zero,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    annotation.$2.toHumanString(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: () => setState(() {
+              annotations.remove(annotation);
+            }),
+            icon: const Icon(Icons.remove_circle_outline_rounded),
+            tooltip: 'Remove annotation',
+            visualDensity: .compact,
+          ),
+        ],
+      ),
+    );
   }
 }
