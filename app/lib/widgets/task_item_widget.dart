@@ -33,12 +33,18 @@ class TaskItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget? subtitle;
-    if (task.due != null || task.tags.isNotEmpty) {
+    if (task.project != null || task.due != null || task.tags.isNotEmpty) {
       subtitle = Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: 6.0,
         runSpacing: 6.0,
         children: [
+          if (task.project != null)
+            _metadataChip(
+              context,
+              icon: Icons.folder_open,
+              label: task.project!,
+            ),
           if (task.due != null)
             _metadataChip(
               context,

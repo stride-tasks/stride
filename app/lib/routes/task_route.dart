@@ -8,7 +8,6 @@ import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
-import 'package:stride/widgets/icon_text_button.dart';
 import 'package:stride/widgets/tags_widget.dart';
 import 'package:uuid/uuid.dart';
 
@@ -24,6 +23,7 @@ class _TaskRouteState extends State<TaskRoute> {
   String title = '';
   DateTime? entry;
   DateTime? due;
+  String? project;
   Set<String> _tags = {};
   List<(UuidValue, DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
@@ -39,6 +39,7 @@ class _TaskRouteState extends State<TaskRoute> {
     title = widget.task?.title ?? title;
     entry = widget.task?.entry;
     due = widget.task?.due;
+    project = widget.task?.project;
     _tags = widget.task?.tags.toSet() ?? _tags;
     annotations =
         widget.task?.annotations
@@ -98,6 +99,8 @@ class _TaskRouteState extends State<TaskRoute> {
                   _buildDueSection(),
                   const SizedBox(height: 10),
                   _buildPrioritySection(),
+                  const SizedBox(height: 10),
+                  _buildProjectSection(),
                   const SizedBox(height: 10),
                   _buildTagsSection(),
                   const SizedBox(height: 10),
@@ -167,6 +170,41 @@ class _TaskRouteState extends State<TaskRoute> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectSection() {
+    final theme = Theme.of(context);
+
+    return _sectionCard(
+      child: Row(
+        children: [
+          Tooltip(
+            message: 'Project',
+            child: Icon(
+              Icons.folder_open_rounded,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextFormField(
+              initialValue: project,
+              decoration: const InputDecoration(
+                border: .none,
+                hintText: 'Project',
+                contentPadding: .symmetric(vertical: 4),
+              ),
+              onSaved: (newValue) {
+                project = newValue == null || newValue.trim().isEmpty
+                    ? null
+                    : newValue.trim();
+              },
             ),
           ),
         ],
@@ -266,6 +304,7 @@ class _TaskRouteState extends State<TaskRoute> {
       id: widget.task?.id ?? UuidValue.fromString(const Uuid().v7()),
       entry: entry ?? DateTime.now().toUtc(),
       title: title,
+      project: project,
       tags: _tags.toList(),
       due: due,
       status: .pending,
