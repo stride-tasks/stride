@@ -239,7 +239,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLoggingError({required String message});
 
-  Future<void> crateApiContextExecute({
+  Future<String> crateApiContextExecute({
     required String method,
     required String args,
   });
@@ -1781,7 +1781,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'error', argNames: ['message']);
 
   @override
-  Future<void> crateApiContextExecute({
+  Future<String> crateApiContextExecute({
     required String method,
     required String args,
   }) {
@@ -1799,7 +1799,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
+          decodeSuccessData: sse_decode_String,
           decodeErrorData:
               sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
         ),

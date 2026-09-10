@@ -52,7 +52,7 @@ pub fn create_context(stream: StreamSink<String>) {
     *stream_lock = Some(stream);
 }
 
-pub fn execute(method: &str, args: &str) -> Result<(), RustError> {
+pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
     #[derive(Debug, serde::Deserialize)]
     struct Params {
         params: api::Value,
@@ -78,9 +78,9 @@ pub fn execute(method: &str, args: &str) -> Result<(), RustError> {
                 .into(),
         })?;
 
-    let _result = serde_json::to_string(&result).map_err(|e| ErrorKind::Other {
+    let result = serde_json::to_string(&result).map_err(|e| ErrorKind::Other {
         message: format!("Failed to serialize result: {e}").into(),
     })?;
 
-    Ok(())
+    Ok(result)
 }

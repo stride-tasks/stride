@@ -58,7 +58,7 @@ class RustContext {
     });
   }
 
-  static Future<void> execute(String method, String args) async {
+  static Future<String> execute(String method, String args) async {
     return context.execute(method: method, args: args);
   }
 }

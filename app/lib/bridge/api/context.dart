@@ -13,11 +13,11 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/api/error.dart';
 import 'package:stride/bridge/frb_generated.dart';
 
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `FlutterNotifier`, `RepositorySpec`, `RepositorySyncHandler`, `SshHostAddArgs`, `SshHostAddHandler`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `handle`, `handle`, `notify`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `FlutterNotifier`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `notify`
 
 Stream<String> createContext() =>
     RustLib.instance.api.crateApiContextCreateContext();
 
-Future<void> execute({required String method, required String args}) =>
+Future<String> execute({required String method, required String args}) =>
     RustLib.instance.api.crateApiContextExecute(method: method, args: args);
