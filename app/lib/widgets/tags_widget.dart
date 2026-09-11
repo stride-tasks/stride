@@ -18,11 +18,19 @@ class TagsWidget extends StatefulWidget {
 
 class TagsWidgetState extends State<TagsWidget> {
   late Set<String> items;
+  late TextEditingController _tagController;
 
   @override
   void initState() {
     super.initState();
     items = widget.tags.toSet();
+    _tagController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _tagController.dispose();
+    super.dispose();
   }
 
   String _normalizeTag(String value) =>
@@ -37,6 +45,19 @@ class TagsWidgetState extends State<TagsWidget> {
             .toList()
           ..sort();
     return available;
+  }
+
+  void _selectTag(String value) {
+    final normalized = _normalizeTag(value);
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      items.add(normalized);
+      widget.onSubmit(items);
+    });
+    _tagController.clear();
   }
 
   void _addTags(String raw) {
@@ -54,6 +75,7 @@ class TagsWidgetState extends State<TagsWidget> {
       items.addAll(normalized);
       widget.onSubmit(items);
     });
+    _tagController.clear();
   }
 
   @override
@@ -65,17 +87,9 @@ class TagsWidgetState extends State<TagsWidget> {
       children: [
         Autocomplete<String>(
           optionsBuilder: (value) => _suggestions(value.text),
-          onSelected: (tag) {
-            final normalized = _normalizeTag(tag);
-            if (normalized.isEmpty) {
-              return;
-            }
-            setState(() {
-              items.add(normalized);
-              widget.onSubmit(items);
-            });
-          },
+          onSelected: _selectTag,
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            _tagController = controller;
             return TextField(
               controller: controller,
               focusNode: focusNode,
