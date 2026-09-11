@@ -506,6 +506,28 @@ impl Database {
         Ok(backends)
     }
 
+    pub fn used_tags(&mut self) -> Result<Vec<Box<str>>> {
+        let mut sql = self.connection.prepare_cached(indoc! {"
+            SELECT
+                tag_id
+            FROM
+                task_tag_table
+            LEFT JOIN task_table task ON task.id = task_id
+            WHERE
+                task.tombstone = 0
+            GROUP BY
+                task_id
+        "})?;
+
+        let rows = sql.query_map((), |row| row.get::<_, Box<str>>("tag_id"))?;
+
+        let mut tags = Vec::new();
+        for tag in rows {
+            tags.push(tag?);
+        }
+        Ok(tags)
+    }
+
     pub fn toggle_backend(&mut self, id: Uuid) -> Result<()> {
         self.connection.execute(
             indoc! {"
