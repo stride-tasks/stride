@@ -32,13 +32,13 @@ impl api::Context for Engine {
             .ok_or_else(|| api::Error::HandlerNotFound {
                 method: method.into(),
             })?;
-        handler
+        let result = handler
             .handle(self.clone(), args.clone())
             .map_err(|err| api::Error::HandlerFailed {
                 method: method.into(),
                 params: args,
                 cause: Box::new(err),
             })?;
-        Ok(api::Value::Map(HashMap::default()))
+        Ok(result)
     }
 }

@@ -10,5 +10,5 @@ pub trait CommandHandler: std::fmt::Debug + Send + Sync + 'static {
     /// # Errors
     ///
     /// Returns an error if the command could not be handled for any reason.
-    fn handle(&self, context: Arc<dyn Context>, args: Value) -> Result<Box<str>>;
+    fn handle(&self, context: Arc<dyn Context>, args: Value) -> Result<Value>;
 }

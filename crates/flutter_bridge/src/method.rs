@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use stride_api as api;
 use uuid::Uuid;
@@ -14,7 +14,7 @@ struct RepositorySpec {
 }
 
 impl api::CommandHandler for RepositorySyncHandler {
-    fn handle(&self, context: Arc<dyn api::Context>, args: api::Value) -> api::Result<Box<str>> {
+    fn handle(&self, context: Arc<dyn api::Context>, args: api::Value) -> api::Result<api::Value> {
         let args = serde_json::to_string(&args).map_err(Box::new)?;
         let spec: RepositorySpec = serde_json::from_str(&args).map_err(Box::new)?;
 
@@ -27,6 +27,6 @@ impl api::CommandHandler for RepositorySyncHandler {
         };
 
         context.notify(api::Notification::RepositoryChanged(notification))?;
-        Ok("".into())
+        Ok(api::Value::Map(HashMap::new()))
     }
 }
