@@ -4,7 +4,11 @@ use stride_api as api;
 use stride_backend_git::method::SshHostAddHandler;
 use stride_engine as engine;
 
-use crate::{ErrorKind, RustError, frb_generated::StreamSink, method::RepositorySyncHandler};
+use crate::{
+    ErrorKind, RustError,
+    frb_generated::StreamSink,
+    method::{RepositorySyncHandler, RepositoryTagListHandler},
+};
 
 static STATE: OnceLock<Arc<dyn api::Context + Send + Sync>> = OnceLock::new();
 static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex::default);
@@ -62,6 +66,7 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
         engine::EngineBuilder::new()
             .notifier(Box::new(FlutterNotifier))
             .command("stride.repository.sync", RepositorySyncHandler)
+            .command("stride.repository.tag.list", RepositoryTagListHandler)
             .command("stride.ssh.host.add", SshHostAddHandler)
             .build()
     });

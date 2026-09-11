@@ -30,3 +30,34 @@ impl api::CommandHandler for RepositorySyncHandler {
         Ok(api::Value::Map(HashMap::new()))
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTagListHandler;
+
+impl api::CommandHandler for RepositoryTagListHandler {
+    fn handle(&self, _: Arc<dyn api::Context>, args: api::Value) -> api::Result<api::Value> {
+        let args = serde_json::to_string(&args).map_err(Box::new)?;
+        let spec: RepositorySpec = serde_json::from_str(&args).map_err(Box::new)?;
+
+        let repository = Repository::open(spec.id).map_err(Box::new)?;
+        let tags = repository
+            .database()
+            .lock()
+            .unwrap()
+            .used_tags()
+            .map_err(Box::new)?;
+
+        let mut result = Vec::new();
+        for tag in tags {
+            result.push(api::Value::Map(HashMap::from([(
+                "id".into(),
+                api::Value::String(tag),
+            )])));
+        }
+
+        Ok(api::Value::Map(HashMap::from([(
+            "tags".into(),
+            api::Value::Array(result),
+        )])))
+    }
+}
