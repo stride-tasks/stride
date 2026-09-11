@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
@@ -6,6 +8,7 @@ import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
 import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
+import 'package:stride/context.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/tags_widget.dart';
@@ -29,6 +32,8 @@ class _TaskRouteState extends State<TaskRoute> {
   List<UuidValue> depends = [];
   TaskPriority? priority;
   List<Uda> udas = [];
+
+  Future<Set<String>>? availableTags;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -55,6 +60,34 @@ class _TaskRouteState extends State<TaskRoute> {
     depends = widget.task?.depends.toList() ?? depends;
     priority = widget.task?.priority;
     udas = widget.task?.udas ?? udas;
+
+    availableTags = _getAvailableTags();
+  }
+
+  Future<Set<String>> _getAvailableTags() async {
+    final taskBloc = context.read<TaskBloc>();
+    final repositoryUuid =
+        taskBloc.repositoryUuid ??
+        taskBloc.settingsBloc.settings.currentRepository;
+    if (repositoryUuid == null) {
+      return const {};
+    }
+
+    try {
+      final response = await RustContext.execute(
+        'stride.repository.tag.list',
+        jsonEncode({
+          'params': {'id': repositoryUuid.toString()},
+        }),
+      );
+      final data = jsonDecode(response) as Map<String, dynamic>;
+      return (data['tags'] as List? ?? const [])
+          .map((entry) => entry['id'] as String?)
+          .whereType<String>()
+          .toSet();
+    } catch (_) {
+      return const {};
+    }
   }
 
   String _dueButtonText() {
@@ -258,26 +291,38 @@ class _TaskRouteState extends State<TaskRoute> {
     final theme = Theme.of(context);
 
     return _sectionCard(
-      child: Column(
-        crossAxisAlignment: .start,
-        children: [
-          Row(
+      child: FutureBuilder<Set<String>>(
+        future: availableTags,
+        builder: (context, snapshot) {
+          final availableTags = snapshot.data ?? const <String>{};
+          return Column(
+            crossAxisAlignment: .start,
             children: [
-              Icon(
-                Icons.sell_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
+              Row(
+                children: [
+                  Icon(
+                    Icons.sell_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Tags',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: .w600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Tags',
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: .w600),
+              const SizedBox(height: 10),
+              TagsWidget(
+                tags: _tags,
+                availableTags: availableTags,
+                onSubmit: (tags) => _tags = tags,
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          TagsWidget(tags: _tags, onSubmit: (tags) => _tags = tags),
-        ],
+          );
+        },
       ),
     );
   }
