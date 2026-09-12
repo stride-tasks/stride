@@ -34,6 +34,7 @@ pub enum Value {
     Bool(bool),
     Array(Vec<Value>),
     Map(HashMap<Box<str>, Value>),
+    Null,
 }
 
 impl std::fmt::Display for Value {
@@ -64,6 +65,7 @@ impl std::fmt::Display for Value {
                 }
                 f.write_str("}")
             }
+            Self::Null => f.write_str("null"),
         }
     }
 }
