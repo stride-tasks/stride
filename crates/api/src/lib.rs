@@ -7,7 +7,7 @@ mod error;
 mod notification;
 mod notifier;
 
-pub use command::{CommandHandler, registry::CommandRegistry};
+pub use command::{CommandDescription, CommandHandler, registry::CommandRegistry};
 pub use error::{Error, Result};
 pub use notification::{
     FieldChange, Notification, PROMPT_METHOD, Prompt, RepositoryChangedNotification, TaskChange,
@@ -22,6 +22,9 @@ pub trait Context: Send + Sync + 'static {
     ///
     /// Returns an error if the notification could not be sent for any reason.
     fn notify(self: Arc<Self>, notification: Notification) -> Result<()>;
+
+    /// Get the descriptions of all available methods for this context.
+    fn method_descriptions(self: Arc<Self>) -> Vec<CommandDescription>;
 
     /// Execute a command with the given method and arguments.
     ///

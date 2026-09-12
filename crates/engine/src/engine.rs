@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use stride_api as api;
 
@@ -25,6 +25,15 @@ impl api::Context for Engine {
         self.clone().notifier.notify(self, notification)
     }
 
+    fn method_descriptions(self: Arc<Self>) -> Vec<api::CommandDescription> {
+        self.commands
+            .iter()
+            .map(|(method, _handler)| api::CommandDescription {
+                name: method.into(),
+            })
+            .collect()
+    }
+
     fn execute(self: Arc<Self>, method: &str, args: api::Value) -> api::Result<api::Value> {
         let handler = self
             .commands
@@ -32,13 +41,13 @@ impl api::Context for Engine {
             .ok_or_else(|| api::Error::HandlerNotFound {
                 method: method.into(),
             })?;
-        let result = handler
-            .handle(self.clone(), args.clone())
-            .map_err(|err| api::Error::HandlerFailed {
+        let result = handler.handle(self.clone(), args.clone()).map_err(|err| {
+            api::Error::HandlerFailed {
                 method: method.into(),
                 params: args,
                 cause: Box::new(err),
-            })?;
+            }
+        })?;
         Ok(result)
     }
 }

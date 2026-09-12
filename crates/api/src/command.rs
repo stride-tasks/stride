@@ -4,6 +4,11 @@ use crate::{Context, Result, Value};
 
 pub(crate) mod registry;
 
+#[derive(Debug, Clone)]
+pub struct CommandDescription {
+    pub name: Box<str>,
+}
+
 pub trait CommandHandler: std::fmt::Debug + Send + Sync + 'static {
     /// Handle a command with the given context and arguments.
     ///
