@@ -2,6 +2,9 @@ use std::{any::Any, collections::HashMap};
 
 use uuid::Uuid;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct FieldChange {
@@ -26,7 +29,7 @@ pub struct RepositoryChangedNotification {
     pub changes: Vec<TaskChange>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum Value {
     Number(f64),
