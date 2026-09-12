@@ -19,4 +19,10 @@ impl CommandRegistry {
     pub fn get(&self, command: &str) -> Option<&dyn CommandHandler> {
         self.map.get(command).map(Box::as_ref)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &dyn CommandHandler)> {
+        self.map
+            .iter()
+            .map(|(command, handler)| (command.as_ref(), handler.as_ref()))
+    }
 }
