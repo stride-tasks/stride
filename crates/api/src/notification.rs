@@ -31,6 +31,7 @@ pub struct RepositoryChangedNotification {
 pub enum Value {
     Number(f64),
     String(Box<str>),
+    Bool(bool),
     Array(Vec<Value>),
     Map(HashMap<Box<str>, Value>),
 }
@@ -40,6 +41,7 @@ impl std::fmt::Display for Value {
         match self {
             Self::Number(value) => value.fmt(f),
             Self::String(value) => std::fmt::Debug::fmt(value, f),
+            Self::Bool(value) => value.fmt(f),
             Self::Array(array) => {
                 f.write_str("[")?;
                 for (i, value) in array.iter().enumerate() {
