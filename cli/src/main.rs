@@ -626,6 +626,13 @@ fn main() -> anyhow::Result<ExitCode> {
             }
         },
         Mode::Api { method, params } => {
+            let Some(method) = method else {
+                let descriptions = engine.clone().method_descriptions();
+                for description in descriptions {
+                    println!("- {}", description.name);
+                }
+                return Ok(ExitCode::SUCCESS);
+            };
             let params = if let Some(params) = params {
                 serde_json::from_str::<api::Value>(&params)?
             } else {

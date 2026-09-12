@@ -183,7 +183,7 @@ pub enum Mode {
     /// Execute a registered API method directly.
     Api {
         /// Name of the method to invoke.
-        method: String,
+        method: Option<String>,
 
         /// Optional JSON parameters to pass to the method.
         params: Option<String>,
