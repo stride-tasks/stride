@@ -131,9 +131,7 @@ struct TaskModifications {
     tag_operations: Vec<(bool, String)>,
 }
 
-fn parse_task_modifications(
-    modifiers: &[cli::TaskModifier]
-) -> anyhow::Result<TaskModifications> {
+fn parse_task_modifications(modifiers: &[cli::TaskModifier]) -> anyhow::Result<TaskModifications> {
     let mut modifications = TaskModifications::default();
 
     for modifier in modifiers {
@@ -173,7 +171,7 @@ fn parse_task_modifications(
             }
             cli::TaskModifier::Project(value) => {
                 modifications.project = if value.trim().is_empty() {
-                     Some(None)
+                    Some(None)
                 } else {
                     Some(Some(value.clone()))
                 };
@@ -347,13 +345,12 @@ fn main() -> anyhow::Result<ExitCode> {
 
             let modifications = parse_task_modifications(&modifiers)?;
             let title = task_title_from_modifications(&modifications);
-            let title = if let Some(title) = title{title} else {
+            let title = if let Some(title) = title {
+                title
+            } else {
                 let mut content = String::new();
                 std::io::stdin().read_line(&mut content)?;
-                    content
-                        .split_whitespace()
-                        .collect::<Vec<_>>()
-                        .join(" ")
+                content.split_whitespace().collect::<Vec<_>>().join(" ")
             };
 
             let mut task = Task::new(title);
@@ -628,6 +625,15 @@ fn main() -> anyhow::Result<ExitCode> {
                 KnownHosts::save(&hosts)?;
             }
         },
+        Mode::Api { method, params } => {
+            let params = if let Some(params) = params {
+                serde_json::from_str::<api::Value>(&params)?
+            } else {
+                api::Value::Map(HashMap::new())
+            };
+            let result = engine.clone().execute(&method, params)?;
+            println!("{result}");
+        }
     }
 
     Ok(ExitCode::SUCCESS)

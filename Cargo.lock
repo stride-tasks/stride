@@ -2615,6 +2615,7 @@ dependencies = [
  "dirs",
  "inquire",
  "log",
+ "serde_json",
  "stride_api",
  "stride_backend",
  "stride_backend_git",

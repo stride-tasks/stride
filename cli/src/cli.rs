@@ -179,6 +179,15 @@ pub enum Mode {
         #[command(subcommand)]
         command: SshCommand,
     },
+
+    /// Execute a registered API method directly.
+    Api {
+        /// Name of the method to invoke.
+        method: String,
+
+        /// Optional JSON parameters to pass to the method.
+        params: Option<String>,
+    },
 }
 
 /// Backend command/action to apply.
