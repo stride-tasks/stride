@@ -528,6 +528,28 @@ impl Database {
         Ok(tags)
     }
 
+    pub fn used_projects(&mut self) -> Result<Vec<Box<str>>> {
+        let mut sql = self.connection.prepare_cached(indoc! {"
+            SELECT
+                project
+            FROM
+                task_table
+            WHERE
+                tombstone = 0
+                AND project IS NOT NULL
+            GROUP BY
+                project
+        "})?;
+
+        let rows = sql.query_map((), |row| row.get::<_, Box<str>>("project"))?;
+
+        let mut projects = Vec::new();
+        for project in rows {
+            projects.push(project?);
+        }
+        Ok(projects)
+    }
+
     pub fn toggle_backend(&mut self, id: Uuid) -> Result<()> {
         self.connection.execute(
             indoc! {"
