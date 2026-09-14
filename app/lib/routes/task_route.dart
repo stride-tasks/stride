@@ -34,6 +34,7 @@ class _TaskRouteState extends State<TaskRoute> {
   List<Uda> udas = [];
 
   Future<Set<String>>? availableTags;
+  Future<Set<String>>? availableProjects;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -62,6 +63,7 @@ class _TaskRouteState extends State<TaskRoute> {
     udas = widget.task?.udas ?? udas;
 
     availableTags = _getAvailableTags();
+    availableProjects = _getAvailableProjects();
   }
 
   Future<Set<String>> _getAvailableTags() async {
@@ -82,6 +84,32 @@ class _TaskRouteState extends State<TaskRoute> {
       );
       final data = jsonDecode(response) as Map<String, dynamic>;
       return (data['tags'] as List? ?? const [])
+          .map((entry) => entry['id'] as String?)
+          .whereType<String>()
+          .toSet();
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  Future<Set<String>> _getAvailableProjects() async {
+    final taskBloc = context.read<TaskBloc>();
+    final repositoryUuid =
+        taskBloc.repositoryUuid ??
+        taskBloc.settingsBloc.settings.currentRepository;
+    if (repositoryUuid == null) {
+      return const {};
+    }
+
+    try {
+      final response = await RustContext.execute(
+        'stride.repository.project.list',
+        jsonEncode({
+          'params': {'id': repositoryUuid.toString()},
+        }),
+      );
+      final data = jsonDecode(response) as Map<String, dynamic>;
+      return (data['projects'] as List? ?? const [])
           .map((entry) => entry['id'] as String?)
           .whereType<String>()
           .toSet();
@@ -210,37 +238,82 @@ class _TaskRouteState extends State<TaskRoute> {
     );
   }
 
+  List<String> _projectSuggestions(String raw, Set<String> availableProjects) {
+    final normalized = raw.trim().toLowerCase();
+    final available =
+        availableProjects
+            .where((value) => value.trim().isNotEmpty)
+            .where(
+              (value) =>
+                  normalized.isEmpty ||
+                  value.toLowerCase().contains(normalized),
+            )
+            .toList()
+          ..sort();
+    return available;
+  }
+
   Widget _buildProjectSection() {
     final theme = Theme.of(context);
 
     return _sectionCard(
-      child: Row(
-        children: [
-          Tooltip(
-            message: 'Project',
-            child: Icon(
-              Icons.folder_open_rounded,
-              size: 18,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextFormField(
-              initialValue: project,
-              decoration: const InputDecoration(
-                border: .none,
-                hintText: 'Project',
-                contentPadding: .symmetric(vertical: 4),
+      child: FutureBuilder<Set<String>>(
+        future: availableProjects,
+        builder: (context, snapshot) {
+          final availableProjects = snapshot.data ?? const <String>{};
+          return Row(
+            children: [
+              Tooltip(
+                message: 'Project',
+                child: Icon(
+                  Icons.folder_open_rounded,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-              onSaved: (newValue) {
-                project = newValue == null || newValue.trim().isEmpty
-                    ? null
-                    : newValue.trim();
-              },
-            ),
-          ),
-        ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Autocomplete<String>(
+                  initialValue: TextEditingValue(text: project ?? ''),
+                  optionsBuilder: (value) =>
+                      _projectSuggestions(value.text, availableProjects),
+                  onSelected: (value) {
+                    setState(() {
+                      project = value;
+                    });
+                  },
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) {
+                        final currentValue = project ?? '';
+                        if (controller.text != currentValue) {
+                          controller.text = currentValue;
+                        }
+                        return TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            border: .none,
+                            hintText: 'Project',
+                            contentPadding: .symmetric(vertical: 4),
+                          ),
+                          onChanged: (newValue) {
+                            project = newValue.trim().isEmpty
+                                ? null
+                                : newValue.trim();
+                          },
+                          onSaved: (newValue) {
+                            project =
+                                newValue == null || newValue.trim().isEmpty
+                                ? null
+                                : newValue.trim();
+                          },
+                        );
+                      },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
