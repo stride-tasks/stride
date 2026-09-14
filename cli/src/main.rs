@@ -27,7 +27,7 @@ use stride_database::Database;
 use stride_engine::EngineBuilder;
 use stride_flutter_bridge::{
     api::settings::{ApplicationPaths, RepositorySpecification, Settings},
-    method::{RepositorySyncHandler, RepositoryTagListHandler},
+    method::{RepositoryProjectsListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
@@ -298,6 +298,10 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("stride.repository.sync", RepositorySyncHandler)
         .command("stride.ssh.host.add", SshHostAddHandler)
         .command("stride.repository.tag.list", RepositoryTagListHandler)
+        .command(
+            "stride.repository.project.list",
+            RepositoryProjectsListHandler,
+        )
         .build();
 
     match mode {
