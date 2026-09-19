@@ -10,12 +10,12 @@
 	],
 	"properties": {
 		"hostname": {
-            "type": "string",
-            "description": "The hostname or IP address of the SSH host."
-        },
-        "key": {
-            "$ref": "stride.type.ssh.key.public.schema.json",
-            "description": "The SSH key used for authentication."
-        }
+			"type": "string",
+			"description": "The hostname or IP address of the SSH host."
+		},
+		"key": {
+			"$ref": "stride.type.ssh.key.public.schema.json",
+			"description": "The SSH key used for authentication."
+		}
 	}
 }
