@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
   "crates/api",
+  "crates/api_codegen",
   "crates/core",
   "crates/crdt",
   "crates/serialization",
@@ -33,6 +34,7 @@ description = "An extensible task menagment application that uses git as it's da
 [workspace.dependencies]
 # Repository Crates
 stride_api = { version = "~0.1.0", path = "crates/api" }
+stride_api_codegen = { version = "~0.1.0", path = "crates/api_codegen" }
 stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
 stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
 stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
