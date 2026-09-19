@@ -1,21 +1,35 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "stride.notification.prompt.schema.json",
+    "$id": "https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json",
     "title": "Prompt",
     "description": "A prompt is a message or question that is presented to the user, often as part of an interactive system or application, and it may also include actions that the user can take in response to the prompt.",
     "type": "object",
     "properties": {
         "method": {
             "type": "string",
-            "const": "stride.notification.prompt.select",
+            "const": "stride.user.prompt",
             "description": "A unique identifier for the method, used to resolve handler for the prompt."
         },
-        "inputs": {
+        "target": {
+            "$comment": "@name:UserPromptTarget",
             "type": "object",
-            "description": "A map of input names to their corresponding values.",
-            "additionalProperties": {
-                "type": "string"
-            }
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "description": "The name of the method to be invoked."
+                },
+                "params": {
+                    "type": "object",
+                    "description": "The parameters for the method.",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "method",
+                "params"
+            ]
         },
         "summary": {
             "type": "string",
@@ -34,5 +48,10 @@
             "description": "A list of actions that the user can take in response to the prompt."
         }
     },
-    "required": ["method", "summary", "actions"]
+    "required": [
+        "method",
+        "target",
+        "summary",
+        "actions"
+    ]
 }

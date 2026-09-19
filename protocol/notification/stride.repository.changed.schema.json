@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "stride.notification.repository.changed.schema.json",
+    "$id": "https://stride-tasks.github.io/stride/api/notification/stride.repository.changed.schema.json",
     "title": "stride.repository.changed",
     "description": "Emitted after a sync when at least one remote actor introduced changes.",
     "type": "object",
@@ -14,6 +14,7 @@
             "properties": {
                 "repository-id": {
                     "type": "string",
+                    "format": "uuid",
                     "description": "UUID of the repository that was synced."
                 },
                 "changes": {
@@ -49,8 +50,7 @@
                                         }
                                     },
                                     "required": [
-                                        "type",
-                                        "current"
+                                        "type"
                                     ]
                                 }
                             }

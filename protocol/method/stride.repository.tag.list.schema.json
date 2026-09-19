@@ -1,7 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "stride.repository.tag.list.schema.json",
-    "title": "stride.repository.tag.list",
+    "$id": "https://stride-tasks.github.io/stride/api/method/stride.repository.tag.list.schema.json",
     "type": "object",
     "properties": {
         "method": {

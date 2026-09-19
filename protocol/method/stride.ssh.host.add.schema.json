@@ -1,7 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "stride.ssh.host.add.schema.json",
-    "title": "stride.ssh.host.add",
+    "$id": "https://stride-tasks.github.io/stride/api/method/stride.ssh.host.add.schema.json",
     "type": "object",
     "properties": {
         "method": {

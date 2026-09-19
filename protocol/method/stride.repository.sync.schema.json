@@ -1,7 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "stride.repository.sync.schema.json",
-    "title": "stride.repository.sync",
+    "$id": "https://stride-tasks.github.io/stride/api/method/stride.repository.sync.schema.json",
     "type": "object",
     "properties": {
         "method": {
@@ -28,7 +27,9 @@
                     }
                 }
             },
-            "required": [ "id" ]
+            "required": [
+                "id"
+            ]
         },
         "result": {
             "type": "object",

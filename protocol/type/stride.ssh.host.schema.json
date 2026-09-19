@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "stride.type.ssh.host.schema.json",
+	"$id": "https://stride-tasks.github.io/stride/api/type/stride.ssh.host.schema.json",
 	"title": "SSH Host",
 	"type": "object",
 	"additionalProperties": false,
@@ -14,7 +14,7 @@
 			"description": "The hostname or IP address of the SSH host."
 		},
 		"key": {
-			"$ref": "stride.type.ssh.key.public.schema.json",
+			"$ref": "https://stride-tasks.github.io/stride/api/type/stride.ssh.key.public.schema.json",
 			"description": "The SSH key used for authentication."
 		}
 	}
