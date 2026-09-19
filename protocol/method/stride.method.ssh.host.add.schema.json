@@ -22,7 +22,7 @@
         },
         "result": {
             "type": "object",
-            "const": {}
+            "properties": {}
         }
     }
 }
