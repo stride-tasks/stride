@@ -131,3 +131,23 @@ pub trait Context: Send + Sync + 'static {
     /// Returns an error if the command could not be executed for any reason.
     fn execute_erased(self: Arc<Self>, method: &str, args: Value) -> Result<Value>;
 }
+
+impl dyn Context {
+    /// Execute a command with the given method and arguments.
+    pub fn execute<T: Method>(self: Arc<Self>, method: T) -> Result<T::Result> {
+        let method_name = T::NAME;
+
+        // FIXME: This round-trip serialization and deserialization is not ideal.
+        //        ideally we should be able to convert the method to a `Value` directly.
+        let value = serde_json::to_value(method).expect("Failed to serialize method to JSON");
+        let params =
+            serde_json::from_value::<Value>(value).expect("Failed to deserialize method to JSON");
+
+        let result_value = <Self as Context>::execute_erased(self, method_name, params)?;
+
+        let result =
+            serde_json::to_value(&result_value).expect("Failed to serialize result to JSON");
+        let result = serde_json::from_value::<T::Result>(result)?;
+        Ok(result)
+    }
+}
