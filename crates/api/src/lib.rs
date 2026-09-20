@@ -48,10 +48,10 @@ impl std::fmt::Display for Value {
     }
 }
 
-pub trait Method: Sized {
+pub trait Method: Sized + serde::Serialize + for<'de> serde::Deserialize<'de> {
     const NAME: &'static str;
 
-    type Result;
+    type Result: serde::Serialize + for<'de> serde::Deserialize<'de>;
 }
 
 pub trait Notification: std::fmt::Debug + Any + 'static {
