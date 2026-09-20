@@ -1,4 +1,4 @@
-use anyhow::{Context, bail};
+use anyhow::{Context as AnyhowContext, bail};
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
@@ -27,7 +27,7 @@ use stride_database::Database;
 use stride_engine::Engine;
 use stride_flutter_bridge::{
     api::settings::{ApplicationPaths, RepositorySpecification, Settings},
-    method::{RepositoryProjectsListHandler, RepositorySyncHandler, RepositoryTagListHandler},
+    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
@@ -307,7 +307,7 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("stride.repository.tag.list", RepositoryTagListHandler)
         .command(
             "stride.repository.project.list",
-            RepositoryProjectsListHandler,
+            RepositoryProjectListHandler,
         )
         .build();
 
@@ -493,14 +493,10 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!("undo")
         }
         Mode::Sync { backend: _name } => {
-            let params = HashMap::from([(
-                "id".into(),
-                api::Value::String(current_repository.to_string().into()),
-            )]);
-
-            engine
-                .clone()
-                .execute_erased("stride.repository.sync", api::Value::Map(params))?;
+            let _result = engine.clone().execute(api::RepositorySyncMethod {
+                id: current_repository,
+                backends: None,
+            })?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.

@@ -7,7 +7,7 @@ use stride_engine as engine;
 use crate::{
     ErrorKind, RustError,
     frb_generated::StreamSink,
-    method::{RepositoryProjectsListHandler, RepositorySyncHandler, RepositoryTagListHandler},
+    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 
 static STATE: OnceLock<Arc<dyn api::Context + Send + Sync>> = OnceLock::new();
@@ -57,7 +57,7 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
             .command("stride.repository.tag.list", RepositoryTagListHandler)
             .command(
                 "stride.repository.project.list",
-                RepositoryProjectsListHandler,
+                RepositoryProjectListHandler,
             )
             .command("stride.ssh.host.add", SshHostAddHandler)
             .build()
