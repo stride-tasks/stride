@@ -2,10 +2,10 @@
 //!
 //! See file format [here](https://man7.org/linux/man-pages/man8/sshd.8.html#SSH_KNOWN_HOSTS_FILE_FORMAT).
 
-use std::{fmt::Display, path::Path, str::FromStr};
-
 use git2::cert::SshHostKeyType;
 use serde::{Deserialize, Serialize};
+use std::{fmt::Display, path::Path, str::FromStr};
+use stride_api as api;
 
 use crate::Result;
 
@@ -260,6 +260,22 @@ impl KnownHosts {
     /// flutter_rust_bridge:ignore
     pub fn add(&mut self, host: Host) {
         self.hosts.push(host);
+    }
+
+    /// flutter_rust_bridge:ignore
+    pub fn add_host(&mut self, host: api::SshHost) {
+        self.hosts.push(Host {
+            hostname: host.hostname.into(),
+            key_type: match host.key.r#type {
+                api::SshKeyFormat::SshRsa => HostKeyType::Rsa,
+                api::SshKeyFormat::SshDss => HostKeyType::Dss,
+                api::SshKeyFormat::EcdsaSha2Nistp256 => HostKeyType::Ecdsa256,
+                api::SshKeyFormat::EcdsaSha2Nistp384 => HostKeyType::Ecdsa384,
+                api::SshKeyFormat::EcdsaSha2Nistp521 => HostKeyType::Ecdsa521,
+                api::SshKeyFormat::SshEd25519 => HostKeyType::Ed255219,
+            },
+            key: host.key.public.into(),
+        });
     }
 
     /// flutter_rust_bridge:ignore
