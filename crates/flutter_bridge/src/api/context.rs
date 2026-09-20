@@ -69,7 +69,7 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
 
     let result = context
         .clone()
-        .execute(method, params.params)
+        .execute_erased(method, params.params)
         .map_err(|err| ErrorKind::Other {
             message: format!("Failed to execute method: {method} with args: {args}. Error: {err}")
                 .into(),

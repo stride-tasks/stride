@@ -83,7 +83,7 @@ impl api::Notifier for CliNotifier {
                 confirm.prompt_skippable().map_err(Box::new)?
             };
             if input == Some(true) {
-                context.execute(
+                context.execute_erased(
                     &prompt.target.method,
                     api::Value::Map(prompt.target.params.clone()),
                 )?;
@@ -500,7 +500,7 @@ fn main() -> anyhow::Result<ExitCode> {
 
             engine
                 .clone()
-                .execute("stride.repository.sync", api::Value::Map(params))?;
+                .execute_erased("stride.repository.sync", api::Value::Map(params))?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
@@ -649,7 +649,7 @@ fn main() -> anyhow::Result<ExitCode> {
             } else {
                 api::Value::Map(HashMap::new())
             };
-            let result = engine.clone().execute(&method, params)?;
+            let result = engine.clone().execute_erased(&method, params)?;
             println!("{result}");
         }
     }

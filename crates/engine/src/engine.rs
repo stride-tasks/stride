@@ -36,7 +36,7 @@ impl api::Context for Engine {
             .collect()
     }
 
-    fn execute(self: Arc<Self>, method: &str, args: api::Value) -> api::Result<api::Value> {
+    fn execute_erased(self: Arc<Self>, method: &str, args: api::Value) -> api::Result<api::Value> {
         let handler = self
             .commands
             .get(method)
