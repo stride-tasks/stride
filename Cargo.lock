@@ -2577,7 +2577,6 @@ dependencies = [
  "git2",
  "log",
  "serde",
- "serde_json",
  "stride_api",
  "stride_backend",
  "stride_core",
