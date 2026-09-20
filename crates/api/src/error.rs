@@ -19,6 +19,12 @@ pub enum Error {
         #[source]
         std::io::Error,
     ),
+    #[error("api serialization error: {0}")]
+    Serialization(
+        #[from]
+        #[source]
+        serde_json::Error,
+    ),
     #[error("api error: {0}")]
     Other(#[source] Box<dyn std::error::Error + Send + Sync>),
 }

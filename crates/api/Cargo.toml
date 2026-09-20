@@ -10,11 +10,16 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 publish = false
+build = "build.rs"
 
 [dependencies]
 serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+
+[build-dependencies]
+stride_api_codegen.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

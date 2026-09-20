@@ -13,7 +13,7 @@ class RustContext {
 
     _stream.listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
-      if (json['method'] == 'stride.notification.repository.changed') {
+      if (json['method'] == 'stride.repository.changed') {
         final params = json['params'] as Map<String, dynamic>;
         final changes = params['changes'] as List<dynamic>;
         for (final change in changes) {

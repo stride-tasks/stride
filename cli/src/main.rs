@@ -69,54 +69,61 @@ impl api::Notifier for CliNotifier {
     fn notify(
         &self,
         context: Arc<dyn api::Context>,
-        notification: api::Notification,
+        notification: Box<dyn api::Notification>,
     ) -> api::Result<()> {
-        match notification {
-            api::Notification::Prompt(prompt) => {
-                let summary = prompt.summary();
-                let description = prompt.description();
-                let mut confirm = inquire::Confirm::new(&summary).with_default(true);
-                if let Some(description) = &description {
-                    confirm = confirm.with_help_message(description);
-                }
-
-                let input = {
-                    let _guard = LogLevelGuard::error();
-                    confirm.prompt_skippable().map_err(Box::new)?
-                };
-                if input == Some(true) {
-                    context.execute(&prompt.target(), prompt.inputs())?;
-                }
+        let notification_any: &dyn std::any::Any = &*notification;
+        if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
+            let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
+            if let Some(description) = &prompt.description {
+                confirm = confirm.with_help_message(description);
             }
-            api::Notification::RepositoryChanged(notification) => {
-                for (
-                    i,
-                    api::TaskChange {
-                        title,
-                        task_id,
-                        fields,
-                    },
-                ) in notification.changes.iter().enumerate()
+
+            let input = {
+                let _guard = LogLevelGuard::error();
+                confirm.prompt_skippable().map_err(Box::new)?
+            };
+            if input == Some(true) {
+                context.execute(
+                    &prompt.target.method,
+                    api::Value::Map(prompt.target.params.clone()),
+                )?;
+            }
+        } else if let Some(notification) =
+            notification_any.downcast_ref::<api::RepositoryChangedNotification>()
+        {
+            for (
+                i,
+                api::TaskChange {
+                    title,
+                    task_id,
+                    fields,
+                },
+            ) in notification.changes.iter().enumerate()
+            {
+                println!("Task ({task_id}): '{title}':");
+                for api::TaskFieldChange {
+                    r#type: typ,
+                    previous,
+                    current,
+                } in fields
                 {
-                    println!("Task ({task_id}): '{title}':");
-                    for api::FieldChange {
-                        typ,
-                        previous,
-                        current,
-                    } in fields
-                    {
-                        println!(
-                            "  -- {typ}: {} => {}",
-                            previous.as_deref().unwrap_or("none"),
-                            current.as_deref().unwrap_or("none")
-                        );
-                    }
+                    println!(
+                        "  -- {typ}: {} => {}",
+                        previous.as_deref().unwrap_or("none"),
+                        current.as_deref().unwrap_or("none")
+                    );
+                }
 
-                    if i + 1 != notification.changes.len() {
-                        println!();
-                    }
+                if i + 1 != notification.changes.len() {
+                    println!();
                 }
             }
+        } else {
+            log::info!(
+                "unknown notification: {};{}",
+                notification.name(),
+                notification.to_value()
+            );
         }
         Ok(())
     }

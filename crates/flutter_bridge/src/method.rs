@@ -21,12 +21,10 @@ impl api::CommandHandler for RepositorySyncHandler {
         let mut repository = Repository::open(spec.id).map_err(Box::new)?;
         let changes = repository.sync(&context).map_err(Box::new)?;
 
-        let notification = api::RepositoryChangedNotification {
+        context.notify(Box::new(api::RepositoryChangedNotification {
             repository_id: spec.id,
             changes,
-        };
-
-        context.notify(api::Notification::RepositoryChanged(notification))?;
+        }))?;
         Ok(api::Value::Map(HashMap::new()))
     }
 }

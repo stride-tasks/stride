@@ -46,7 +46,7 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
       ) {
     RustContext.stream().listen((event) {
       final map = jsonDecode(event) as Map<String, dynamic>;
-      if (map['method'] == 'stride.notification.prompt') {
+      if (map['method'] == 'stride.user.prompt') {
         final params = map['params'] as Map<String, dynamic>;
         add(
           DialogAlertEvent(

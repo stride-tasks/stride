@@ -17,29 +17,17 @@ static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex
 struct FlutterNotifier;
 
 impl api::Notifier for FlutterNotifier {
-    fn notify(&self, _: Arc<dyn api::Context>, notification: api::Notification) -> api::Result<()> {
-        let map = match notification {
-            api::Notification::Prompt(prompt) => {
-                let map = serde_json::json!({
-                    "method": api::PROMPT_METHOD,
-                    "params": {
-                        "target": prompt.target(),
-                        "inputs": prompt.inputs(),
-                        "summary": prompt.summary(),
-                        "description": prompt.description(),
-                    }
-                });
-                map
-            }
-            api::Notification::RepositoryChanged(changed) => {
-                let map = serde_json::json!({
-                    "method": "stride.notification.repository.changed",
-                    "params": changed,
-                });
-                println!("{}", serde_json::to_string_pretty(&map).unwrap());
-                map
-            }
-        };
+    fn notify(
+        &self,
+        _: Arc<dyn api::Context>,
+        notification: Box<dyn api::Notification>,
+    ) -> api::Result<()> {
+        let name = notification.name();
+        let value = notification.to_value();
+        let map = serde_json::json!({
+            "method": name,
+            "params": value,
+        });
 
         STREAM.clear_poison();
         let mut lock = STREAM.lock().unwrap();

@@ -425,7 +425,7 @@ impl<'a> Transaction<'a> {
         diff: &VersionDifference,
     ) -> Result<Vec<api::TaskChange>> {
         let own_actor = self.actor_id;
-        let mut by_task: HashMap<Uuid, Vec<api::FieldChange>> = HashMap::new();
+        let mut by_task: HashMap<Uuid, Vec<api::TaskFieldChange>> = HashMap::new();
 
         let mut min_timestamp = Timestamp::MAX;
         for (actor_id, change_range) in diff {
@@ -451,8 +451,8 @@ impl<'a> Transaction<'a> {
                     let previous = self.field_before(change.timestamp, &task_id, kind)?;
 
                     let fields = by_task.entry(task_id).or_default();
-                    let field_change = api::FieldChange {
-                        typ: field.into(),
+                    let field_change = api::TaskFieldChange {
+                        r#type: field.into(),
                         current,
                         previous,
                     };
@@ -463,24 +463,24 @@ impl<'a> Transaction<'a> {
 
         let mut result = Vec::with_capacity(by_task.len());
         for (task_id, fields) in by_task {
-            let title = if let Some(title_field) = fields.iter().find(|f| f.typ.as_ref() == "title")
-            {
-                if let Some(previous) = &title_field.previous {
-                    previous.clone()
+            let title =
+                if let Some(title_field) = fields.iter().find(|f| f.r#type.as_ref() == "title") {
+                    if let Some(previous) = &title_field.previous {
+                        previous.clone()
+                    } else {
+                        title_field
+                            .current
+                            .clone()
+                            .unwrap_or_else(|| task_id.to_string().into())
+                    }
                 } else {
-                    title_field
-                        .current
-                        .clone()
+                    let kind = OperationKind::Task(TaskOperation::ModifyTitle {
+                        title: Box::default(),
+                    });
+                    let kind = operation_type(&kind);
+                    self.field_before(min_timestamp, &task_id, kind)?
                         .unwrap_or_else(|| task_id.to_string().into())
-                }
-            } else {
-                let kind = OperationKind::Task(TaskOperation::ModifyTitle {
-                    title: Box::default(),
-                });
-                let kind = operation_type(&kind);
-                self.field_before(min_timestamp, &task_id, kind)?
-                    .unwrap_or_else(|| task_id.to_string().into())
-            };
+                };
 
             result.push(api::TaskChange {
                 task_id,

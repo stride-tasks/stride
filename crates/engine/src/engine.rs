@@ -21,7 +21,7 @@ impl Engine {
 }
 
 impl api::Context for Engine {
-    fn notify(self: Arc<Self>, notification: api::Notification) -> api::Result<()> {
+    fn notify(self: Arc<Self>, notification: Box<dyn api::Notification>) -> api::Result<()> {
         self.clone().notifier.notify(self, notification)
     }
 
