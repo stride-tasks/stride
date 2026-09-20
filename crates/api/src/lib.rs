@@ -109,7 +109,9 @@ mod command;
 mod error;
 mod notifier;
 
-pub use command::{CommandDescription, CommandHandler, registry::CommandRegistry};
+pub use command::{
+    CommandDescription, CommandHandler, TypedCommandHandler, registry::CommandRegistry,
+};
 pub use error::{Error, Result};
 pub use notifier::{NoopNotifier, Notifier};
 
