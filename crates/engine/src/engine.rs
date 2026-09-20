@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use stride_api as api;
 
+use crate::EngineBuilder;
+
 pub(super) mod builder;
 
 #[derive(Debug)]
@@ -49,5 +51,13 @@ impl api::Context for Engine {
             }
         })?;
         Ok(result)
+    }
+}
+
+impl Engine {
+    /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
+    #[must_use]
+    pub fn builder() -> EngineBuilder {
+        EngineBuilder::new()
     }
 }

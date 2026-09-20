@@ -24,7 +24,7 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::EngineBuilder;
+use stride_engine::Engine;
 use stride_flutter_bridge::{
     api::settings::{ApplicationPaths, RepositorySpecification, Settings},
     method::{RepositoryProjectsListHandler, RepositorySyncHandler, RepositoryTagListHandler},
@@ -300,7 +300,7 @@ fn main() -> anyhow::Result<ExitCode> {
     backend_registry.insert(TaskchampionBackend::handler());
 
     let notifier = Box::new(CliNotifier);
-    let engine: Arc<dyn api::Context> = EngineBuilder::new()
+    let engine: Arc<dyn api::Context> = Engine::builder()
         .notifier(notifier)
         .command("stride.repository.sync", RepositorySyncHandler)
         .command("stride.ssh.host.add", SshHostAddHandler)

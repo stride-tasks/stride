@@ -51,7 +51,7 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
     }
 
     let context = STATE.get_or_init(|| {
-        engine::EngineBuilder::new()
+        engine::Engine::builder()
             .notifier(Box::new(FlutterNotifier))
             .command("stride.repository.sync", RepositorySyncHandler)
             .command("stride.repository.tag.list", RepositoryTagListHandler)
