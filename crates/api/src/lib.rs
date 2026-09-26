@@ -81,14 +81,27 @@ impl<T: Prompt> Notification for T {
     }
 
     fn to_value(&self) -> Value {
-        let mut map = std::collections::HashMap::new();
-        map.insert("target".into(), Value::String(self.target()));
-        map.insert("summary".into(), Value::String(self.summary()));
-        if let Some(description) = self.description() {
-            map.insert("description".into(), Value::String(description));
-        }
-        map.insert("inputs".into(), self.inputs());
-        Value::Map(map)
+        let inputs = self.inputs();
+
+        // FIXME: This round-trip serialization and deserialization is not ideal.
+        let inputs = serde_json::to_value(&inputs).expect("Failed to serialize inputs to JSON");
+        let inputs =
+            serde_json::from_value::<_>(inputs).expect("Failed to deserialize inputs to JSON");
+
+        let prompt = UserPromptNotification {
+            summary: self.summary(),
+            target: UserPromptTarget {
+                params: inputs,
+                method: self.target(),
+            },
+            description: self.description(),
+            actions: Vec::new(),
+        };
+
+        let prompt = serde_json::to_value(&prompt).expect("Failed to serialize prompt to JSON");
+        let prompt =
+            serde_json::from_value::<Value>(prompt).expect("Failed to deserialize prompt to JSON");
+        prompt
     }
 
     fn from_value(value: Value) -> Result<Self>
