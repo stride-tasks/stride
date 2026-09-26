@@ -48,6 +48,21 @@ impl std::fmt::Display for Value {
     }
 }
 
+impl Value {
+    pub fn from_type<T: serde::Serialize>(value: T) -> Self {
+        let value = serde_json::to_value(value).expect("Failed to serialize value to JSON");
+        let value =
+            serde_json::from_value::<Self>(value).expect("Failed to deserialize value from JSON");
+        value
+    }
+
+    pub fn to_type<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<T> {
+        let value = serde_json::to_value(self)?;
+        let value = serde_json::from_value::<T>(value)?;
+        Ok(value)
+    }
+}
+
 pub trait Method: Sized + serde::Serialize + for<'de> serde::Deserialize<'de> {
     const NAME: &'static str;
 
