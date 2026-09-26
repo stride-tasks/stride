@@ -34,7 +34,7 @@
         },
         "result": {
             "type": "object",
-            "const": {}
+            "properties": {}
         }
     },
     "required": [

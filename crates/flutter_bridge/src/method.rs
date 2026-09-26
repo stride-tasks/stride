@@ -8,7 +8,11 @@ pub struct RepositorySyncHandler;
 impl api::TypedCommandHandler for RepositorySyncHandler {
     type Method = api::RepositorySyncMethod;
 
-    fn handle(&self, context: Arc<dyn api::Context>, method: Self::Method) -> api::Result<()> {
+    fn handle(
+        &self,
+        context: Arc<dyn api::Context>,
+        method: Self::Method,
+    ) -> api::Result<api::RepositorySyncMethodResult> {
         let mut repository = Repository::open(method.id).map_err(Box::new)?;
         let changes = repository.sync(&context).map_err(Box::new)?;
 
@@ -16,7 +20,7 @@ impl api::TypedCommandHandler for RepositorySyncHandler {
             repository_id: method.id,
             changes,
         }))?;
-        Ok(())
+        Ok(api::RepositorySyncMethodResult {})
     }
 }
 
