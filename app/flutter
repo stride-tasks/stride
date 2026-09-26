@@ -7,11 +7,10 @@ FLUTTER_DIR="$APP_DIR/.flutter"
 
 cd "$APP_DIR"
 
-if [ -e "$FLUTTER_DIR" ]; then
-    exec "$FLUTTER_DIR"/bin/flutter $@
+if [ ! -e "$FLUTTER_DIR" ]; then
+    git clone "--filter=tree:0" https://github.com/flutter/flutter "$FLUTTER_DIR" --branch "$VERSION"
+
+    "$FLUTTER_DIR"/bin/flutter config --no-analytics
 fi
 
-git clone "--filter=tree:0" https://github.com/flutter/flutter "$FLUTTER_DIR" --branch "$VERSION"
-
-"$FLUTTER_DIR"/bin/flutter config --no-analytics
 exec "$FLUTTER_DIR"/bin/flutter $@
