@@ -15,7 +15,6 @@ use known_hosts::{Host, HostKeyType, KnownHosts};
 use ssh_key::SshKey;
 use std::{
     cell::RefCell,
-    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader, BufWriter, Lines, Seek, Write},
     iter::{FusedIterator, Skip},
@@ -688,25 +687,35 @@ impl api::Prompt for AddUnknownHostPrompt {
         .into()
     }
 
+    fn description(&self) -> Option<Box<str>> {
+        Some(
+            format!(
+                "The host {} with key {} is not in the known hosts.",
+                self.host.hostname, self.host.key
+            )
+            .into(),
+        )
+    }
+
     fn inputs(&self) -> api::Value {
-        let mut map = HashMap::new();
+        let method = api::SshHostAddMethod {
+            host: api::SshHost {
+                hostname: self.host.hostname.clone().into_boxed_str(),
+                key: api::SshKeyPublic {
+                    r#type: match self.host.key_type {
+                        HostKeyType::Rsa => api::SshKeyFormat::SshRsa,
+                        HostKeyType::Dss => api::SshKeyFormat::SshDss,
+                        HostKeyType::Ecdsa256 => api::SshKeyFormat::EcdsaSha2Nistp256,
+                        HostKeyType::Ecdsa384 => api::SshKeyFormat::EcdsaSha2Nistp384,
+                        HostKeyType::Ecdsa521 => api::SshKeyFormat::EcdsaSha2Nistp521,
+                        HostKeyType::Ed255219 => api::SshKeyFormat::SshEd25519,
+                    },
+                    public: self.host.key.clone().into_boxed_str(),
+                },
+            },
+        };
 
-        let mut host = HashMap::new();
-        host.insert(
-            "hostname".into(),
-            api::Value::String(self.host.hostname.clone().into()),
-        );
-        host.insert(
-            "key-type".into(),
-            api::Value::String(self.host.key_type.name().into()),
-        );
-        host.insert(
-            "key".into(),
-            api::Value::String(self.host.key.clone().into()),
-        );
-
-        map.insert("host".into(), api::Value::Map(host));
-        api::Value::Map(map)
+        api::Value::from_type(method)
     }
 }
 
