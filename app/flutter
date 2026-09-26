@@ -13,4 +13,9 @@ if [ ! -e "$FLUTTER_DIR" ]; then
     "$FLUTTER_DIR"/bin/flutter config --no-analytics
 fi
 
+if [ "$1" = "run" ] || [ "$1" = "build" ]; then
+    echo "Ensuring code generation is up to date..."
+    "$FLUTTER_DIR"/bin/dart run build_runner build
+fi
+
 exec "$FLUTTER_DIR"/bin/flutter $@
