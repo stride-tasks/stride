@@ -3,6 +3,7 @@
 VERSION=3.47.0
 
 APP_DIR="$( cd "$( dirname "$0" )" && pwd )"
+PROJECT_DIR="$( cd "$APP_DIR/.." && pwd )"
 FLUTTER_DIR="$APP_DIR/.flutter"
 
 cd "$APP_DIR"
@@ -15,7 +16,29 @@ fi
 
 if [ "$1" = "run" ] || [ "$1" = "build" ]; then
     echo "Ensuring code generation is up to date..."
-    "$FLUTTER_DIR"/bin/dart run build_runner build
+
+    GENERATE_OUTPUT=$(cargo run \
+        --release \
+        --manifest-path "$PROJECT_DIR/Cargo.toml" \
+        --package stride_api_codegen_cli \
+        --bin stride_api_codegen \
+        -- \
+        generate-dart \
+        --protocol-dir "$PROJECT_DIR/protocol" \
+        --output "$APP_DIR/lib/api/generated.dart")
+
+    EXIT_CODE=$?
+    echo -n "$GENERATE_OUTPUT"
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "Error: Rust code generation failed with exit code $EXIT_CODE"
+        exit $EXIT_CODE
+    fi
+
+    if printf '%s\n' "$GENERATE_OUTPUT" | grep -q "Regenerating:"; then
+        "$FLUTTER_DIR"/bin/dart run build_runner build
+    else
+        echo "Generated file is up to date, skipping build_runner."
+    fi
 fi
 
 exec "$FLUTTER_DIR"/bin/flutter $@
