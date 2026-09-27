@@ -45,6 +45,7 @@ dev_dependencies:
   mocktail: ^1.0.5
 
   freezed: ^3.2.4
+  json_serializable: ^6.14.1
   build_runner: ^2.15.1
 
   flutter_launcher_icons: ^0.14.4
