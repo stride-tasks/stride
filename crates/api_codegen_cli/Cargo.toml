@@ -1,0 +1,20 @@
+[package]
+name = "stride_api_codegen_cli"
+description = "CLI for the protocol API code generator"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[[bin]]
+name = "stride_api_codegen"
+path = "src/main.rs"
+
+[dependencies]
+stride_api_codegen.workspace = true
+
+[lints]
+workspace = true

@@ -2557,6 +2557,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_api_codegen_cli"
+version = "0.1.0"
+dependencies = [
+ "stride_api_codegen",
+]
+
+[[package]]
 name = "stride_backend"
 version = "0.1.0"
 dependencies = [
