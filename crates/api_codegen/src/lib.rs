@@ -1,6 +1,9 @@
 //! This crate generates code from a JSON schema.
 
-use crate::{parser::parse, render::render_rust};
+use crate::{
+    parser::parse,
+    render::{render_dart, render_rust},
+};
 use std::path::Path;
 
 mod error;
@@ -20,4 +23,9 @@ pub use crate::{
 pub fn generate_rust(protocol_dir: &Path) -> Result<String> {
     let nodes = parse(protocol_dir)?;
     Ok(render_rust(&nodes))
+}
+
+pub fn generate_dart(protocol_dir: &Path) -> Result<String> {
+    let nodes = parse(protocol_dir)?;
+    Ok(render_dart(&nodes))
 }
