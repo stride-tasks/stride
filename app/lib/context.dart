@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:stride/api.dart';
 import 'package:stride/bridge/api/context.dart' as context;
 import 'package:stride/notifications.dart';
 
@@ -13,30 +14,30 @@ class RustContext {
 
     _stream.listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
-      if (json['method'] == 'stride.repository.changed') {
-        final params = json['params'] as Map<String, dynamic>;
-        final changes = params['changes'] as List<dynamic>;
-        for (final change in changes) {
-          final taskId = change['task-id'] as String;
-          var title = change['title'] as String?;
+      final method = json['method'] as String;
+      final params = json['params'] as Map<String, dynamic>;
+      if (method == 'stride.repository.changed') {
+        final notification = RepositoryChangedNotification.fromJson(params);
+        for (final change in notification.changes) {
+          final taskId = change.taskId;
+          var title = change.title;
 
           String? body;
 
           var isNewTask = false;
 
-          final fields = change['fields'] as List<dynamic>;
-          for (final field in fields) {
-            final type = field['type'] as String;
-            final current = field['current'] as String?;
-            final previous = field['previous'] as String?;
+          for (final field in change.fields) {
+            final type = field.type;
+            final current = field.current;
+            final previous = field.previous;
 
             if (type == 'status' && previous == null && current == 'pending') {
               isNewTask = true;
               continue;
             }
 
-            if (type == 'title') {
-              title ??= current;
+            if (type == 'title' && current != null) {
+              title ??= current!;
 
               if (previous == null) {
                 continue;
@@ -60,5 +61,19 @@ class RustContext {
 
   static Future<String> executeErased(String method, String args) async {
     return context.execute(method: method, args: args);
+  }
+
+  static Future<Result> execute<Result>(Method<Result> method) async {
+    final factory =
+        SerdeRegistry.getByType(method.runtimeType)
+            as SerdeFactory<Method<Result>>;
+
+    final result = await context.execute(
+      method: method.getName(),
+      args: jsonEncode({'params': factory.serialize(method)}),
+    );
+
+    final json = jsonDecode(result);
+    return SerdeRegistry.get<Result>().deserialize(json);
   }
 }

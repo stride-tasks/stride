@@ -3,9 +3,10 @@ import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/api.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/context.dart';
 import 'package:stride/bridge/api/logging.dart' as logging;
+import 'package:stride/context.dart';
 
 @immutable
 abstract class DialogEvent {}
@@ -46,17 +47,20 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
       ) {
     RustContext.stream().listen((event) {
       final map = jsonDecode(event) as Map<String, dynamic>;
-      if (map['method'] == 'stride.user.prompt') {
-        final params = map['params'] as Map<String, dynamic>;
+      final method = map['method'] as String;
+      final params = map['params'] as Map<String, dynamic>;
+      if (method == 'stride.user.prompt') {
+        print('Received user prompt event: $event');
+        final notification = UserPromptNotification.fromJson(params);
         add(
           DialogAlertEvent(
-            title: params['summary'] as String,
+            title: notification.summary,
             content: 'Rust has requested a prompt. Do you want to continue?',
             onConfirm: (context) async {
               try {
                 await RustContext.executeErased(
-                  params['target'] as String,
-                  jsonEncode({'params': params['inputs']}),
+                  notification.target.method,
+                  jsonEncode({'params': notification.target.params}),
                 );
               } on RustError catch (e) {
                 logging.error(

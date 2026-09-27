@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
@@ -76,18 +75,20 @@ class _TaskRouteState extends State<TaskRoute> {
     }
 
     try {
-      final response = await RustContext.executeErased(
-        'stride.repository.tag.list',
-        jsonEncode({
-          'params': {'id': repositoryUuid.toString()},
-        }),
+      final response = await RustContext.execute(
+        RepositoryTagListMethod(id: repositoryUuid),
       );
-      final data = jsonDecode(response) as Map<String, dynamic>;
-      return (data['tags'] as List? ?? const [])
-          .map((entry) => entry['id'] as String?)
-          .whereType<String>()
-          .toSet();
-    } catch (_) {
+      // final x = await RepositoryTagListMethod(
+      //   id: repositoryUuid.toString(),
+      // ).execute((name, json) async => {
+      //   final jsonString = jsonEncode(json);
+      //   final data = await RustContext.execute(name, jsonString);
+      //   return jsonDecode(data);
+      // });
+
+      return response.tags.toSet();
+    } catch (o) {
+      print('Error fetching available tags: $o');
       return const {};
     }
   }
@@ -102,17 +103,10 @@ class _TaskRouteState extends State<TaskRoute> {
     }
 
     try {
-      final response = await RustContext.executeErased(
-        'stride.repository.project.list',
-        jsonEncode({
-          'params': {'id': repositoryUuid.toString()},
-        }),
+      final response = await RustContext.execute(
+        RepositoryProjectListMethod(id: repositoryUuid),
       );
-      final data = jsonDecode(response) as Map<String, dynamic>;
-      return (data['projects'] as List? ?? const [])
-          .map((entry) => entry['id'] as String?)
-          .whereType<String>()
-          .toSet();
+      return response.projects.toSet();
     } catch (_) {
       return const {};
     }
