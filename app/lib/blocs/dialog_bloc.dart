@@ -54,7 +54,7 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
             content: 'Rust has requested a prompt. Do you want to continue?',
             onConfirm: (context) async {
               try {
-                await RustContext.execute(
+                await RustContext.executeErased(
                   params['target'] as String,
                   jsonEncode({'params': params['inputs']}),
                 );

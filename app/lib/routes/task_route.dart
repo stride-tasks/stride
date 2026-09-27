@@ -76,7 +76,7 @@ class _TaskRouteState extends State<TaskRoute> {
     }
 
     try {
-      final response = await RustContext.execute(
+      final response = await RustContext.executeErased(
         'stride.repository.tag.list',
         jsonEncode({
           'params': {'id': repositoryUuid.toString()},
@@ -102,7 +102,7 @@ class _TaskRouteState extends State<TaskRoute> {
     }
 
     try {
-      final response = await RustContext.execute(
+      final response = await RustContext.executeErased(
         'stride.repository.project.list',
         jsonEncode({
           'params': {'id': repositoryUuid.toString()},

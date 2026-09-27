@@ -235,7 +235,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
       Output(name: name, inputData: input, timestamp: DateTime.now()).toMap(),
     );
 
-    await RustContext.execute(
+    await RustContext.executeErased(
       name.method,
       jsonEncode({
         'params': jsonDecode(input['params'] as String) as Map<String, dynamic>,

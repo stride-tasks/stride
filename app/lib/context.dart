@@ -58,7 +58,7 @@ class RustContext {
     });
   }
 
-  static Future<String> execute(String method, String args) async {
+  static Future<String> executeErased(String method, String args) async {
     return context.execute(method: method, args: args);
   }
 }
