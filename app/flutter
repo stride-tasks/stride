@@ -24,7 +24,7 @@ if [ "$1" = "run" ] || [ "$1" = "build" ]; then
         --bin stride_api_codegen \
         -- \
         generate-dart \
-        --protocol-dir "$PROJECT_DIR/protocol" \
+        --api-dir "$PROJECT_DIR/api" \
         --output "$APP_DIR/lib/api/generated.dart")
 
     EXIT_CODE=$?

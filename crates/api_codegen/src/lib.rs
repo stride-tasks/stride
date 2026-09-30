@@ -20,12 +20,12 @@ pub use crate::{
     schema::{AdditionalProperties, Schema, SchemaType},
 };
 
-pub fn generate_rust(protocol_dir: &Path) -> Result<String> {
-    let nodes = parse(protocol_dir)?;
+pub fn generate_rust(api_dir: &Path) -> Result<String> {
+    let nodes = parse(api_dir)?;
     Ok(render_rust(&nodes))
 }
 
-pub fn generate_dart(protocol_dir: &Path) -> Result<String> {
-    let nodes = parse(protocol_dir)?;
+pub fn generate_dart(api_dir: &Path) -> Result<String> {
+    let nodes = parse(api_dir)?;
     Ok(render_dart(&nodes))
 }

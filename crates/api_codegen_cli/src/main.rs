@@ -20,13 +20,13 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = args.into_iter();
     let command = args
         .next()
-        .unwrap_or_else(|| panic!("usage: stride_api_codegen <generate-rust|generate-dart> --protocol-dir <dir> [--output <path>] [--force]"));
+        .unwrap_or_else(|| panic!("usage: stride_api_codegen <generate-rust|generate-dart> --api-dir <dir> [--output <path>] [--force]"));
 
     match command.as_str() {
         "generate-rust" => {
-            let protocol_dir = next_arg(&mut args, "--protocol-dir");
+            let api_dir = next_arg(&mut args, "--api-dir");
             let output = next_arg(&mut args, "--output");
-            let stale_files = stale_protocol_files(&output, &protocol_dir)?;
+            let stale_files = stale_api_files(&output, &api_dir)?;
             if !force && stale_files.is_empty() {
                 return Ok(());
             }
@@ -37,13 +37,13 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                     println!("Regenerating: {}", file.display());
                 }
             }
-            let generated = stride_api_codegen::generate_rust(&protocol_dir)?;
+            let generated = stride_api_codegen::generate_rust(&api_dir)?;
             write_output(output, &generated)?;
         }
         "generate-dart" => {
-            let protocol_dir = next_arg(&mut args, "--protocol-dir");
+            let api_dir = next_arg(&mut args, "--api-dir");
             let output = next_arg(&mut args, "--output");
-            let stale_files = stale_protocol_files(&output, &protocol_dir)?;
+            let stale_files = stale_api_files(&output, &api_dir)?;
             if !force && stale_files.is_empty() {
                 return Ok(());
             }
@@ -54,7 +54,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                     println!("Regenerating: {}", file.display());
                 }
             }
-            let generated = stride_api_codegen::generate_dart(&protocol_dir)?;
+            let generated = stride_api_codegen::generate_dart(&api_dir)?;
             write_output(output, &generated)?;
         }
         other => {
@@ -83,13 +83,13 @@ fn latest_mtime(dirs: &[PathBuf]) -> Result<Option<SystemTime>, Box<dyn std::err
     Ok(latest)
 }
 
-fn stale_protocol_files(
+fn stale_api_files(
     output: &Path,
-    protocol_dir: &Path,
+    api_dir: &Path,
 ) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let cutoff = match output.metadata() {
         Ok(metadata) => metadata.modified()?,
-        Err(_) => return Ok(all_protocol_files(protocol_dir)?),
+        Err(_) => return Ok(all_api_files(api_dir)?),
     };
 
     // Get the path of the running binary
@@ -102,18 +102,18 @@ fn stale_protocol_files(
     let generator_mtime: SystemTime = metadata.modified()?;
 
     if cutoff < generator_mtime {
-        return Ok(all_protocol_files(protocol_dir)?);
+        return Ok(all_api_files(api_dir)?);
     }
 
     let mut stale = Vec::new();
-    visit_stale_files(protocol_dir, cutoff, &mut stale)?;
+    visit_stale_files(api_dir, cutoff, &mut stale)?;
     stale.sort();
     Ok(stale)
 }
 
-fn all_protocol_files(protocol_dir: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+fn all_api_files(api_dir: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let mut files = Vec::new();
-    collect_files(protocol_dir, &mut files)?;
+    collect_files(api_dir, &mut files)?;
     files.sort();
     Ok(files)
 }

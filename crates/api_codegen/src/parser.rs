@@ -30,10 +30,10 @@ pub fn parse(dir: &Path) -> Result<Vec<Node>> {
     Ok(nodes)
 }
 
-fn collect_schema_files(protocol_dir: &Path) -> Result<Vec<PathBuf>> {
+fn collect_schema_files(api_dir: &Path) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     for subdir in ["method", "notification", "type"] {
-        let dir = protocol_dir.join(subdir);
+        let dir = api_dir.join(subdir);
         if !dir.exists() {
             continue;
         }

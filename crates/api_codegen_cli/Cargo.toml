@@ -1,6 +1,6 @@
 [package]
 name = "stride_api_codegen_cli"
-description = "CLI for the protocol API code generator"
+description = "CLI for the API code generator"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
