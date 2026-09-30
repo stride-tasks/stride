@@ -1,4 +1,4 @@
-use anyhow::{Context as AnyhowContext, bail};
+use anyhow::{bail, Context as AnyhowContext};
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
@@ -9,11 +9,10 @@ use std::{
     sync::Arc,
 };
 use stride_api as api;
-use stride_backend::{Backend, registry::Registry};
+use stride_backend::{registry::Registry, Backend};
 use stride_backend_git::{
-    GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
+    known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey, GitBackend,
 };
-use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
     event::{HostEvent, PluginEvent},
     state::KnownPaths,
@@ -30,7 +29,7 @@ use stride_flutter_bridge::{
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 use stride_logging::LogLevelGuard;
-use stride_plugin_manager::{PluginManager, manifest::PluginAction};
+use stride_plugin_manager::{manifest::PluginAction, PluginManager};
 use uuid::Uuid;
 
 use crate::{
@@ -297,7 +296,6 @@ fn main() -> anyhow::Result<ExitCode> {
 
     let mut backend_registry = Registry::new();
     backend_registry.insert(GitBackend::handler());
-    backend_registry.insert(TaskchampionBackend::handler());
 
     let notifier = Box::new(CliNotifier);
     let engine: Arc<dyn api::Context> = Engine::builder()

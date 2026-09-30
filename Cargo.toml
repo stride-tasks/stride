@@ -12,7 +12,6 @@ members = [
   "crates/background",
   "crates/backend",
   "crates/backends/git",
-  "crates/backends/taskchampion",
   "crates/crypto",
   "crates/plugin",
   "crates/plugin_manager",
@@ -45,7 +44,6 @@ stride_database = { version = "~0.1.0", path = "crates/database" }
 stride_background = { version = "~0.1.0", path = "crates/background" }
 stride_backend = { version = "~0.1.0", path = "crates/backend" }
 stride_backend_git = { version = "~0.1.0", path = "crates/backends/git" }
-stride_backend_taskchampion = { version = "~0.1.0", path = "crates/backends/taskchampion" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
 stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
 stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
@@ -62,14 +60,7 @@ flutter_rust_bridge = { version = "=2.12.0", default-features = false, features 
   "uuid",
   "anyhow",
 ] }
-taskchampion = { version = "3.1.0", default-features = false, features = [
-  "encryption",
-  "server-sync",
-  "bundled",
-  "storage-sqlite",
-  "tls-webpki-roots",
-] }
-rusqlite = { version = "0.39.0", features = ["bundled", "uuid", "array"] }
+rusqlite = { version = "0.39.0", features = ["bundled", "uuid", "array", "fallible_uint"] }
 tokio = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "3.21"

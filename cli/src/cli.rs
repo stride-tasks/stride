@@ -29,9 +29,6 @@ pub struct CliArgs {
 pub enum Backend {
     /// A `git` based repository, which tracks changes as commits
     Git,
-
-    /// A `taskchampion` Replica, which can sync to `taskwarrior`
-    TaskChampion,
 }
 
 /// Represents a discrete modification, attribute alteration, or metadata update for a task.

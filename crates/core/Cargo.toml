@@ -19,7 +19,6 @@ chrono.workspace = true
 thiserror.workspace = true
 
 base64 = { workspace = true, optional = true }
-taskchampion = { workspace = true, optional = true }
 url = { workspace = true, features = ["serde"], optional = true }
 
 [dev-dependencies]
@@ -27,9 +26,8 @@ anyhow.workspace = true
 serde_json.workspace = true
 
 [features]
-default = ["backend", "taskchampion"]
+default = ["backend"]
 backend = ["dep:base64", "dep:url"]
-taskchampion = ["dep:taskchampion"]
 
 [lints]
 workspace = true

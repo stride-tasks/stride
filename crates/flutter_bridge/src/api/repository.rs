@@ -9,7 +9,6 @@ use flutter_rust_bridge::frb;
 use stride_api::{Context, TaskChange};
 use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::GitBackend;
-use stride_backend_taskchampion::TaskchampionBackend;
 use stride_core::{
     backend::{BackendRecord as CoreBackendRecord, Config},
     event::TaskQuery,
@@ -58,7 +57,6 @@ impl Repository {
 
         let mut backend_registry = Registry::new();
         backend_registry.insert(GitBackend::handler());
-        backend_registry.insert(TaskchampionBackend::handler());
         Ok(Self {
             uuid,
             db: db.into(),
