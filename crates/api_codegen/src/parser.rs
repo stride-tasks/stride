@@ -3,8 +3,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::node::{
-    EnumNode, EnumVariantNode, FieldNode, MethodNode, ModuleKind, Node, NotificationNode,
-    PrimitiveType, StructNode, TypeRef,
+    EnumNode, EnumVariantNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType,
+    StructNode, TypeNode, TypeRef,
 };
 use crate::{Result, Schema, SchemaType};
 
@@ -78,23 +78,11 @@ fn emit_type_schema(
         .as_ref()
         .is_some_and(|values| !values.is_empty())
     {
-        drop(type_ref_for_schema(
-            schema,
-            &root_name,
-            ModuleKind::Type,
-            seen,
-            output,
-        ));
+        drop(type_ref_for_schema(schema, &root_name, seen, output));
         return;
     }
 
-    drop(emit_object_schema(
-        schema,
-        &root_name,
-        ModuleKind::Type,
-        seen,
-        output,
-    ));
+    drop(emit_object_schema(schema, &root_name, seen, output));
 }
 
 fn emit_method_schema(
@@ -115,18 +103,11 @@ fn emit_method_schema(
 
     if let Some(params_schema) = params_schema {
         let params_name = schema_name_from_path(path, schema);
-        let params_type = emit_object_schema(
-            params_schema,
-            &params_name,
-            ModuleKind::Method,
-            seen,
-            output,
-        );
+        let params_type = emit_object_schema(params_schema, &params_name, seen, output);
         let result_type = match result_schema {
             Some(result_schema) => resolve_result_type(
                 result_schema,
                 &format!("{}Result", schema_name_from_path(path, schema)),
-                ModuleKind::Method,
                 seen,
                 output,
             ),
@@ -134,21 +115,20 @@ fn emit_method_schema(
         };
 
         output.push(Node::Method(MethodNode {
-            module: ModuleKind::Method,
-            name: params_type,
+            name: params_name,
             method_name: method_name.clone(),
-            result: result_type,
+            params: TypeNode::Ref(TypeRef::Object(params_type)),
+            result: TypeNode::Ref(result_type),
         }));
         return;
     }
 
     let payload_name = schema_name_from_path(path, schema);
-    let payload_type = emit_object_schema(schema, &payload_name, ModuleKind::Method, seen, output);
+    let payload_type = emit_object_schema(schema, &payload_name, seen, output);
     let result_type = match result_schema {
         Some(result_schema) => resolve_result_type(
             result_schema,
             &format!("{payload_name}Result"),
-            ModuleKind::Method,
             seen,
             output,
         ),
@@ -156,10 +136,10 @@ fn emit_method_schema(
     };
 
     output.push(Node::Method(MethodNode {
-        module: ModuleKind::Method,
-        name: payload_type,
+        name: payload_name,
         method_name,
-        result: result_type,
+        params: TypeNode::Ref(TypeRef::Object(payload_type)),
+        result: TypeNode::Ref(result_type),
     }));
 }
 
@@ -178,41 +158,28 @@ fn emit_notification_schema(
     if properties.contains_key("params") {
         let params_schema = properties.get("params").unwrap();
         let params_name = schema_name_from_path(path, schema);
-        let params_type = emit_object_schema(
-            params_schema,
-            &params_name,
-            ModuleKind::Notification,
-            seen,
-            output,
-        );
+        let params_type = emit_object_schema(params_schema, &params_name, seen, output);
 
         output.push(Node::Notification(NotificationNode {
-            module: ModuleKind::Notification,
-            name: params_type,
+            name: params_name,
             method_name: method_name.clone(),
+            params: TypeNode::Ref(TypeRef::Object(params_type)),
         }));
         return;
     }
 
     let payload_name = schema_name_from_path(path, schema);
-    let payload_type = emit_object_schema(
-        schema,
-        &payload_name,
-        ModuleKind::Notification,
-        seen,
-        output,
-    );
+    let payload_type = emit_object_schema(schema, &payload_name, seen, output);
     output.push(Node::Notification(NotificationNode {
-        module: ModuleKind::Notification,
-        name: payload_type,
+        name: payload_name,
         method_name,
+        params: TypeNode::Ref(TypeRef::Object(payload_type)),
     }));
 }
 
 fn resolve_result_type(
     schema: &Schema,
     preferred_name: &str,
-    module: ModuleKind,
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
 ) -> TypeRef {
@@ -220,29 +187,28 @@ fn resolve_result_type(
         if schema.const_value == Some(serde_json::Value::Object(serde_json::Map::new())) {
             return TypeRef::Unit;
         }
-        return type_ref_for_schema(schema, preferred_name, module, seen, output);
+        return type_ref_for_schema(schema, preferred_name, seen, output);
     }
 
     if schema.properties.is_some() {
-        let type_name = emit_object_schema(schema, preferred_name, module, seen, output);
+        let type_name = emit_object_schema(schema, preferred_name, seen, output);
         return TypeRef::Object(type_name);
     }
 
     if schema.schema_type.as_ref().and_then(SchemaType::as_str) == Some("array") {
-        return type_ref_for_schema(schema, preferred_name, module, seen, output);
+        return type_ref_for_schema(schema, preferred_name, seen, output);
     }
 
     if schema.schema_type.as_ref().and_then(SchemaType::as_str) == Some("object") {
-        return type_ref_for_schema(schema, preferred_name, module, seen, output);
+        return type_ref_for_schema(schema, preferred_name, seen, output);
     }
 
-    type_ref_for_schema(schema, preferred_name, module, seen, output)
+    type_ref_for_schema(schema, preferred_name, seen, output)
 }
 
 fn schema_to_node(
     schema: &Schema,
     preferred_name: &str,
-    module: ModuleKind,
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
 ) -> Option<Node> {
@@ -257,11 +223,7 @@ fn schema_to_node(
         }
 
         let enum_name = normalize_schema_name(&target_name);
-        if seen.contains(&enum_name) {
-            return None;
-        }
-
-        let variants: Vec<EnumVariantNode> = enum_values
+        let variants = enum_values
             .iter()
             .filter_map(|value| match value {
                 serde_json::Value::String(s) => Some((enum_variant_name(s), s.clone())),
@@ -278,18 +240,17 @@ fn schema_to_node(
                 _ => None,
             })
             .map(|(name, value)| EnumVariantNode { name, value })
-            .collect();
+            .collect::<Vec<_>>();
 
         if variants.is_empty() {
             return None;
         }
 
-        return Some(Node::Enum(EnumNode {
-            module,
+        return Some(Node::Type(TypeNode::Enum(EnumNode {
             name: enum_name,
             description: schema.description.clone(),
             variants,
-        }));
+        })));
     }
 
     let properties = schema.properties.as_ref()?;
@@ -308,13 +269,8 @@ fn schema_to_node(
             continue;
         }
 
-        let field_type = type_ref_for_schema(
-            value,
-            &append_type_name(&target_name, key),
-            module,
-            seen,
-            output,
-        );
+        let field_type =
+            type_ref_for_schema(value, &append_type_name(&target_name, key), seen, output);
 
         fields.push(FieldNode {
             name: key.clone(),
@@ -337,18 +293,16 @@ fn schema_to_node(
         }
     }
 
-    Some(Node::Struct(StructNode {
-        module,
+    Some(Node::Type(TypeNode::Struct(StructNode {
         name: target_name,
         doc,
         fields,
-    }))
+    })))
 }
 
 fn emit_object_schema(
     schema: &Schema,
     preferred_name: &str,
-    module: ModuleKind,
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
 ) -> String {
@@ -361,7 +315,7 @@ fn emit_object_schema(
         return target_name;
     }
 
-    if let Some(node) = schema_to_node(schema, &target_name, module, seen, output) {
+    if let Some(node) = schema_to_node(schema, &target_name, seen, output) {
         output.push(node);
         return target_name;
     }
@@ -373,7 +327,6 @@ fn emit_object_schema(
 fn type_ref_for_schema(
     schema: &Schema,
     fallback_name: &str,
-    module: ModuleKind,
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
 ) -> TypeRef {
@@ -385,7 +338,6 @@ fn type_ref_for_schema(
         let inner = type_ref_for_schema(
             items,
             &append_type_name(fallback_name, "Item"),
-            module,
             seen,
             output,
         );
@@ -420,12 +372,11 @@ fn type_ref_for_schema(
             .collect::<Vec<_>>();
 
         if !variants.is_empty() {
-            let node = Node::Enum(EnumNode {
-                module,
+            let node = Node::Type(TypeNode::Enum(EnumNode {
                 name: enum_name.clone(),
                 description: schema.description.clone(),
                 variants,
-            });
+            }));
             output.push(node);
             seen.insert(enum_name.clone());
             return TypeRef::Enum(enum_name);
@@ -450,13 +401,7 @@ fn type_ref_for_schema(
         if seen.contains(&explicit_name) {
             return TypeRef::Reference(explicit_name);
         }
-        drop(emit_object_schema(
-            schema,
-            &explicit_name,
-            module,
-            seen,
-            output,
-        ));
+        drop(emit_object_schema(schema, &explicit_name, seen, output));
         return TypeRef::Object(explicit_name);
     }
 
@@ -473,13 +418,7 @@ fn type_ref_for_schema(
         Some("number") => TypeRef::Primitive(PrimitiveType::Number),
         Some("array") => {
             let inner = schema.items.as_deref().map_or(TypeRef::Json, |item| {
-                type_ref_for_schema(
-                    item,
-                    &append_type_name(fallback_name, "Item"),
-                    module,
-                    seen,
-                    output,
-                )
+                type_ref_for_schema(item, &append_type_name(fallback_name, "Item"), seen, output)
             });
             TypeRef::Array(Box::new(inner))
         }
@@ -489,7 +428,7 @@ fn type_ref_for_schema(
                 if seen.contains(&type_name) {
                     return TypeRef::Reference(type_name);
                 }
-                drop(emit_object_schema(schema, &type_name, module, seen, output));
+                drop(emit_object_schema(schema, &type_name, seen, output));
                 TypeRef::Object(type_name)
             } else if schema.additional_properties.is_some() {
                 TypeRef::Map(Box::new(TypeRef::Json))
@@ -503,7 +442,7 @@ fn type_ref_for_schema(
                 if seen.contains(&type_name) {
                     return TypeRef::Reference(type_name);
                 }
-                drop(emit_object_schema(schema, &type_name, module, seen, output));
+                drop(emit_object_schema(schema, &type_name, seen, output));
                 TypeRef::Object(type_name)
             } else if schema.additional_properties.is_some() {
                 TypeRef::Map(Box::new(TypeRef::Json))

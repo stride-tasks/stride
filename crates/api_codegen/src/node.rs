@@ -1,16 +1,15 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ModuleKind {
-    Type,
-    Method,
-    Notification,
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Node {
+    Type(TypeNode),
+    Method(MethodNode),
+    Notification(NotificationNode),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Node {
+pub enum TypeNode {
     Struct(StructNode),
     Enum(EnumNode),
-    Method(MethodNode),
-    Notification(NotificationNode),
+    Ref(TypeRef),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -36,7 +35,6 @@ pub enum PrimitiveType {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StructNode {
-    pub module: ModuleKind,
     pub name: String,
     pub doc: Vec<String>,
     pub fields: Vec<FieldNode>,
@@ -52,7 +50,6 @@ pub struct FieldNode {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EnumNode {
-    pub module: ModuleKind,
     pub name: String,
     pub description: Option<String>,
     pub variants: Vec<EnumVariantNode>,
@@ -60,33 +57,21 @@ pub struct EnumNode {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MethodNode {
-    pub module: ModuleKind,
     pub name: String,
     pub method_name: String,
-    pub result: TypeRef,
+    pub params: TypeNode,
+    pub result: TypeNode,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NotificationNode {
-    pub module: ModuleKind,
     pub name: String,
     pub method_name: String,
+    pub params: TypeNode,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EnumVariantNode {
     pub name: String,
     pub value: String,
-}
-
-impl Node {
-    #[must_use]
-    pub fn module(&self) -> ModuleKind {
-        match self {
-            Self::Struct(node) => node.module,
-            Self::Enum(node) => node.module,
-            Self::Method(node) => node.module,
-            Self::Notification(node) => node.module,
-        }
-    }
 }

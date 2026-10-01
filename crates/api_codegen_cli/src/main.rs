@@ -1,3 +1,6 @@
+//! This is the main entry point for the `stride_api_codegen_cli` crate,
+//! which provides a command-line interface for generating code from API definitions.
+
 use std::{
     env, fs,
     path::{Path, PathBuf},
