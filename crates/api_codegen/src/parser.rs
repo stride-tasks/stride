@@ -115,6 +115,8 @@ fn emit_method_schema(
         };
 
         output.push(Node::Method(MethodNode {
+            id: schema.id.clone(),
+            description: schema.description.clone(),
             name: params_name,
             method_name: method_name.clone(),
             params: TypeNode::Ref(TypeRef::Object(params_type)),
@@ -136,6 +138,8 @@ fn emit_method_schema(
     };
 
     output.push(Node::Method(MethodNode {
+        id: schema.id.clone(),
+        description: schema.description.clone(),
         name: payload_name,
         method_name,
         params: TypeNode::Ref(TypeRef::Object(payload_type)),
@@ -161,8 +165,10 @@ fn emit_notification_schema(
         let params_type = emit_object_schema(params_schema, &params_name, seen, output);
 
         output.push(Node::Notification(NotificationNode {
+            id: schema.id.clone(),
             name: params_name,
             method_name: method_name.clone(),
+            description: schema.description.clone(),
             params: TypeNode::Ref(TypeRef::Object(params_type)),
         }));
         return;
@@ -171,8 +177,10 @@ fn emit_notification_schema(
     let payload_name = schema_name_from_path(path, schema);
     let payload_type = emit_object_schema(schema, &payload_name, seen, output);
     output.push(Node::Notification(NotificationNode {
+        id: schema.id.clone(),
         name: payload_name,
         method_name,
+        description: schema.description.clone(),
         params: TypeNode::Ref(TypeRef::Object(payload_type)),
     }));
 }
@@ -247,6 +255,7 @@ fn schema_to_node(
         }
 
         return Some(Node::Type(TypeNode::Enum(EnumNode {
+            id: schema.id.clone(),
             name: enum_name,
             description: schema.description.clone(),
             variants,
@@ -294,6 +303,7 @@ fn schema_to_node(
     }
 
     Some(Node::Type(TypeNode::Struct(StructNode {
+        id: schema.id.clone(),
         name: target_name,
         doc,
         fields,
@@ -373,6 +383,7 @@ fn type_ref_for_schema(
 
         if !variants.is_empty() {
             let node = Node::Type(TypeNode::Enum(EnumNode {
+                id: schema.id.clone(),
                 name: enum_name.clone(),
                 description: schema.description.clone(),
                 variants,

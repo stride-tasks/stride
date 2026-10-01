@@ -35,6 +35,7 @@ pub enum PrimitiveType {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StructNode {
+    pub id: String,
     pub name: String,
     pub doc: Vec<String>,
     pub fields: Vec<FieldNode>,
@@ -50,6 +51,7 @@ pub struct FieldNode {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EnumNode {
+    pub id: String,
     pub name: String,
     pub description: Option<String>,
     pub variants: Vec<EnumVariantNode>,
@@ -57,8 +59,10 @@ pub struct EnumNode {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MethodNode {
+    pub id: String,
     pub name: String,
     pub method_name: String,
+    pub description: Option<String>,
     pub params: TypeNode,
     pub result: TypeNode,
 }
@@ -68,6 +72,8 @@ pub struct NotificationNode {
     pub name: String,
     pub method_name: String,
     pub params: TypeNode,
+    pub description: Option<String>,
+    pub id: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stride API</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+  <div class="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+    <header class="mb-6">
+      <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.3em] text-sky-700 dark:text-sky-400">Stride</p>
+          <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">API schema reference</h1>
+        </div>
+
+        <div class="flex w-full max-w-xl items-center gap-3 md:justify-end">
+          <label class="relative block w-full">
+            <span class="sr-only">Search schemas</span>
+            <input id="schema-search" type="search" placeholder="Search schemas, fields, and IDs..." class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-sky-500/20" />
+          </label>
+          <button id="theme-toggle" type="button" aria-label="Toggle color mode" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            <span id="theme-icon" class="inline-flex h-4 w-4 items-center justify-center" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside class="h-fit rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Table of contents</h2>
+          <span id="search-count" class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">13</span>
+        </div>
+        <ul class="text-sm text-slate-600 dark:text-slate-300"><li class="mb-2" data-toc-item="prompt"><a href="#prompt" data-toc-link="prompt" class="text-sky-700 hover:underline">Prompt</a></li><li class="mb-2" data-toc-item="repositorychangednotification"><a href="#repositorychangednotification" data-toc-link="repositorychangednotification" class="text-sky-700 hover:underline">RepositoryChangedNotification</a></li><li class="mb-2" data-toc-item="the-parameters-for-the-method"><a href="#the-parameters-for-the-method" data-toc-link="the-parameters-for-the-method" class="text-sky-700 hover:underline">The.parameters.for.the.method.</a></li><li class="mb-2" data-toc-item="the-parameters-for-the-method"><a href="#the-parameters-for-the-method" data-toc-link="the-parameters-for-the-method" class="text-sky-700 hover:underline">The.parameters.for.the.method.</a></li><li class="mb-2" data-toc-item="the-parameters-for-the-method"><a href="#the-parameters-for-the-method" data-toc-link="the-parameters-for-the-method" class="text-sky-700 hover:underline">The.parameters.for.the.method.</a></li><li class="mb-2" data-toc-item="the-parameters-for-the-method"><a href="#the-parameters-for-the-method" data-toc-link="the-parameters-for-the-method" class="text-sky-700 hover:underline">The.parameters.for.the.method.</a></li><li class="mb-2" data-toc-item="the-type-of-ssh-key-used-for-authentication"><a href="#the-type-of-ssh-key-used-for-authentication" data-toc-link="the-type-of-ssh-key-used-for-authentication" class="text-sky-700 hover:underline">The.type.of.SSH.key.used.for.authentication.</a></li><li class="mb-2" data-toc-item="stride-repository-changed"><a href="#stride-repository-changed" data-toc-link="stride-repository-changed" class="text-sky-700 hover:underline">stride.repository.changed</a></li><li class="mb-2" data-toc-item="stride-repository-project-list"><a href="#stride-repository-project-list" data-toc-link="stride-repository-project-list" class="text-sky-700 hover:underline">stride.repository.project.list</a></li><li class="mb-2" data-toc-item="stride-repository-sync"><a href="#stride-repository-sync" data-toc-link="stride-repository-sync" class="text-sky-700 hover:underline">stride.repository.sync</a></li><li class="mb-2" data-toc-item="stride-repository-tag-list"><a href="#stride-repository-tag-list" data-toc-link="stride-repository-tag-list" class="text-sky-700 hover:underline">stride.repository.tag.list</a></li><li class="mb-2" data-toc-item="stride-ssh-host-add"><a href="#stride-ssh-host-add" data-toc-link="stride-ssh-host-add" class="text-sky-700 hover:underline">stride.ssh.host.add</a></li><li class="mb-2" data-toc-item="stride-user-prompt"><a href="#stride-user-prompt" data-toc-link="stride-user-prompt" class="text-sky-700 hover:underline">stride.user.prompt</a></li></ul>
+      </aside>
+
+      <main>
+        <div id="empty-state" hidden class="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
+          No schemas match your search.
+        </div>
+        
+            <section id="prompt" data-section-id="prompt" data-search-text="Prompt type https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json A prompt is a message or question that is presented to the user, often as part of an interactive system or application, and it may also include actions that the user can take in response to the prompt. UserPromptTarget type  summary string A brief summary of the prompt. true description string A detailed description of the prompt. false target UserPromptTarget target true actions array&lt;string&gt; A list of actions that the user can take in response to the prompt. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Prompt</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300">A prompt is a message or question that is presented to the user, often as part of an interactive system or application, and it may also include actions that the user can take in response to the prompt.</p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">summary</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A brief summary of the prompt.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">description</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">no</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A detailed description of the prompt.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">target</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">UserPromptTarget</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">target</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">actions</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;string&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A list of actions that the user can take in response to the prompt.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="prompt-userprompttarget" class="text-xl font-semibold text-slate-900 dark:text-slate-100">UserPromptTarget</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">method</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The name of the method to be invoked.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">params</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">map&lt;json&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The parameters for the method.</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+            </section>
+            
+            <section id="repositorychangednotification" data-section-id="repositorychangednotification" data-search-text="RepositoryChangedNotification type   TaskChange type  changes array&lt;TaskChange&gt; One entry per task that was touched by a remote actor. true repository-id uuid UUID of the repository that was synced. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">RepositoryChangedNotification</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><span class="text-slate-500 dark:text-slate-400">No schema id</span></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">changes</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;TaskChange&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">One entry per task that was touched by a remote actor.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">repository-id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">UUID of the repository that was synced.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="repositorychangednotification-taskchange" class="text-xl font-semibold text-slate-900 dark:text-slate-100">TaskChange</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">fields</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;TaskFieldChange&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">fields</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">task-id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">UUID of the affected task.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">title</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The title of the task before the change.</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="repositorychangednotification-taskchange-taskfieldchange" class="text-xl font-semibold text-slate-900 dark:text-slate-100">TaskFieldChange</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">current</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">no</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">current</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">type</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">type</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">previous</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">no</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">previous</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+              </div>
+            
+            </section>
+            
+            <section id="the-parameters-for-the-method" data-section-id="the-parameters-for-the-method" data-search-text="The.parameters.for.the.method. type    id uuid The unique identifier of the repository whose projects should be listed. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">The.parameters.for.the.method.</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><span class="text-slate-500 dark:text-slate-400">No schema id</span></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The unique identifier of the repository whose projects should be listed.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+            </section>
+            
+            <section id="the-parameters-for-the-method" data-section-id="the-parameters-for-the-method" data-search-text="The.parameters.for.the.method. type    id uuid The unique identifier of the repository to be synchronized. true backends array&lt;string&gt; A list of backends to synchronize with the repository. false" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">The.parameters.for.the.method.</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><span class="text-slate-500 dark:text-slate-400">No schema id</span></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The unique identifier of the repository to be synchronized.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">backends</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;string&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">no</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A list of backends to synchronize with the repository.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+            </section>
+            
+            <section id="the-parameters-for-the-method" data-section-id="the-parameters-for-the-method" data-search-text="The.parameters.for.the.method. type    id uuid The unique identifier of the repository whose tags should be listed. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">The.parameters.for.the.method.</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><span class="text-slate-500 dark:text-slate-400">No schema id</span></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The unique identifier of the repository whose tags should be listed.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+            </section>
+            
+            <section id="the-parameters-for-the-method" data-section-id="the-parameters-for-the-method" data-search-text="The.parameters.for.the.method. type   SSH.Host type  host SshHost host true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">The.parameters.for.the.method.</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><span class="text-slate-500 dark:text-slate-400">No schema id</span></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">host</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">SshHost</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">host</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="the-parameters-for-the-method-ssh-host" class="text-xl font-semibold text-slate-900 dark:text-slate-100">SSH.Host</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">key</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">SshKeyPublic</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The SSH key used for authentication.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">hostname</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The hostname or IP address of the SSH host.</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="the-parameters-for-the-method-ssh-host-ssh-public-key" class="text-xl font-semibold text-slate-900 dark:text-slate-100">SSH.Public.Key</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">public</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The SSH key used for authentication.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">type</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">SshKeyFormat</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">type</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+              </div>
+            
+            </section>
+            
+            <section id="the-type-of-ssh-key-used-for-authentication" data-section-id="the-type-of-ssh-key-used-for-authentication" data-search-text="The.type.of.SSH.key.used.for.authentication. type https://stride-tasks.github.io/stride/api/type/stride.ssh.key.format.schema.json The type of SSH key used for authentication.  SshRsa enum ssh-rsa true SshDss enum ssh-dss true SshEd25519 enum ssh-ed25519 true EcdsaSha2Nistp256 enum ecdsa-sha2-nistp256 true EcdsaSha2Nistp384 enum ecdsa-sha2-nistp384 true EcdsaSha2Nistp521 enum ecdsa-sha2-nistp521 true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">type</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">The.type.of.SSH.key.used.for.authentication.</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/type/stride.ssh.key.format.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/type/stride.ssh.key.format.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300">The type of SSH key used for authentication.</p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">SshRsa</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">enum</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">ssh-rsa</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">SshDss</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">enum</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">ssh-dss</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">SshEd25519</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">enum</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">ssh-ed25519</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">EcdsaSha2Nistp256</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">enum</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">ecdsa-sha2-nistp256</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">EcdsaSha2Nistp384</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">enum</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">ecdsa-sha2-nistp384</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">EcdsaSha2Nistp521</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">enum</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">ecdsa-sha2-nistp521</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+            </section>
+            
+            <section id="stride-repository-changed" data-section-id="stride-repository-changed" data-search-text="stride.repository.changed notification https://stride-tasks.github.io/stride/api/notification/stride.repository.changed.schema.json Emitted after a sync when at least one remote actor introduced changes.  changes array&lt;TaskChange&gt; One entry per task that was touched by a remote actor. true repository-id uuid UUID of the repository that was synced. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">notification</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">stride.repository.changed</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/notification/stride.repository.changed.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/notification/stride.repository.changed.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300">Emitted after a sync when at least one remote actor introduced changes.</p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">changes</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;TaskChange&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">One entry per task that was touched by a remote actor.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">repository-id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">UUID of the repository that was synced.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+            </section>
+            
+            <section id="stride-repository-project-list" data-section-id="stride-repository-project-list" data-search-text="stride.repository.project.list method https://stride-tasks.github.io/stride/api/method/stride.repository.project.list.schema.json  RepositoryProjectListMethodResult type  id uuid The unique identifier of the repository whose projects should be listed. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">method</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">stride.repository.project.list</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/method/stride.repository.project.list.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/method/stride.repository.project.list.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The unique identifier of the repository whose projects should be listed.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="stride-repository-project-list-repositoryprojectlistmethodresult" class="text-xl font-semibold text-slate-900 dark:text-slate-100">RepositoryProjectListMethodResult</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">projects</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;string&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">All non-deleted project names stored in the repository database.</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+            </section>
+            
+            <section id="stride-repository-sync" data-section-id="stride-repository-sync" data-search-text="stride.repository.sync method https://stride-tasks.github.io/stride/api/method/stride.repository.sync.schema.json  RepositorySyncMethodResult type  id uuid The unique identifier of the repository to be synchronized. true backends array&lt;string&gt; A list of backends to synchronize with the repository. false" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">method</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">stride.repository.sync</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/method/stride.repository.sync.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/method/stride.repository.sync.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The unique identifier of the repository to be synchronized.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">backends</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;string&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">no</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A list of backends to synchronize with the repository.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="stride-repository-sync-repositorysyncmethodresult" class="text-xl font-semibold text-slate-900 dark:text-slate-100">RepositorySyncMethodResult</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr><td colspan="4" class="px-3 py-4 text-slate-500 dark:text-slate-400">No properties.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+            </section>
+            
+            <section id="stride-repository-tag-list" data-section-id="stride-repository-tag-list" data-search-text="stride.repository.tag.list method https://stride-tasks.github.io/stride/api/method/stride.repository.tag.list.schema.json  RepositoryTagListMethodResult type  id uuid The unique identifier of the repository whose tags should be listed. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">method</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">stride.repository.tag.list</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/method/stride.repository.tag.list.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/method/stride.repository.tag.list.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">id</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">uuid</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">The unique identifier of the repository whose tags should be listed.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="stride-repository-tag-list-repositorytaglistmethodresult" class="text-xl font-semibold text-slate-900 dark:text-slate-100">RepositoryTagListMethodResult</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">tags</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;string&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">All non-deleted tags stored in the repository database.</td>
+            </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+            </section>
+            
+            <section id="stride-ssh-host-add" data-section-id="stride-ssh-host-add" data-search-text="stride.ssh.host.add method https://stride-tasks.github.io/stride/api/method/stride.ssh.host.add.schema.json  SshHostAddMethodResult type  host SshHost host true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">method</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">stride.ssh.host.add</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/method/stride.ssh.host.add.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/method/stride.ssh.host.add.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">host</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">SshHost</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">host</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Sub type</p>
+                    <h3 id="stride-ssh-host-add-sshhostaddmethodresult" class="text-xl font-semibold text-slate-900 dark:text-slate-100">SshHostAddMethodResult</h3>
+                  </div>
+                  <span class="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">type</span>
+                </div>
+                <div class="mb-4">
+                  <p class="text-sm text-slate-600 dark:text-slate-300"></p>
+                </div>
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      <tr>
+                        <th class="px-3 py-2 font-semibold">Field</th>
+                        <th class="px-3 py-2 font-semibold">Type</th>
+                        <th class="px-3 py-2 font-semibold">Required</th>
+                        <th class="px-3 py-2 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                      <tr><td colspan="4" class="px-3 py-4 text-slate-500 dark:text-slate-400">No properties.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            
+            </section>
+            
+            <section id="stride-user-prompt" data-section-id="stride-user-prompt" data-search-text="stride.user.prompt notification https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json A prompt is a message or question that is presented to the user, often as part of an interactive system or application, and it may also include actions that the user can take in response to the prompt.  summary string A brief summary of the prompt. true description string A detailed description of the prompt. false target UserPromptTarget target true actions array&lt;string&gt; A list of actions that the user can take in response to the prompt. true" class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+              <div class="mb-4 flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between dark:border-slate-700">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">notification</p>
+                  <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">stride.user.prompt</h2>
+                </div>
+                <div class="text-sm text-slate-600 dark:text-slate-300"><a href="https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json" class="break-all text-sky-700 hover:underline dark:text-sky-400">https://stride-tasks.github.io/stride/api/notification/stride.user.prompt.schema.json</a></div>
+              </div>
+              <div class="mb-6">
+                <p class="text-sm text-slate-600 dark:text-slate-300">A prompt is a message or question that is presented to the user, often as part of an interactive system or application, and it may also include actions that the user can take in response to the prompt.</p>
+              </div>
+              <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <tr>
+                      <th class="px-3 py-2 font-semibold">Field</th>
+                      <th class="px-3 py-2 font-semibold">Type</th>
+                      <th class="px-3 py-2 font-semibold">Required</th>
+                      <th class="px-3 py-2 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+                    <tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">summary</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A brief summary of the prompt.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">description</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">string</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">no</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A detailed description of the prompt.</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">target</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">UserPromptTarget</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">target</td>
+            </tr><tr class="align-top">
+                <td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">actions</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">array&lt;string&gt;</td>
+                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">yes</td>
+                <td class="px-3 py-3 text-slate-600 dark:text-slate-300">A list of actions that the user can take in response to the prompt.</td>
+            </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+            </section>
+            
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const searchInput = document.getElementById('schema-search');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const sections = Array.from(document.querySelectorAll('[data-section-id]'));
+    const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
+    const emptyState = document.getElementById('empty-state');
+    const searchCount = document.getElementById('search-count');
+
+    const sunIcon = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-4 w-4"><path d="M10 2.5a.75.75 0 0 1 .75.75v1.25a.75.75 0 0 1-1.5 0V3.25A.75.75 0 0 1 10 2.5Zm0 12.5a.75.75 0 0 1 .75.75v1.25a.75.75 0 0 1-1.5 0v-1.25A.75.75 0 0 1 10 15Zm6.5-5.5a.75.75 0 0 1 0 1.5h-1.25a.75.75 0 0 1 0-1.5H16.5Zm-12.5 0a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H4Zm9.95-4.05a.75.75 0 0 1 1.06 0l.88.88a.75.75 0 1 1-1.06 1.06l-.88-.88a.75.75 0 0 1 0-1.06Zm-9.9 9.9a.75.75 0 0 1 1.06 0l.88.88a.75.75 0 0 1-1.06 1.06l-.88-.88a.75.75 0 0 1 0-1.06Zm0-9.9a.75.75 0 0 1 0 1.06l-.88.88A.75.75 0 0 1 3.12 4.13l.88-.88a.75.75 0 0 1 1.06 0Zm9.9 9.9a.75.75 0 0 1 0 1.06l-.88.88a.75.75 0 1 1-1.06-1.06l.88-.88a.75.75 0 0 1 1.06 0ZM10 6.25A3.75 3.75 0 1 1 10 13.75A3.75 3.75 0 0 1 10 6.25Z"/></svg>';
+    const moonIcon = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-4 w-4"><path d="M14.88 12.8A6.5 6.5 0 0 1 7.2 5.12A6.5 6.5 0 1 0 14.88 12.8Z"/></svg>';
+
+    const setTheme = (theme) => {
+      const isDark = theme === 'dark';
+      root.classList.toggle('dark', isDark);
+      localStorage.setItem('stride-theme', theme);
+      themeIcon.innerHTML = isDark ? sunIcon : moonIcon;
+    };
+
+    const preferredTheme = localStorage.getItem('stride-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(preferredTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const nextTheme = root.classList.contains('dark') ? 'light' : 'dark';
+      setTheme(nextTheme);
+    });
+
+    const applySearch = () => {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      sections.forEach((section) => {
+        const text = (section.dataset.searchText || '').toLowerCase();
+        const matches = !query || text.includes(query);
+        section.hidden = !matches;
+        if (matches) visibleCount += 1;
+      });
+
+      tocLinks.forEach((link) => {
+        const target = document.getElementById(link.dataset.tocLink);
+        if (!target) return;
+        link.parentElement.hidden = target.hidden;
+      });
+
+      emptyState.hidden = visibleCount !== 0;
+      searchCount.textContent = String(visibleCount);
+    };
+
+    searchInput.addEventListener('input', applySearch);
+    applySearch();
+  </script>
+</body>
+</html>
