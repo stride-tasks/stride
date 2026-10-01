@@ -89,7 +89,7 @@ fn stale_api_files(
 ) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let cutoff = match output.metadata() {
         Ok(metadata) => metadata.modified()?,
-        Err(_) => return Ok(all_api_files(api_dir)?),
+        Err(_) => return all_api_files(api_dir),
     };
 
     // Get the path of the running binary
@@ -102,7 +102,7 @@ fn stale_api_files(
     let generator_mtime: SystemTime = metadata.modified()?;
 
     if cutoff < generator_mtime {
-        return Ok(all_api_files(api_dir)?);
+        return all_api_files(api_dir);
     }
 
     let mut stale = Vec::new();
@@ -197,10 +197,10 @@ fn next_arg(args: &mut impl Iterator<Item = String>, name: &str) -> PathBuf {
 }
 
 fn write_output(output: PathBuf, contents: &str) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(parent) = output.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = output.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        fs::create_dir_all(parent)?;
     }
     fs::write(output, contents)?;
     Ok(())

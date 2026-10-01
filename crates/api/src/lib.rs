@@ -48,12 +48,15 @@ impl std::fmt::Display for Value {
     }
 }
 
+#[allow(clippy::missing_errors_doc)]
 impl Value {
+    /// Create a `Value` from any serializable value.
+    ///
+    /// # Panics
+    /// Panics if the value cannot be serialized to JSON or converted back into `Value`.
     pub fn from_type<T: serde::Serialize>(value: T) -> Self {
         let value = serde_json::to_value(value).expect("Failed to serialize value to JSON");
-        let value =
-            serde_json::from_value::<Self>(value).expect("Failed to deserialize value from JSON");
-        value
+        serde_json::from_value::<Self>(value).expect("Failed to deserialize value from JSON")
     }
 
     pub fn to_type<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<T> {
@@ -73,6 +76,12 @@ pub trait Notification: std::fmt::Debug + Any + 'static {
     fn name(&self) -> &'static str;
 
     fn to_value(&self) -> Value;
+
+    /// Convert a `Value` into this notification type.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the value could not be converted into this notification type.
     fn from_value(value: Value) -> Result<Self>
     where
         Self: Sized;
@@ -114,9 +123,7 @@ impl<T: Prompt> Notification for T {
         };
 
         let prompt = serde_json::to_value(&prompt).expect("Failed to serialize prompt to JSON");
-        let prompt =
-            serde_json::from_value::<Value>(prompt).expect("Failed to deserialize prompt to JSON");
-        prompt
+        serde_json::from_value::<Value>(prompt).expect("Failed to deserialize prompt to JSON")
     }
 
     fn from_value(value: Value) -> Result<Self>
@@ -164,20 +171,17 @@ pub trait Context: Send + Sync + 'static {
 
 impl dyn Context {
     /// Execute a command with the given method and arguments.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the method could not be executed for any reason.
     pub fn execute<T: Method>(self: Arc<Self>, method: T) -> Result<T::Result> {
         let method_name = T::NAME;
 
-        // FIXME: This round-trip serialization and deserialization is not ideal.
-        //        ideally we should be able to convert the method to a `Value` directly.
-        let value = serde_json::to_value(method).expect("Failed to serialize method to JSON");
-        let params =
-            serde_json::from_value::<Value>(value).expect("Failed to deserialize method to JSON");
+        let params = Value::from_type(method);
 
         let result_value = <Self as Context>::execute_erased(self, method_name, params)?;
-
-        let result =
-            serde_json::to_value(&result_value).expect("Failed to serialize result to JSON");
-        let result = serde_json::from_value::<T::Result>(result)?;
+        let result = Value::to_type::<T::Result>(&result_value)?;
         Ok(result)
     }
 }

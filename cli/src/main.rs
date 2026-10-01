@@ -1,4 +1,4 @@
-use anyhow::{bail, Context as AnyhowContext};
+use anyhow::{Context as AnyhowContext, bail};
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
@@ -9,9 +9,9 @@ use std::{
     sync::Arc,
 };
 use stride_api as api;
-use stride_backend::{registry::Registry, Backend};
+use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::{
-    known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey, GitBackend,
+    GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
 };
 use stride_core::{
     event::{HostEvent, PluginEvent},
@@ -29,7 +29,7 @@ use stride_flutter_bridge::{
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 use stride_logging::LogLevelGuard;
-use stride_plugin_manager::{manifest::PluginAction, PluginManager};
+use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use uuid::Uuid;
 
 use crate::{
@@ -129,6 +129,7 @@ impl api::Notifier for CliNotifier {
 }
 
 #[derive(Default)]
+#[allow(clippy::option_option)]
 struct TaskModifications {
     title_parts: Vec<String>,
     due: Option<Option<chrono::DateTime<Utc>>>,
@@ -148,7 +149,7 @@ fn parse_task_modifications(modifiers: &[cli::TaskModifier]) -> anyhow::Result<T
             cli::TaskModifier::Due(value) => {
                 modifications.due = if value.trim().is_empty() {
                     Some(None)
-                } else if let Ok(date) = NaiveDate::parse_from_str(&value, "%Y-%m-%d") {
+                } else if let Ok(date) = NaiveDate::parse_from_str(value, "%Y-%m-%d") {
                     Some(Some(
                         date.and_time(NaiveTime::default())
                             .and_local_timezone(chrono::Local)
@@ -211,7 +212,7 @@ fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bo
     }
 
     if let Some(new_project) = &modifications.project {
-        task.project = new_project.clone();
+        task.project.clone_from(new_project);
         modified = true;
     }
 

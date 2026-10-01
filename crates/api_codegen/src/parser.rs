@@ -8,6 +8,10 @@ use crate::node::{
 };
 use crate::{Result, Schema, SchemaType};
 
+/// Parse all schema files beneath a directory into generated Rust/Flutter model nodes.
+///
+/// # Errors
+/// Returns an error if a schema file cannot be read or its JSON cannot be parsed.
 pub fn parse(dir: &Path) -> Result<Vec<Node>> {
     let mut files = collect_schema_files(dir)?;
 
@@ -86,7 +90,7 @@ fn emit_type_schema(
 
     drop(emit_object_schema(
         schema,
-        root_name,
+        &root_name,
         ModuleKind::Type,
         seen,
         output,
@@ -99,9 +103,8 @@ fn emit_method_schema(
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
 ) {
-    let properties = match schema.properties.as_ref() {
-        Some(properties) => properties,
-        None => return,
+    let Some(properties) = schema.properties.as_ref() else {
+        return;
     };
 
     let method_name =
@@ -114,7 +117,7 @@ fn emit_method_schema(
         let params_name = schema_name_from_path(path, schema);
         let params_type = emit_object_schema(
             params_schema,
-            params_name.clone(),
+            &params_name,
             ModuleKind::Method,
             seen,
             output,
@@ -140,13 +143,7 @@ fn emit_method_schema(
     }
 
     let payload_name = schema_name_from_path(path, schema);
-    let payload_type = emit_object_schema(
-        schema,
-        payload_name.clone(),
-        ModuleKind::Method,
-        seen,
-        output,
-    );
+    let payload_type = emit_object_schema(schema, &payload_name, ModuleKind::Method, seen, output);
     let result_type = match result_schema {
         Some(result_schema) => resolve_result_type(
             result_schema,
@@ -174,9 +171,8 @@ fn emit_notification_schema(
 ) {
     let method_name =
         root_method_name(schema).unwrap_or_else(|| schema_name_from_path(path, schema));
-    let properties = match schema.properties.as_ref() {
-        Some(properties) => properties,
-        None => return,
+    let Some(properties) = schema.properties.as_ref() else {
+        return;
     };
 
     if properties.contains_key("params") {
@@ -184,7 +180,7 @@ fn emit_notification_schema(
         let params_name = schema_name_from_path(path, schema);
         let params_type = emit_object_schema(
             params_schema,
-            params_name.clone(),
+            &params_name,
             ModuleKind::Notification,
             seen,
             output,
@@ -201,7 +197,7 @@ fn emit_notification_schema(
     let payload_name = schema_name_from_path(path, schema);
     let payload_type = emit_object_schema(
         schema,
-        payload_name.clone(),
+        &payload_name,
         ModuleKind::Notification,
         seen,
         output,
@@ -228,7 +224,7 @@ fn resolve_result_type(
     }
 
     if schema.properties.is_some() {
-        let type_name = emit_object_schema(schema, preferred_name.to_owned(), module, seen, output);
+        let type_name = emit_object_schema(schema, preferred_name, module, seen, output);
         return TypeRef::Object(type_name);
     }
 
@@ -245,7 +241,7 @@ fn resolve_result_type(
 
 fn schema_to_node(
     schema: &Schema,
-    preferred_name: String,
+    preferred_name: &str,
     module: ModuleKind,
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
@@ -253,7 +249,7 @@ fn schema_to_node(
     let explicit_name = explicit_struct_name(schema);
     let target_name = explicit_name
         .clone()
-        .unwrap_or_else(|| preferred_name.clone());
+        .unwrap_or_else(|| preferred_name.to_owned());
 
     if let Some(enum_values) = schema.enum_values.as_ref() {
         if enum_values.is_empty() {
@@ -270,13 +266,10 @@ fn schema_to_node(
             .filter_map(|value| match value {
                 serde_json::Value::String(s) => Some((enum_variant_name(s), s.clone())),
                 serde_json::Value::Number(n) => {
-                    let raw = if let Some(i) = n.as_i64() {
-                        i.to_string()
-                    } else if let Some(f) = n.as_f64() {
-                        f.to_string()
-                    } else {
-                        return None;
-                    };
+                    let raw = n
+                        .as_i64()
+                        .map(|i| i.to_string())
+                        .or_else(|| n.as_f64().map(|f| f.to_string()))?;
                     Some((enum_variant_name(&raw), raw))
                 }
                 serde_json::Value::Bool(b) => {
@@ -354,7 +347,7 @@ fn schema_to_node(
 
 fn emit_object_schema(
     schema: &Schema,
-    preferred_name: String,
+    preferred_name: &str,
     module: ModuleKind,
     seen: &mut BTreeSet<String>,
     output: &mut Vec<Node>,
@@ -362,13 +355,13 @@ fn emit_object_schema(
     let explicit_name = explicit_struct_name(schema);
     let target_name = explicit_name
         .clone()
-        .unwrap_or_else(|| preferred_name.clone());
+        .unwrap_or_else(|| preferred_name.to_owned());
 
     if !seen.insert(target_name.clone()) {
         return target_name;
     }
 
-    if let Some(node) = schema_to_node(schema, target_name.clone(), module, seen, output) {
+    if let Some(node) = schema_to_node(schema, &target_name, module, seen, output) {
         output.push(node);
         return target_name;
     }
@@ -376,6 +369,7 @@ fn emit_object_schema(
     target_name
 }
 
+#[allow(clippy::too_many_lines)]
 fn type_ref_for_schema(
     schema: &Schema,
     fallback_name: &str,
@@ -398,46 +392,43 @@ fn type_ref_for_schema(
         return TypeRef::Array(Box::new(inner));
     }
 
-    if let Some(enum_values) = schema.enum_values.as_ref() {
-        if !enum_values.is_empty() {
-            let enum_name = normalize_schema_name(fallback_name);
-            if seen.contains(&enum_name) {
-                return TypeRef::Reference(enum_name);
-            }
+    if let Some(enum_values) = schema.enum_values.as_ref()
+        && !enum_values.is_empty()
+    {
+        let enum_name = normalize_schema_name(fallback_name);
+        if seen.contains(&enum_name) {
+            return TypeRef::Reference(enum_name);
+        }
 
-            let variants: Vec<EnumVariantNode> = enum_values
-                .iter()
-                .filter_map(|value| match value {
-                    serde_json::Value::String(s) => Some((enum_variant_name(s), s.clone())),
-                    serde_json::Value::Number(n) => {
-                        let raw = if let Some(i) = n.as_i64() {
-                            i.to_string()
-                        } else if let Some(f) = n.as_f64() {
-                            f.to_string()
-                        } else {
-                            return None;
-                        };
-                        Some((enum_variant_name(&raw), raw))
-                    }
-                    serde_json::Value::Bool(b) => {
-                        Some((enum_variant_name(&b.to_string()), b.to_string()))
-                    }
-                    _ => None,
-                })
-                .map(|(name, value)| EnumVariantNode { name, value })
-                .collect::<Vec<_>>();
+        let variants: Vec<EnumVariantNode> = enum_values
+            .iter()
+            .filter_map(|value| match value {
+                serde_json::Value::String(s) => Some((enum_variant_name(s), s.clone())),
+                serde_json::Value::Number(n) => {
+                    let raw = n
+                        .as_i64()
+                        .map(|i| i.to_string())
+                        .or_else(|| n.as_f64().map(|f| f.to_string()))?;
+                    Some((enum_variant_name(&raw), raw))
+                }
+                serde_json::Value::Bool(b) => {
+                    Some((enum_variant_name(&b.to_string()), b.to_string()))
+                }
+                _ => None,
+            })
+            .map(|(name, value)| EnumVariantNode { name, value })
+            .collect::<Vec<_>>();
 
-            if !variants.is_empty() {
-                let node = Node::Enum(EnumNode {
-                    module,
-                    name: enum_name.clone(),
-                    description: schema.description.clone(),
-                    variants,
-                });
-                output.push(node);
-                seen.insert(enum_name.clone());
-                return TypeRef::Enum(enum_name);
-            }
+        if !variants.is_empty() {
+            let node = Node::Enum(EnumNode {
+                module,
+                name: enum_name.clone(),
+                description: schema.description.clone(),
+                variants,
+            });
+            output.push(node);
+            seen.insert(enum_name.clone());
+            return TypeRef::Enum(enum_name);
         }
     }
 
@@ -461,7 +452,7 @@ fn type_ref_for_schema(
         }
         drop(emit_object_schema(
             schema,
-            explicit_name.clone(),
+            &explicit_name,
             module,
             seen,
             output,
@@ -481,19 +472,15 @@ fn type_ref_for_schema(
         Some("integer") => TypeRef::Primitive(PrimitiveType::Integer),
         Some("number") => TypeRef::Primitive(PrimitiveType::Number),
         Some("array") => {
-            let inner = schema
-                .items
-                .as_deref()
-                .map(|item| {
-                    type_ref_for_schema(
-                        item,
-                        &append_type_name(fallback_name, "Item"),
-                        module,
-                        seen,
-                        output,
-                    )
-                })
-                .unwrap_or(TypeRef::Json);
+            let inner = schema.items.as_deref().map_or(TypeRef::Json, |item| {
+                type_ref_for_schema(
+                    item,
+                    &append_type_name(fallback_name, "Item"),
+                    module,
+                    seen,
+                    output,
+                )
+            });
             TypeRef::Array(Box::new(inner))
         }
         Some("object") => {
@@ -502,13 +489,7 @@ fn type_ref_for_schema(
                 if seen.contains(&type_name) {
                     return TypeRef::Reference(type_name);
                 }
-                drop(emit_object_schema(
-                    schema,
-                    type_name.clone(),
-                    module,
-                    seen,
-                    output,
-                ));
+                drop(emit_object_schema(schema, &type_name, module, seen, output));
                 TypeRef::Object(type_name)
             } else if schema.additional_properties.is_some() {
                 TypeRef::Map(Box::new(TypeRef::Json))
@@ -522,13 +503,7 @@ fn type_ref_for_schema(
                 if seen.contains(&type_name) {
                     return TypeRef::Reference(type_name);
                 }
-                drop(emit_object_schema(
-                    schema,
-                    type_name.clone(),
-                    module,
-                    seen,
-                    output,
-                ));
+                drop(emit_object_schema(schema, &type_name, module, seen, output));
                 TypeRef::Object(type_name)
             } else if schema.additional_properties.is_some() {
                 TypeRef::Map(Box::new(TypeRef::Json))
@@ -611,15 +586,16 @@ fn normalize_path_name(name: &str) -> String {
         let lower = cleaned.to_ascii_lowercase();
         if matches!(lower.as_str(), "stride" | "type") {
             continue;
-        } else if matches!(lower.as_str(), "method") {
+        }
+        if matches!(lower.as_str(), "method") {
             is_method = true;
             continue;
-        } else if matches!(lower.as_str(), "notification") {
+        }
+        if matches!(lower.as_str(), "notification") {
             is_notification = true;
             continue;
-        } else {
-            tokens.push(cleaned);
         }
+        tokens.push(cleaned);
     }
 
     if is_method {
@@ -661,15 +637,16 @@ fn normalize_schema_name(name: &str) -> String {
         let lower = cleaned.to_ascii_lowercase();
         if matches!(lower.as_str(), "stride") {
             continue;
-        } else if matches!(lower.as_str(), "method") {
+        }
+        if matches!(lower.as_str(), "method") {
             is_method = true;
             continue;
-        } else if matches!(lower.as_str(), "notification") {
+        }
+        if matches!(lower.as_str(), "notification") {
             is_notification = true;
             continue;
-        } else {
-            tokens.push(cleaned);
         }
+        tokens.push(cleaned);
     }
 
     if is_method {
@@ -715,11 +692,9 @@ fn split_name_parts(value: &str) -> Vec<String> {
                 (prev.is_ascii_lowercase() || prev.is_ascii_digit()) && ch.is_ascii_uppercase();
             let split_after_upper =
                 prev.is_ascii_uppercase() && ch.is_ascii_uppercase() && next.is_ascii_lowercase();
-            if split_before || split_after_upper {
-                if !current.is_empty() {
-                    parts.push(current.clone());
-                    current.clear();
-                }
+            if (split_before || split_after_upper) && !current.is_empty() {
+                parts.push(current.clone());
+                current.clear();
             }
         }
 

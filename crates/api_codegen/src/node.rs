@@ -80,6 +80,7 @@ pub struct EnumVariantNode {
 }
 
 impl Node {
+    #[must_use]
     pub fn module(&self) -> ModuleKind {
         match self {
             Self::Struct(node) => node.module,

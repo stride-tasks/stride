@@ -63,6 +63,7 @@ pub enum SchemaType {
 }
 
 impl SchemaType {
+    #[must_use]
     pub fn as_str(&self) -> Option<&str> {
         match self {
             Self::Single(value) => Some(value),
@@ -80,10 +81,16 @@ pub enum AdditionalProperties {
 }
 
 impl Schema {
+    /// Parse a schema from a JSON string.
+    ///
+    /// # Errors
+    /// Returns an error when the JSON payload is invalid or malformed.
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(json: &str) -> Result<Self, serde_json::Error> {
         serde_json::from_str(json)
     }
 
+    #[must_use]
     pub fn to_value(&self) -> Value {
         serde_json::to_value(self).unwrap_or(Value::Null)
     }
