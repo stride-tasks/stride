@@ -9,18 +9,10 @@ pub enum Node {
 pub enum TypeNode {
     Struct(StructNode),
     Enum(EnumNode),
-    Ref(TypeRef),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypeRef {
     Primitive(PrimitiveType),
-    Array(Box<TypeRef>),
-    Map(Box<TypeRef>),
-    Object(String),
-    Enum(String),
+    Array(Box<TypeNode>),
     Reference(String),
-    Json,
+    Any,
     Unit,
 }
 
@@ -43,7 +35,7 @@ pub struct StructNode {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FieldNode {
     pub name: String,
-    pub type_ref: TypeRef,
+    pub typ: TypeNode,
     pub required: bool,
     pub description: Option<String>,
 }

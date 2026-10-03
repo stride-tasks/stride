@@ -10,48 +10,49 @@
             "const": "stride.user.prompt",
             "description": "A unique identifier for the method, used to resolve handler for the prompt."
         },
-        "target": {
-            "$comment": "@name:UserPromptTarget",
+        "params": {
             "type": "object",
             "properties": {
-                "method": {
-                    "type": "string",
-                    "description": "The name of the method to be invoked."
-                },
-                "params": {
+                "target": {
+                    "$comment": "@name:UserPromptTarget",
                     "type": "object",
-                    "description": "The parameters for the method.",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                    "properties": {
+                        "method": {
+                            "type": "string",
+                            "description": "The name of the method to be invoked."
+                        },
+                        "params": {
+                            "description": "The parameters for the method."
+                        }
+                    },
+                    "required": [
+                        "method",
+                        "params"
+                    ]
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "A brief summary of the prompt."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "A detailed description of the prompt."
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "An action that the user can take in response to the prompt."
+                    },
+                    "description": "A list of actions that the user can take in response to the prompt."
                 }
             },
             "required": [
                 "method",
-                "params"
+                "target",
+                "summary",
+                "actions"
             ]
-        },
-        "summary": {
-            "type": "string",
-            "description": "A brief summary of the prompt."
-        },
-        "description": {
-            "type": "string",
-            "description": "A detailed description of the prompt."
-        },
-        "actions": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "description": "An action that the user can take in response to the prompt."
-            },
-            "description": "A list of actions that the user can take in response to the prompt."
         }
-    },
-    "required": [
-        "method",
-        "target",
-        "summary",
-        "actions"
-    ]
+    }
 }

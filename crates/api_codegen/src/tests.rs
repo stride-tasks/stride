@@ -1,4 +1,5 @@
 use super::*;
+use crate::node::{Node, TypeNode};
 
 use std::{
     fs,
@@ -213,6 +214,51 @@ fn keeps_explicitly_named_nested_objects_with_method_fields() {
         "output was:\n{output}"
     );
     assert!(output.contains("pub params:"), "output was:\n{output}");
+}
+
+#[test]
+fn stores_inline_object_fields_as_actual_type_nodes() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_inline_object_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("stride.user.schema.json"),
+        r#"{
+            "title": "User",
+            "type": "object",
+            "properties": {
+                "profile": {
+                    "type": "object",
+                    "properties": {
+                        "name": { "type": "string" }
+                    },
+                    "required": ["name"]
+                }
+            },
+            "required": ["profile"]
+        }"#,
+    )
+    .unwrap();
+
+    let nodes = parse(&dir).unwrap();
+    let root = nodes
+        .iter()
+        .find_map(|node| match node {
+            Node::Type(TypeNode::Struct(node)) if node.name == "User" => Some(node),
+            _ => None,
+        })
+        .unwrap();
+
+    let profile_field = root
+        .fields
+        .iter()
+        .find(|field| field.name == "profile")
+        .unwrap();
+
+    assert!(matches!(&profile_field.typ, TypeNode::Struct(_)));
 }
 
 #[test]

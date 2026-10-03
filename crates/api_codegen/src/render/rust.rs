@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::node::{
-    EnumNode, MethodNode, Node, NotificationNode, PrimitiveType, StructNode, TypeNode, TypeRef,
+    EnumNode, MethodNode, Node, NotificationNode, PrimitiveType, StructNode, TypeNode,
 };
 
 #[must_use]
@@ -14,17 +14,49 @@ pub fn render_rust(nodes: &[Node]) -> String {
         match node {
             Node::Type(TypeNode::Struct(node)) => output.push(render_struct(node)),
             Node::Type(TypeNode::Enum(node)) => output.push(render_enum(node)),
-            Node::Type(TypeNode::Ref(_)) => {}
-            Node::Method(node) => output.push(render_method(node)),
-            Node::Notification(node) => output.push(render_notification(node)),
+            Node::Type(_) => {}
+            Node::Method(node) => {
+                if let Some(rendered) = render_type(&node.params) {
+                    output.push(rendered);
+                }
+                if let Some(rendered) = render_type(&node.result) {
+                    output.push(rendered);
+                }
+                output.push(render_method(node));
+            }
+            Node::Notification(node) => {
+                if let Some(rendered) = render_type(&node.params) {
+                    output.push(rendered);
+                }
+                output.push(render_notification(node));
+            }
         }
     }
 
     output.join("\n")
 }
 
+fn render_type(this: &TypeNode) -> Option<String> {
+    if let TypeNode::Struct(strukt) = &this {
+        Some(render_struct(strukt))
+    } else if let TypeNode::Enum(enum_) = &this {
+        Some(render_enum(enum_))
+    } else if let TypeNode::Array(array) = &this {
+        render_type(array.as_ref())
+    } else {
+        None
+    }
+}
+
 fn render_struct(this: &StructNode) -> String {
     let mut lines = Vec::new();
+
+    for field in &this.fields {
+        if let Some(rendered) = render_type(&field.typ) {
+            lines.push(rendered);
+        }
+    }
+
     for doc in &this.doc {
         lines.push(format!("/// {doc}"));
     }
@@ -39,7 +71,7 @@ fn render_struct(this: &StructNode) -> String {
         }
 
         let rust_name = rust_field_name(&field.name);
-        let field_type = render_type_ref(&field.type_ref);
+        let field_type = render_type_node(&field.typ);
         if field.required {
             lines.push(format!("    pub {rust_name}: {field_type},"));
         } else {
@@ -127,25 +159,15 @@ fn render_type_node(type_node: &TypeNode) -> String {
     match type_node {
         TypeNode::Struct(node) => node.name.clone(),
         TypeNode::Enum(node) => node.name.clone(),
-        TypeNode::Ref(type_ref) => render_type_ref(type_ref),
-    }
-}
-
-fn render_type_ref(type_ref: &TypeRef) -> String {
-    match type_ref {
-        TypeRef::Primitive(PrimitiveType::String) => "Box<str>".to_owned(),
-        TypeRef::Primitive(PrimitiveType::Uuid) => "uuid::Uuid".to_owned(),
-        TypeRef::Primitive(PrimitiveType::Integer) => "i64".to_owned(),
-        TypeRef::Primitive(PrimitiveType::Number) => "f64".to_owned(),
-        TypeRef::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
-        TypeRef::Array(inner) => format!("Vec<{}>", render_type_ref(inner)),
-        TypeRef::Map(inner) => format!(
-            "std::collections::HashMap<Box<str>, {}>",
-            render_type_ref(inner)
-        ),
-        TypeRef::Object(name) | TypeRef::Enum(name) | TypeRef::Reference(name) => name.clone(),
-        TypeRef::Json => "Value".to_owned(),
-        TypeRef::Unit => "()".to_owned(),
+        TypeNode::Primitive(PrimitiveType::String) => "Box<str>".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Uuid) => "uuid::Uuid".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Integer) => "i64".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Number) => "f64".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
+        TypeNode::Array(inner) => format!("Vec<{}>", render_type_node(inner)),
+        TypeNode::Reference(name) => name.clone(),
+        TypeNode::Any => "Value".to_owned(),
+        TypeNode::Unit => "()".to_owned(),
     }
 }
 

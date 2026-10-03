@@ -3,7 +3,6 @@
 	"$id": "https://stride-tasks.github.io/stride/api/type/stride.ssh.host.schema.json",
 	"title": "SSH Host",
 	"type": "object",
-	"additionalProperties": false,
 	"required": [
 		"hostname",
 		"key"

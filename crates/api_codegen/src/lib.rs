@@ -17,7 +17,7 @@ mod tests;
 
 pub use crate::{
     error::{Error, Result},
-    schema::{AdditionalProperties, Schema, SchemaType},
+    schema::{AdditionalProperties, Schema, SchemaConcreteType},
 };
 
 /// Generate Rust code from the API schema located in `api_dir`.

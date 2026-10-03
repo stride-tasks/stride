@@ -82,10 +82,7 @@ impl api::Notifier for CliNotifier {
                 confirm.prompt_skippable().map_err(Box::new)?
             };
             if input == Some(true) {
-                context.execute_erased(
-                    &prompt.target.method,
-                    api::Value::Map(prompt.target.params.clone()),
-                )?;
+                context.execute_erased(&prompt.target.method, prompt.target.params.clone())?;
             }
         } else if let Some(notification) =
             notification_any.downcast_ref::<api::RepositoryChangedNotification>()
