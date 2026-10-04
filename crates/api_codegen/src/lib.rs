@@ -1,22 +1,24 @@
 //! This crate generates code from a JSON schema.
 
-use crate::{
-    parser::parse,
-    render::{render_dart, render_rust},
-};
+use crate::render::{render_dart, render_rust};
 use std::path::Path;
 
 mod error;
 pub mod node;
 pub mod parser;
 pub mod render;
-mod schema;
+pub mod schema;
 
 #[cfg(test)]
 mod tests;
 
 pub use crate::{
     error::{Error, Result},
+    node::{
+        EnumNode, EnumVariantNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType,
+        StructNode, TypeNode,
+    },
+    parser::parse,
     schema::{AdditionalProperties, Schema, SchemaConcreteType},
 };
 
