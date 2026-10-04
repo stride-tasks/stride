@@ -1,11 +1,11 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://stride-tasks.github.io/stride/api/method/stride.repository.project.list.schema.json",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.project.list.schema.json",
     "type": "object",
     "properties": {
         "method": {
             "type": "string",
-            "const": "stride.repository.project.list",
+            "const": "repository.project.list",
             "description": "The name of the method to be invoked."
         },
         "params": {

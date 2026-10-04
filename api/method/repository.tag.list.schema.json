@@ -1,11 +1,11 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://stride-tasks.github.io/stride/api/method/stride.repository.sync.schema.json",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.tag.list.schema.json",
     "type": "object",
     "properties": {
         "method": {
             "type": "string",
-            "const": "stride.repository.sync",
+            "const": "repository.tag.list",
             "description": "The name of the method to be invoked."
         },
         "params": {
@@ -15,17 +15,7 @@
                 "id": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "The unique identifier of the repository to be synchronized."
-                },
-                "backends": {
-                    "type": "array",
-                    "description": "A list of backends to synchronize with the repository.",
-                    "items": {
-                        "type": "string",
-                        "example": [
-                            "stride.git"
-                        ]
-                    }
+                    "description": "The unique identifier of the repository whose tags should be listed."
                 }
             },
             "required": [
@@ -34,7 +24,19 @@
         },
         "result": {
             "type": "object",
-            "properties": {}
+            "properties": {
+                "tags": {
+                    "type": "array",
+                    "description": "All non-deleted tags stored in the repository database.",
+                    "items": {
+                        "type": "string",
+                        "description": "The tag name."
+                    }
+                }
+            },
+            "required": [
+                "tags"
+            ]
         }
     },
     "required": [

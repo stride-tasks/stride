@@ -1,13 +1,13 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://stride-tasks.github.io/stride/api/notification/stride.repository.changed.schema.json",
-    "title": "stride.repository.changed",
+    "$id": "https://stride-tasks.github.io/stride/api/notification/repository.changed.schema.json",
+    "title": "repository.changed",
     "description": "Emitted after a sync when at least one remote actor introduced changes.",
     "type": "object",
     "properties": {
         "method": {
             "type": "string",
-            "const": "stride.repository.changed"
+            "const": "repository.changed"
         },
         "params": {
             "type": "object",

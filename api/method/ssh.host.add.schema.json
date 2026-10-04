@@ -1,18 +1,18 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://stride-tasks.github.io/stride/api/method/stride.ssh.host.add.schema.json",
+    "$id": "https://stride-tasks.github.io/stride/api/method/ssh.host.add.schema.json",
     "type": "object",
     "properties": {
         "method": {
             "type": "string",
-            "const": "stride.ssh.host.add"
+            "const": "ssh.host.add"
         },
         "params": {
             "type": "object",
             "description": "The parameters for the method.",
             "properties": {
                 "host": {
-                    "$ref": "stride.type.ssh.host.schema.json"
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/ssh.host.schema.json"
                 }
             },
             "required": [

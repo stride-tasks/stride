@@ -16,7 +16,7 @@ class RustContext {
       final json = jsonDecode(event) as Map<String, dynamic>;
       final method = json['method'] as String;
       final params = json['params'] as Map<String, dynamic>;
-      if (method == 'stride.repository.changed') {
+      if (method == 'repository.changed') {
         final notification = RepositoryChangedNotification.fromJson(params);
         for (final change in notification.changes) {
           final taskId = change.taskId;

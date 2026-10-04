@@ -318,9 +318,6 @@ fn normalize_path_name(name: &str) -> String {
             continue;
         }
         let lower = cleaned.to_ascii_lowercase();
-        if matches!(lower.as_str(), "stride" | "type") {
-            continue;
-        }
         if matches!(lower.as_str(), "method") {
             is_method = true;
             continue;

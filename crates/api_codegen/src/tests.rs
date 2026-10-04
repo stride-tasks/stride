@@ -122,8 +122,7 @@ fn derives_rust_type_suffixes_from_schema_directory() {
     .unwrap();
 
     fs::write(
-        dir.join("method")
-            .join("stride.repository.sync.schema.json"),
+        dir.join("method").join("repository.sync.schema.json"),
         r#"{
             "title": "Repository Sync",
             "type": "object",
@@ -143,7 +142,7 @@ fn derives_rust_type_suffixes_from_schema_directory() {
 
     fs::write(
         dir.join("notification")
-            .join("stride.repository.changed.schema.json"),
+            .join("repository.changed.schema.json"),
         r#"{
             "title": "Repository Changed",
             "type": "object",
@@ -395,13 +394,12 @@ fn generates_dart_method_implementation_with_result_type_and_name() {
     let dir = std::env::temp_dir().join(format!("stride_api_codegen_method_dart_{unique}"));
     fs::create_dir_all(dir.join("method")).unwrap();
     fs::write(
-        dir.join("method")
-            .join("stride.repository.sync.schema.json"),
+        dir.join("method").join("repository.sync.schema.json"),
         r#"{
             "title": "Repository Sync",
             "type": "object",
             "properties": {
-                "method": { "const": "stride.repository.sync" },
+                "method": { "const": "repository.sync" },
                 "params": {
                     "type": "object",
                     "properties": {
@@ -428,5 +426,5 @@ fn generates_dart_method_implementation_with_result_type_and_name() {
         output
             .contains("implements Serde<RepositorySyncMethod>, Method<RepositorySyncMethodResult>")
     );
-    assert!(output.contains("String getName() => \"stride.repository.sync\";"));
+    assert!(output.contains("String getName() => \"repository.sync\";"));
 }

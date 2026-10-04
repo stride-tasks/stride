@@ -38,7 +38,7 @@ class TaskSyncBackgroundTask implements BackgroundTask {
 
   @override
   String uniqueName() {
-    return 'stride.repository.sync:$repositoryId';
+    return 'repository.sync:$repositoryId';
   }
 
   @override

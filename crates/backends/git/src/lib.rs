@@ -676,7 +676,7 @@ struct AddUnknownHostPrompt {
 
 impl api::Prompt for AddUnknownHostPrompt {
     fn target(&self) -> Box<str> {
-        "stride.ssh.host.add".into()
+        "ssh.host.add".into()
     }
 
     fn summary(&self) -> Box<str> {

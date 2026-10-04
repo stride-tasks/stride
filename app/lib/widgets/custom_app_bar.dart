@@ -72,7 +72,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     final output = snapshot.data?.lookup(
                       Output(
                         name: Name(
-                          method: 'stride.repository.sync',
+                          method: 'repository.sync',
                           unique: context.read<TaskBloc>().repositoryUuid?.uuid,
                         ),
                         inputData: {},

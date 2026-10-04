@@ -298,13 +298,10 @@ fn main() -> anyhow::Result<ExitCode> {
     let notifier = Box::new(CliNotifier);
     let engine: Arc<dyn api::Context> = Engine::builder()
         .notifier(notifier)
-        .command("stride.repository.sync", RepositorySyncHandler)
-        .command("stride.ssh.host.add", SshHostAddHandler)
-        .command("stride.repository.tag.list", RepositoryTagListHandler)
-        .command(
-            "stride.repository.project.list",
-            RepositoryProjectListHandler,
-        )
+        .command("ssh.host.add", SshHostAddHandler)
+        .command("repository.sync", RepositorySyncHandler)
+        .command("repository.tag.list", RepositoryTagListHandler)
+        .command("repository.project.list", RepositoryProjectListHandler)
         .build();
 
     match mode {

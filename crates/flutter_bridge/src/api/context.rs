@@ -53,13 +53,10 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
     let context = STATE.get_or_init(|| {
         engine::Engine::builder()
             .notifier(Box::new(FlutterNotifier))
-            .command("stride.repository.sync", RepositorySyncHandler)
-            .command("stride.repository.tag.list", RepositoryTagListHandler)
-            .command(
-                "stride.repository.project.list",
-                RepositoryProjectListHandler,
-            )
-            .command("stride.ssh.host.add", SshHostAddHandler)
+            .command("repository.sync", RepositorySyncHandler)
+            .command("repository.tag.list", RepositoryTagListHandler)
+            .command("repository.project.list", RepositoryProjectListHandler)
+            .command("ssh.host.add", SshHostAddHandler)
             .build()
     });
 
