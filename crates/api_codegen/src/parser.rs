@@ -85,7 +85,7 @@ fn module_name_for_path(path: &Path) -> &str {
 
 fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
-        panic!("method should not be a reference");
+        panic!("method should not be a reference: {path:?}");
     };
     let SchemaConcreteType::Object { properties, .. } = concrete_type else {
         panic!("method schema must be an object");
@@ -99,7 +99,7 @@ fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
         .expect("method must have params property");
     let result_schema = properties
         .get("result")
-        .expect("method must have params property");
+        .expect("method must have result property");
 
     let params_name = schema_name_from_path(path, schema);
     let params_type = type_for_schema(params_schema, &params_name);
@@ -109,6 +109,11 @@ fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
     );
 
     MethodNode {
+        id: schema
+            .id
+            .clone()
+            .unwrap_or_else(|| panic!("method should have an $id: {}", path.display())),
+        description: schema.description.clone(),
         name: params_name,
         method_name: method_name.clone(),
         params: params_type,
@@ -121,19 +126,24 @@ fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
         root_method_name(schema).unwrap_or_else(|| schema_name_from_path(path, schema));
 
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
-        panic!("method should not be a reference");
+        panic!("notification should not be a reference: {path:?}");
     };
     let SchemaConcreteType::Object { properties, .. } = concrete_type else {
-        panic!("notification schema must be an object");
+        panic!("notification schema must be an object: {path:?}");
     };
 
     let params_schema = properties
         .get("params")
-        .expect("notification must have params property");
+        .expect("notification must have params property: {path:?}");
     let params_name = schema_name_from_path(path, schema);
     let params_type = type_for_schema(params_schema, &params_name);
 
     NotificationNode {
+        id: schema
+            .id
+            .clone()
+            .unwrap_or_else(|| panic!("notification should have an $id: {}", path.display())),
+        description: schema.description.clone(),
         name: params_name,
         method_name: method_name.clone(),
         params: params_type,
@@ -175,8 +185,23 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                 "Enum values are empty for schema: {schema:?}"
             );
 
+            let mut doc = Vec::new();
+            if let Some(title) = &schema.title {
+                doc.push(title.clone());
+            }
+            if let Some(description) = &schema.description {
+                if !doc.is_empty() {
+                    doc.push(String::new());
+                }
+                for line in description.split('\n') {
+                    doc.push(line.to_owned());
+                }
+            }
+
             let enum_node = EnumNode {
                 name: enum_name,
+                id: schema.id.clone().unwrap_or_default(),
+                doc,
                 description: schema.description.clone(),
                 variants,
             };
@@ -234,6 +259,7 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
 
             TypeNode::Struct(StructNode {
                 name: target_name,
+                id: schema.id.clone().unwrap_or_default(),
                 doc,
                 fields,
             })
