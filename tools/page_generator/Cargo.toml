@@ -1,0 +1,10 @@
+[package]
+name = "stride_page_generator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+stride_api_codegen.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true

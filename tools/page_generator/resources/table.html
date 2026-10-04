@@ -1,0 +1,20 @@
+<div class="overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
+  <table class="min-w-full divide-y divide-slate-200 text-left text-xs dark:divide-slate-700">
+    <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+      <tr>
+        %for header in HEADERS%
+        <th class="px-2.5 py-1.5 font-semibold">%expand(header)%</th>
+        %%
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900">
+      %for row in ROWS%
+      <tr class="align-top">
+        $for column in row.columns$
+        %expand(column)%
+        $$
+      </tr>
+      %%
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,23 @@
+<section id="@SECTION_ID@" data-section-id="@SECTION_ID@" data-search-text="@SEARCH_TEXT@"
+  class="mb-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition dark:border-slate-700 dark:bg-slate-900">
+  <div class="mb-1 border-b border-slate-200 pb-1 dark:border-slate-700">
+    <div class="mb-1 flex items-center justify-between gap-3">
+      <div
+        class="inline-flex flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm dark:border-slate-700 dark:bg-slate-800">
+        <span class="text-base font-semibold text-slate-900 dark:text-slate-100">@TITLE@</span>
+        %if !empty(ID)%
+        <span class="text-lg font-black leading-none text-slate-400 dark:text-slate-500">|</span>
+        <span class="inline-flex items-center">@ID@</span>
+        %%
+      </div>
+      <p class="@GROUP_CLASS@">@GROUP@</p>
+    </div>
+  </div>
+  %if !empty(DESCRIPTION)%
+  <div class="mb-2">
+    <p class="text-sm text-slate-600 dark:text-slate-300">@DESCRIPTION@</p>
+  </div>
+  %%
+  @TABLE@
+  @SUB_SECTIONS_HTML@
+</section>
