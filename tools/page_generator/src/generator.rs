@@ -148,10 +148,13 @@ fn enum_doc(node: &stride_api_codegen::EnumNode) -> SchemaDoc {
         .variants
         .iter()
         .map(|variant| PropertyRow {
-            name: variant.name.clone(),
+            name: variant.value.clone(),
             type_name: "enum".to_string(),
             required: true,
-            description: variant.value.clone(),
+            description: variant
+                .description
+                .clone()
+                .unwrap_or_else(|| variant.value.clone()),
         })
         .collect::<Vec<_>>();
 
