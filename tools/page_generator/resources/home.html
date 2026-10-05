@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>@PAGE_TITLE@</title>
+  <link rel="icon" type="image/png" href="./assets/logo_circle.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+
+<body
+  class="min-h-screen bg-slate-100 text-slate-800 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+  <div class="flex min-h-screen flex-col">
+    <div class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 lg:px-6 lg:py-8">
+      <header class="mb-8">
+        <div
+          class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 p-3.5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-3">
+            <img src="./assets/logo_circle.png" alt="Stride logo"
+              class="h-11 w-11 rounded-xl border border-slate-200 bg-white/80 object-cover shadow-sm dark:border-slate-700 dark:bg-slate-800" />
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-700 dark:text-emerald-400">
+                @SITE_NAME@
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Task management</p>
+            </div>
+          </div>
+
+          <nav class="flex flex-wrap items-center gap-2 md:justify-end">
+            <a href="index.html"
+              class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><i
+                class="fa-solid fa-house"></i>Home</a>
+            <a href="api.html"
+              class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><i
+                class="fa-solid fa-code"></i>API</a>
+            <a href="https://github.com/stride-tasks/stride/releases" target="_blank" rel="noreferrer"
+              class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><i
+                class="fa-solid fa-download"></i>Download</a>
+            <a href="https://github.com/stride-tasks/stride" target="_blank" rel="noreferrer"
+              class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><i
+                class="fa-brands fa-github"></i>GitHub</a>
+            <button id="theme-toggle" type="button" aria-label="Toggle color mode"
+              class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              <span id="theme-icon" class="inline-flex h-4 w-4 items-center justify-center" aria-hidden="true"></span>
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <div class="flex-1"></div>
+    </div>
+
+    <footer
+      class="border-t border-slate-200 bg-white/80 py-4 text-sm text-slate-500 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-400">
+      <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 md:flex-row md:items-center md:justify-between lg:px-6">
+        <p>Built for task workflows that live with code.</p>
+        <div class="flex items-center gap-3">
+          <a href="api.html" class="hover:text-emerald-600 dark:hover:text-emerald-400">API reference</a>
+          <a href="https://github.com/stride-tasks/stride" target="_blank" rel="noreferrer"
+            class="hover:text-emerald-600 dark:hover:text-emerald-400">GitHub</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="theme.js"></script>
+</body>
+
+</html>

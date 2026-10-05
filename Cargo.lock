@@ -2501,6 +2501,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "stride_page_generator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+ "stride_api_codegen",
+]
+
+[[package]]
 name = "stride_plugin"
 version = "0.1.0"
 dependencies = [

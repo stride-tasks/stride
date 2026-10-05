@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stride API</title>
+  <link rel="icon" type="image/png" href="./assets/logo_circle.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+
+<body
+  class="min-h-screen bg-slate-100 text-slate-800 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+  <div class="flex min-h-screen flex-col">
+    <div class="mx-auto w-full max-w-[1220px] flex-1 px-2.5 py-5 lg:px-4 lg:py-6">
+      <header class="mb-5">
+        <div
+          class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-3">
+            <img src="./assets/logo_circle.png" alt="Stride logo"
+              class="h-11 w-11 rounded-xl border border-slate-200 bg-white/80 object-cover shadow-sm dark:border-slate-700 dark:bg-slate-800" />
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-700 dark:text-emerald-400">
+                Stride
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">API schema reference</p>
+            </div>
+          </div>
+
+          <div class="flex w-full max-w-md items-center gap-2 md:justify-end">
+            <label class="relative block w-full">
+              <span class="sr-only">Search schemas</span>
+              <input id="schema-search" type="search" placeholder="Search schemas, fields, and IDs..."
+                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-500/20" />
+            </label>
+            <button id="theme-toggle" type="button" aria-label="Toggle color mode"
+              class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              <span id="theme-icon" class="inline-flex h-4 w-4 items-center justify-center" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div id="page-layout" class="grid gap-2 transition-all lg:grid-cols-[minmax(0,1fr)_230px]">
+        <main class="order-2 lg:order-1">
+          <div id="empty-state" hidden
+            class="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
+            No schemas match your search.
+          </div>
+          @BODY@
+        </main>
+
+        <aside id="toc-panel"
+          class="order-1 h-fit rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900 lg:sticky lg:top-4 lg:order-2">
+          <div id="toc-header" class="flex items-center justify-between gap-2">
+            <h2 id="toc-heading"
+              class="inline-flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-100"><i
+                class="fa-solid fa-list"></i>Table of contents</h2>
+            <button id="toc-toggle" type="button" aria-label="Hide table of contents" aria-expanded="true"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              <span id="toc-toggle-icon" aria-hidden="true">−</span>
+            </button>
+          </div>
+
+          <div id="toc-content" class="mt-2">
+            <ul class="text-sm text-slate-600 dark:text-slate-300">@TOC@</ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <footer
+      class="border-t border-slate-200 bg-white/80 py-4 text-sm text-slate-500 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-400">
+      <div
+        class="mx-auto flex max-w-[1220px] flex-col gap-2 px-2.5 md:flex-row md:items-center md:justify-between lg:px-4">
+        <p>Built for task workflows that live with code.</p>
+        <div class="flex items-center gap-3">
+          <a href="index.html" class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
+          <a href="https://github.com/stride-tasks/stride" target="_blank" rel="noreferrer"
+            class="hover:text-emerald-600 dark:hover:text-emerald-400">GitHub</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="theme.js"></script>
+  <script>
+    const searchInput = document.getElementById('schema-search');
+    const pageLayout = document.getElementById('page-layout');
+    const tocPanel = document.getElementById('toc-panel');
+    const tocHeading = document.getElementById('toc-heading');
+    const tocContent = document.getElementById('toc-content');
+    const tocToggle = document.getElementById('toc-toggle');
+    const tocToggleIcon = document.getElementById('toc-toggle-icon');
+    const sections = Array.from(document.querySelectorAll('[data-section-id]'));
+    const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
+    const emptyState = document.getElementById('empty-state');
+
+    const setTocOpen = (isOpen) => {
+      pageLayout.classList.toggle('lg:grid-cols-[minmax(0,1fr)_3rem]', !isOpen);
+      tocPanel.classList.toggle('w-12', !isOpen);
+      tocPanel.classList.toggle('p-2', !isOpen);
+      tocPanel.classList.toggle('p-3.5', isOpen);
+      tocPanel.classList.toggle('justify-self-end', !isOpen);
+      tocHeading.classList.toggle('hidden', !isOpen);
+      tocContent.classList.toggle('hidden', !isOpen);
+      tocToggle.setAttribute('aria-expanded', String(isOpen));
+      tocToggle.setAttribute('aria-label', isOpen ? 'Hide table of contents' : 'Show table of contents');
+      tocToggleIcon.textContent = isOpen ? '−' : '+';
+      localStorage.setItem('stride-toc-open', String(isOpen));
+    };
+
+    const initialTocOpen = localStorage.getItem('stride-toc-open') !== 'false';
+    setTocOpen(initialTocOpen);
+    tocToggle.addEventListener('click', () => {
+      setTocOpen(tocContent.classList.contains('hidden'));
+    });
+
+    const updateTocGroupCounts = () => {
+      document.querySelectorAll('[data-toc-group]').forEach((group) => {
+        const items = Array.from(group.querySelectorAll('[data-toc-item]'));
+        const visibleCount = items.filter((item) => !item.hidden).length;
+        const badge = group.querySelector('[data-toc-group-count]');
+        if (badge) badge.textContent = String(visibleCount);
+        group.hidden = visibleCount === 0;
+      });
+
+      const visibleGroups = Array.from(document.querySelectorAll('[data-toc-group]')).filter((group) => !group.hidden);
+      if (tocContent) {
+        tocContent.hidden = visibleGroups.length === 0;
+      }
+    };
+
+    const applySearch = () => {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      sections.forEach((section) => {
+        const text = (section.dataset.searchText || '').toLowerCase();
+        const matches = !query || text.includes(query);
+        section.hidden = !matches;
+        if (matches) visibleCount += 1;
+      });
+
+      tocLinks.forEach((link) => {
+        const target = document.getElementById(link.dataset.tocLink);
+        if (!target) return;
+        link.parentElement.hidden = target.hidden;
+      });
+
+      updateTocGroupCounts();
+      emptyState.hidden = visibleCount !== 0;
+    };
+
+    searchInput.addEventListener('input', applySearch);
+    applySearch();
+  </script>
+</body>
+
+</html>

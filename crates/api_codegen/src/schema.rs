@@ -4,6 +4,15 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct EnumAnyOfValue {
+    #[serde(rename = "const")]
+    pub const_value: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)] // Evaluates from top to bottom
 pub enum SchemaString {
     // 1. Matches if the "enum" key is present in the JSON payload
@@ -12,7 +21,13 @@ pub enum SchemaString {
         enum_values: Vec<String>,
     },
 
-    // 2. Fallback variant if "enum" is missing; looks for type constraints
+    // 2. Matches if the schema uses const values with per-variant descriptions.
+    AnyOf {
+        #[serde(rename = "anyOf")]
+        any_of: Vec<EnumAnyOfValue>,
+    },
+
+    // 3. Fallback variant if "enum" is missing; looks for type constraints
     String {
         #[serde(skip_serializing_if = "Option::is_none")]
         format: Option<String>,

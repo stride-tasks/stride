@@ -9,7 +9,6 @@
         },
         "params": {
             "type": "object",
-            "description": "The parameters for the method.",
             "properties": {
                 "host": {
                     "$ref": "https://stride-tasks.github.io/stride/api/type/ssh.host.schema.json"

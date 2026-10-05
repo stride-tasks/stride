@@ -5,12 +5,10 @@
     "properties": {
         "method": {
             "type": "string",
-            "const": "repository.tag.list",
-            "description": "The name of the method to be invoked."
+            "const": "repository.tag.list"
         },
         "params": {
             "type": "object",
-            "description": "The parameters for the method.",
             "properties": {
                 "id": {
                     "type": "string",

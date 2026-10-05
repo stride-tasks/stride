@@ -49,7 +49,7 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
       final map = jsonDecode(event) as Map<String, dynamic>;
       final method = map['method'] as String;
       final params = map['params'] as Map<String, dynamic>;
-      if (method == 'stride.user.prompt') {
+      if (method == 'user.prompt') {
         print('Received user prompt event: $event');
         final notification = UserPromptNotification.fromJson(params);
         add(

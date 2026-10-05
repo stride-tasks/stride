@@ -7,8 +7,7 @@
     "properties": {
         "method": {
             "type": "string",
-            "const": "stride.user.prompt",
-            "description": "A unique identifier for the method, used to resolve handler for the prompt."
+            "const": "user.prompt"
         },
         "params": {
             "type": "object",

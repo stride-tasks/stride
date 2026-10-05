@@ -5,12 +5,10 @@
     "properties": {
         "method": {
             "type": "string",
-            "const": "repository.sync",
-            "description": "The name of the method to be invoked."
+            "const": "repository.sync"
         },
         "params": {
             "type": "object",
-            "description": "The parameters for the method.",
             "properties": {
                 "id": {
                     "type": "string",
