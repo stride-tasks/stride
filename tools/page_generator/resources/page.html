@@ -5,70 +5,93 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Stride API</title>
+  <link rel="icon" type="image/png" href="./assets/logo_circle.png" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <script>
     tailwind.config = { darkMode: 'class' };
   </script>
 </head>
 
-<body class="h-full bg-slate-100 text-slate-800 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
-  <div class="mx-auto max-w-[1220px] px-2.5 py-5 lg:px-4 lg:py-6">
-    <header class="mb-5">
-      <div
-        class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-700 dark:text-sky-400">Stride</p>
-          <h1 class="mt-1 text-[2rem] font-bold text-slate-900 dark:text-slate-100">API schema reference</h1>
-        </div>
+<body
+  class="min-h-screen bg-slate-100 text-slate-800 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+  <div class="flex min-h-screen flex-col">
+    <div class="mx-auto w-full max-w-[1220px] flex-1 px-2.5 py-5 lg:px-4 lg:py-6">
+      <header class="mb-5">
+        <div
+          class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-3">
+            <img src="./assets/logo_circle.png" alt="Stride logo"
+              class="h-11 w-11 rounded-xl border border-slate-200 bg-white/80 object-cover shadow-sm dark:border-slate-700 dark:bg-slate-800" />
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-700 dark:text-emerald-400">
+                Stride
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">API schema reference</p>
+            </div>
+          </div>
 
-        <div class="flex w-full max-w-md items-center gap-2 md:justify-end">
-          <label class="relative block w-full">
-            <span class="sr-only">Search schemas</span>
-            <input id="schema-search" type="search" placeholder="Search schemas, fields, and IDs..."
-              class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-sky-500/20" />
-          </label>
-          <button id="theme-toggle" type="button" aria-label="Toggle color mode"
-            class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-            <span id="theme-icon" class="inline-flex h-4 w-4 items-center justify-center" aria-hidden="true"></span>
-          </button>
+          <div class="flex w-full max-w-md items-center gap-2 md:justify-end">
+            <label class="relative block w-full">
+              <span class="sr-only">Search schemas</span>
+              <input id="schema-search" type="search" placeholder="Search schemas, fields, and IDs..."
+                class="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-500/20" />
+            </label>
+            <button id="theme-toggle" type="button" aria-label="Toggle color mode"
+              class="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              <span id="theme-icon" class="inline-flex h-4 w-4 items-center justify-center" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div id="page-layout" class="grid gap-2 transition-all lg:grid-cols-[minmax(0,1fr)_230px]">
+        <main class="order-2 lg:order-1">
+          <div id="empty-state" hidden
+            class="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
+            No schemas match your search.
+          </div>
+          @BODY@
+        </main>
+
+        <aside id="toc-panel"
+          class="order-1 h-fit rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900 lg:sticky lg:top-4 lg:order-2">
+          <div id="toc-header" class="flex items-center justify-between gap-2">
+            <h2 id="toc-heading"
+              class="inline-flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-100"><i
+                class="fa-solid fa-list"></i>Table of contents</h2>
+            <button id="toc-toggle" type="button" aria-label="Hide table of contents" aria-expanded="true"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              <span id="toc-toggle-icon" aria-hidden="true">−</span>
+            </button>
+          </div>
+
+          <div id="toc-content" class="mt-2">
+            <ul class="text-sm text-slate-600 dark:text-slate-300">@TOC@</ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <footer
+      class="border-t border-slate-200 bg-white/80 py-4 text-sm text-slate-500 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-400">
+      <div
+        class="mx-auto flex max-w-[1220px] flex-col gap-2 px-2.5 md:flex-row md:items-center md:justify-between lg:px-4">
+        <p>Built for task workflows that live with code.</p>
+        <div class="flex items-center gap-3">
+          <a href="index.html" class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
+          <a href="https://github.com/stride-tasks/stride" target="_blank" rel="noreferrer"
+            class="hover:text-emerald-600 dark:hover:text-emerald-400">GitHub</a>
         </div>
       </div>
-    </header>
-
-    <div id="page-layout" class="grid gap-2 transition-all lg:grid-cols-[minmax(0,1fr)_230px]">
-      <main class="order-2 lg:order-1">
-        <div id="empty-state" hidden
-          class="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
-          No schemas match your search.
-        </div>
-        @BODY@
-      </main>
-
-      <aside id="toc-panel"
-        class="order-1 h-fit rounded-lg border border-slate-200 bg-white p-3.5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900 lg:sticky lg:top-4 lg:order-2">
-        <div id="toc-header" class="flex items-center justify-between gap-2">
-          <h2 id="toc-heading" class="text-base font-semibold text-slate-900 dark:text-slate-100">Table of contents</h2>
-          <button id="toc-toggle" type="button" aria-label="Hide table of contents" aria-expanded="true"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-            <span id="toc-toggle-icon" aria-hidden="true">−</span>
-          </button>
-        </div>
-
-        <div id="toc-content" class="mt-2">
-          <ul class="text-sm text-slate-600 dark:text-slate-300">@TOC@</ul>
-        </div>
-      </aside>
-    </div>
+    </footer>
   </div>
 
+  <script src="theme.js"></script>
   <script>
-    const root = document.documentElement;
     const searchInput = document.getElementById('schema-search');
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
     const pageLayout = document.getElementById('page-layout');
     const tocPanel = document.getElementById('toc-panel');
-    const tocHeader = document.getElementById('toc-header');
     const tocHeading = document.getElementById('toc-heading');
     const tocContent = document.getElementById('toc-content');
     const tocToggle = document.getElementById('toc-toggle');
@@ -76,24 +99,6 @@
     const sections = Array.from(document.querySelectorAll('[data-section-id]'));
     const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
     const emptyState = document.getElementById('empty-state');
-
-    const sunIcon = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-4 w-4"><path d="M10 2.5a.75.75 0 0 1 .75.75v1.25a.75.75 0 0 1-1.5 0V3.25A.75.75 0 0 1 10 2.5Zm0 12.5a.75.75 0 0 1 .75.75v1.25a.75.75 0 0 1-1.5 0v-1.25A.75.75 0 0 1 10 15Zm6.5-5.5a.75.75 0 0 1 0 1.5h-1.25a.75.75 0 0 1 0-1.5H16.5Zm-12.5 0a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H4Zm9.95-4.05a.75.75 0 0 1 1.06 0l.88.88a.75.75 0 1 1-1.06 1.06l-.88-.88a.75.75 0 0 1 0-1.06Zm-9.9 9.9a.75.75 0 0 1 1.06 0l.88.88a.75.75 0 0 1-1.06 1.06l-.88-.88a.75.75 0 0 1 0-1.06Zm0-9.9a.75.75 0 0 1 0 1.06l-.88.88A.75.75 0 0 1 3.12 4.13l.88-.88a.75.75 0 0 1 1.06 0Zm9.9 9.9a.75.75 0 0 1 0 1.06l-.88.88a.75.75 0 1 1-1.06-1.06l.88-.88a.75.75 0 0 1 1.06 0ZM10 6.25A3.75 3.75 0 1 1 10 13.75A3.75 3.75 0 0 1 10 6.25Z"/></svg>';
-    const moonIcon = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-4 w-4"><path d="M14.88 12.8A6.5 6.5 0 0 1 7.2 5.12A6.5 6.5 0 1 0 14.88 12.8Z"/></svg>';
-
-    const setTheme = (theme) => {
-      const isDark = theme === 'dark';
-      root.classList.toggle('dark', isDark);
-      localStorage.setItem('stride-theme', theme);
-      themeIcon.innerHTML = isDark ? sunIcon : moonIcon;
-    };
-
-    const preferredTheme = localStorage.getItem('stride-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    setTheme(preferredTheme);
-
-    themeToggle.addEventListener('click', () => {
-      const nextTheme = root.classList.contains('dark') ? 'light' : 'dark';
-      setTheme(nextTheme);
-    });
 
     const setTocOpen = (isOpen) => {
       pageLayout.classList.toggle('lg:grid-cols-[minmax(0,1fr)_3rem]', !isOpen);

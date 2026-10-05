@@ -1,28 +1,38 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
+use anyhow::Result;
+use clap::Parser;
+
+use crate::cli::Cli;
+
+mod cli;
 mod dsl;
 mod generator;
 
-fn main() {
-    let api_dir = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| default_api_dir().display().to_string());
-    let output_dir = std::env::args()
-        .nth(2)
-        .unwrap_or_else(|| default_output_dir().display().to_string());
-
-    if let Err(err) = generator::generate_all_html(Path::new(&api_dir), Path::new(&output_dir)) {
-        eprintln!("api page generator failed: {err}");
-        std::process::exit(1);
+fn copy_directory(src: &Path, dst: &Path) -> std::io::Result<()> {
+    if !dst.exists() {
+        std::fs::create_dir_all(dst)?;
     }
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if file_type.is_dir() {
+            copy_directory(&src_path, &dst_path)?;
+        } else {
+            std::fs::copy(&src_path, &dst_path)?;
+        }
+    }
+    Ok(())
 }
 
-fn default_api_dir() -> PathBuf {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    root.join("../../api")
-}
+fn main() -> Result<()> {
+    let cli = Cli::parse();
 
-fn default_output_dir() -> PathBuf {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    root.join("output")
+    generator::generate_all_html(&cli.api_dir, &cli.output_dir)?;
+
+    copy_directory(&cli.api_dir, &cli.output_dir.join("api"))?;
+    copy_directory(&cli.assets_dir, &cli.output_dir.join("assets"))?;
+    Ok(())
 }

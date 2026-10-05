@@ -3,12 +3,14 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TemplateValue {
     Html(String),
+    #[allow(unused)]
     Bool(bool),
     List(Vec<TemplateValue>),
     Map(HashMap<String, TemplateValue>),
 }
 
 impl TemplateValue {
+    #[allow(unused)]
     pub fn as_html(&self) -> Option<&str> {
         match self {
             TemplateValue::Html(value) => Some(value),
@@ -289,7 +291,8 @@ fn render_block(template: &str, context: &TemplateContext) -> Result<String, Tem
             continue;
         }
 
-        if template[cursor..].starts_with("%expand(") || template[cursor..].starts_with("$expand(") {
+        if template[cursor..].starts_with("%expand(") || template[cursor..].starts_with("$expand(")
+        {
             let (open, close_marker) = if template[cursor..].starts_with("%expand(") {
                 ("%expand(", "%")
             } else {

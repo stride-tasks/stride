@@ -1,5 +1,5 @@
+use anyhow::Result;
 use std::collections::{HashMap, HashSet};
-use std::error::Error;
 use std::fs;
 use std::path::Path;
 use stride_api_codegen::{parse, Node, TypeNode};
@@ -7,6 +7,8 @@ use stride_api_codegen::{parse, Node, TypeNode};
 use crate::dsl::{render_template, TemplateContext, TemplateValue};
 
 const PAGE_TEMPLATE: &str = include_str!("../resources/page.html");
+const HOME_TEMPLATE: &str = include_str!("../resources/home.html");
+const THEME_SCRIPT: &str = include_str!("../resources/theme.js");
 const SECTION_TEMPLATE: &str = include_str!("../resources/section.html");
 const SUB_SECTION_TEMPLATE: &str = include_str!("../resources/subsection.html");
 const TABLE_TEMPLATE: &str = include_str!("../resources/table.html");
@@ -29,13 +31,17 @@ struct SchemaDoc {
     sub_sections: Vec<SchemaDoc>,
 }
 
-pub fn generate_all_html(api_dir: &Path, output_dir: &Path) -> Result<(), Box<dyn Error>> {
+pub fn generate_all_html(api_dir: &Path, output_dir: &Path) -> Result<()> {
     let nodes = parse(api_dir)?;
     let docs = build_docs_from_nodes(&nodes);
 
-    let html = render_page(&docs);
+    let api_html = render_page(&docs);
+    let home_html = render_home_page();
+
     fs::create_dir_all(output_dir)?;
-    fs::write(output_dir.join("index.html"), html)?;
+    fs::write(output_dir.join("index.html"), home_html)?;
+    fs::write(output_dir.join("api.html"), api_html)?;
+    fs::write(output_dir.join("theme.js"), THEME_SCRIPT)?;
 
     Ok(())
 }
@@ -475,7 +481,7 @@ fn slugify(value: &str) -> String {
 fn group_badge_class(group: &str) -> String {
     match group {
         "method" => {
-            "inline-flex items-center rounded-full border border-sky-200 bg-sky-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300".to_string()
+            "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300".to_string()
         }
         "notification" => {
             "inline-flex items-center rounded-full border border-violet-200 bg-violet-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-300".to_string()
@@ -484,6 +490,19 @@ fn group_badge_class(group: &str) -> String {
             "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300".to_string()
         }
     }
+}
+
+fn render_home_page() -> String {
+    HOME_TEMPLATE
+        .replace("@PAGE_TITLE@", "Stride | Task management with git")
+        .replace("@SITE_NAME@", "Stride")
+        .replace("@HERO_TITLE@", "Task management that follows your repo.")
+        .replace(
+            "@HERO_TEXT@",
+            "Stride keeps tasks, project context, and git-backed history in one place so work stays local-first, searchable, and easy to sync.",
+        )
+        .replace("@PRIMARY_CTA@", "Open API reference")
+        .replace("@SECONDARY_CTA@", "Download")
 }
 
 fn render_page(docs: &[SchemaDoc]) -> String {
@@ -504,7 +523,7 @@ fn render_page(docs: &[SchemaDoc]) -> String {
         for doc in group_docs {
             let anchor = slugify(&doc.title);
             group_items.push_str(&format!(
-                "<li class=\"mb-1\" data-toc-item=\"{anchor}\"><a href=\"#{anchor}\" data-toc-link=\"{anchor}\" class=\"text-sky-700 hover:underline\">{}</a></li>",
+                "<li class=\"mb-1\" data-toc-item=\"{anchor}\"><a href=\"#{anchor}\" data-toc-link=\"{anchor}\" class=\"text-emerald-700 hover:underline dark:text-emerald-400\">{}</a></li>",
                 escape_html(&doc.title)
             ));
         }
@@ -538,7 +557,7 @@ fn render_page(docs: &[SchemaDoc]) -> String {
             String::new()
         } else {
             format!(
-                "<a href=\"{}\" class=\"break-all text-sky-700 hover:underline dark:text-sky-400\">schema</a>",
+                "<a href=\"{}\" class=\"break-all text-emerald-700 hover:underline dark:text-emerald-400\">schema</a>",
                 escape_html(&doc.id)
             )
         };
@@ -719,7 +738,7 @@ fn render_type_name_html(type_name: &str, type_anchor_lookup: &HashMap<String, S
     if let Some(anchor) = type_anchor_lookup.get(normalized) {
         let label = escape_html(normalized);
         let mut out = format!(
-            "<a href=\"#{}\" class=\"break-all text-sky-700 hover:underline dark:text-sky-400\">{}</a>",
+            "<a href=\"#{}\" class=\"break-all text-emerald-700 hover:underline dark:text-emerald-400\">{}</a>",
             escape_html(anchor),
             label,
         );
