@@ -363,7 +363,8 @@ fn render_enum(this: &EnumNode) -> String {
         };
 
         let variant_name = dart_variant_name(&variant.name);
-        lines.push(format!("  /// {value}"));
+        let description = variant.description.as_deref().unwrap_or(value);
+        lines.push(format!("  /// {description}"));
         if i + 1 != this.variants.len() {
             lines.push(format!("  @JsonValue({json_value}) {variant_name},"));
             continue;

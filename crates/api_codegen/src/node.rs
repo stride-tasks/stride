@@ -73,4 +73,5 @@ pub struct NotificationNode {
 pub struct EnumVariantNode {
     pub name: String,
     pub value: String,
+    pub description: Option<String>,
 }

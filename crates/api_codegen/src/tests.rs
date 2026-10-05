@@ -210,6 +210,49 @@ fn generates_dart_enum_variants_in_camel_case() {
 }
 
 #[test]
+fn parses_anyof_enum_variants_with_descriptions() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_anyof_enum_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("stride.ssh.key.format.schema.json"),
+        r#"{
+            "title": "SSH Key Format",
+            "description": "The type of SSH key used for authentication.",
+            "type": "string",
+            "anyOf": [
+                { "const": "ssh-rsa", "description": "RSA key format." },
+                { "const": "ssh-ed25519", "description": "Ed25519 key format." }
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    let nodes = parse(&dir).unwrap();
+    let enum_node = nodes
+        .iter()
+        .find_map(|node| match node {
+            Node::Type(TypeNode::Enum(node)) if node.name == "SshKeyFormat" => Some(node),
+            _ => None,
+        })
+        .unwrap();
+
+    let ssh_rsa = enum_node
+        .variants
+        .iter()
+        .find(|variant| variant.value == "ssh-rsa")
+        .unwrap();
+    assert_eq!(ssh_rsa.description.as_deref(), Some("RSA key format."));
+
+    let output = generate_dart(&dir).unwrap();
+    assert!(output.contains("/// RSA key format."));
+    assert!(output.contains("@JsonValue('ssh-rsa') sshRsa"));
+}
+
+#[test]
 fn generates_uuid_as_uuid_value_in_dart() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -150,6 +150,39 @@ fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
     }
 }
 
+fn enum_type_from_variants(
+    schema: &Schema,
+    fallback_name: &str,
+    variants: Vec<EnumVariantNode>,
+) -> TypeNode {
+    if variants.is_empty() {
+        return TypeNode::Primitive(PrimitiveType::String);
+    }
+
+    let mut doc = Vec::new();
+    if let Some(title) = &schema.title {
+        doc.push(title.clone());
+    }
+    if let Some(description) = &schema.description {
+        if !doc.is_empty() {
+            doc.push(String::new());
+        }
+        for line in description.split('\n') {
+            doc.push(line.to_owned());
+        }
+    }
+
+    let enum_node = EnumNode {
+        name: normalize_schema_name(fallback_name),
+        id: schema.id.clone().unwrap_or_default(),
+        doc,
+        description: schema.description.clone(),
+        variants,
+    };
+
+    TypeNode::Enum(enum_node)
+}
+
 #[allow(clippy::too_many_lines)]
 fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
     let concrete_type = match &schema.schema_type {
@@ -168,45 +201,47 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
         .unwrap_or_else(|| fallback_name.to_owned());
 
     match concrete_type {
-        SchemaConcreteType::String {
-            kind: SchemaString::Enum { enum_values },
-            ..
-        } => {
-            let enum_name = normalize_schema_name(fallback_name);
-
-            let variants = enum_values
-                .iter()
-                .map(|s| (enum_variant_name(s), s.clone()))
-                .map(|(name, value)| EnumVariantNode { name, value })
-                .collect::<Vec<_>>();
-
-            assert!(
-                !variants.is_empty(),
-                "Enum values are empty for schema: {schema:?}"
-            );
-
-            let mut doc = Vec::new();
-            if let Some(title) = &schema.title {
-                doc.push(title.clone());
+        SchemaConcreteType::String { kind, .. } => match kind {
+            SchemaString::Enum { enum_values } if !enum_values.is_empty() => {
+                enum_type_from_variants(
+                    schema,
+                    fallback_name,
+                    enum_values
+                        .iter()
+                        .map(|value| EnumVariantNode {
+                            name: enum_variant_name(value),
+                            value: value.clone(),
+                            description: None,
+                        })
+                        .collect(),
+                )
             }
-            if let Some(description) = &schema.description {
-                if !doc.is_empty() {
-                    doc.push(String::new());
-                }
-                for line in description.split('\n') {
-                    doc.push(line.to_owned());
+            SchemaString::Enum { .. } => {
+                TypeNode::Primitive(PrimitiveType::String)
+            }
+            SchemaString::AnyOf { any_of } if !any_of.is_empty() => {
+                enum_type_from_variants(
+                    schema,
+                    fallback_name,
+                    any_of
+                        .iter()
+                        .map(|variant| EnumVariantNode {
+                            name: enum_variant_name(&variant.const_value),
+                            value: variant.const_value.clone(),
+                            description: variant.description.clone(),
+                        })
+                        .collect(),
+                )
+            }
+            SchemaString::AnyOf { .. } => TypeNode::Primitive(PrimitiveType::String),
+            SchemaString::String { format } => {
+                if format.as_deref() == Some("uuid") {
+                    TypeNode::Primitive(PrimitiveType::Uuid)
+                } else {
+                    TypeNode::Primitive(PrimitiveType::String)
                 }
             }
-
-            let enum_node = EnumNode {
-                name: enum_name,
-                id: schema.id.clone().unwrap_or_default(),
-                doc,
-                description: schema.description.clone(),
-                variants,
-            };
-            TypeNode::Enum(enum_node)
-        }
+        },
         SchemaConcreteType::Array { items } => TypeNode::Array(Box::new(type_for_schema(
             items,
             &append_type_name(fallback_name, "Item"),
@@ -214,16 +249,6 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
         SchemaConcreteType::Boolean { .. } => TypeNode::Primitive(PrimitiveType::Boolean),
         SchemaConcreteType::Integer { .. } => TypeNode::Primitive(PrimitiveType::Integer),
         SchemaConcreteType::Number { .. } => TypeNode::Primitive(PrimitiveType::Number),
-        SchemaConcreteType::String {
-            kind: SchemaString::String { format },
-            ..
-        } => {
-            if format.as_deref() == Some("uuid") {
-                TypeNode::Primitive(PrimitiveType::Uuid)
-            } else {
-                TypeNode::Primitive(PrimitiveType::String)
-            }
-        }
         SchemaConcreteType::Null {} => TypeNode::Any,
         SchemaConcreteType::Object {
             properties,

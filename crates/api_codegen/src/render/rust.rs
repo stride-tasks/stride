@@ -96,6 +96,9 @@ fn render_enum(this: &EnumNode) -> String {
     );
     lines.push(format!("pub enum {} {{", this.name));
     for variant in &this.variants {
+        if let Some(description) = &variant.description {
+            lines.push(format!("    /// {description}"));
+        }
         lines.push(format!(
             "    #[serde(rename = \"{}\")]\n    {},",
             variant.value, variant.name
