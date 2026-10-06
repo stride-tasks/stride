@@ -66,7 +66,7 @@ struct CliNotifier;
 impl stride_engine::Notifier for CliNotifier {
     fn notify(
         &self,
-        context: Arc<Engine>,
+        context: &Arc<Engine>,
         notification: Box<dyn stride_engine::Notification>,
     ) -> stride_engine::Result<()> {
         let notification_any: &dyn std::any::Any = &*notification;
@@ -292,7 +292,7 @@ fn main() -> anyhow::Result<ExitCode> {
     database.apply_migrations()?;
 
     let notifier = Box::new(CliNotifier);
-    let engine = Engine::builder()
+    let engine = Engine::builder(known_paths)
         .notifier(notifier)
         .backend(GitBackend::handler())
         .command("ssh.host.add", SshHostAddHandler)
@@ -398,7 +398,7 @@ fn main() -> anyhow::Result<ExitCode> {
                         engine.backends().sync_all(
                             current_repository,
                             &mut database,
-                            &known_paths,
+                            &engine.known_paths(),
                             &engine,
                         )?;
                     }
@@ -593,20 +593,20 @@ fn main() -> anyhow::Result<ExitCode> {
         },
         Mode::Ssh { command } => match command {
             SshCommand::Key { command: None } => {
-                for key in SshKey::load_keys(&known_paths.ssh_keys)? {
+                for key in SshKey::load_keys(&engine.known_paths().ssh_keys)? {
                     println!("{} {}", key.id, key.public_key);
                 }
             }
             SshCommand::Key {
                 command: Some(SshKeyCommand::Generate),
             } => {
-                let key = SshKey::generate(&known_paths.ssh_keys)?;
+                let key = SshKey::generate(&engine.known_paths().ssh_keys)?;
                 println!("{} {}", key.id, key.public_key);
             }
             SshCommand::Key {
                 command: Some(SshKeyCommand::Remove { id }),
             } => {
-                SshKey::remove_key(&known_paths.ssh_keys, id)?;
+                SshKey::remove_key(&engine.known_paths().ssh_keys, id)?;
             }
             SshCommand::KnownHosts { command: None } => {
                 let hosts = KnownHosts::load()?;

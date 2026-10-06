@@ -2,10 +2,12 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 
 use stride_api as api;
 use stride_backend_git::{GitBackend, method::SshHostAddHandler};
+use stride_core::state::KnownPaths;
 use stride_engine::{Backend, Engine, Notifier};
 
 use crate::{
     ErrorKind, RustError,
+    api::settings::{application_cache_path, application_support_path},
     frb_generated::StreamSink,
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
@@ -19,7 +21,7 @@ struct FlutterNotifier;
 impl Notifier for FlutterNotifier {
     fn notify(
         &self,
-        _: Arc<Engine>,
+        _: &Arc<Engine>,
         notification: Box<dyn stride_engine::Notification>,
     ) -> stride_engine::Result<()> {
         let name = notification.name();
@@ -50,8 +52,9 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
         params: api::Value,
     }
 
+    let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
     let context = ENGINE.get_or_init(|| {
-        Engine::builder()
+        Engine::builder(known_paths)
             .notifier(Box::new(FlutterNotifier))
             .backend(GitBackend::handler())
             .command("repository.sync", RepositorySyncHandler)

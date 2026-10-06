@@ -1,3 +1,5 @@
+use stride_core::state::KnownPaths;
+
 use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
 };
@@ -6,8 +8,9 @@ use super::Engine;
 
 use std::sync::Arc;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct EngineBuilder {
+    known_paths: KnownPaths,
     notifier: Option<Box<dyn Notifier>>,
     commands: CommandRegistry,
     backends: BackendRegistry,
@@ -15,8 +18,13 @@ pub struct EngineBuilder {
 
 impl EngineBuilder {
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(known_paths: KnownPaths) -> Self {
+        Self {
+            known_paths,
+            notifier: None,
+            commands: CommandRegistry::default(),
+            backends: BackendRegistry::default(),
+        }
     }
 
     #[must_use]
@@ -47,6 +55,7 @@ impl EngineBuilder {
     #[must_use]
     pub fn build(self) -> Arc<Engine> {
         Arc::new(Engine {
+            known_paths: self.known_paths,
             notifier: self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
             commands: self.commands,
             backends: self.backends,

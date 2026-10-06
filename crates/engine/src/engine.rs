@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use stride_api as api;
+use stride_core::state::KnownPaths;
 
 use crate::{
     BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier, Result,
@@ -10,6 +11,7 @@ pub(super) mod builder;
 
 #[derive(Debug)]
 pub struct Engine {
+    known_paths: KnownPaths,
     notifier: Box<dyn Notifier>,
     commands: CommandRegistry,
     backends: BackendRegistry,
@@ -17,8 +19,9 @@ pub struct Engine {
 
 impl Engine {
     #[must_use]
-    pub fn new(notifier: Box<dyn Notifier>) -> Arc<Self> {
+    pub fn new(known_paths: KnownPaths, notifier: Box<dyn Notifier>) -> Arc<Self> {
         Arc::new(Self {
+            known_paths,
             notifier,
             commands: CommandRegistry::default(),
             backends: BackendRegistry::default(),
@@ -29,8 +32,8 @@ impl Engine {
 impl Engine {
     /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
     #[must_use]
-    pub fn builder() -> EngineBuilder {
-        EngineBuilder::new()
+    pub fn builder(known_paths: KnownPaths) -> EngineBuilder {
+        EngineBuilder::new(known_paths)
     }
 
     /// Notify user of an event with the given notification.
@@ -38,7 +41,7 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the notification could not be sent for any reason.
-    pub fn notify(self: Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
+    pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
         self.clone().notifier.notify(self, notification)
     }
 
@@ -47,7 +50,7 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the command could not be executed for any reason.
-    pub fn execute_erased(self: Arc<Self>, method: &str, args: api::Value) -> Result<api::Value> {
+    pub fn execute_erased(self: &Arc<Self>, method: &str, args: api::Value) -> Result<api::Value> {
         let handler = self
             .commands
             .get(method)
@@ -70,7 +73,7 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the method could not be executed for any reason.
-    pub fn execute<T: api::Method>(self: Arc<Self>, method: T) -> Result<T::Result> {
+    pub fn execute<T: api::Method>(self: &Arc<Self>, method: T) -> Result<T::Result> {
         let method_name = T::NAME;
 
         let params = api::Value::from_type(method);
@@ -78,6 +81,11 @@ impl Engine {
         let result_value = self.execute_erased(method_name, params)?;
         let result = api::Value::to_type::<T::Result>(&result_value).map_err(Error::Other)?;
         Ok(result)
+    }
+
+    /// Get the known paths for this engine instance.
+    pub fn known_paths(self: &Arc<Self>) -> &KnownPaths {
+        &self.known_paths
     }
 
     /// Get the descriptions of all available methods for this context.
