@@ -2,7 +2,7 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 
 use stride_api as api;
 use stride_backend_git::method::SshHostAddHandler;
-use stride_engine as engine;
+use stride_engine::{Engine, Notifier};
 
 use crate::{
     ErrorKind, RustError,
@@ -10,18 +10,18 @@ use crate::{
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 
-static STATE: OnceLock<Arc<dyn api::Context + Send + Sync>> = OnceLock::new();
+static STATE: OnceLock<Arc<Engine>> = OnceLock::new();
 static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex::default);
 
 #[derive(Debug)]
 struct FlutterNotifier;
 
-impl api::Notifier for FlutterNotifier {
+impl Notifier for FlutterNotifier {
     fn notify(
         &self,
-        _: Arc<dyn api::Context>,
-        notification: Box<dyn api::Notification>,
-    ) -> api::Result<()> {
+        _: Arc<Engine>,
+        notification: Box<dyn stride_engine::Notification>,
+    ) -> stride_engine::Result<()> {
         let name = notification.name();
         let value = notification.to_value();
         let map = serde_json::json!({
@@ -51,7 +51,7 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
     }
 
     let context = STATE.get_or_init(|| {
-        engine::Engine::builder()
+        Engine::builder()
             .notifier(Box::new(FlutterNotifier))
             .command("repository.sync", RepositorySyncHandler)
             .command("repository.tag.list", RepositoryTagListHandler)

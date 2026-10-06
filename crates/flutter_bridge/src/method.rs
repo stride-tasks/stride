@@ -1,18 +1,19 @@
 use crate::api::repository::Repository;
 use std::sync::Arc;
 use stride_api as api;
+use stride_engine::{Engine, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
-impl api::TypedCommandHandler for RepositorySyncHandler {
+impl TypedCommandHandler for RepositorySyncHandler {
     type Method = api::RepositorySyncMethod;
 
     fn handle(
         &self,
-        context: Arc<dyn api::Context>,
+        context: Arc<Engine>,
         method: Self::Method,
-    ) -> api::Result<api::RepositorySyncMethodResult> {
+    ) -> stride_engine::Result<api::RepositorySyncMethodResult> {
         let mut repository = Repository::open(method.id).map_err(Box::new)?;
         let changes = repository.sync(&context).map_err(Box::new)?;
 
@@ -27,14 +28,14 @@ impl api::TypedCommandHandler for RepositorySyncHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTagListHandler;
 
-impl api::TypedCommandHandler for RepositoryTagListHandler {
+impl TypedCommandHandler for RepositoryTagListHandler {
     type Method = api::RepositoryTagListMethod;
 
     fn handle(
         &self,
-        _: Arc<dyn api::Context>,
+        _: Arc<Engine>,
         method: Self::Method,
-    ) -> api::Result<api::RepositoryTagListMethodResult> {
+    ) -> stride_engine::Result<api::RepositoryTagListMethodResult> {
         let repository = Repository::open(method.id).map_err(Box::new)?;
         let tags = repository
             .database()
@@ -50,14 +51,14 @@ impl api::TypedCommandHandler for RepositoryTagListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryProjectListHandler;
 
-impl api::TypedCommandHandler for RepositoryProjectListHandler {
+impl TypedCommandHandler for RepositoryProjectListHandler {
     type Method = api::RepositoryProjectListMethod;
 
     fn handle(
         &self,
-        _: Arc<dyn api::Context>,
+        _: Arc<Engine>,
         method: Self::Method,
-    ) -> api::Result<api::RepositoryProjectListMethodResult> {
+    ) -> stride_engine::Result<api::RepositoryProjectListMethodResult> {
         let repository = Repository::open(method.id).map_err(Box::new)?;
         let projects = repository
             .database()

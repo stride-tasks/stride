@@ -1,7 +1,5 @@
 use flutter_rust_bridge::frb;
-use stride_backend::Error as BackendError;
 use stride_backend_git::{
-    Error as GitBackendError,
     known_hosts::{Host, KnownHostsError},
     ssh_key::SshError,
 };
@@ -78,8 +76,6 @@ pub enum ErrorKind {
     Plugin(#[from] PluginError),
     #[error("database error: {0}")]
     Database(#[from] DatabaseError),
-    #[error("backend error: {0}")]
-    Backend(#[from] BackendError),
     #[error("ssh error: {0}")]
     Ssh(#[from] SshError),
     #[error("other error: {message}")]
@@ -104,16 +100,8 @@ impl RustError {
     #[frb(sync)]
     #[must_use]
     pub fn as_unknown_host(&self) -> Option<Host> {
-        let ErrorKind::Backend(backend) = self.repr.as_ref() else {
-            return None;
-        };
-
-        let GitBackendError::UnknownHost { host } = &backend.downcast_ref::<GitBackendError>()?
-        else {
-            return None;
-        };
-
-        Some(host.clone())
+        // TODO: Remove this function.
+        None
     }
 
     #[frb(sync)]

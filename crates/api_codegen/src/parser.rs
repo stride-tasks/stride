@@ -216,23 +216,19 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                         .collect(),
                 )
             }
-            SchemaString::Enum { .. } => {
-                TypeNode::Primitive(PrimitiveType::String)
-            }
-            SchemaString::AnyOf { any_of } if !any_of.is_empty() => {
-                enum_type_from_variants(
-                    schema,
-                    fallback_name,
-                    any_of
-                        .iter()
-                        .map(|variant| EnumVariantNode {
-                            name: enum_variant_name(&variant.const_value),
-                            value: variant.const_value.clone(),
-                            description: variant.description.clone(),
-                        })
-                        .collect(),
-                )
-            }
+            SchemaString::Enum { .. } => TypeNode::Primitive(PrimitiveType::String),
+            SchemaString::AnyOf { any_of } if !any_of.is_empty() => enum_type_from_variants(
+                schema,
+                fallback_name,
+                any_of
+                    .iter()
+                    .map(|variant| EnumVariantNode {
+                        name: enum_variant_name(&variant.const_value),
+                        value: variant.const_value.clone(),
+                        description: variant.description.clone(),
+                    })
+                    .collect(),
+            ),
             SchemaString::AnyOf { .. } => TypeNode::Primitive(PrimitiveType::String),
             SchemaString::String { format } => {
                 if format.as_deref() == Some("uuid") {

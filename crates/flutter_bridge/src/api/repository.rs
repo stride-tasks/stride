@@ -6,8 +6,7 @@ use std::{
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use stride_api::{Context, TaskChange};
-use stride_backend::{Backend, registry::Registry};
+use stride_api::TaskChange;
 use stride_backend_git::GitBackend;
 use stride_core::{
     backend::{BackendRecord as CoreBackendRecord, Config},
@@ -20,10 +19,11 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
+use stride_engine::{Backend, BackendRegistry, Engine};
 use uuid::Uuid;
 
 use crate::{
-    RustError,
+    ErrorKind, RustError,
     api::{
         filter::Filter,
         settings::{application_cache_path, application_support_path},
@@ -37,7 +37,7 @@ pub struct Repository {
     pub(crate) root_path: PathBuf,
     pub(crate) db: Mutex<Database>,
 
-    pub(crate) backend_registry: Registry,
+    pub(crate) backend_registry: BackendRegistry,
 }
 
 impl Repository {
@@ -55,7 +55,7 @@ impl Repository {
             .map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
 
-        let mut backend_registry = Registry::new();
+        let mut backend_registry = BackendRegistry::new();
         backend_registry.insert(GitBackend::handler());
         Ok(Self {
             uuid,
@@ -137,10 +137,7 @@ impl Repository {
         Ok(self.db.lock().unwrap().task_query(query)?)
     }
 
-    pub(crate) fn sync(
-        &mut self,
-        context: &Arc<dyn Context>,
-    ) -> Result<Vec<TaskChange>, stride_backend::Error> {
+    pub(crate) fn sync(&mut self, context: &Arc<Engine>) -> stride_engine::Result<Vec<TaskChange>> {
         let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
 
         let db = self.db.get_mut().unwrap();
@@ -206,7 +203,11 @@ impl Repository {
     }
 
     pub fn add_backend(&self, name: &str) -> Result<(), RustError> {
-        let handler = self.backend_registry.get_or_error(name)?;
+        let handler = self.backend_registry.get_or_error(name).map_err(|e| {
+            RustError::from(ErrorKind::Other {
+                message: e.to_string().into_boxed_str(),
+            })
+        })?;
         let name = handler.name();
         self.database()
             .lock()

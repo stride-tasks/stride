@@ -9,7 +9,6 @@ use std::{
     sync::Arc,
 };
 use stride_api as api;
-use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
 };
@@ -23,7 +22,7 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::Engine;
+use stride_engine::{Backend, BackendRegistry, Engine};
 use stride_flutter_bridge::{
     api::settings::{ApplicationPaths, RepositorySpecification, Settings},
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
@@ -64,12 +63,12 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
 #[derive(Debug, Clone, Copy)]
 struct CliNotifier;
 
-impl api::Notifier for CliNotifier {
+impl stride_engine::Notifier for CliNotifier {
     fn notify(
         &self,
-        context: Arc<dyn api::Context>,
-        notification: Box<dyn api::Notification>,
-    ) -> api::Result<()> {
+        context: Arc<Engine>,
+        notification: Box<dyn stride_engine::Notification>,
+    ) -> stride_engine::Result<()> {
         let notification_any: &dyn std::any::Any = &*notification;
         if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
             let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
@@ -292,11 +291,11 @@ fn main() -> anyhow::Result<ExitCode> {
     let mut database = Database::open(&database_filepath, actor_id, clock)?;
     database.apply_migrations()?;
 
-    let mut backend_registry = Registry::new();
+    let mut backend_registry = BackendRegistry::new();
     backend_registry.insert(GitBackend::handler());
 
     let notifier = Box::new(CliNotifier);
-    let engine: Arc<dyn api::Context> = Engine::builder()
+    let engine = Engine::builder()
         .notifier(notifier)
         .command("ssh.host.add", SshHostAddHandler)
         .command("repository.sync", RepositorySyncHandler)

@@ -120,40 +120,13 @@ fn render_method(this: &MethodNode) -> String {
 fn render_notification(this: &NotificationNode) -> String {
     let mut lines = String::new();
 
-    writeln!(lines, "impl {} {{", this.name).unwrap();
+    writeln!(lines, "impl Notification for {} {{", this.name).unwrap();
     writeln!(
         lines,
-        "    pub const NAME: &'static str = \"{}\";",
+        "    const NAME: &'static str = \"{}\";",
         this.method_name
     )
     .unwrap();
-    writeln!(lines, "}}").unwrap();
-
-    lines.push('\n');
-
-    writeln!(lines, "impl Notification for {} {{", this.name).unwrap();
-    writeln!(lines, "    fn name(&self) -> &'static str {{").unwrap();
-    writeln!(lines, "        \"{}\"", this.method_name).unwrap();
-    writeln!(lines, "    }}").unwrap();
-    writeln!(lines, "    fn to_value(&self) -> Value {{").unwrap();
-    writeln!(
-        lines,
-        "        let value = serde_json::to_value(self).expect(\"Failed to serialize to JSON\");"
-    )
-    .unwrap();
-    writeln!(
-        lines,
-        "        serde_json::from_value(value).expect(\"Failed to deserialize from JSON\")"
-    )
-    .unwrap();
-    writeln!(lines, "    }}").unwrap();
-    writeln!(lines, "    fn from_value(value: Value) -> Result<Self>").unwrap();
-    writeln!(lines, "    where").unwrap();
-    writeln!(lines, "        Self: Sized,").unwrap();
-    writeln!(lines, "    {{").unwrap();
-    writeln!(lines, "        let value = serde_json::to_value(value)?;").unwrap();
-    writeln!(lines, "        Ok(serde_json::from_value(value)?)").unwrap();
-    writeln!(lines, "    }}").unwrap();
     writeln!(lines, "}}").unwrap();
     lines
 }

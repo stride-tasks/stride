@@ -1,19 +1,18 @@
 use std::{collections::HashMap, sync::Arc};
 
-use stride_api::Context;
 use stride_core::state::KnownPaths;
 use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
 
-use crate::{BackendHandler, Error};
+use crate::{BackendHandler, Engine, Error};
 
 #[derive(Debug, Default)]
-pub struct Registry {
+pub struct BackendRegistry {
     map: HashMap<Box<str>, Box<dyn BackendHandler>>,
 }
 
-impl Registry {
+impl BackendRegistry {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -46,7 +45,7 @@ impl Registry {
         repository_id: Uuid,
         database: &mut Database,
         known_paths: &KnownPaths,
-        context: &Arc<dyn Context>,
+        context: &Arc<Engine>,
     ) -> Result<VersionDifference, Error> {
         let backends = database.backends()?;
         let mut combined_diff = VersionDifference::default();

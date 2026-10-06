@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 
-use stride_backend::{Backend, BackendHandler};
 use stride_core::{
     backend::{Config, Schema, SchemaValue},
     state::KnownPaths,
 };
+use stride_engine::{Backend, BackendHandler};
 
-use crate::{Error, GitBackend};
+use crate::GitBackend;
 
 use super::ssh_key::SshKey;
 
@@ -76,7 +76,7 @@ impl BackendHandler for Handler {
         config: &Config,
         path: &Path,
         known_paths: &KnownPaths,
-    ) -> stride_backend::Result<Box<dyn Backend>> {
+    ) -> stride_engine::Result<Box<dyn Backend>> {
         let schema = self.config_schema();
         let config = config.align(&schema)?.fill(&schema)?;
 
@@ -89,11 +89,11 @@ impl BackendHandler for Handler {
             encryption_key: config.bytes_value("encryption_key")?.into(),
             ssh_key: {
                 let id = config.uuid_value("ssh_key")?;
-                SshKey::load_key(id, &known_paths.ssh_keys).map_err(Error::from)?
+                SshKey::load_key(id, &known_paths.ssh_keys).map_err(Box::new)?
             },
         };
 
-        Ok(Box::new(GitBackend::new(config)?))
+        Ok(Box::new(GitBackend::new(config).map_err(Box::new)?))
     }
 }
 
