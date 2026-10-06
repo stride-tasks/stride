@@ -22,7 +22,7 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::{Backend, BackendRegistry, Engine};
+use stride_engine::{Backend, Engine};
 use stride_flutter_bridge::{
     api::settings::{ApplicationPaths, RepositorySpecification, Settings},
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
@@ -291,12 +291,10 @@ fn main() -> anyhow::Result<ExitCode> {
     let mut database = Database::open(&database_filepath, actor_id, clock)?;
     database.apply_migrations()?;
 
-    let mut backend_registry = BackendRegistry::new();
-    backend_registry.insert(GitBackend::handler());
-
     let notifier = Box::new(CliNotifier);
     let engine = Engine::builder()
         .notifier(notifier)
+        .backend(GitBackend::handler())
         .command("ssh.host.add", SshHostAddHandler)
         .command("repository.sync", RepositorySyncHandler)
         .command("repository.tag.list", RepositoryTagListHandler)
@@ -397,7 +395,7 @@ fn main() -> anyhow::Result<ExitCode> {
                         transaction.commit()?;
                     }
                     PluginEvent::TaskSync => {
-                        backend_registry.sync_all(
+                        engine.backends().sync_all(
                             current_repository,
                             &mut database,
                             &known_paths,
@@ -576,7 +574,7 @@ fn main() -> anyhow::Result<ExitCode> {
             Settings::save(settings)?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), &backend_registry, &mut database)?;
+            backend::handle_command(command.as_ref(), &engine.backends(), &mut database)?;
         }
         Mode::Plugin { command } => match command {
             None => {

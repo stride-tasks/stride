@@ -1,4 +1,6 @@
-use crate::{CommandHandler, CommandRegistry, NoopNotifier, Notifier};
+use crate::{
+    BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
+};
 
 use super::Engine;
 
@@ -8,6 +10,7 @@ use std::sync::Arc;
 pub struct EngineBuilder {
     notifier: Option<Box<dyn Notifier>>,
     commands: CommandRegistry,
+    backends: BackendRegistry,
 }
 
 impl EngineBuilder {
@@ -33,10 +36,20 @@ impl EngineBuilder {
     }
 
     #[must_use]
+    pub fn backend<T>(mut self, backend: T) -> Self
+    where
+        T: Into<Box<dyn BackendHandler + 'static>>,
+    {
+        self.backends.insert(backend.into());
+        self
+    }
+
+    #[must_use]
     pub fn build(self) -> Arc<Engine> {
         Arc::new(Engine {
             notifier: self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
             commands: self.commands,
+            backends: self.backends,
         })
     }
 }

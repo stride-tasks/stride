@@ -19,12 +19,13 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::{Backend, BackendRegistry, Engine};
+use stride_engine::{Backend, Engine};
 use uuid::Uuid;
 
 use crate::{
     ErrorKind, RustError,
     api::{
+        context::ENGINE,
         filter::Filter,
         settings::{application_cache_path, application_support_path},
     },
@@ -36,8 +37,6 @@ pub struct Repository {
     uuid: Uuid,
     pub(crate) root_path: PathBuf,
     pub(crate) db: Mutex<Database>,
-
-    pub(crate) backend_registry: BackendRegistry,
 }
 
 impl Repository {
@@ -55,13 +54,10 @@ impl Repository {
             .map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
 
-        let mut backend_registry = BackendRegistry::new();
-        backend_registry.insert(GitBackend::handler());
         Ok(Self {
             uuid,
             db: db.into(),
             root_path,
-            backend_registry,
         })
     }
 
@@ -141,8 +137,9 @@ impl Repository {
         let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
 
         let db = self.db.get_mut().unwrap();
-        let diff = self
-            .backend_registry
+        let diff = ENGINE
+            .wait()
+            .backends()
             .sync_all(self.uuid, db, &known_paths, context)?;
 
         Ok(db.transaction()?.task_changes_from_diff(&diff)?)
@@ -203,7 +200,7 @@ impl Repository {
     }
 
     pub fn add_backend(&self, name: &str) -> Result<(), RustError> {
-        let handler = self.backend_registry.get_or_error(name).map_err(|e| {
+        let handler = ENGINE.wait().backends().get_or_error(name).map_err(|e| {
             RustError::from(ErrorKind::Other {
                 message: e.to_string().into_boxed_str(),
             })
@@ -236,7 +233,7 @@ impl Repository {
     }
 
     pub fn backend_names(&self) -> Vec<String> {
-        self.backend_registry.keys().map(Into::into).collect()
+        ENGINE.wait().backends().keys().map(Into::into).collect()
     }
 }
 

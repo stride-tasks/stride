@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use stride_api as api;
 
-use crate::{CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier, Result};
+use crate::{
+    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier, Result,
+};
 
 pub(super) mod builder;
 
@@ -10,6 +12,7 @@ pub(super) mod builder;
 pub struct Engine {
     notifier: Box<dyn Notifier>,
     commands: CommandRegistry,
+    backends: BackendRegistry,
 }
 
 impl Engine {
@@ -18,6 +21,7 @@ impl Engine {
         Arc::new(Self {
             notifier,
             commands: CommandRegistry::default(),
+            backends: BackendRegistry::default(),
         })
     }
 }
@@ -36,16 +40,6 @@ impl Engine {
     /// Returns an error if the notification could not be sent for any reason.
     pub fn notify(self: Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
         self.clone().notifier.notify(self, notification)
-    }
-
-    /// Get the descriptions of all available methods for this context.
-    pub fn method_descriptions(self: Arc<Self>) -> Vec<CommandDescription> {
-        self.commands
-            .iter()
-            .map(|(method, _handler)| CommandDescription {
-                name: method.into(),
-            })
-            .collect()
     }
 
     /// Execute a command with the given method and arguments.
@@ -84,6 +78,20 @@ impl Engine {
         let result_value = self.execute_erased(method_name, params)?;
         let result = api::Value::to_type::<T::Result>(&result_value).map_err(Error::Other)?;
         Ok(result)
+    }
+
+    /// Get the descriptions of all available methods for this context.
+    pub fn method_descriptions(self: Arc<Self>) -> Vec<CommandDescription> {
+        self.commands
+            .iter()
+            .map(|(method, _handler)| CommandDescription {
+                name: method.into(),
+            })
+            .collect()
+    }
+
+    pub fn backends(self: &Arc<Self>) -> &BackendRegistry {
+        &self.backends
     }
 }
 

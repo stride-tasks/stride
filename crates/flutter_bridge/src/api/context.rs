@@ -1,8 +1,8 @@
 use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 
 use stride_api as api;
-use stride_backend_git::method::SshHostAddHandler;
-use stride_engine::{Engine, Notifier};
+use stride_backend_git::{GitBackend, method::SshHostAddHandler};
+use stride_engine::{Backend, Engine, Notifier};
 
 use crate::{
     ErrorKind, RustError,
@@ -10,7 +10,7 @@ use crate::{
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 
-static STATE: OnceLock<Arc<Engine>> = OnceLock::new();
+pub(crate) static ENGINE: OnceLock<Arc<Engine>> = OnceLock::new();
 static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex::default);
 
 #[derive(Debug)]
@@ -50,9 +50,10 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
         params: api::Value,
     }
 
-    let context = STATE.get_or_init(|| {
+    let context = ENGINE.get_or_init(|| {
         Engine::builder()
             .notifier(Box::new(FlutterNotifier))
+            .backend(GitBackend::handler())
             .command("repository.sync", RepositorySyncHandler)
             .command("repository.tag.list", RepositoryTagListHandler)
             .command("repository.project.list", RepositoryProjectListHandler)
