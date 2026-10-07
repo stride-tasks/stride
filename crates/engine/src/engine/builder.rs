@@ -6,7 +6,7 @@ use crate::{
 
 use super::Engine;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 #[derive(Debug)]
 pub struct EngineBuilder {
@@ -59,6 +59,7 @@ impl EngineBuilder {
             notifier: self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
             commands: self.commands,
             backends: self.backends,
+            repositories: std::sync::Mutex::new(super::Cache::new(Duration::from_secs(60))),
         })
     }
 }

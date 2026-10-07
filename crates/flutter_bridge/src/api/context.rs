@@ -3,13 +3,15 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 use stride_api as api;
 use stride_backend_git::{GitBackend, method::SshHostAddHandler};
 use stride_core::state::KnownPaths;
-use stride_engine::{Backend, Engine, Notifier};
+use stride_engine::{
+    Backend, Engine, Notifier,
+    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
+};
 
 use crate::{
     ErrorKind, RustError,
     api::settings::{application_cache_path, application_support_path},
     frb_generated::StreamSink,
-    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
 
 pub(crate) static ENGINE: OnceLock<Arc<Engine>> = OnceLock::new();

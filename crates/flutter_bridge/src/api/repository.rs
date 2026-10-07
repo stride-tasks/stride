@@ -6,12 +6,10 @@ use std::{
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use stride_api::TaskChange;
 use stride_backend_git::GitBackend;
 use stride_core::{
     backend::{BackendRecord as CoreBackendRecord, Config},
     event::TaskQuery,
-    state::KnownPaths,
     task::{Task, TaskStatus},
 };
 use stride_crdt::{
@@ -19,22 +17,17 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::{Backend, Engine};
+use stride_engine::Backend;
 use uuid::Uuid;
 
 use crate::{
     ErrorKind, RustError,
-    api::{
-        context::ENGINE,
-        filter::Filter,
-        settings::{application_cache_path, application_support_path},
-    },
+    api::{context::ENGINE, filter::Filter, settings::application_support_path},
 };
 
 #[frb(opaque)]
 #[derive(Debug)]
 pub struct Repository {
-    uuid: Uuid,
     pub(crate) root_path: PathBuf,
     pub(crate) db: Mutex<Database>,
 }
@@ -55,7 +48,6 @@ impl Repository {
         db.apply_migrations()?;
 
         Ok(Self {
-            uuid,
             db: db.into(),
             root_path,
         })
@@ -131,18 +123,6 @@ impl Repository {
     pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>, RustError> {
         self.db.clear_poison();
         Ok(self.db.lock().unwrap().task_query(query)?)
-    }
-
-    pub(crate) fn sync(&mut self, context: &Arc<Engine>) -> stride_engine::Result<Vec<TaskChange>> {
-        let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
-
-        let db = self.db.get_mut().unwrap();
-        let diff = ENGINE
-            .wait()
-            .backends()
-            .sync_all(self.uuid, db, &known_paths, context)?;
-
-        Ok(db.transaction()?.task_changes_from_diff(&diff)?)
     }
 
     pub fn undo(&self) -> Result<(), RustError> {

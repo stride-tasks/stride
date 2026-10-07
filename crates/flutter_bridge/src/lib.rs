@@ -8,7 +8,6 @@
 #![allow(clippy::doc_markdown)]
 
 pub mod api;
-pub mod method;
 
 pub use api::error::{ErrorKind, RustError};
 

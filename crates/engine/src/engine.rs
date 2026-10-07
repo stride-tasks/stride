@@ -1,10 +1,15 @@
-use std::sync::Arc;
+use std::{
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
 
 use stride_api as api;
 use stride_core::state::KnownPaths;
+use uuid::Uuid;
 
 use crate::{
-    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier, Result,
+    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier,
+    Repository, Result, cache::Cache,
 };
 
 pub(super) mod builder;
@@ -15,6 +20,7 @@ pub struct Engine {
     notifier: Box<dyn Notifier>,
     commands: CommandRegistry,
     backends: BackendRegistry,
+    repositories: Mutex<Cache<Repository>>,
 }
 
 impl Engine {
@@ -25,6 +31,7 @@ impl Engine {
             notifier,
             commands: CommandRegistry::default(),
             backends: BackendRegistry::default(),
+            repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
         })
     }
 }
@@ -43,6 +50,31 @@ impl Engine {
     /// Returns an error if the notification could not be sent for any reason.
     pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
         self.clone().notifier.notify(self, notification)
+    }
+
+    /// Open a repository instance and cache it for one minute of inactivity.
+    ///
+    /// The cache keeps using the same [`Arc`] while a caller still has a strong reference.
+    /// Expired entries are evicted in FIFO order once they are no longer referenced.
+    pub fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
+        let mut repositories = self.repositories.lock().unwrap();
+        let now = Instant::now();
+
+        if let Some(entry) = repositories.get_mut(id) {
+            entry.last_used = now;
+            let repository = entry.value.clone();
+
+            repositories.evict_expired(now);
+            return Ok(repository);
+        }
+
+        repositories.evict_expired(now);
+
+        let repository = Repository::open(id, self.known_paths())?;
+        let repository = Arc::new(repository);
+
+        repositories.insert(id, repository.clone());
+        Ok(repository)
     }
 
     /// Execute a command with the given method and arguments.

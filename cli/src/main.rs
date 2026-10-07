@@ -22,11 +22,11 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::{Backend, Engine};
-use stride_flutter_bridge::{
-    api::settings::{ApplicationPaths, RepositorySpecification, Settings},
+use stride_engine::{
+    Backend, Engine,
     method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
 };
+use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use uuid::Uuid;
