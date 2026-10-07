@@ -3,10 +3,7 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 use stride_api as api;
 use stride_backend_git::{GitBackend, method::SshHostAddHandler};
 use stride_core::state::KnownPaths;
-use stride_engine::{
-    Backend, Engine, Notifier,
-    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
-};
+use stride_engine::{Backend, Engine, Notifier};
 
 use crate::{
     ErrorKind, RustError,
@@ -58,10 +55,8 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
     let context = ENGINE.get_or_init(|| {
         Engine::builder(known_paths)
             .notifier(Box::new(FlutterNotifier))
+            .insert_default_methods()
             .backend(GitBackend::handler())
-            .command("repository.sync", RepositorySyncHandler)
-            .command("repository.tag.list", RepositoryTagListHandler)
-            .command("repository.project.list", RepositoryProjectListHandler)
             .command("ssh.host.add", SshHostAddHandler)
             .build()
     });
