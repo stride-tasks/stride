@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/backend/config_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -22,14 +24,14 @@ class _BackendListRouteState extends State<BackendListRoute> {
   );
 
   Future<List<BackendRecord>>? _backends;
-  Future<List<String>>? _backendNames;
+  Future<BackendListMethodResult>? _backendDescriptors;
 
   @override
   void initState() {
     super.initState();
 
     _backends = widget.repository.backends();
-    _backendNames = widget.repository.backendNames();
+    _backendDescriptors = RustContext.execute(BackendListMethod());
   }
 
   @override
@@ -112,13 +114,13 @@ class _BackendListRouteState extends State<BackendListRoute> {
         },
       ),
       floatingActionButton: FutureBuilder(
-        future: _backendNames,
+        future: _backendDescriptors,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return Center();
           }
 
-          final names = snapshot.data!;
+          final result = snapshot.data!;
           return FloatingActionButton(
             shape: const CircleBorder(),
             onPressed: () async {
@@ -126,16 +128,18 @@ class _BackendListRouteState extends State<BackendListRoute> {
                 context: context,
                 builder: (context) {
                   return ListView.builder(
-                    itemCount: names.length,
+                    itemCount: result.backends.length,
                     itemBuilder: (context, index) {
-                      final name = names[index];
+                      final name = result.backends[index].name;
                       return ListTile(
                         title: Text(name),
                         onTap: () async {
                           await widget.repository.addBackend(name: name);
                           setState(() {
                             _backends = widget.repository.backends();
-                            _backendNames = widget.repository.backendNames();
+                            _backendDescriptors = RustContext.execute(
+                              BackendListMethod(),
+                            );
                           });
                         },
                       );
