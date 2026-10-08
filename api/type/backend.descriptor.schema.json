@@ -1,0 +1,23 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/backend.descriptor.schema.json",
+	"title": "backend.descriptor",
+	"type": "object",
+	"required": [
+		"name",
+		"schema"
+	],
+	"properties": {
+		"name": {
+			"type": "string",
+			"description": "The unique name of the backend.",
+			"examples": [
+				"git"
+			]
+		},
+		"schema": {
+			"type": "string",
+			"description": "The schema of the backend."
+		}
+	}
+}
