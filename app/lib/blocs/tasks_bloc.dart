@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
@@ -14,6 +15,7 @@ import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_core/task.dart';
+import 'package:stride/context.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
 
@@ -178,7 +180,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskRemoveRepositoryEvent>((event, emit) async {
-      await Repository.remove(uuid: event.uuid);
+      await RepositoryRemoveMethod(repositoryId: event.uuid).execute();
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
