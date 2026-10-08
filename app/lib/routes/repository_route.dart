@@ -74,8 +74,10 @@ class RepositoryRoute extends StatelessWidget {
                   SettingsTileNavigation(
                     leading: const Icon(Icons.backup),
                     title: const Text('Backends'),
-                    builder: (context) =>
-                        BackendListRoute(repository: repository),
+                    builder: (context) => BackendListRoute(
+                      repository: repository,
+                      repositoryUuid: repositorySpec.uuid,
+                    ),
                   ),
                 ],
               ),

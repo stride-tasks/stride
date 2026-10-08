@@ -7,10 +7,16 @@ import 'package:stride/context.dart';
 import 'package:stride/routes/backend/config_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
+import 'package:uuid/uuid.dart';
 
 class BackendListRoute extends StatefulWidget {
   final Repository repository;
-  const BackendListRoute({super.key, required this.repository});
+  final UuidValue repositoryUuid;
+  const BackendListRoute({
+    super.key,
+    required this.repository,
+    required this.repositoryUuid,
+  });
 
   @override
   State<BackendListRoute> createState() => _BackendListRouteState();
@@ -73,9 +79,10 @@ class _BackendListRouteState extends State<BackendListRoute> {
                             ],
                           ),
                           onConfirm: (context) async {
-                            await widget.repository.deleteBackend(
-                              id: backend.id,
-                            );
+                            await RepositoryBackendRemoveMethod(
+                              repositoryId: widget.repositoryUuid,
+                              backendId: backend.id,
+                            ).execute();
                             setState(() {
                               _backends = widget.repository.backends();
                             });
@@ -134,7 +141,10 @@ class _BackendListRouteState extends State<BackendListRoute> {
                       return ListTile(
                         title: Text(name),
                         onTap: () async {
-                          await widget.repository.addBackend(name: name);
+                          await RepositoryBackendAddMethod(
+                            repositoryId: widget.repositoryUuid,
+                            backend: name,
+                          ).execute();
                           setState(() {
                             _backends = widget.repository.backends();
                             _backendDescriptors = BackendListMethod().execute();
