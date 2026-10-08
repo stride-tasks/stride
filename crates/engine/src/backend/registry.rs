@@ -40,6 +40,10 @@ impl BackendRegistry {
         self.map.keys().map(Box::as_ref)
     }
 
+    pub fn values(&self) -> impl Iterator<Item = &dyn BackendHandler> {
+        self.map.values().map(Box::as_ref)
+    }
+
     pub fn sync_all(
         &self,
         repository_id: Uuid,
