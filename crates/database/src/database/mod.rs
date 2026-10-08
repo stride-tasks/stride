@@ -550,8 +550,9 @@ impl Database {
         Ok(projects)
     }
 
-    pub fn toggle_backend(&mut self, id: Uuid) -> Result<()> {
-        self.connection.execute(
+    pub fn toggle_backend(&mut self, id: Uuid) -> Result<bool> {
+        let transaction = self.connection.transaction()?;
+        transaction.execute(
             indoc! {"
                 UPDATE backend_table
                 SET
@@ -561,7 +562,14 @@ impl Database {
             "},
             (id.as_bytes(),),
         )?;
-        Ok(())
+
+        let new_state = transaction.query_row(
+            "SELECT enabled FROM backend_table WHERE id = ?1",
+            (id.as_bytes(),),
+            |row| row.get::<_, bool>("enabled"),
+        )?;
+        transaction.commit()?;
+        Ok(new_state)
     }
 
     pub fn update_backend(&mut self, backend: &BackendRecord) -> Result<()> {
