@@ -53,6 +53,26 @@ impl TypedCommandHandler for RepositoryBackendRemoveHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendToggleHandler;
+
+impl TypedCommandHandler for RepositoryBackendToggleHandler {
+    type Method = crate::api::RepositoryBackendToggleMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendToggleMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let new_state = repository
+            .lock_database()
+            .toggle_backend(method.backend_id)?;
+
+        Ok(crate::api::RepositoryBackendToggleMethodResult { state: new_state })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
 impl TypedCommandHandler for RepositorySyncHandler {
