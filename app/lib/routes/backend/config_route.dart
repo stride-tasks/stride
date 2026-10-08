@@ -6,9 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/context.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -276,11 +278,13 @@ Uint8List generateCryptoRandomBytes(int length) {
 
 class BackendConfigRoute extends StatefulWidget {
   final Repository repository;
+  final UuidValue repositoryId;
   final UuidValue backendId;
   const BackendConfigRoute({
     super.key,
     required this.repository,
     required this.backendId,
+    required this.repositoryId,
   });
 
   @override
@@ -311,7 +315,11 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
         final record = snapshot.data!;
         return Scaffold(
           appBar: AppBar(title: Text(record.name)),
-          body: _ConfigSection(repository: widget.repository, record: record),
+          body: _ConfigSection(
+            repository: widget.repository,
+            repositoryId: widget.repositoryId,
+            record: record,
+          ),
         );
       },
     );
@@ -320,8 +328,13 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
 
 class _ConfigSection extends StatefulWidget {
   final Repository repository;
+  final UuidValue repositoryId;
   final BackendRecord record;
-  const _ConfigSection({required this.record, required this.repository});
+  const _ConfigSection({
+    required this.record,
+    required this.repository,
+    required this.repositoryId,
+  });
 
   @override
   State<_ConfigSection> createState() => _ConfigSectionState();
@@ -561,13 +574,16 @@ class _ConfigSectionState extends State<_ConfigSection> {
 
   Future<void> _save() async {
     final json = _config.toJson();
-    final backend = BackendRecord(
+    final backend = BackendInstance(
       id: widget.record.id,
       name: widget.record.name,
-      enabled: widget.record.enabled,
-      schema: '',
-      config: jsonEncode(json),
+      state: widget.record.enabled ? .enabled : .disabled,
+      configuration: json,
     );
-    return widget.repository.updateBackend(backend: backend);
+
+    await RepositoryBackendUpdateMethod(
+      repositoryId: widget.repositoryId,
+      backendInstance: backend,
+    ).execute();
   }
 }
