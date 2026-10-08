@@ -83,6 +83,20 @@ impl Engine {
         Ok(repository)
     }
 
+    /// Remove a repository and its associated data from the engine and the filesystem.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the repository could not be removed for any reason.
+    pub fn remove_repository(self: &Arc<Self>, id: Uuid) -> Result<()> {
+        let mut repositories = self.lock_repositories();
+        repositories.remove(id);
+
+        let root_path = self.known_paths().repository_path(id);
+        std::fs::remove_dir_all(&root_path)?;
+        Ok(())
+    }
+
     /// Execute a command with the given method and arguments.
     ///
     /// # Errors
