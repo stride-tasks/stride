@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/backend.instance.state.schema.json",
+    "type": "string",
+    "anyOf": [
+        {
+            "const": "enabled",
+            "description": "The backend is currently enabled and is being used for syncing."
+        },
+        {
+            "const": "disabled",
+            "description": "The backend is currently disabled and is not being used for syncing."
+        }
+    ]
+}
