@@ -3,7 +3,7 @@ use std::sync::Arc;
 use stride_core::backend::{BackendRecord, Config};
 use uuid::Uuid;
 
-use crate::{Engine, Result, TypedCommandHandler};
+use crate::{Engine, Error, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendAddHandler;
@@ -69,6 +69,35 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
             .toggle_backend(method.backend_id)?;
 
         Ok(crate::api::RepositoryBackendToggleMethodResult { state: new_state })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendUpdateHandler;
+
+impl TypedCommandHandler for RepositoryBackendUpdateHandler {
+    type Method = crate::api::RepositoryBackendUpdateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendUpdateMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        repository
+            .lock_database()
+            .update_backend(dbg!(&BackendRecord {
+                id: method.backend_instance.id,
+                name: method.backend_instance.name,
+                enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
+                config: method
+                    .backend_instance
+                    .configuration
+                    .to_type()
+                    .map_err(Error::Other)?,
+            }))?;
+
+        Ok(crate::api::RepositoryBackendUpdateMethodResult {})
     }
 }
 
