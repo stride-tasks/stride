@@ -4,7 +4,8 @@ use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
     method::{
         BackendListHandler, RepositoryBackendAddHandler, RepositoryBackendRemoveHandler,
-        RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler,
+        RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositorySyncHandler,
+        RepositoryTagListHandler,
     },
 };
 
@@ -60,6 +61,7 @@ impl EngineBuilder {
         self.command("backend.list", BackendListHandler)
             .command("repository.backend.add", RepositoryBackendAddHandler)
             .command("repository.backend.remove", RepositoryBackendRemoveHandler)
+            .command("repository.backend.toggle", RepositoryBackendToggleHandler)
             .command("repository.sync", RepositorySyncHandler)
             .command("repository.tag.list", RepositoryTagListHandler)
             .command("repository.project.list", RepositoryProjectListHandler)
