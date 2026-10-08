@@ -3,6 +3,6 @@ mod repository;
 
 pub use backend::BackendListHandler;
 pub use repository::{
-    RepositoryBackendAddHandler, RepositoryProjectListHandler, RepositorySyncHandler,
-    RepositoryTagListHandler,
+    RepositoryBackendAddHandler, RepositoryBackendRemoveHandler, RepositoryProjectListHandler,
+    RepositorySyncHandler, RepositoryTagListHandler,
 };

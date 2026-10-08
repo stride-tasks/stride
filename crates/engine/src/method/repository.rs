@@ -33,6 +33,26 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendRemoveHandler;
+
+impl TypedCommandHandler for RepositoryBackendRemoveHandler {
+    type Method = crate::api::RepositoryBackendRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendRemoveMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        repository
+            .lock_database()
+            .delete_backend(method.backend_id)?;
+
+        Ok(crate::api::RepositoryBackendRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
 impl TypedCommandHandler for RepositorySyncHandler {
