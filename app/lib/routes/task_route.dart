@@ -75,18 +75,11 @@ class _TaskRouteState extends State<TaskRoute> {
     }
 
     try {
-      final response = await RustContext.execute(
-        RepositoryTagListMethod(id: repositoryUuid),
-      );
-      // final x = await RepositoryTagListMethod(
-      //   id: repositoryUuid.toString(),
-      // ).execute((name, json) async => {
-      //   final jsonString = jsonEncode(json);
-      //   final data = await RustContext.execute(name, jsonString);
-      //   return jsonDecode(data);
-      // });
+      final result = await RepositoryTagListMethod(
+        id: repositoryUuid,
+      ).execute();
 
-      return response.tags.toSet();
+      return result.tags.toSet();
     } catch (o) {
       print('Error fetching available tags: $o');
       return const {};
@@ -103,10 +96,11 @@ class _TaskRouteState extends State<TaskRoute> {
     }
 
     try {
-      final response = await RustContext.execute(
-        RepositoryProjectListMethod(id: repositoryUuid),
-      );
-      return response.projects.toSet();
+      final result = await RepositoryProjectListMethod(
+        id: repositoryUuid,
+      ).execute();
+
+      return result.projects.toSet();
     } catch (_) {
       return const {};
     }

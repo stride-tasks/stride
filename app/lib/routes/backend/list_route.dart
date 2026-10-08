@@ -31,7 +31,7 @@ class _BackendListRouteState extends State<BackendListRoute> {
     super.initState();
 
     _backends = widget.repository.backends();
-    _backendDescriptors = RustContext.execute(BackendListMethod());
+    _backendDescriptors = BackendListMethod().execute();
   }
 
   @override
@@ -137,9 +137,7 @@ class _BackendListRouteState extends State<BackendListRoute> {
                           await widget.repository.addBackend(name: name);
                           setState(() {
                             _backends = widget.repository.backends();
-                            _backendDescriptors = RustContext.execute(
-                              BackendListMethod(),
-                            );
+                            _backendDescriptors = BackendListMethod().execute();
                           });
                         },
                       );
