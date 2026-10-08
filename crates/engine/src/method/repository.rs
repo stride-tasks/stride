@@ -73,6 +73,38 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendListHandler;
+
+impl TypedCommandHandler for RepositoryBackendListHandler {
+    type Method = crate::api::RepositoryBackendListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendListMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let backend_instances = repository.lock_database().backends()?;
+
+        Ok(crate::api::RepositoryBackendListMethodResult {
+            backends: backend_instances
+                .into_iter()
+                .map(|backend| crate::api::BackendInstance {
+                    name: backend.name,
+                    id: backend.id,
+                    state: if backend.enabled {
+                        crate::api::BackendInstanceState::Enabled
+                    } else {
+                        crate::api::BackendInstanceState::Disabled
+                    },
+                    configuration: crate::api::Value::from_type(backend.config),
+                })
+                .collect(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
 impl TypedCommandHandler for RepositorySyncHandler {
