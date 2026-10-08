@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/backend.list.schema.json",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "backend.list"
+        },
+        "params": {
+            "type": "object",
+            "properties": {}
+        },
+        "result": {
+            "type": "object",
+            "required": [
+                "backends"
+            ],
+            "properties": {
+                "backends": {
+                    "type": "array",
+                    "description": "A list of all available backends.",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/backend.descriptor.schema.json"
+                    }
+                }
+            }
+        }
+    }
+}
