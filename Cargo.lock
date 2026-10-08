@@ -2320,7 +2320,6 @@ dependencies = [
  "serde",
  "serde_json",
  "stride_api_codegen",
- "thiserror 2.0.21",
  "uuid",
 ]
 
@@ -2341,18 +2340,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stride_backend"
-version = "0.1.0"
-dependencies = [
- "stride_api",
- "stride_core",
- "stride_crdt",
- "stride_database",
- "thiserror 2.0.21",
- "uuid",
-]
-
-[[package]]
 name = "stride_backend_git"
 version = "0.1.0"
 dependencies = [
@@ -2361,12 +2348,11 @@ dependencies = [
  "git2",
  "log",
  "serde",
- "stride_api",
- "stride_backend",
  "stride_core",
  "stride_crdt",
  "stride_crypto",
  "stride_database",
+ "stride_engine",
  "stride_serialize",
  "thiserror 2.0.21",
  "uuid",
@@ -2395,7 +2381,6 @@ dependencies = [
  "log",
  "serde_json",
  "stride_api",
- "stride_backend",
  "stride_backend_git",
  "stride_core",
  "stride_crdt",
@@ -2465,7 +2450,11 @@ name = "stride_engine"
 version = "0.1.0"
 dependencies = [
  "stride_api",
+ "stride_core",
+ "stride_crdt",
+ "stride_database",
  "thiserror 2.0.21",
+ "uuid",
 ]
 
 [[package]]
@@ -2479,7 +2468,6 @@ dependencies = [
  "serde",
  "serde_json",
  "stride_api",
- "stride_backend",
  "stride_backend_git",
  "stride_core",
  "stride_crdt",

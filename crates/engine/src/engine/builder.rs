@@ -1,19 +1,31 @@
-use stride_api::{CommandHandler, CommandRegistry, NoopNotifier, Notifier};
+use stride_core::state::KnownPaths;
+
+use crate::{
+    BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
+    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
+};
 
 use super::Engine;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct EngineBuilder {
+    known_paths: KnownPaths,
     notifier: Option<Box<dyn Notifier>>,
     commands: CommandRegistry,
+    backends: BackendRegistry,
 }
 
 impl EngineBuilder {
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(known_paths: KnownPaths) -> Self {
+        Self {
+            known_paths,
+            notifier: None,
+            commands: CommandRegistry::default(),
+            backends: BackendRegistry::default(),
+        }
     }
 
     #[must_use]
@@ -33,10 +45,28 @@ impl EngineBuilder {
     }
 
     #[must_use]
+    pub fn backend<T>(mut self, backend: T) -> Self
+    where
+        T: Into<Box<dyn BackendHandler + 'static>>,
+    {
+        self.backends.insert(backend.into());
+        self
+    }
+
+    pub fn insert_default_methods(self) -> Self {
+        self.command("repository.sync", RepositorySyncHandler)
+            .command("repository.tag.list", RepositoryTagListHandler)
+            .command("repository.project.list", RepositoryProjectListHandler)
+    }
+
+    #[must_use]
     pub fn build(self) -> Arc<Engine> {
         Arc::new(Engine {
+            known_paths: self.known_paths,
             notifier: self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
             commands: self.commands,
+            backends: self.backends,
+            repositories: std::sync::Mutex::new(super::Cache::new(Duration::from_secs(60))),
         })
     }
 }

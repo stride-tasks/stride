@@ -6,13 +6,10 @@ use std::{
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use stride_api::{Context, TaskChange};
-use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::GitBackend;
 use stride_core::{
     backend::{BackendRecord as CoreBackendRecord, Config},
     event::TaskQuery,
-    state::KnownPaths,
     task::{Task, TaskStatus},
 };
 use stride_crdt::{
@@ -20,24 +17,19 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
+use stride_engine::Backend;
 use uuid::Uuid;
 
 use crate::{
-    RustError,
-    api::{
-        filter::Filter,
-        settings::{application_cache_path, application_support_path},
-    },
+    ErrorKind, RustError,
+    api::{context::ENGINE, filter::Filter, settings::application_support_path},
 };
 
 #[frb(opaque)]
 #[derive(Debug)]
 pub struct Repository {
-    uuid: Uuid,
     pub(crate) root_path: PathBuf,
     pub(crate) db: Mutex<Database>,
-
-    pub(crate) backend_registry: Registry,
 }
 
 impl Repository {
@@ -55,13 +47,9 @@ impl Repository {
             .map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
 
-        let mut backend_registry = Registry::new();
-        backend_registry.insert(GitBackend::handler());
         Ok(Self {
-            uuid,
             db: db.into(),
             root_path,
-            backend_registry,
         })
     }
 
@@ -137,20 +125,6 @@ impl Repository {
         Ok(self.db.lock().unwrap().task_query(query)?)
     }
 
-    pub(crate) fn sync(
-        &mut self,
-        context: &Arc<dyn Context>,
-    ) -> Result<Vec<TaskChange>, stride_backend::Error> {
-        let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
-
-        let db = self.db.get_mut().unwrap();
-        let diff = self
-            .backend_registry
-            .sync_all(self.uuid, db, &known_paths, context)?;
-
-        Ok(db.transaction()?.task_changes_from_diff(&diff)?)
-    }
-
     pub fn undo(&self) -> Result<(), RustError> {
         todo!("undo")
     }
@@ -206,7 +180,11 @@ impl Repository {
     }
 
     pub fn add_backend(&self, name: &str) -> Result<(), RustError> {
-        let handler = self.backend_registry.get_or_error(name)?;
+        let handler = ENGINE.wait().backends().get_or_error(name).map_err(|e| {
+            RustError::from(ErrorKind::Other {
+                message: e.to_string().into_boxed_str(),
+            })
+        })?;
         let name = handler.name();
         self.database()
             .lock()
@@ -235,7 +213,7 @@ impl Repository {
     }
 
     pub fn backend_names(&self) -> Vec<String> {
-        self.backend_registry.keys().map(Into::into).collect()
+        ENGINE.wait().backends().keys().map(Into::into).collect()
     }
 }
 

@@ -1,4 +1,3 @@
-use stride_backend::error::BackendError;
 use stride_crdt::{actor::ActorId, change::Sequence};
 use stride_crypto::crypter::Error as EncryptionError;
 
@@ -83,5 +82,3 @@ pub enum Error {
     #[error("unexpected empty line in changelog")]
     UnexpectedEmptyLine,
 }
-
-impl BackendError for Error {}

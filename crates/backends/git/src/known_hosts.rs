@@ -5,7 +5,7 @@
 use git2::cert::SshHostKeyType;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, path::Path, str::FromStr};
-use stride_api as api;
+use stride_engine::api;
 
 use crate::Result;
 

@@ -4,7 +4,7 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
-use base64::{DecodeError, Engine};
+use base64::{DecodeError, Engine as Base64Engine};
 use config::GitConfig;
 use git2::{
     AnnotatedCommit, Branch, CertificateCheckStatus, Cred, ErrorClass, ErrorCode, FetchOptions,
@@ -22,8 +22,6 @@ use std::{
     rc::Rc,
     sync::Arc,
 };
-use stride_api as api;
-use stride_backend::{Backend, BackendHandler};
 use stride_crdt::{
     actor::{Actor, ActorId},
     change::{Change, Sequence},
@@ -32,6 +30,7 @@ use stride_crdt::{
 };
 use stride_crypto::crypter::Crypter;
 use stride_database::Database;
+use stride_engine::{Backend, BackendHandler, Engine, Prompt, PromptNotification, api};
 use uuid::Uuid;
 
 mod serialization;
@@ -674,7 +673,7 @@ struct AddUnknownHostPrompt {
     host: Host,
 }
 
-impl api::Prompt for AddUnknownHostPrompt {
+impl Prompt for AddUnknownHostPrompt {
     fn target(&self) -> Box<str> {
         "ssh.host.add".into()
     }
@@ -729,18 +728,18 @@ impl Backend for GitBackend {
 
     fn sync(
         &mut self,
-        context: Arc<dyn api::Context>,
+        context: Arc<Engine>,
         db: &mut Database,
-    ) -> Result<VersionDifference, stride_backend::Error> {
+    ) -> stride_engine::Result<VersionDifference> {
         match self.sync_impl(db) {
             Ok(diff) => Ok(diff),
             Err(Error::UnknownHost { host }) => {
-                context
-                    .clone()
-                    .notify(Box::new(AddUnknownHostPrompt { host: host.clone() }))?;
-                Err(Error::UnknownHost { host }.into())
+                context.clone().notify(Box::new(PromptNotification::new(
+                    AddUnknownHostPrompt { host: host.clone() },
+                )))?;
+                Err(Box::new(Error::UnknownHost { host }).into())
             }
-            Err(err) => Err(err.into()),
+            Err(err) => Err(Box::new(err).into()),
         }
     }
 }

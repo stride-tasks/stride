@@ -10,7 +10,6 @@ use std::{
     sync::Arc,
 };
 
-use stride_api::Context;
 use stride_core::{
     backend::{Config, Schema},
     state::KnownPaths,
@@ -19,10 +18,9 @@ use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
 
-pub mod error;
-pub mod registry;
+use crate::{Engine, Result};
 
-pub use error::{Error, Result};
+pub(crate) mod registry;
 
 pub trait BackendHandler: Debug + Sync + Send {
     // TODO: encapsulate name in a newtype, to restrict to ascii, no space, etc.
@@ -50,5 +48,5 @@ pub trait Backend {
     where
         Self: Sized;
 
-    fn sync(&mut self, context: Arc<dyn Context>, db: &mut Database) -> Result<VersionDifference>;
+    fn sync(&mut self, context: Arc<Engine>, db: &mut Database) -> Result<VersionDifference>;
 }

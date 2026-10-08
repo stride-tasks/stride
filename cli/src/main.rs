@@ -9,7 +9,6 @@ use std::{
     sync::Arc,
 };
 use stride_api as api;
-use stride_backend::{Backend, registry::Registry};
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
 };
@@ -23,11 +22,8 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::Engine;
-use stride_flutter_bridge::{
-    api::settings::{ApplicationPaths, RepositorySpecification, Settings},
-    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
-};
+use stride_engine::{Backend, Engine};
+use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
 use stride_logging::LogLevelGuard;
 use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use uuid::Uuid;
@@ -64,12 +60,12 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
 #[derive(Debug, Clone, Copy)]
 struct CliNotifier;
 
-impl api::Notifier for CliNotifier {
+impl stride_engine::Notifier for CliNotifier {
     fn notify(
         &self,
-        context: Arc<dyn api::Context>,
-        notification: Box<dyn api::Notification>,
-    ) -> api::Result<()> {
+        context: &Arc<Engine>,
+        notification: Box<dyn stride_engine::Notification>,
+    ) -> stride_engine::Result<()> {
         let notification_any: &dyn std::any::Any = &*notification;
         if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
             let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
@@ -292,16 +288,12 @@ fn main() -> anyhow::Result<ExitCode> {
     let mut database = Database::open(&database_filepath, actor_id, clock)?;
     database.apply_migrations()?;
 
-    let mut backend_registry = Registry::new();
-    backend_registry.insert(GitBackend::handler());
-
     let notifier = Box::new(CliNotifier);
-    let engine: Arc<dyn api::Context> = Engine::builder()
+    let engine = Engine::builder(known_paths)
         .notifier(notifier)
+        .insert_default_methods()
+        .backend(GitBackend::handler())
         .command("ssh.host.add", SshHostAddHandler)
-        .command("repository.sync", RepositorySyncHandler)
-        .command("repository.tag.list", RepositoryTagListHandler)
-        .command("repository.project.list", RepositoryProjectListHandler)
         .build();
 
     match mode {
@@ -398,10 +390,10 @@ fn main() -> anyhow::Result<ExitCode> {
                         transaction.commit()?;
                     }
                     PluginEvent::TaskSync => {
-                        backend_registry.sync_all(
+                        engine.backends().sync_all(
                             current_repository,
                             &mut database,
-                            &known_paths,
+                            &engine.known_paths(),
                             &engine,
                         )?;
                     }
@@ -577,7 +569,7 @@ fn main() -> anyhow::Result<ExitCode> {
             Settings::save(settings)?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), &backend_registry, &mut database)?;
+            backend::handle_command(command.as_ref(), &engine.backends(), &mut database)?;
         }
         Mode::Plugin { command } => match command {
             None => {
@@ -596,20 +588,20 @@ fn main() -> anyhow::Result<ExitCode> {
         },
         Mode::Ssh { command } => match command {
             SshCommand::Key { command: None } => {
-                for key in SshKey::load_keys(&known_paths.ssh_keys)? {
+                for key in SshKey::load_keys(&engine.known_paths().ssh_keys)? {
                     println!("{} {}", key.id, key.public_key);
                 }
             }
             SshCommand::Key {
                 command: Some(SshKeyCommand::Generate),
             } => {
-                let key = SshKey::generate(&known_paths.ssh_keys)?;
+                let key = SshKey::generate(&engine.known_paths().ssh_keys)?;
                 println!("{} {}", key.id, key.public_key);
             }
             SshCommand::Key {
                 command: Some(SshKeyCommand::Remove { id }),
             } => {
-                SshKey::remove_key(&known_paths.ssh_keys, id)?;
+                SshKey::remove_key(&engine.known_paths().ssh_keys, id)?;
             }
             SshCommand::KnownHosts { command: None } => {
                 let hosts = KnownHosts::load()?;

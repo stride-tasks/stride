@@ -10,7 +10,6 @@ members = [
   "crates/logging",
   "crates/database",
   "crates/background",
-  "crates/backend",
   "crates/backends/git",
   "crates/crypto",
   "crates/plugin",
@@ -43,7 +42,6 @@ stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
 stride_logging = { version = "~0.1.0", path = "crates/logging" }
 stride_database = { version = "~0.1.0", path = "crates/database" }
 stride_background = { version = "~0.1.0", path = "crates/background" }
-stride_backend = { version = "~0.1.0", path = "crates/backend" }
 stride_backend_git = { version = "~0.1.0", path = "crates/backends/git" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
 stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
