@@ -1,6 +1,36 @@
 use std::sync::Arc;
 
+use stride_core::backend::{BackendRecord, Config};
+use uuid::Uuid;
+
 use crate::{Engine, Result, TypedCommandHandler};
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendAddHandler;
+
+impl TypedCommandHandler for RepositoryBackendAddHandler {
+    type Method = crate::api::RepositoryBackendAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendAddMethodResult> {
+        let handler = engine.backends().get_or_error(&method.backend)?;
+        let name = handler.name();
+        let backend_id = Uuid::now_v7();
+
+        let repository = engine.open_repository(method.repository_id)?;
+        repository.lock_database().add_backend(&BackendRecord {
+            id: backend_id,
+            name,
+            enabled: false,
+            config: Config::default(),
+        })?;
+
+        Ok(crate::api::RepositoryBackendAddMethodResult { backend_id })
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
