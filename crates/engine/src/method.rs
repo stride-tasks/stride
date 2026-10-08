@@ -5,5 +5,5 @@ pub use backend::BackendListHandler;
 pub use repository::{
     RepositoryBackendAddHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
     RepositoryBackendToggleHandler, RepositoryBackendUpdateHandler, RepositoryProjectListHandler,
-    RepositorySyncHandler, RepositoryTagListHandler,
+    RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
 };

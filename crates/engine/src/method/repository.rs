@@ -134,6 +134,22 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryRemoveHandler;
+
+impl TypedCommandHandler for RepositoryRemoveHandler {
+    type Method = crate::api::RepositoryRemoveMethod;
+
+    fn handle(
+        &self,
+        context: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryRemoveMethodResult> {
+        context.remove_repository(method.repository_id)?;
+        Ok(crate::api::RepositoryRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
 impl TypedCommandHandler for RepositorySyncHandler {
