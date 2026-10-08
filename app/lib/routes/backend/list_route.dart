@@ -29,14 +29,16 @@ class _BackendListRouteState extends State<BackendListRoute> {
     color: Colors.red,
   );
 
-  Future<List<BackendRecord>>? _backends;
+  Future<RepositoryBackendListMethodResult>? _backends;
   Future<BackendListMethodResult>? _backendDescriptors;
 
   @override
   void initState() {
     super.initState();
 
-    _backends = widget.repository.backends();
+    _backends = RepositoryBackendListMethod(
+      repositoryId: widget.repositoryUuid,
+    ).execute();
     _backendDescriptors = BackendListMethod().execute();
   }
 
@@ -55,13 +57,13 @@ class _BackendListRouteState extends State<BackendListRoute> {
             context.read<LogBloc>().add(LogErrorEvent(error: snapshot.error!));
             return Center(child: CircularProgressIndicator.adaptive());
           }
-          final backends = snapshot.data!.map((backend) {
+          final backends = snapshot.data!.backends.map((backend) {
             return SettingsTileNavigation(
               title: Text(backend.name),
               leading: const Icon(Icons.task),
               trailing: Wrap(
                 children: [
-                  if (!backend.enabled)
+                  if (backend.state != .enabled)
                     IconButton(
                       onPressed: () async {
                         await showAlertDialog(
@@ -84,7 +86,9 @@ class _BackendListRouteState extends State<BackendListRoute> {
                               backendId: backend.id,
                             ).execute();
                             setState(() {
-                              _backends = widget.repository.backends();
+                              _backends = RepositoryBackendListMethod(
+                                repositoryId: widget.repositoryUuid,
+                              ).execute();
                             });
                             return true;
                           },
@@ -93,7 +97,7 @@ class _BackendListRouteState extends State<BackendListRoute> {
                       icon: Icon(Icons.delete_forever),
                     ),
                   Switch(
-                    value: backend.enabled,
+                    value: backend.state == .enabled,
                     activeThumbColor: Colors.redAccent,
                     onChanged: (value) async {
                       await RepositoryBackendToggleMethod(
@@ -101,7 +105,9 @@ class _BackendListRouteState extends State<BackendListRoute> {
                         backendId: backend.id,
                       ).execute();
                       setState(() {
-                        _backends = widget.repository.backends();
+                        _backends = RepositoryBackendListMethod(
+                          repositoryId: widget.repositoryUuid,
+                        ).execute();
                       });
                     },
                   ),
@@ -149,7 +155,9 @@ class _BackendListRouteState extends State<BackendListRoute> {
                             backend: name,
                           ).execute();
                           setState(() {
-                            _backends = widget.repository.backends();
+                            _backends = RepositoryBackendListMethod(
+                              repositoryId: widget.repositoryUuid,
+                            ).execute();
                             _backendDescriptors = BackendListMethod().execute();
                           });
                         },
