@@ -73,16 +73,16 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct RepositoryBackendUpdateHandler;
+pub struct RepositoryBackendSetHandler;
 
-impl TypedCommandHandler for RepositoryBackendUpdateHandler {
-    type Method = crate::api::RepositoryBackendUpdateMethod;
+impl TypedCommandHandler for RepositoryBackendSetHandler {
+    type Method = crate::api::RepositoryBackendSetMethod;
 
     fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
-    ) -> Result<crate::api::RepositoryBackendUpdateMethodResult> {
+    ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
         let repository = engine.open_repository(method.repository_id)?;
         repository
             .lock_database()
@@ -97,7 +97,7 @@ impl TypedCommandHandler for RepositoryBackendUpdateHandler {
                     .map_err(Error::Other)?,
             }))?;
 
-        Ok(crate::api::RepositoryBackendUpdateMethodResult {})
+        Ok(crate::api::RepositoryBackendSetMethodResult {})
     }
 }
 

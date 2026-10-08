@@ -581,7 +581,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
       configuration: json,
     );
 
-    await RepositoryBackendUpdateMethod(
+    await RepositoryBackendSetMethod(
       repositoryId: widget.repositoryId,
       backendInstance: backend,
     ).execute();

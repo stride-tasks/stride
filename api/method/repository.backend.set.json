@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://stride-tasks.github.io/stride/api/method/repository.backend.update.schema.json",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.backend.set.schema.json",
     "type": "object",
     "required": [
         "method",
@@ -9,7 +9,7 @@
     "properties": {
         "method": {
             "type": "string",
-            "const": "repository.backend.update"
+            "const": "repository.backend.set"
         },
         "params": {
             "type": "object",
