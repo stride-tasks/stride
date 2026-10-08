@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -28,7 +27,6 @@ use crate::{
 #[frb(opaque)]
 #[derive(Debug)]
 pub struct Repository {
-    pub(crate) root_path: PathBuf,
     pub(crate) db: Mutex<Database>,
 }
 
@@ -47,10 +45,7 @@ impl Repository {
             .map_err(Into::<stride_database::Error>::into)?;
         db.apply_migrations()?;
 
-        Ok(Self {
-            db: db.into(),
-            root_path,
-        })
+        Ok(Self { db: db.into() })
     }
 
     pub fn remove(uuid: Uuid) -> Result<(), RustError> {
@@ -130,18 +125,8 @@ impl Repository {
     }
 
     /// flutter_rust_bridge:ignore
-    pub fn root_path(&self) -> &Path {
-        &self.root_path
-    }
-
-    /// flutter_rust_bridge:ignore
     pub fn database(&self) -> &Mutex<Database> {
         &self.db
-    }
-
-    /// flutter_rust_bridge:ignore
-    pub fn database_mut(&mut self) -> &mut Mutex<Database> {
-        &mut self.db
     }
 
     pub fn backends(&self) -> Result<Vec<BackendRecord>, RustError> {
