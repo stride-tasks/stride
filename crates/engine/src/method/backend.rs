@@ -27,3 +27,27 @@ impl TypedCommandHandler for BackendListHandler {
         Ok(crate::api::BackendListMethodResult { backends })
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct BackendGetHandler;
+
+impl TypedCommandHandler for BackendGetHandler {
+    type Method = crate::api::BackendGetMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::BackendGetMethodResult> {
+        let backend_descriptor = engine.backends().get(&method.backend_name).map(|handler| {
+            crate::api::BackendDescriptor {
+                name: handler.name().into(),
+                schema: crate::api::Value::from_type(&handler.config_schema())
+                    .to_string()
+                    .into_boxed_str(),
+            }
+        });
+
+        Ok(crate::api::BackendGetMethodResult { backend_descriptor })
+    }
+}
