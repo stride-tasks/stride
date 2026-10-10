@@ -1,6 +1,199 @@
 use std::sync::Arc;
 
-use crate::{Engine, Result, TypedCommandHandler};
+use stride_api::Value;
+use stride_core::backend::{BackendRecord, Config};
+use uuid::Uuid;
+
+use crate::{Engine, Error, Result, TypedCommandHandler};
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendAddHandler;
+
+impl TypedCommandHandler for RepositoryBackendAddHandler {
+    type Method = crate::api::RepositoryBackendAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendAddMethodResult> {
+        let handler = engine.backends().get_or_error(&method.backend)?;
+        let name = handler.name();
+        let backend_id = Uuid::now_v7();
+
+        let repository = engine.open_repository(method.repository_id)?;
+        repository.lock_database().add_backend(&BackendRecord {
+            id: backend_id,
+            name,
+            enabled: false,
+            config: Config::default(),
+        })?;
+
+        Ok(crate::api::RepositoryBackendAddMethodResult { backend_id })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendRemoveHandler;
+
+impl TypedCommandHandler for RepositoryBackendRemoveHandler {
+    type Method = crate::api::RepositoryBackendRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendRemoveMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        repository
+            .lock_database()
+            .delete_backend(method.backend_id)?;
+
+        Ok(crate::api::RepositoryBackendRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendToggleHandler;
+
+impl TypedCommandHandler for RepositoryBackendToggleHandler {
+    type Method = crate::api::RepositoryBackendToggleMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendToggleMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let new_state = repository
+            .lock_database()
+            .toggle_backend(method.backend_id)?;
+
+        Ok(crate::api::RepositoryBackendToggleMethodResult { state: new_state })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendGetHandler;
+
+impl TypedCommandHandler for RepositoryBackendGetHandler {
+    type Method = crate::api::RepositoryBackendGetMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendGetMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let backend_instances = repository.lock_database().backends()?;
+
+        let backend_instance = backend_instances
+            .into_iter()
+            .find(|backend| backend.id == method.backend_id)
+            .map(|backend| crate::api::BackendInstance {
+                name: backend.name,
+                id: backend.id,
+                state: if backend.enabled {
+                    crate::api::BackendInstanceState::Enabled
+                } else {
+                    crate::api::BackendInstanceState::Disabled
+                },
+                configuration: Value::from_type(backend.config),
+            });
+
+        let backend_record = backend_instance.map(|instance| {
+            let descriptor = engine.backends().get(&instance.name);
+            let descriptor = descriptor.map(|handler| crate::api::BackendDescriptor {
+                name: handler.name(),
+                schema: Value::from_type(handler.config_schema())
+                    .to_string()
+                    .into_boxed_str(),
+            });
+
+            crate::api::BackendRecord {
+                instance,
+                descriptor,
+            }
+        });
+
+        Ok(crate::api::RepositoryBackendGetMethodResult { backend_record })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendSetHandler;
+
+impl TypedCommandHandler for RepositoryBackendSetHandler {
+    type Method = crate::api::RepositoryBackendSetMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        repository.lock_database().update_backend(&BackendRecord {
+            id: method.backend_instance.id,
+            name: method.backend_instance.name,
+            enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
+            config: method
+                .backend_instance
+                .configuration
+                .to_type()
+                .map_err(Error::Other)?,
+        })?;
+
+        Ok(crate::api::RepositoryBackendSetMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendListHandler;
+
+impl TypedCommandHandler for RepositoryBackendListHandler {
+    type Method = crate::api::RepositoryBackendListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendListMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let backend_instances = repository.lock_database().backends()?;
+
+        Ok(crate::api::RepositoryBackendListMethodResult {
+            backends: backend_instances
+                .into_iter()
+                .map(|backend| crate::api::BackendInstance {
+                    name: backend.name,
+                    id: backend.id,
+                    state: if backend.enabled {
+                        crate::api::BackendInstanceState::Enabled
+                    } else {
+                        crate::api::BackendInstanceState::Disabled
+                    },
+                    configuration: Value::from_type(backend.config),
+                })
+                .collect(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryRemoveHandler;
+
+impl TypedCommandHandler for RepositoryRemoveHandler {
+    type Method = crate::api::RepositoryRemoveMethod;
+
+    fn handle(
+        &self,
+        context: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryRemoveMethodResult> {
+        context.remove_repository(method.repository_id)?;
+        Ok(crate::api::RepositoryRemoveMethodResult {})
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;

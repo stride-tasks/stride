@@ -6,9 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/context.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -276,11 +278,13 @@ Uint8List generateCryptoRandomBytes(int length) {
 
 class BackendConfigRoute extends StatefulWidget {
   final Repository repository;
+  final UuidValue repositoryId;
   final UuidValue backendId;
   const BackendConfigRoute({
     super.key,
     required this.repository,
     required this.backendId,
+    required this.repositoryId,
   });
 
   @override
@@ -288,18 +292,21 @@ class BackendConfigRoute extends StatefulWidget {
 }
 
 class _BackendConfigRouteState extends State<BackendConfigRoute> {
-  Future<BackendRecord?>? _backend;
+  Future<BackendRecord?>? _backendRecord;
 
   @override
   void initState() {
     super.initState();
-    _backend = widget.repository.backend(id: widget.backendId);
+    _backendRecord = RepositoryBackendGetMethod(
+      repositoryId: widget.repositoryId,
+      backendId: widget.backendId,
+    ).execute().then((value) => value.backendRecord);
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: _backend,
+      future: _backendRecord,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           context.read<LogBloc>().add(LogErrorEvent(error: snapshot.error!));
@@ -310,8 +317,12 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
 
         final record = snapshot.data!;
         return Scaffold(
-          appBar: AppBar(title: Text(record.name)),
-          body: _ConfigSection(repository: widget.repository, record: record),
+          appBar: AppBar(title: Text(record.instance.name)),
+          body: _ConfigSection(
+            repository: widget.repository,
+            repositoryId: widget.repositoryId,
+            record: record,
+          ),
         );
       },
     );
@@ -320,8 +331,13 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
 
 class _ConfigSection extends StatefulWidget {
   final Repository repository;
+  final UuidValue repositoryId;
   final BackendRecord record;
-  const _ConfigSection({required this.record, required this.repository});
+  const _ConfigSection({
+    required this.record,
+    required this.repository,
+    required this.repositoryId,
+  });
 
   @override
   State<_ConfigSection> createState() => _ConfigSectionState();
@@ -338,8 +354,11 @@ class _ConfigSectionState extends State<_ConfigSection> {
     super.initState();
 
     _sshKeys = sshKeys();
-    final configJson = jsonDecode(widget.record.config) as Map<String, dynamic>;
-    final schemaJson = jsonDecode(widget.record.schema) as Map<String, dynamic>;
+    final configJson = widget.record.instance.configuration;
+
+    // TODO: Verify that descriptor is not null.
+    final schemaJson =
+        jsonDecode(widget.record.descriptor!.schema) as Map<String, dynamic>;
 
     _schema = Schema.fromJson(schemaJson);
     _config = Config.fromJson(configJson);
@@ -561,13 +580,11 @@ class _ConfigSectionState extends State<_ConfigSection> {
 
   Future<void> _save() async {
     final json = _config.toJson();
-    final backend = BackendRecord(
-      id: widget.record.id,
-      name: widget.record.name,
-      enabled: widget.record.enabled,
-      schema: '',
-      config: jsonEncode(json),
-    );
-    return widget.repository.updateBackend(backend: backend);
+    final instance = widget.record.instance.copyWith(configuration: json);
+
+    await RepositoryBackendSetMethod(
+      repositoryId: widget.repositoryId,
+      backendInstance: instance,
+    ).execute();
   }
 }

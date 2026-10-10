@@ -1,5 +1,5 @@
 use std::{
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
     time::{Duration, Instant},
 };
 
@@ -52,12 +52,18 @@ impl Engine {
         self.clone().notifier.notify(self, notification)
     }
 
+    pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
+        self.repositories
+            .lock()
+            .unwrap_or_else(|cache| cache.into_inner())
+    }
+
     /// Open a repository instance and cache it for one minute of inactivity.
     ///
     /// The cache keeps using the same [`Arc`] while a caller still has a strong reference.
     /// Expired entries are evicted in FIFO order once they are no longer referenced.
     pub fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
-        let mut repositories = self.repositories.lock().unwrap();
+        let mut repositories = self.lock_repositories();
         let now = Instant::now();
 
         if let Some(entry) = repositories.get_mut(id) {
@@ -75,6 +81,20 @@ impl Engine {
 
         repositories.insert(id, repository.clone());
         Ok(repository)
+    }
+
+    /// Remove a repository and its associated data from the engine and the filesystem.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the repository could not be removed for any reason.
+    pub fn remove_repository(self: &Arc<Self>, id: Uuid) -> Result<()> {
+        let mut repositories = self.lock_repositories();
+        repositories.remove(id);
+
+        let root_path = self.known_paths().repository_path(id);
+        std::fs::remove_dir_all(&root_path)?;
+        Ok(())
     }
 
     /// Execute a command with the given method and arguments.

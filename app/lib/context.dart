@@ -77,3 +77,9 @@ class RustContext {
     return SerdeRegistry.get<Result>().deserialize(json);
   }
 }
+
+extension RustContextExtension<Result> on Method<Result> {
+  Future<Result> execute() async {
+    return RustContext.execute(this);
+  }
+}

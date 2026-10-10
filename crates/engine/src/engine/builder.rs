@@ -2,7 +2,12 @@ use stride_core::state::KnownPaths;
 
 use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
-    method::{RepositoryProjectListHandler, RepositorySyncHandler, RepositoryTagListHandler},
+    method::{
+        BackendGetHandler, BackendListHandler, RepositoryBackendAddHandler,
+        RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
+        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
+        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
+    },
 };
 
 use super::Engine;
@@ -54,7 +59,16 @@ impl EngineBuilder {
     }
 
     pub fn insert_default_methods(self) -> Self {
-        self.command("repository.sync", RepositorySyncHandler)
+        self.command("backend.list", BackendListHandler)
+            .command("backend.get", BackendGetHandler)
+            .command("repository.backend.add", RepositoryBackendAddHandler)
+            .command("repository.backend.list", RepositoryBackendListHandler)
+            .command("repository.backend.remove", RepositoryBackendRemoveHandler)
+            .command("repository.backend.toggle", RepositoryBackendToggleHandler)
+            .command("repository.backend.get", RepositoryBackendGetHandler)
+            .command("repository.backend.set", RepositoryBackendSetHandler)
+            .command("repository.remove", RepositoryRemoveHandler)
+            .command("repository.sync", RepositorySyncHandler)
             .command("repository.tag.list", RepositoryTagListHandler)
             .command("repository.project.list", RepositoryProjectListHandler)
     }

@@ -1,0 +1,29 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/backend.instance.schema.json",
+    "type": "object",
+    "required": [
+        "id",
+        "name",
+        "state",
+        "configuration"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The UUID of the instance."
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the instance was based on."
+        },
+        "state": {
+            "description": "The current state of the instance.",
+            "$ref": "https://stride-tasks.github.io/stride/api/type/backend.instance.state.schema.json"
+        },
+        "configuration": {
+            "description": "The configuration of the instance. TODO: provide a detailed schema for the configuration."
+        }
+    }
+}

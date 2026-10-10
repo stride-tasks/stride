@@ -44,4 +44,8 @@ impl<T> Cache<T> {
             last_used: Instant::now(),
         });
     }
+
+    pub(crate) fn remove(&mut self, id: Uuid) {
+        self.entries.retain(|entry| entry.id != id);
+    }
 }
