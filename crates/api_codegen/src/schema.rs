@@ -83,7 +83,7 @@ pub enum SchemaConcreteType {
     #[serde(rename = "boolean")]
     Boolean {
         #[serde(default, rename = "const", skip_serializing_if = "Option::is_none")]
-        const_value: Option<String>,
+        const_value: Option<bool>,
     },
     #[serde(rename = "null")]
     Null {},
