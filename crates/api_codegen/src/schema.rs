@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -50,8 +49,8 @@ pub enum SchemaType {
 pub enum SchemaConcreteType {
     #[serde(rename = "object")]
     Object {
-        #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-        properties: HashMap<String, Schema>,
+        #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+        properties: IndexMap<String, Schema>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         required: Vec<String>,
         #[serde(

@@ -96,6 +96,7 @@ vint64 = "=1.0.1"
 async-trait = "0.1.92"
 inquire = "0.9.4"
 comfy-table = "8.0.1"
+indexmap = "2.14.2"
 
 [profile.release]
 # strip = "debug"

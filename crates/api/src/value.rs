@@ -1,3 +1,7 @@
+use indexmap::IndexMap;
+
+pub type Map = IndexMap<Box<str>, Value>;
+
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum Value {
@@ -5,7 +9,7 @@ pub enum Value {
     String(Box<str>),
     Bool(bool),
     Array(Vec<Value>),
-    Map(std::collections::HashMap<Box<str>, Value>),
+    Map(Map),
     Null,
 }
 

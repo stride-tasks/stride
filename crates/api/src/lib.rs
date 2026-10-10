@@ -2,7 +2,7 @@
 
 mod value;
 
-pub use value::Value;
+pub use value::{Map, Value};
 
 pub trait Method: Sized + serde::Serialize + for<'de> serde::Deserialize<'de> {
     const NAME: &'static str;
