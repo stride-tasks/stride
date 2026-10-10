@@ -2,6 +2,8 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use serde_json::Value;
+
 use crate::node::{
     EnumNode, EnumVariantNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType,
     StructNode, TypeNode,
@@ -341,6 +343,14 @@ fn union_type(
                     const_value: Some(value),
                     ..
                 })) => value.clone(),
+                Some(SchemaType::Any {
+                    const_value: Some(Value::String(value)),
+                }) => value.clone(),
+                Some(SchemaType::Any {
+                    const_value: Some(_),
+                }) => panic!(
+                    "oneOf variant must define a const `{tag}` property: {name} must be a string"
+                ),
                 _ => panic!("oneOf variant must define a const `{tag}` property: {name}"),
             };
             let variant_name = enum_variant_name(&value);
