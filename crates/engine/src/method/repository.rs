@@ -74,6 +74,53 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryBackendGetHandler;
+
+impl TypedCommandHandler for RepositoryBackendGetHandler {
+    type Method = crate::api::RepositoryBackendGetMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryBackendGetMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let backend_instances = repository.lock_database().backends()?;
+
+        let backend_instance = backend_instances
+            .into_iter()
+            .find(|backend| backend.id == method.backend_id)
+            .map(|backend| crate::api::BackendInstance {
+                name: backend.name,
+                id: backend.id,
+                state: if backend.enabled {
+                    crate::api::BackendInstanceState::Enabled
+                } else {
+                    crate::api::BackendInstanceState::Disabled
+                },
+                configuration: Value::from_type(backend.config),
+            });
+
+        let backend_record = backend_instance.map(|instance| {
+            let descriptor = engine.backends().get(&instance.name);
+            let descriptor = descriptor.map(|handler| crate::api::BackendDescriptor {
+                name: handler.name(),
+                schema: Value::from_type(handler.config_schema())
+                    .to_string()
+                    .into_boxed_str(),
+            });
+
+            crate::api::BackendRecord {
+                instance,
+                descriptor,
+            }
+        });
+
+        Ok(crate::api::RepositoryBackendGetMethodResult { backend_record })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendSetHandler;
 
 impl TypedCommandHandler for RepositoryBackendSetHandler {
