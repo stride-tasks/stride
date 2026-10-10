@@ -58,6 +58,7 @@ impl EngineBuilder {
         self
     }
 
+    #[must_use]
     pub fn insert_default_methods(self) -> Self {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)

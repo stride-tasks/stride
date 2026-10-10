@@ -55,13 +55,17 @@ impl Engine {
     pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
         self.repositories
             .lock()
-            .unwrap_or_else(|cache| cache.into_inner())
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     /// Open a repository instance and cache it for one minute of inactivity.
     ///
     /// The cache keeps using the same [`Arc`] while a caller still has a strong reference.
     /// Expired entries are evicted in FIFO order once they are no longer referenced.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the repository could not be opened for any reason.
     pub fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
         let mut repositories = self.lock_repositories();
         let now = Instant::now();

@@ -393,7 +393,7 @@ fn main() -> anyhow::Result<ExitCode> {
                         engine.backends().sync_all(
                             current_repository,
                             &mut database,
-                            &engine.known_paths(),
+                            engine.known_paths(),
                             &engine,
                         )?;
                     }
@@ -569,7 +569,7 @@ fn main() -> anyhow::Result<ExitCode> {
             Settings::save(settings)?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), &engine.backends(), &mut database)?;
+            backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;
         }
         Mode::Plugin { command } => match command {
             None => {

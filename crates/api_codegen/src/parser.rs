@@ -85,10 +85,10 @@ fn module_name_for_path(path: &Path) -> &str {
 
 fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
-        panic!("method should not be a reference: {path:?}");
+        panic!("method should not be a reference: {}", path.display());
     };
     let SchemaConcreteType::Object { properties, .. } = concrete_type else {
-        panic!("method schema must be an object");
+        panic!("method schema must be an object: {}", path.display());
     };
 
     let method_name =
@@ -126,15 +126,15 @@ fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
         root_method_name(schema).unwrap_or_else(|| schema_name_from_path(path, schema));
 
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
-        panic!("notification should not be a reference: {path:?}");
+        panic!("notification should not be a reference: {}", path.display());
     };
     let SchemaConcreteType::Object { properties, .. } = concrete_type else {
-        panic!("notification schema must be an object: {path:?}");
+        panic!("notification schema must be an object: {}", path.display());
     };
 
     let params_schema = properties
         .get("params")
-        .expect("notification must have params property: {path:?}");
+        .expect("notification must have params property");
     let params_name = schema_name_from_path(path, schema);
     let params_type = type_for_schema(params_schema, &params_name);
 
@@ -216,7 +216,6 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                         .collect(),
                 )
             }
-            SchemaString::Enum { .. } => TypeNode::Primitive(PrimitiveType::String),
             SchemaString::AnyOf { any_of } if !any_of.is_empty() => enum_type_from_variants(
                 schema,
                 fallback_name,
@@ -229,7 +228,9 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                     })
                     .collect(),
             ),
-            SchemaString::AnyOf { .. } => TypeNode::Primitive(PrimitiveType::String),
+            SchemaString::Enum { .. } | SchemaString::AnyOf { .. } => {
+                TypeNode::Primitive(PrimitiveType::String)
+            }
             SchemaString::String { format } => {
                 if format.as_deref() == Some("uuid") {
                     TypeNode::Primitive(PrimitiveType::Uuid)
