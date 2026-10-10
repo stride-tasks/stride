@@ -5,9 +5,7 @@ use std::{
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use stride_backend_git::GitBackend;
 use stride_core::{
-    backend::{BackendRecord as CoreBackendRecord, Config},
     event::TaskQuery,
     task::{Task, TaskStatus},
 };
@@ -16,12 +14,11 @@ use stride_crdt::{
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::Backend;
 use uuid::Uuid;
 
 use crate::{
-    ErrorKind, RustError,
-    api::{context::ENGINE, filter::Filter, settings::application_support_path},
+    RustError,
+    api::{filter::Filter, settings::application_support_path},
 };
 
 #[frb(opaque)]
@@ -46,14 +43,6 @@ impl Repository {
         db.apply_migrations()?;
 
         Ok(Self { db: db.into() })
-    }
-
-    pub fn remove(uuid: Uuid) -> Result<(), RustError> {
-        let root_path = application_support_path()
-            .join("repository")
-            .join(uuid.to_string());
-        std::fs::remove_dir_all(&root_path)?;
-        Ok(())
     }
 
     pub fn all_tasks(&mut self, filter: &Filter) -> Result<Vec<Task>, RustError> {
@@ -119,94 +108,4 @@ impl Repository {
         self.db.clear_poison();
         Ok(self.db.lock().unwrap().task_query(query)?)
     }
-
-    pub fn undo(&self) -> Result<(), RustError> {
-        todo!("undo")
-    }
-
-    /// flutter_rust_bridge:ignore
-    pub fn database(&self) -> &Mutex<Database> {
-        &self.db
-    }
-
-    pub fn backends(&self) -> Result<Vec<BackendRecord>, RustError> {
-        let backends = self.database().lock().unwrap().backends()?;
-
-        Ok(backends
-            .into_iter()
-            .map(|backend| BackendRecord {
-                id: backend.id,
-                name: backend.name.to_string(),
-                enabled: backend.enabled,
-                schema: serde_json::to_string_pretty(&GitBackend::handler().config_schema())
-                    .expect("should not fail"),
-                config: serde_json::to_string_pretty(&backend.config).expect("should not fail"),
-            })
-            .collect::<Vec<_>>())
-    }
-
-    pub fn toggle_backend(&self, id: Uuid) -> Result<(), RustError> {
-        self.database().lock().unwrap().toggle_backend(id)?;
-        Ok(())
-    }
-
-    pub fn update_backend(&self, backend: &BackendRecord) -> Result<(), RustError> {
-        let config = serde_json::from_str(&backend.config).expect("invalid backend config json");
-        self.database()
-            .lock()
-            .unwrap()
-            .update_backend(&CoreBackendRecord {
-                id: backend.id,
-                name: backend.name.clone().into_boxed_str(),
-                enabled: backend.enabled,
-                config,
-            })?;
-        Ok(())
-    }
-
-    pub fn add_backend(&self, name: &str) -> Result<(), RustError> {
-        let handler = ENGINE.wait().backends().get_or_error(name).map_err(|e| {
-            RustError::from(ErrorKind::Other {
-                message: e.to_string().into_boxed_str(),
-            })
-        })?;
-        let name = handler.name();
-        self.database()
-            .lock()
-            .unwrap()
-            .add_backend(&CoreBackendRecord {
-                id: Uuid::now_v7(),
-                name,
-                enabled: false,
-                config: Config::default(),
-            })?;
-        Ok(())
-    }
-
-    pub fn delete_backend(&self, id: Uuid) -> Result<(), RustError> {
-        self.database().lock().unwrap().delete_backend(id)?;
-        Ok(())
-    }
-
-    pub fn backend(&self, id: Uuid) -> Result<Option<BackendRecord>, RustError> {
-        let backends = self.backends()?;
-
-        Ok(backends
-            .into_iter()
-            .filter(|backend| backend.id == id)
-            .nth(0))
-    }
-
-    pub fn backend_names(&self) -> Vec<String> {
-        ENGINE.wait().backends().keys().map(Into::into).collect()
-    }
-}
-
-#[derive(Debug)]
-pub struct BackendRecord {
-    pub id: Uuid,
-    pub name: String,
-    pub enabled: bool,
-    pub schema: String,
-    pub config: String,
 }

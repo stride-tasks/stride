@@ -8,7 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/repository.dart' hide BackendRecord;
+import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
 import 'package:stride/utils/functions.dart';

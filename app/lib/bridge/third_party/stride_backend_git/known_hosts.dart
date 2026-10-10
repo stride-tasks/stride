@@ -14,7 +14,7 @@ import 'package:stride/bridge/frb_generated.dart';
 
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `HostRef`, `KnownHostsError`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
-// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `add`, `as_ref`, `from_str`, `from_str`, `host`, `hosts`, `name`, `new`, `new`, `parse_str`, `read_file`, `read_standard_file`, `remove_by_hostname`, `short_name`, `try_from`, `write_file`, `write_standard_file`
+// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `add_host`, `add`, `as_ref`, `from_str`, `from_str`, `host`, `hosts`, `name`, `new`, `new`, `parse_str`, `read_file`, `read_standard_file`, `remove_by_hostname`, `short_name`, `try_from`, `write_file`, `write_standard_file`
 
 /// flutter_rust_bridge:non_opaque
 class Host {

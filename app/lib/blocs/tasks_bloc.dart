@@ -235,8 +235,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<void> undo() async {
-    await repository()?.undo();
-    add(TaskFetchEvent());
+    throw UnimplementedError();
+    // add(TaskFetchEvent());
   }
 
   @override
