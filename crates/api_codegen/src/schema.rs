@@ -41,7 +41,9 @@ pub enum SchemaType {
         ref_: String,
     },
     Concrete(SchemaConcreteType),
-    Any {},
+    Any {
+        const_value: Option<Value>,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
