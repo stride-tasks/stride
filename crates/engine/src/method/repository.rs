@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use stride_api::Value;
 use stride_core::backend::{BackendRecord, Config};
 use uuid::Uuid;
 
@@ -84,18 +85,16 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
         let repository = engine.open_repository(method.repository_id)?;
-        repository
-            .lock_database()
-            .update_backend(dbg!(&BackendRecord {
-                id: method.backend_instance.id,
-                name: method.backend_instance.name,
-                enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
-                config: method
-                    .backend_instance
-                    .configuration
-                    .to_type()
-                    .map_err(Error::Other)?,
-            }))?;
+        repository.lock_database().update_backend(&BackendRecord {
+            id: method.backend_instance.id,
+            name: method.backend_instance.name,
+            enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
+            config: method
+                .backend_instance
+                .configuration
+                .to_type()
+                .map_err(Error::Other)?,
+        })?;
 
         Ok(crate::api::RepositoryBackendSetMethodResult {})
     }
@@ -126,7 +125,7 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
                     } else {
                         crate::api::BackendInstanceState::Disabled
                     },
-                    configuration: crate::api::Value::from_type(backend.config),
+                    configuration: Value::from_type(backend.config),
                 })
                 .collect(),
         })
