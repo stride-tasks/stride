@@ -34,6 +34,20 @@ pub enum SchemaString {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SchemaObject {
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub properties: IndexMap<String, Schema>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub required: Vec<String>,
+    #[serde(
+        default,
+        rename = "additionalProperties",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub additional_properties: Option<AdditionalProperties>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)] // Allows parsing variants by fields instead of an explicit "type" tag
 pub enum SchemaType {
     Reference {
@@ -51,16 +65,11 @@ pub enum SchemaType {
 pub enum SchemaConcreteType {
     #[serde(rename = "object")]
     Object {
-        #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
-        properties: IndexMap<String, Schema>,
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        required: Vec<String>,
-        #[serde(
-            default,
-            rename = "additionalProperties",
-            skip_serializing_if = "Option::is_none"
-        )]
-        additional_properties: Option<AdditionalProperties>,
+        #[serde(flatten)]
+        object: SchemaObject,
+
+        #[serde(rename = "oneOf", skip_serializing_if = "Option::is_none")]
+        one_of: Option<Vec<SchemaObject>>,
     },
     #[serde(rename = "array")]
     Array { items: Box<Schema> },

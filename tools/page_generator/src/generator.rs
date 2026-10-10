@@ -75,7 +75,7 @@ fn build_docs_from_nodes(nodes: &[Node]) -> Vec<SchemaDoc> {
                 docs.push(doc);
             }
             Node::Type(TypeNode::Enum(node)) => {
-                let doc = enum_doc(node);
+                let doc = enum_doc(node, &type_titles);
                 docs.push(doc);
             }
             Node::Method(node) => {
@@ -138,12 +138,16 @@ fn struct_doc(
     }
 }
 
-fn enum_doc(node: &stride_api_codegen::EnumNode) -> SchemaDoc {
+fn enum_doc(
+    node: &stride_api_codegen::EnumNode,
+    type_titles: &HashMap<String, String>,
+) -> SchemaDoc {
     let title = node
         .doc
         .first()
         .cloned()
         .unwrap_or_else(|| node.name.clone());
+    let tag = node.tag.as_deref();
     let properties = node
         .variants
         .iter()
@@ -154,17 +158,59 @@ fn enum_doc(node: &stride_api_codegen::EnumNode) -> SchemaDoc {
             description: variant
                 .description
                 .clone()
+                .or_else(|| {
+                    tag.map(|tag| format!("Selected when `{tag}` is \"{}\".", variant.value))
+                })
                 .unwrap_or_else(|| variant.value.clone()),
         })
         .collect::<Vec<_>>();
 
+    // Tagged enums get one sub-section per variant, listing that variant's fields.
+    let sub_sections = match tag {
+        Some(tag) => node
+            .variants
+            .iter()
+            .map(|variant| SchemaDoc {
+                title: format!("{tag} = {}", variant.value),
+                id: String::new(),
+                description: variant.description.clone(),
+                group: "variant".to_string(),
+                properties: Some(
+                    variant
+                        .fields
+                        .iter()
+                        .map(|field| PropertyRow {
+                            name: field.name.clone(),
+                            type_name: type_node_to_string(&field.typ, type_titles),
+                            required: field.required,
+                            description: field
+                                .description
+                                .clone()
+                                .unwrap_or_else(|| field.name.clone()),
+                        })
+                        .collect(),
+                ),
+                sub_sections: Vec::new(),
+            })
+            .collect(),
+        None => Vec::new(),
+    };
+
+    let description = match (&node.description, tag) {
+        (Some(description), Some(tag)) => {
+            Some(format!("{description} Discriminated by the `{tag}` property."))
+        }
+        (None, Some(tag)) => Some(format!("Discriminated by the `{tag}` property.")),
+        (description, None) => description.clone(),
+    };
+
     SchemaDoc {
         title: normalize_title(&title),
         id: node.id.clone(),
-        description: node.description.clone(),
+        description,
         group: "type".to_string(),
         properties: Some(properties),
-        sub_sections: Vec::new(),
+        sub_sections,
     }
 }
 
@@ -334,7 +380,7 @@ fn append_nested_type_node(
             append_struct_section(node, struct_by_name, type_titles, seen, sections)
         }
         TypeNode::Enum(node) => {
-            let doc = enum_doc(node);
+            let doc = enum_doc(node, type_titles);
             sections.push(doc);
         }
         TypeNode::Array(inner) => {

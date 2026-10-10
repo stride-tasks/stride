@@ -6,7 +6,7 @@ use crate::node::{
     EnumNode, EnumVariantNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType,
     StructNode, TypeNode,
 };
-use crate::schema::{SchemaString, SchemaType};
+use crate::schema::{SchemaObject, SchemaString, SchemaType};
 use crate::{Error, Result, Schema, SchemaConcreteType};
 
 #[derive(Debug, Default)]
@@ -87,17 +87,19 @@ fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
         panic!("method should not be a reference: {}", path.display());
     };
-    let SchemaConcreteType::Object { properties, .. } = concrete_type else {
+    let SchemaConcreteType::Object { object, .. } = concrete_type else {
         panic!("method schema must be an object: {}", path.display());
     };
 
     let method_name =
         root_method_name(schema).unwrap_or_else(|| schema_name_from_path(path, schema));
 
-    let params_schema = properties
+    let params_schema = object
+        .properties
         .get("params")
         .expect("method must have params property");
-    let result_schema = properties
+    let result_schema = object
+        .properties
         .get("result")
         .expect("method must have result property");
 
@@ -128,11 +130,12 @@ fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
         panic!("notification should not be a reference: {}", path.display());
     };
-    let SchemaConcreteType::Object { properties, .. } = concrete_type else {
+    let SchemaConcreteType::Object { object, .. } = concrete_type else {
         panic!("notification schema must be an object: {}", path.display());
     };
 
-    let params_schema = properties
+    let params_schema = object
+        .properties
         .get("params")
         .expect("notification must have params property");
     let params_name = schema_name_from_path(path, schema);
@@ -177,6 +180,7 @@ fn enum_type_from_variants(
         id: schema.id.clone().unwrap_or_default(),
         doc,
         description: schema.description.clone(),
+        tag: None,
         variants,
     };
 
@@ -212,6 +216,7 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                             name: enum_variant_name(value),
                             value: value.clone(),
                             description: None,
+                            fields: Vec::new(),
                         })
                         .collect(),
                 )
@@ -225,6 +230,7 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                         name: enum_variant_name(&variant.const_value),
                         value: variant.const_value.clone(),
                         description: variant.description.clone(),
+                        fields: Vec::new(),
                     })
                     .collect(),
             ),
@@ -248,10 +254,18 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
         SchemaConcreteType::Number { .. } => TypeNode::Primitive(PrimitiveType::Number),
         SchemaConcreteType::Null {} => TypeNode::Any,
         SchemaConcreteType::Object {
-            properties,
-            required,
-            ..
+            object:
+                SchemaObject {
+                    properties,
+                    required,
+                    ..
+                },
+            one_of,
         } => {
+            if let Some(one_of) = one_of {
+                return union_type(schema, &target_name, properties, one_of);
+            }
+
             let required = required.clone().into_iter().collect::<HashSet<_>>();
 
             let mut fields = Vec::new();
@@ -289,6 +303,80 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
     }
 }
 
+fn doc_lines(schema: &Schema) -> Vec<String> {
+    let mut doc = Vec::new();
+    if let Some(title) = &schema.title {
+        doc.push(title.clone());
+    }
+    if let Some(description) = &schema.description {
+        if !doc.is_empty() {
+            doc.push(String::new());
+        }
+        doc.extend(description.split('\n').map(str::to_owned));
+    }
+    doc
+}
+
+fn union_type(
+    schema: &Schema,
+    name: &str,
+    base_properties: &indexmap::IndexMap<String, Schema>,
+    one_of: &[SchemaObject],
+) -> TypeNode {
+    let tag = base_properties
+        .iter()
+        .find(|(_, value)| value.comment.as_deref().map(str::trim) == Some("@discriminant"))
+        .map(|(key, _)| key.clone())
+        .unwrap_or_else(|| panic!("oneOf object requires a @discriminant property: {name}"));
+
+    let variants = one_of
+        .iter()
+        .map(|variant| {
+            let value = match variant
+                .properties
+                .get(&tag)
+                .map(|schema| &schema.schema_type)
+            {
+                Some(SchemaType::Concrete(SchemaConcreteType::String {
+                    const_value: Some(value),
+                    ..
+                })) => value.clone(),
+                _ => panic!("oneOf variant must define a const `{tag}` property: {name}"),
+            };
+            let variant_name = enum_variant_name(&value);
+            let variant_prefix = format!("{name}{variant_name}");
+
+            let fields = variant
+                .properties
+                .iter()
+                .filter(|(key, _)| **key != tag)
+                .map(|(key, field)| FieldNode {
+                    name: key.clone(),
+                    typ: type_for_schema(field, &append_type_name(&variant_prefix, key)),
+                    required: variant.required.contains(key),
+                    description: field.description.clone(),
+                })
+                .collect();
+
+            EnumVariantNode {
+                name: variant_name,
+                value,
+                description: None,
+                fields,
+            }
+        })
+        .collect();
+
+    TypeNode::Enum(EnumNode {
+        name: name.to_owned(),
+        id: schema.id.clone().unwrap_or_default(),
+        doc: doc_lines(schema),
+        description: schema.description.clone(),
+        tag: Some(tag),
+        variants,
+    })
+}
+
 fn resolve_reference(reference: &str) -> String {
     let stem = Path::new(reference)
         .file_stem()
@@ -303,11 +391,11 @@ fn root_method_name(schema: &Schema) -> Option<String> {
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
         return None;
     };
-    let SchemaConcreteType::Object { properties, .. } = concrete_type else {
+    let SchemaConcreteType::Object { object, .. } = concrete_type else {
         return None;
     };
 
-    let SchemaType::Concrete(concrete_type) = &properties.get("method")?.schema_type else {
+    let SchemaType::Concrete(concrete_type) = &object.properties.get("method")?.schema_type else {
         return None;
     };
     let SchemaConcreteType::String { const_value, .. } = concrete_type else {

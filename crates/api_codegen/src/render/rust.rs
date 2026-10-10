@@ -86,6 +86,10 @@ fn render_struct(this: &StructNode) -> String {
 }
 
 fn render_enum(this: &EnumNode) -> String {
+    if this.tag.is_some() {
+        return render_tagged_enum(this);
+    }
+
     let mut lines = Vec::new();
     if let Some(description) = &this.description {
         lines.push(format!("/// {description}"));
@@ -104,6 +108,54 @@ fn render_enum(this: &EnumNode) -> String {
             variant.value, variant.name
         ));
     }
+    lines.push("}\n".to_owned());
+    lines.join("\n")
+}
+
+fn render_tagged_enum(this: &EnumNode) -> String {
+    let mut lines = Vec::new();
+
+    let tag = this.tag.as_deref().unwrap_or_default();
+    for variant in &this.variants {
+        for field in &variant.fields {
+            if let Some(rendered) = render_type(&field.typ) {
+                lines.push(rendered);
+            }
+        }
+    }
+
+    for doc in &this.doc {
+        lines.push(format!("/// {doc}"));
+    }
+    lines.push("#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]".to_owned());
+    lines.push(format!(
+        "#[serde(tag = \"{}\", rename_all = \"kebab-case\", rename_all_fields = \"kebab-case\")]",
+        tag
+    ));
+    lines.push(format!("pub enum {} {{", this.name));
+
+    for variant in &this.variants {
+        lines.push(format!(
+            "    #[serde(rename = \"{}\")]\n    {} {{",
+            variant.value, variant.name
+        ));
+        for field in &variant.fields {
+            if let Some(description) = &field.description {
+                lines.push(format!("        /// {description}"));
+            }
+            let rust_name = rust_field_name(&field.name);
+            let field_type = render_type_node(&field.typ);
+            if field.required {
+                lines.push(format!("        {rust_name}: {field_type},"));
+            } else {
+                lines.push(format!(
+                    "        #[serde(default, skip_serializing_if = \"Option::is_none\")]\n        {rust_name}: Option<{field_type}>,"
+                ));
+            }
+        }
+        lines.push("    },".to_owned());
+    }
+
     lines.push("}\n".to_owned());
     lines.join("\n")
 }

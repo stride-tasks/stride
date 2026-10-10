@@ -47,6 +47,8 @@ pub struct EnumNode {
     pub id: String,
     pub doc: Vec<String>,
     pub description: Option<String>,
+    /// Discriminant property name; set for tagged enums whose variants carry fields.
+    pub tag: Option<String>,
     pub variants: Vec<EnumVariantNode>,
 }
 
@@ -74,4 +76,5 @@ pub struct EnumVariantNode {
     pub name: String,
     pub value: String,
     pub description: Option<String>,
+    pub fields: Vec<FieldNode>,
 }
