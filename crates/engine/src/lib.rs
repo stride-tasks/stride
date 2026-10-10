@@ -19,5 +19,5 @@ pub use error::{Error, Result};
 pub use notifier::{NoopNotifier, Notifier};
 pub use repository::Repository;
 
-/// Re-export the stride_api crate for convenience.
+/// Re-export the `stride_api` crate for convenience.
 pub use stride_api as api;

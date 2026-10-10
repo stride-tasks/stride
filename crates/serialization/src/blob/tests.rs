@@ -13,7 +13,7 @@ fn u8_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = u8::from_blob(&mut slice).unwrap();
     assert_eq!(value, 10);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -26,7 +26,7 @@ fn u32_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = u32::from_blob(&mut slice).unwrap();
     assert_eq!(value, u32::MAX);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn date_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = Date::from_blob(&mut slice).unwrap();
     assert_eq!(value, date);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn u8_slice_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <&[u8]>::from_blob(&mut slice).unwrap();
     assert_eq!(value, slice_value);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn str_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <&str>::from_blob(&mut slice).unwrap();
     assert_eq!(value, str);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn uuid_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = Uuid::from_blob(&mut slice).unwrap();
     assert_eq!(value, uuid);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn option_str_none_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <Option<&str>>::from_blob(&mut slice).unwrap();
     assert_eq!(value, str);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 #[test]
@@ -111,7 +111,7 @@ fn option_str_some_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <Option<&str>>::from_blob(&mut slice).unwrap();
     assert_eq!(value, str);
-    assert!(slice.is_empty());
+    assert_eq!(slice, &[]);
 }
 
 // TODO: Add tests for Operation

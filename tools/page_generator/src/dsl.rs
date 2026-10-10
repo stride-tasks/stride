@@ -69,7 +69,7 @@ impl TemplateContext {
                         current = String::new();
                     }
                     let mut index = String::new();
-                    while let Some(next) = chars.next() {
+                    for next in chars.by_ref() {
                         if next == ']' {
                             break;
                         }

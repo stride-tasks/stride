@@ -17,6 +17,11 @@ pub struct Repository {
 }
 
 impl Repository {
+    /// Open a repository instance located at the given known paths.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the repository could not be opened for any reason.
     pub fn open(id: Uuid, known_paths: &KnownPaths) -> Result<Self> {
         let root_path = known_paths.support.join("repository").join(id.to_string());
         std::fs::create_dir_all(&root_path)?;
@@ -35,14 +40,21 @@ impl Repository {
     }
 
     pub fn lock_database(&self) -> MutexGuard<'_, Database> {
-        self.db.lock().unwrap_or_else(|err| err.into_inner())
+        self.db
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
+    /// Synchronize the repository with all backends.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the synchronization could not be performed for any reason.
     pub fn sync(&self, engine: &Arc<Engine>) -> Result<Vec<crate::api::TaskChange>> {
         let mut db = self.lock_database();
         let diff = engine
             .backends()
-            .sync_all(self.uuid, &mut db, &engine.known_paths(), engine)?;
+            .sync_all(self.uuid, &mut db, engine.known_paths(), engine)?;
 
         Ok(db.transaction()?.task_changes_from_diff(&diff)?)
     }

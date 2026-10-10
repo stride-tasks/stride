@@ -12,6 +12,9 @@ if [ ! -e "$FLUTTER_DIR" ]; then
     git clone "--filter=tree:0" https://github.com/flutter/flutter "$FLUTTER_DIR" --branch "$VERSION"
 
     "$FLUTTER_DIR"/bin/flutter config --no-analytics
+
+    # Get Flutter dependencies so code generation works correctly below.
+    "$FLUTTER_DIR"/bin/flutter pub get --enforce-lockfile
 fi
 
 if [ "$1" = "run" ] || [ "$1" = "build" ] || [ "$1" = "test" ]; then
