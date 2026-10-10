@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/backend.get.schema.json",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "backend.get"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "backend-name": {
+                    "type": "string",
+                    "description": "The name of the backend to retrieve."
+                }
+            },
+            "required": [
+                "backend-name"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "backend-descriptor": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/backend.descriptor.schema.json"
+                }
+            }
+        }
+    }
+}
