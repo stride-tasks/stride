@@ -3,10 +3,10 @@ use stride_core::state::KnownPaths;
 use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
     method::{
-        BackendListHandler, RepositoryBackendAddHandler, RepositoryBackendGetHandler,
-        RepositoryBackendListHandler, RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
-        RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
-        RepositorySyncHandler, RepositoryTagListHandler,
+        BackendGetHandler, BackendListHandler, RepositoryBackendAddHandler,
+        RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
+        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
+        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
     },
 };
 
@@ -60,6 +60,7 @@ impl EngineBuilder {
 
     pub fn insert_default_methods(self) -> Self {
         self.command("backend.list", BackendListHandler)
+            .command("backend.get", BackendGetHandler)
             .command("repository.backend.add", RepositoryBackendAddHandler)
             .command("repository.backend.list", RepositoryBackendListHandler)
             .command("repository.backend.remove", RepositoryBackendRemoveHandler)
