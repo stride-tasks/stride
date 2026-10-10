@@ -195,7 +195,7 @@ impl<T: std::fmt::Debug + api::Notification + 'static> Notification for T {
 pub trait Prompt: std::fmt::Debug + std::any::Any + 'static {
     fn target(&self) -> Box<str>;
     fn inputs(&self) -> api::Value {
-        api::Value::Map(std::collections::HashMap::default())
+        api::Value::Map(api::Map::default())
     }
 
     fn summary(&self) -> Box<str>;

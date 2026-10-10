@@ -3,7 +3,6 @@ use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
     process::ExitCode,
     sync::Arc,
@@ -628,7 +627,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let params = if let Some(params) = params {
                 serde_json::from_str::<api::Value>(&params)?
             } else {
-                api::Value::Map(HashMap::new())
+                api::Value::Map(api::Map::new())
             };
             let result = engine.clone().execute_erased(&method, params)?;
             println!("{result}");

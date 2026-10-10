@@ -16,7 +16,9 @@ build = "build.rs"
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
+
 uuid.workspace = true
+indexmap = { workspace = true, features = ["serde"] }
 
 [build-dependencies]
 stride_api_codegen.workspace = true
