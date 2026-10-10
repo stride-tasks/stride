@@ -216,10 +216,10 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                         .collect(),
                 )
             }
-            SchemaString::AnyOf { any_of } if !any_of.is_empty() => enum_type_from_variants(
+            SchemaString::OneOf { one_of } if !one_of.is_empty() => enum_type_from_variants(
                 schema,
                 fallback_name,
-                any_of
+                one_of
                     .iter()
                     .map(|variant| EnumVariantNode {
                         name: enum_variant_name(&variant.const_value),
@@ -228,8 +228,8 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                     })
                     .collect(),
             ),
-            SchemaString::Enum { .. } | SchemaString::AnyOf { .. } => {
-                TypeNode::Primitive(PrimitiveType::String)
+            SchemaString::Enum { .. } | SchemaString::OneOf { .. } => {
+                panic!("Enum or OneOf variant is empty: {fallback_name}");
             }
             SchemaString::String { format } => {
                 if format.as_deref() == Some("uuid") {

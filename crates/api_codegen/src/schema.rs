@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct EnumAnyOfValue {
+pub struct EnumOneOfValue {
     #[serde(rename = "const")]
     pub const_value: String,
 
@@ -21,9 +21,9 @@ pub enum SchemaString {
     },
 
     // 2. Matches if the schema uses const values with per-variant descriptions.
-    AnyOf {
-        #[serde(rename = "anyOf")]
-        any_of: Vec<EnumAnyOfValue>,
+    OneOf {
+        #[serde(rename = "oneOf")]
+        one_of: Vec<EnumOneOfValue>,
     },
 
     // 3. Fallback variant if "enum" is missing; looks for type constraints

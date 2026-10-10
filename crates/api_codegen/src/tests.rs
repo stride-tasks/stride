@@ -223,7 +223,7 @@ fn parses_anyof_enum_variants_with_descriptions() {
             "title": "SSH Key Format",
             "description": "The type of SSH key used for authentication.",
             "type": "string",
-            "anyOf": [
+            "oneOf": [
                 { "const": "ssh-rsa", "description": "RSA key format." },
                 { "const": "ssh-ed25519", "description": "Ed25519 key format." }
             ]
