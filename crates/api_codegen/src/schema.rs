@@ -56,6 +56,7 @@ pub enum SchemaType {
     },
     Concrete(SchemaConcreteType),
     Any {
+        #[serde(rename = "const", skip_serializing_if = "Option::is_none")]
         const_value: Option<Value>,
     },
 }
