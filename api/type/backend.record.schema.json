@@ -1,0 +1,18 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/backend.record.schema.json",
+    "type": "object",
+    "required": [
+        "instance"
+    ],
+    "properties": {
+        "instance": {
+            "description": "The backend instance.",
+            "$ref": "https://stride-tasks.github.io/stride/api/type/backend.instance.schema.json"
+        },
+        "descriptor": {
+            "description": "The descriptor of the backend. May be empty if not available.",
+            "$ref": "https://stride-tasks.github.io/stride/api/type/backend.descriptor.schema.json"
+        }
+    }
+}
