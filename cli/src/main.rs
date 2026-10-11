@@ -288,7 +288,7 @@ fn main() -> anyhow::Result<ExitCode> {
     database.apply_migrations()?;
 
     let notifier = Box::new(CliNotifier);
-    let engine = Engine::builder(known_paths)
+    let engine = Engine::builder(known_paths)?
         .notifier(notifier)
         .insert_default_methods()
         .backend(GitBackend::handler())

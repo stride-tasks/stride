@@ -5,6 +5,7 @@ use std::{
 
 use stride_api as api;
 use stride_core::state::KnownPaths;
+use stride_plugin_manager::PluginManager;
 use uuid::Uuid;
 
 use crate::{
@@ -21,6 +22,7 @@ pub struct Engine {
     commands: CommandRegistry,
     backends: BackendRegistry,
     repositories: Mutex<Cache<Repository>>,
+    plugin_manager: Mutex<PluginManager>,
 }
 
 impl Engine {
@@ -32,6 +34,7 @@ impl Engine {
             commands: CommandRegistry::default(),
             backends: BackendRegistry::default(),
             repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
+            plugin_manager: Mutex::default(),
         })
     }
 }
@@ -39,7 +42,7 @@ impl Engine {
 impl Engine {
     /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
     #[must_use]
-    pub fn builder(known_paths: KnownPaths) -> EngineBuilder {
+    pub fn builder(known_paths: KnownPaths) -> Result<EngineBuilder> {
         EngineBuilder::new(known_paths)
     }
 
@@ -54,6 +57,12 @@ impl Engine {
 
     pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
         self.repositories
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    pub(crate) fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
+        self.plugin_manager
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }

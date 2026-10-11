@@ -30,6 +30,13 @@ pub enum Error {
     #[error("unknown backend: {name}")]
     UnknownBackend { name: Box<str> },
 
+    #[error("plugin error: {0}")]
+    Plugin(
+        #[from]
+        #[source]
+        stride_plugin_manager::Error,
+    ),
+
     #[error("api I/O error: {0}")]
     Io(
         #[from]

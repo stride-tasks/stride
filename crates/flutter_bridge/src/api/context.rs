@@ -54,6 +54,7 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
     let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
     let context = ENGINE.get_or_init(|| {
         Engine::builder(known_paths)
+            .expect("unable to build engine")
             .notifier(Box::new(FlutterNotifier))
             .insert_default_methods()
             .backend(GitBackend::handler())

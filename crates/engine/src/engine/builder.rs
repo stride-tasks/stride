@@ -1,7 +1,9 @@
 use stride_core::state::KnownPaths;
+use stride_plugin_manager::PluginManager;
 
 use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
+    Result,
     method::{
         BackendGetHandler, BackendListHandler, RepositoryBackendAddHandler,
         RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
@@ -12,7 +14,10 @@ use crate::{
 
 use super::Engine;
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 #[derive(Debug)]
 pub struct EngineBuilder {
@@ -20,17 +25,21 @@ pub struct EngineBuilder {
     notifier: Option<Box<dyn Notifier>>,
     commands: CommandRegistry,
     backends: BackendRegistry,
+    plugin_manager: Mutex<PluginManager>,
 }
 
 impl EngineBuilder {
     #[must_use]
-    pub fn new(known_paths: KnownPaths) -> Self {
-        Self {
+    pub fn new(known_paths: KnownPaths) -> Result<Self> {
+        Ok(Self {
+            plugin_manager: Mutex::new(PluginManager::new(
+                &known_paths.support.as_path().join("plugins"),
+            )?),
             known_paths,
             notifier: None,
             commands: CommandRegistry::default(),
             backends: BackendRegistry::default(),
-        }
+        })
     }
 
     #[must_use]
@@ -81,7 +90,8 @@ impl EngineBuilder {
             notifier: self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
             commands: self.commands,
             backends: self.backends,
-            repositories: std::sync::Mutex::new(super::Cache::new(Duration::from_secs(60))),
+            repositories: Mutex::new(super::Cache::new(Duration::from_secs(60))),
+            plugin_manager: self.plugin_manager,
         })
     }
 }
