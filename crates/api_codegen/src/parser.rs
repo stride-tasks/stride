@@ -283,7 +283,7 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
             one_of,
         } => {
             if let Some(one_of) = one_of {
-                return union_type(schema, &target_name, properties, one_of);
+                return union_type(schema, &target_name, properties, required, one_of);
             }
 
             match additional_properties {
@@ -359,6 +359,7 @@ fn union_type(
     schema: &Schema,
     name: &str,
     base_properties: &indexmap::IndexMap<String, Schema>,
+    base_required: &Vec<String>,
     one_of: &[SchemaObject],
 ) -> TypeNode {
     let tag = base_properties
@@ -399,7 +400,7 @@ fn union_type(
                 .map(|(key, field)| FieldNode {
                     name: key.clone(),
                     typ: type_for_schema(field, &append_type_name(&variant_prefix, key)),
-                    required: variant.required.contains(key),
+                    required: base_required.contains(key) || variant.required.contains(key),
                     description: field.description.clone(),
                 })
                 .collect();
