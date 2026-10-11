@@ -41,6 +41,17 @@ impl Notifier for FlutterNotifier {
 }
 
 pub fn create_context(stream: StreamSink<String>) {
+    let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
+    ENGINE.get_or_init(|| {
+        Engine::builder(known_paths)
+            .expect("unable to build engine")
+            .notifier(Box::new(FlutterNotifier))
+            .insert_default_methods()
+            .backend(GitBackend::handler())
+            .command("ssh.host.add", SshHostAddHandler)
+            .build()
+    });
+
     let mut stream_lock = STREAM.lock().unwrap();
     *stream_lock = Some(stream);
 }
@@ -51,22 +62,12 @@ pub fn execute(method: &str, args: &str) -> Result<String, RustError> {
         params: api::Value,
     }
 
-    let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
-    let context = ENGINE.get_or_init(|| {
-        Engine::builder(known_paths)
-            .expect("unable to build engine")
-            .notifier(Box::new(FlutterNotifier))
-            .insert_default_methods()
-            .backend(GitBackend::handler())
-            .command("ssh.host.add", SshHostAddHandler)
-            .build()
-    });
-
     let params: Params = serde_json::from_str(args).map_err(|e| ErrorKind::Other {
         message: format!("Failed to parse args: {e}").into(),
     })?;
 
-    let result = context
+    let result = ENGINE
+        .wait()
         .clone()
         .execute_erased(method, params.params)
         .map_err(|err| ErrorKind::Other {

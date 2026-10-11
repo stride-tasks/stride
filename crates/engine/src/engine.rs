@@ -61,7 +61,7 @@ impl Engine {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    pub(crate) fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
+    pub fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
         self.plugin_manager
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)

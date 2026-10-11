@@ -55,8 +55,6 @@ Future<void> main() async {
   await Background.init();
   await NotificationService.init();
 
-  final pluginPath = path.join(supportPath, 'plugins');
-  await pm.load(pluginPath: pluginPath);
   final plugins = await pm.pluginManifests();
   final pluginManagerState = PluginManagerState(plugins: plugins);
 
