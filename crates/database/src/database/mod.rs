@@ -4,9 +4,8 @@ mod tests;
 use chrono::DateTime;
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
-use stride_api::{Config, ConfigField, ConfigValue};
+use stride_api::{BackendInstance, BackendInstanceState, Config, ConfigField, ConfigValue};
 use stride_core::{
-    backend::BackendInstance,
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -406,7 +405,11 @@ impl Database {
                 )
                 VALUES (?1, ?2, ?3)
             "},
-            (backend.id.as_bytes(), &backend.name, &backend.enabled),
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                backend.state == BackendInstanceState::Enabled,
+            ),
         )?;
 
         for field in &backend.config.fields {
@@ -499,7 +502,11 @@ impl Database {
             Ok(BackendInstance {
                 id: row.get::<_, Uuid>("id")?,
                 name: row.get::<_, Box<str>>("name")?,
-                enabled: row.get::<_, bool>("enabled")?,
+                state: if row.get::<_, bool>("enabled")? {
+                    BackendInstanceState::Enabled
+                } else {
+                    BackendInstanceState::Disabled
+                },
                 config: Config { fields },
             })
         })?;
@@ -607,7 +614,11 @@ impl Database {
                 WHERE
                     id = ?1
             "},
-            (backend.id.as_bytes(), &backend.name, &backend.enabled),
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                backend.state == BackendInstanceState::Enabled,
+            ),
         )?;
 
         transaction.commit()?;

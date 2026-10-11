@@ -23,8 +23,7 @@ anyhow.workspace = true
 serde_json.workspace = true
 
 [features]
-default = ["backend"]
-backend = []
+default = []
 
 [lints]
 workspace = true

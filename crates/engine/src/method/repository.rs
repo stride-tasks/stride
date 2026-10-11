@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use stride_api::Config;
-use stride_core::backend::BackendInstance;
 use uuid::Uuid;
 
 use crate::{Engine, Result, TypedCommandHandler};
@@ -22,12 +21,14 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
         let backend_id = Uuid::now_v7();
 
         let repository = engine.open_repository(method.repository_id)?;
-        repository.lock_database().add_backend(&BackendInstance {
-            id: backend_id,
-            name,
-            enabled: false,
-            config: Config::default(),
-        })?;
+        repository
+            .lock_database()
+            .add_backend(&crate::api::BackendInstance {
+                id: backend_id,
+                name,
+                state: crate::api::BackendInstanceState::Disabled,
+                config: Config::default(),
+            })?;
 
         Ok(crate::api::RepositoryBackendAddMethodResult { backend_id })
     }
@@ -89,17 +90,7 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
 
         let backend_instance = backend_instances
             .into_iter()
-            .find(|backend| backend.id == method.backend_id)
-            .map(|backend| crate::api::BackendInstance {
-                name: backend.name,
-                id: backend.id,
-                state: if backend.enabled {
-                    crate::api::BackendInstanceState::Enabled
-                } else {
-                    crate::api::BackendInstanceState::Disabled
-                },
-                config: backend.config,
-            });
+            .find(|backend| backend.id == method.backend_id);
 
         let backend_record = backend_instance.map(|instance| {
             let descriptor = engine.backends().get(&instance.name);
@@ -130,12 +121,9 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
         let repository = engine.open_repository(method.repository_id)?;
-        repository.lock_database().update_backend(&BackendInstance {
-            id: method.backend_instance.id,
-            name: method.backend_instance.name,
-            enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
-            config: method.backend_instance.config,
-        })?;
+        repository
+            .lock_database()
+            .update_backend(&method.backend_instance)?;
 
         Ok(crate::api::RepositoryBackendSetMethodResult {})
     }
@@ -156,19 +144,7 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
         let backend_instances = repository.lock_database().backends()?;
 
         Ok(crate::api::RepositoryBackendListMethodResult {
-            backends: backend_instances
-                .into_iter()
-                .map(|backend| crate::api::BackendInstance {
-                    name: backend.name,
-                    id: backend.id,
-                    state: if backend.enabled {
-                        crate::api::BackendInstanceState::Enabled
-                    } else {
-                        crate::api::BackendInstanceState::Disabled
-                    },
-                    config: backend.config,
-                })
-                .collect(),
+            backends: backend_instances,
         })
     }
 }

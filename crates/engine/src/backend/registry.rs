@@ -54,7 +54,7 @@ impl BackendRegistry {
         let backends = database.backends()?;
         let mut combined_diff = VersionDifference::default();
         for mut backend in backends {
-            if !backend.enabled {
+            if backend.state == crate::api::BackendInstanceState::Disabled {
                 continue;
             }
 

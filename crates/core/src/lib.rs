@@ -4,10 +4,6 @@
 #![allow(clippy::doc_markdown)]
 
 /// flutter_rust_bridge:ignore
-#[cfg(feature = "backend")]
-pub mod backend;
-
-/// flutter_rust_bridge:ignore
 pub mod state;
 
 pub mod constant;
