@@ -2406,7 +2406,6 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
- "stride_api",
  "uuid",
 ]
 
