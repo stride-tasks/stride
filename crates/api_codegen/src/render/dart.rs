@@ -542,8 +542,9 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Primitive(PrimitiveType::Uuid) => "UuidValue".to_owned(),
         TypeNode::Primitive(PrimitiveType::Bytes) => "Uint8List".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uri) => "Uri".to_owned(),
-        TypeNode::Primitive(PrimitiveType::Integer) => "int".to_owned(),
-        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => "int".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Integer | PrimitiveType::UnsignedInteger) => {
+            "int".to_owned()
+        }
         TypeNode::Primitive(PrimitiveType::Number) => "double".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
         TypeNode::Array(inner) => format!("List<{}>", render_type_node(inner)),

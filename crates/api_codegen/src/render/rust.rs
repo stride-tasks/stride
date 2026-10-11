@@ -146,8 +146,7 @@ fn render_tagged_enum(this: &EnumNode) -> String {
         "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
     );
     lines.push(format!(
-        "#[serde(tag = \"{}\", rename_all = \"kebab-case\", rename_all_fields = \"kebab-case\")]",
-        tag
+        "#[serde(tag = \"{tag}\", rename_all = \"kebab-case\", rename_all_fields = \"kebab-case\")]"
     ));
     lines.push(format!("pub enum {} {{", this.name));
 

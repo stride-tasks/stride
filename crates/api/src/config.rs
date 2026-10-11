@@ -1,3 +1,7 @@
+#![allow(clippy::missing_errors_doc)]
+
+// TODO: Maybe move this into it's separate crate.
+
 use base64::Engine;
 
 use crate::{Config, ConfigField, ConfigSchema, ConfigSchemaField, ConfigSchemaValue, ConfigValue};
@@ -219,6 +223,11 @@ impl ConfigValue {
         }
     }
 
+    /// Aligns the current configuration value with the given schema field.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Error` if the value cannot be aligned according to the schema.
     pub fn align(&self, schema: &ConfigSchemaField) -> Result<Option<Self>, Error> {
         match (&schema.value, self) {
             (ConfigSchemaValue::String { .. }, Self::String { .. })
@@ -253,7 +262,7 @@ impl ConfigValue {
                 }));
             }
             (ConfigSchemaValue::Uuid { .. }, Self::String { value }) => {
-                match uuid::Uuid::parse_str(&value) {
+                match uuid::Uuid::parse_str(value) {
                     Ok(value) => return Ok(Some(Self::Uuid { value })),
                     Err(error) => {
                         return Err(Error::UuidParse {
@@ -264,7 +273,7 @@ impl ConfigValue {
                 }
             }
             (ConfigSchemaValue::Url { .. }, Self::String { value }) => {
-                return match url::Url::parse(&value) {
+                return match url::Url::parse(value) {
                     Ok(value) => Ok(Some(Self::Url { value })),
                     Err(error) => Err(Error::UrlParse {
                         id: schema.name.clone(),
@@ -283,6 +292,8 @@ impl ConfigValue {
     }
 }
 
+// Allowed because this struct is generated.
+#[allow(clippy::derivable_impls)]
 impl Default for Config {
     fn default() -> Self {
         Self { fields: Vec::new() }
@@ -295,6 +306,11 @@ impl Config {
         self.fields.iter().find(|field| field.id.as_ref() == id)
     }
 
+    /// Retrieves a reference to the configuration field with the specified ID, if it exists.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error::MissingField`] if the field with the specified ID does not exist.
     #[must_use]
     pub fn get_mut(&mut self, id: &str) -> Option<&mut ConfigField> {
         self.fields.iter_mut().find(|field| field.id.as_ref() == id)

@@ -51,16 +51,14 @@ pub fn parse(dir: &Path) -> Result<Vec<Node>> {
     let mut schemas_by_id = HashMap::new();
     for entry in &entries {
         if let Some(id) = &entry.schema.id {
-            if schemas_by_id
-                .insert(
-                    id.clone(),
-                    SchemaEntry {
-                        path: entry.path.clone(),
-                        schema: entry.schema.clone(),
-                    },
-                )
-                .is_some()
-            {
+            let schema = schemas_by_id.insert(
+                id.clone(),
+                SchemaEntry {
+                    path: entry.path.clone(),
+                    schema: entry.schema.clone(),
+                },
+            );
+            if schema.is_some() {
                 return Err(Error::DuplicateSchemaId { id: id.clone() });
             }
         }
@@ -301,12 +299,10 @@ fn type_for_schema(
                 content_encoding,
             } => match content_encoding {
                 Some(ContentEncoding::Base64) => {
-                    if format.is_some() {
-                        panic!(
-                            "Base64 encoding is not compatible with format: {:?}",
-                            format
-                        );
-                    }
+                    assert!(
+                        !format.is_some(),
+                        "Base64 encoding is not compatible with format: {format:?}",
+                    );
                     TypeNode::Primitive(PrimitiveType::Bytes)
                 }
                 None => {
@@ -345,23 +341,22 @@ fn type_for_schema(
             one_of,
         } => {
             if let Some(one_of) = one_of {
-                return Ok(union_type(
+                return union_type(
                     schema,
                     &target_name,
                     properties,
                     required,
                     one_of,
                     schemas_by_id,
-                )?);
+                );
             }
 
             match additional_properties {
                 Some(AdditionalProperties::Schema(value_schema)) => {
-                    if !properties.is_empty() {
-                        panic!(
-                            "schema based additionalProperties with existing properties is not supported yet"
-                        );
-                    }
+                    assert!(
+                        properties.is_empty(),
+                        "schema based additionalProperties with existing properties is not supported yet"
+                    );
                     return Ok(TypeNode::Map(Box::new(type_for_schema(
                         value_schema,
                         &append_type_name(&target_name, "Value"),
@@ -430,15 +425,17 @@ fn union_type(
     schema: &Schema,
     name: &str,
     base_properties: &indexmap::IndexMap<String, Schema>,
-    base_required: &Vec<String>,
+    base_required: &[String],
     one_of: &[SchemaObject],
     schemas_by_id: &HashMap<String, SchemaEntry>,
 ) -> Result<TypeNode> {
     let tag = base_properties
         .iter()
         .find(|(_, value)| value.comment.as_deref().map(str::trim) == Some("@discriminant"))
-        .map(|(key, _)| key.clone())
-        .unwrap_or_else(|| panic!("oneOf object requires a @discriminant property: {name}"));
+        .map_or_else(
+            || panic!("oneOf object requires a @discriminant property: {name}"),
+            |(key, _)| key.clone(),
+        );
 
     let variants = one_of
         .iter()
@@ -448,13 +445,15 @@ fn union_type(
                 .get(&tag)
                 .map(|schema| &schema.schema_type)
             {
-                Some(SchemaType::Concrete(SchemaConcreteType::String {
-                    const_value: Some(value),
-                    ..
-                })) => value.clone(),
-                Some(SchemaType::Any {
-                    const_value: Some(Value::String(value)),
-                }) => value.clone(),
+                Some(
+                    SchemaType::Concrete(SchemaConcreteType::String {
+                        const_value: Some(value),
+                        ..
+                    })
+                    | SchemaType::Any {
+                        const_value: Some(Value::String(value)),
+                    },
+                ) => value.clone(),
                 Some(SchemaType::Any {
                     const_value: Some(_),
                 }) => panic!(

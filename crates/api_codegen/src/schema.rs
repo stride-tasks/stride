@@ -11,7 +11,7 @@ pub struct EnumOneOfValue {
     pub description: Option<String>,
 }
 
-/// https://www.learnjsonschema.com/2020-12/content/contentencoding/
+/// <https://www.learnjsonschema.com/2020-12/content/contentencoding/>
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 pub enum ContentEncoding {
     #[serde(rename = "base64")]
