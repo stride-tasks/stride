@@ -62,7 +62,9 @@ fn render_struct(this: &StructNode) -> String {
     for doc in &this.doc {
         lines.push(format!("/// {doc}"));
     }
-    lines.push("#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]".to_owned());
+    lines.push(
+        "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
+    );
     lines.push("#[serde(rename_all = \"kebab-case\")]".to_owned());
     lines.push("#[allow(missing_copy_implementations)]".to_owned());
     lines.push(format!("pub struct {} {{", this.name));
@@ -108,7 +110,7 @@ fn render_enum(this: &EnumNode) -> String {
         lines.push(format!("/// {description}"));
     }
     lines.push(
-        "#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]"
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]"
             .to_owned(),
     );
     lines.push(format!("pub enum {} {{", this.name));
@@ -140,7 +142,9 @@ fn render_tagged_enum(this: &EnumNode) -> String {
     for doc in &this.doc {
         lines.push(format!("/// {doc}"));
     }
-    lines.push("#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]".to_owned());
+    lines.push(
+        "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
+    );
     lines.push(format!(
         "#[serde(tag = \"{}\", rename_all = \"kebab-case\", rename_all_fields = \"kebab-case\")]",
         tag
