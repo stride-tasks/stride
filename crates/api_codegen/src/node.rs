@@ -11,6 +11,7 @@ pub enum TypeNode {
     Enum(EnumNode),
     Primitive(PrimitiveType),
     Array(Box<TypeNode>),
+    Map(Box<TypeNode>),
     Reference(String),
     Any,
     Unit,

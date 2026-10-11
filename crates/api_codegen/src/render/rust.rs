@@ -43,6 +43,8 @@ fn render_type(this: &TypeNode) -> Option<String> {
         Some(render_enum(enum_))
     } else if let TypeNode::Array(array) = &this {
         render_type(array.as_ref())
+    } else if let TypeNode::Map(value) = &this {
+        render_type(value.as_ref())
     } else {
         None
     }
@@ -217,6 +219,12 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Primitive(PrimitiveType::Number) => "f64".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
         TypeNode::Array(inner) => format!("Vec<{}>", render_type_node(inner)),
+        TypeNode::Map(value) => {
+            format!(
+                "std::collections::HashMap<String, {}>",
+                render_type_node(value)
+            )
+        }
         TypeNode::Reference(name) => name.clone(),
         TypeNode::Any => "Value".to_owned(),
         TypeNode::Unit => "()".to_owned(),

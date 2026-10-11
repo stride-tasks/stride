@@ -8,7 +8,9 @@ use crate::node::{
     EnumNode, EnumVariantNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType,
     StructNode, TypeNode,
 };
-use crate::schema::{ContentEncoding, SchemaObject, SchemaString, SchemaType};
+use crate::schema::{
+    AdditionalProperties, ContentEncoding, SchemaObject, SchemaString, SchemaType,
+};
 use crate::{Error, Result, Schema, SchemaConcreteType};
 
 #[derive(Debug, Default)]
@@ -276,12 +278,30 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                 SchemaObject {
                     properties,
                     required,
-                    ..
+                    additional_properties,
                 },
             one_of,
         } => {
             if let Some(one_of) = one_of {
                 return union_type(schema, &target_name, properties, one_of);
+            }
+
+            match additional_properties {
+                Some(AdditionalProperties::Schema(value_schema)) => {
+                    if !properties.is_empty() {
+                        panic!(
+                            "schema based additionalProperties with existing properties is not supported yet"
+                        );
+                    }
+                    return TypeNode::Map(Box::new(type_for_schema(
+                        value_schema,
+                        &append_type_name(&target_name, "Value"),
+                    )));
+                }
+                Some(AdditionalProperties::Boolean(_)) => {
+                    panic!("boolean additionalProperties is not supported yet");
+                }
+                None => {}
             }
 
             let required = required.clone().into_iter().collect::<HashSet<_>>();

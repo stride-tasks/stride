@@ -386,6 +386,9 @@ fn append_nested_type_node(
         TypeNode::Array(inner) => {
             append_nested_type_node(inner, struct_by_name, type_titles, seen, sections);
         }
+        TypeNode::Map(value) => {
+            append_nested_type_node(value, struct_by_name, type_titles, seen, sections);
+        }
         TypeNode::Reference(_) | TypeNode::Primitive(_) | TypeNode::Any | TypeNode::Unit => {}
     }
 }
@@ -417,6 +420,7 @@ fn properties_for_type_node(
         TypeNode::Enum(_)
         | TypeNode::Primitive(_)
         | TypeNode::Array(_)
+        | TypeNode::Map(_)
         | TypeNode::Any
         | TypeNode::Unit => None,
     }?;
@@ -454,6 +458,7 @@ fn type_node_to_string(
             stride_api_codegen::PrimitiveType::Boolean => "boolean".to_string(),
         },
         TypeNode::Array(inner) => format!("{}[]", type_node_to_string(inner, type_titles)),
+        TypeNode::Map(value) => format!("map<string, {}>", type_node_to_string(value, type_titles)),
         TypeNode::Reference(name) => type_titles
             .get(name)
             .cloned()
@@ -779,6 +784,16 @@ fn render_rows(
 
 fn render_type_name_html(type_name: &str, type_anchor_lookup: &HashMap<String, String>) -> String {
     let trimmed = type_name.trim();
+    if let Some(value_type) = trimmed
+        .strip_prefix("map<string, ")
+        .and_then(|value_type| value_type.strip_suffix('>'))
+    {
+        return format!(
+            "map&lt;string, {}&gt;",
+            render_type_name_html(value_type, type_anchor_lookup)
+        );
+    }
+
     let mut suffixes = Vec::new();
     let mut normalized = trimmed;
     while normalized.ends_with("[]") {
@@ -845,4 +860,31 @@ fn escape_html(value: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&#39;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn displays_map_types_with_linked_value_types() {
+        let type_node = TypeNode::Map(Box::new(TypeNode::Reference(
+            "ConfigSchemaField".to_string(),
+        )));
+        let titles = HashMap::from([(
+            "ConfigSchemaField".to_string(),
+            "Config Schema Field".to_string(),
+        )]);
+        let anchors = HashMap::from([(
+            "Config Schema Field".to_string(),
+            "config-schema-field".to_string(),
+        )]);
+
+        let type_name = type_node_to_string(&type_node, &titles);
+        assert_eq!(type_name, "map<string, Config Schema Field>");
+        assert_eq!(
+            render_type_name_html(&type_name, &anchors),
+            "map&lt;string, <a href=\"#config-schema-field\" class=\"break-all text-emerald-700 hover:underline dark:text-emerald-400\">Config Schema Field</a>&gt;"
+        );
+    }
 }

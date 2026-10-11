@@ -38,6 +38,44 @@ fn generates_empty_object_as_struct() {
 }
 
 #[test]
+fn generates_schema_additional_properties_as_a_typed_map() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_map_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("config.schema.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json"
+                    }
+                }
+            },
+            "required": ["fields"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(
+        rust.contains("pub fields: std::collections::HashMap<String, ConfigSchemaField>,"),
+        "output was:\n{rust}"
+    );
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(
+        dart.contains("Map<String, ConfigSchemaField> fields"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
 fn keeps_explicitly_named_nested_objects_with_method_fields() {
     let output = generate_with_schema(
         r#"{
