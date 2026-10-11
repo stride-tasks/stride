@@ -10,10 +10,8 @@ use std::{
     sync::Arc,
 };
 
-use stride_core::{
-    backend::{Config, ConfigSchema},
-    state::KnownPaths,
-};
+use stride_api::{Config, ConfigSchema};
+use stride_core::state::KnownPaths;
 use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;

@@ -1,9 +1,10 @@
 use std::process::ExitCode;
 
 use anyhow::{Context, bail};
-use stride_core::backend::{BackendRecord, Config};
+use stride_api::ConfigField;
+use stride_core::backend::BackendRecord;
 use stride_database::Database;
-use stride_engine::{BackendRegistry, api::ConfigValue};
+use stride_engine::{BackendRegistry, api::Config};
 use uuid::Uuid;
 
 use crate::cli::BackendCommand;
@@ -56,24 +57,30 @@ pub(crate) fn handle_command(
             }
 
             let Some(property_name) = property_name else {
-                for (id, schema_field) in &schema.fields {
+                for schema_field in &schema.fields {
                     let required = if schema_field.value.as_value().is_some() {
                         "*"
                     } else {
                         ""
                     };
-                    let value = backend
+                    let field = backend
                         .config
-                        .get(id)
+                        .get(schema_field.id.as_ref())
                         .cloned()
-                        .or_else(|| schema_field.value.as_value());
+                        .or_else(|| {
+                            Some(ConfigField {
+                                id: schema_field.id.clone(),
+                                value: schema_field.value.as_value()?,
+                            })
+                        });
 
                     println!(
-                        "{id}: {}{required} = {}",
+                        "{}: {}{required} = {}",
+                        schema_field.id.as_ref(),
                         schema_field.value.as_type_name(),
-                        value.map_or_else(
+                        field.map_or_else(
                             || String::from("none").into(),
-                            |value: ConfigValue| value.as_value_string()
+                            |field| field.value.as_value_string()
                         )
                     );
                 }
@@ -90,12 +97,12 @@ pub(crate) fn handle_command(
                     return Ok(ExitCode::SUCCESS);
                 }
 
-                let value = backend.config.get(property_name);
-                if let Some(value) = value {
-                    println!("{value}");
+                let field = backend.config.get(property_name);
+                if let Some(field) = field {
+                    println!("{}", field.value.as_value_string());
                 }
 
-                let has_value = value.is_some();
+                let has_value = field.is_some();
                 database.update_backend(backend)?;
 
                 return Ok(ExitCode::from(u8::from(!has_value)));

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use stride_api::Value;
-use stride_core::backend::{BackendRecord, Config};
+use stride_api::{Config, Value};
+use stride_core::backend::BackendRecord;
 use uuid::Uuid;
 
 use crate::{Engine, Error, Result, TypedCommandHandler};

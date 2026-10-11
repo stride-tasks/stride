@@ -4,9 +4,9 @@ mod tests;
 use chrono::DateTime;
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
-use stride_api::ConfigValue;
+use stride_api::{Config, ConfigField, ConfigValue};
 use stride_core::{
-    backend::{BackendRecord, Config},
+    backend::BackendRecord,
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -14,11 +14,7 @@ use stride_crdt::{actor::ActorId, hlc::Clock};
 use url::Url;
 use uuid::Uuid;
 
-use std::{
-    collections::{HashMap, HashSet},
-    path::Path,
-    rc::Rc,
-};
+use std::{collections::HashSet, path::Path, rc::Rc};
 
 use crate::{
     Result, Sql, apply_migrations, database::transaction::Transaction, task_status_to_sql,
@@ -413,7 +409,7 @@ impl Database {
             (backend.id.as_bytes(), &backend.name, &backend.enabled),
         )?;
 
-        for (name, value) in &backend.config.fields {
+        for field in &backend.config.fields {
             transaction.execute(
                 indoc! {"
                     INSERT INTO backend_config_table (
@@ -425,9 +421,9 @@ impl Database {
                 "},
                 (
                     backend.id.as_bytes(),
-                    name,
-                    value.as_type_name(),
-                    value.as_value_boxed_slice(),
+                    &field.id,
+                    field.value.as_type_name(),
+                    field.value.as_value_boxed_slice(),
                 ),
             )?;
         }
@@ -495,10 +491,10 @@ impl Database {
                 ))
             })?;
 
-            let mut fields = HashMap::new();
+            let mut fields = Vec::new();
             for field in rows {
                 let (name, value) = field?;
-                fields.insert(name, value);
+                fields.push(ConfigField { id: name, value });
             }
             Ok(BackendRecord {
                 id: row.get::<_, Uuid>("id")?,
@@ -592,12 +588,12 @@ impl Database {
         )?;
         let mut sql = transaction
             .prepare_cached("INSERT INTO backend_config_table (backend_id, name, type, value) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING")?;
-        for (name, value) in &backend.config.fields {
+        for field in &backend.config.fields {
             sql.execute((
                 backend.id,
-                name,
-                value.as_type_name(),
-                value.as_value_boxed_slice(),
+                &field.id,
+                field.value.as_type_name(),
+                field.value.as_value_boxed_slice(),
             ))?;
         }
         drop(sql);
