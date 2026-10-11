@@ -10,4 +10,8 @@ pub enum Error {
         #[source]
         source: serde_json::Error,
     },
+    #[error("duplicate schema $id: {id}")]
+    DuplicateSchemaId { id: String },
+    #[error("schema references unknown $id: {reference}")]
+    UnknownReference { reference: String },
 }

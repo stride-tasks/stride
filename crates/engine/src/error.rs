@@ -24,7 +24,7 @@ pub enum Error {
     Config(
         #[from]
         #[source]
-        stride_core::backend::Error,
+        stride_api::config::Error,
     ),
 
     #[error("unknown backend: {name}")]

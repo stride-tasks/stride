@@ -1,10 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use stride_core::{
-    backend::{Config, Schema, SchemaValue},
-    state::KnownPaths,
-};
-use stride_engine::{Backend, BackendHandler};
+use stride_core::state::KnownPaths;
+use stride_engine::{Backend, BackendHandler, api};
 
 use crate::GitBackend;
 
@@ -18,18 +15,18 @@ impl BackendHandler for Handler {
         "git".into()
     }
 
-    fn config_schema(&self) -> Schema {
-        Schema::builder(self.name())
+    fn config_schema(&self) -> api::ConfigSchema {
+        api::ConfigSchema::builder(self.name())
             .field(
                 "origin",
                 "Origin",
-                SchemaValue::String { default: None },
+                api::ConfigSchemaValue::String { default: None },
                 false,
             )
             .field(
                 "author",
                 "Author",
-                SchemaValue::String {
+                api::ConfigSchemaValue::String {
                     default: Some("Stride".into()),
                 },
                 false,
@@ -37,7 +34,7 @@ impl BackendHandler for Handler {
             .field(
                 "email",
                 "E-mail",
-                SchemaValue::String {
+                api::ConfigSchemaValue::String {
                     default: Some("noreply.stride.tasks@gmail.com".into()),
                 },
                 false,
@@ -45,7 +42,7 @@ impl BackendHandler for Handler {
             .field(
                 "branch",
                 "Git Branch",
-                SchemaValue::String {
+                api::ConfigSchemaValue::String {
                     default: Some("main".into()),
                 },
                 false,
@@ -53,19 +50,19 @@ impl BackendHandler for Handler {
             .field(
                 "encryption_key",
                 "Encryption Key",
-                SchemaValue::Bytes {
+                api::ConfigSchemaValue::Bytes {
                     default: None,
                     min: Some(32),
                     max: Some(32),
-                    category: Some(stride_core::backend::BytesCategory::Password),
-                    generator: Some(stride_core::backend::BytesGenerator::CryptoRandom),
+                    category: Some(api::ConfigSchemaByteCategory::Password),
+                    generator: Some(api::ConfigSchemaByteGenerator::CryptoRandom),
                 },
                 true,
             )
             .field(
                 "ssh_key",
                 "SSH Key",
-                SchemaValue::SshKey { default: None },
+                api::ConfigSchemaValue::SshKey { default: None },
                 false,
             )
             .build()
@@ -73,7 +70,7 @@ impl BackendHandler for Handler {
 
     fn create(
         &self,
-        config: &Config,
+        config: &api::Config,
         path: &Path,
         known_paths: &KnownPaths,
     ) -> stride_engine::Result<Box<dyn Backend>> {

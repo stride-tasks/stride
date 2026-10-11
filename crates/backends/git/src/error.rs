@@ -68,7 +68,7 @@ pub enum Error {
     Database(#[from] stride_database::Error),
 
     #[error("config error: {0}")]
-    Config(#[from] stride_core::backend::Error),
+    Config(#[from] stride_engine::api::config::Error),
 
     #[error("ssh error: {0}")]
     Ssh(#[from] SshError),

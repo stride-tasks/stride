@@ -3,12 +3,19 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct EnumAnyOfValue {
+pub struct EnumOneOfValue {
     #[serde(rename = "const")]
     pub const_value: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+}
+
+/// <https://www.learnjsonschema.com/2020-12/content/contentencoding/>
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum ContentEncoding {
+    #[serde(rename = "base64")]
+    Base64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -21,16 +28,32 @@ pub enum SchemaString {
     },
 
     // 2. Matches if the schema uses const values with per-variant descriptions.
-    AnyOf {
-        #[serde(rename = "anyOf")]
-        any_of: Vec<EnumAnyOfValue>,
+    OneOf {
+        #[serde(rename = "oneOf")]
+        one_of: Vec<EnumOneOfValue>,
     },
 
     // 3. Fallback variant if "enum" is missing; looks for type constraints
     String {
         #[serde(skip_serializing_if = "Option::is_none")]
         format: Option<String>,
+        #[serde(rename = "contentEncoding", skip_serializing_if = "Option::is_none")]
+        content_encoding: Option<ContentEncoding>,
     },
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SchemaObject {
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub properties: IndexMap<String, Schema>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub required: Vec<String>,
+    #[serde(
+        default,
+        rename = "additionalProperties",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub additional_properties: Option<AdditionalProperties>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -41,7 +64,10 @@ pub enum SchemaType {
         ref_: String,
     },
     Concrete(SchemaConcreteType),
-    Any {},
+    Any {
+        #[serde(rename = "const", skip_serializing_if = "Option::is_none")]
+        const_value: Option<Value>,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -49,16 +75,11 @@ pub enum SchemaType {
 pub enum SchemaConcreteType {
     #[serde(rename = "object")]
     Object {
-        #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
-        properties: IndexMap<String, Schema>,
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        required: Vec<String>,
-        #[serde(
-            default,
-            rename = "additionalProperties",
-            skip_serializing_if = "Option::is_none"
-        )]
-        additional_properties: Option<AdditionalProperties>,
+        #[serde(flatten)]
+        object: SchemaObject,
+
+        #[serde(rename = "oneOf", skip_serializing_if = "Option::is_none")]
+        one_of: Option<Vec<SchemaObject>>,
     },
     #[serde(rename = "array")]
     Array { items: Box<Schema> },
@@ -78,12 +99,14 @@ pub enum SchemaConcreteType {
     #[serde(rename = "integer")]
     Integer {
         #[serde(default, rename = "const", skip_serializing_if = "Option::is_none")]
-        const_value: Option<String>,
+        const_value: Option<i64>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        format: Option<String>,
     },
     #[serde(rename = "boolean")]
     Boolean {
         #[serde(default, rename = "const", skip_serializing_if = "Option::is_none")]
-        const_value: Option<String>,
+        const_value: Option<bool>,
     },
     #[serde(rename = "null")]
     Null {},

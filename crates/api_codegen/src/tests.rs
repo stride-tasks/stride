@@ -38,6 +38,107 @@ fn generates_empty_object_as_struct() {
 }
 
 #[test]
+fn generates_schema_additional_properties_as_a_typed_map() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_map_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("config.schema.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json"
+                    }
+                }
+            },
+            "required": ["fields"]
+        }"#,
+    )
+    .unwrap();
+    fs::write(
+        dir.join("type").join("config.schema.field.schema.json"),
+        r#"{
+            "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json",
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            }
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(
+        rust.contains("pub fields: std::collections::HashMap<String, ConfigSchemaField>,"),
+        "output was:\n{rust}"
+    );
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(
+        dart.contains("Map<String, ConfigSchemaField> fields"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn fails_when_reference_id_is_not_in_loaded_schemas() {
+    let error = generate_with_schema(
+        r#"{
+            "type": "object",
+            "properties": {
+                "value": { "$ref": "https://example.com/missing.schema.json" }
+            }
+        }"#,
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(error, Error::UnknownReference { ref reference } if reference == "https://example.com/missing.schema.json"),
+        "unexpected error: {error}"
+    );
+}
+
+#[test]
+fn generates_uint_as_usize_in_rust_and_int_in_dart() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_uint_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "max": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                },
+                "min": { "type": "integer" }
+            },
+            "required": ["max", "min"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(rust.contains("pub max: usize,"), "output was:\n{rust}");
+    assert!(rust.contains("pub min: i64,"), "output was:\n{rust}");
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("int max"), "output was:\n{dart}");
+    assert!(dart.contains("int min"), "output was:\n{dart}");
+}
+
+#[test]
 fn keeps_explicitly_named_nested_objects_with_method_fields() {
     let output = generate_with_schema(
         r#"{
@@ -135,6 +236,17 @@ fn generates_freezed_dart_with_json_keys() {
         }"#,
     )
     .unwrap();
+    fs::write(
+        dir.join("type").join("stride.ssh.key.public.schema.json"),
+        r#"{
+            "$id": "https://example.com/type/stride.ssh.key.public.schema.json",
+            "type": "object",
+            "properties": {
+                "value": { "type": "string" }
+            }
+        }"#,
+    )
+    .unwrap();
 
     let output = generate_dart(&dir).unwrap();
 
@@ -223,7 +335,7 @@ fn parses_anyof_enum_variants_with_descriptions() {
             "title": "SSH Key Format",
             "description": "The type of SSH key used for authentication.",
             "type": "string",
-            "anyOf": [
+            "oneOf": [
                 { "const": "ssh-rsa", "description": "RSA key format." },
                 { "const": "ssh-ed25519", "description": "Ed25519 key format." }
             ]
@@ -280,4 +392,33 @@ fn generates_uuid_as_uuid_value_in_dart() {
     assert!(output.contains("UuidValue uuid"));
     assert!(output.contains("@UuidValueJsonConverter()"));
     assert!(!output.contains("String uuid"));
+}
+
+#[test]
+fn generates_base64_and_uri_types() {
+    let schema = r#"{
+        "title": "Encoded Values",
+        "type": "object",
+        "properties": {
+            "bytes": { "type": "string", "contentEncoding": "base64" },
+            "url": { "type": "string", "format": "uri" }
+        },
+        "required": ["url"]
+    }"#;
+    let rust = generate_with_schema(schema).unwrap();
+    assert!(rust.contains("pub bytes: Option<Box<[u8]>>"));
+    assert!(rust.contains("pub url: url::Url"));
+    assert!(rust.contains("serde_with::base64::Base64"));
+
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_encoded_dart_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(dir.join("type").join("generated.schema.json"), schema).unwrap();
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("Uint8List? bytes"));
+    assert!(dart.contains("Uri url"));
+    assert!(dart.contains("@NullableBase64BytesJsonConverter()"));
 }

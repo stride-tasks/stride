@@ -1,0 +1,88 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.value.schema.json",
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "$comment": "@discriminant"
+        }
+    },
+    "oneOf": [
+        {
+            "properties": {
+                "type": {
+                    "const": "string"
+                },
+                "default": {
+                    "type": "string",
+                    "description": "The value of the form field."
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "uuid"
+                },
+                "default": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "bytes"
+                },
+                "default": {
+                    "type": "string",
+                    "contentEncoding": "base64"
+                },
+                "min": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                },
+                "max": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                },
+                "category": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.byte.category.schema.json"
+                },
+                "generator": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.byte.generator.schema.json"
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "url"
+                },
+                "default": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "ssh-key",
+                    "description": "TODO: Should SshKey variant be a Uuid type with a SshKey category type?"
+                },
+                "default": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        }
+    ]
+}

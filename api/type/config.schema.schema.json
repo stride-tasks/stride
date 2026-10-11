@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.schema.json",
+    "type": "object",
+    "required": [
+        "name",
+        "fields"
+    ],
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "fields": {
+            "type": "array",
+            "items": {
+                "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json"
+            }
+        }
+    }
+}

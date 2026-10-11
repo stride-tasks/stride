@@ -15,258 +15,6 @@ import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
 
-class Schema {
-  final String name;
-  final Map<String, SchemaValue> fields;
-
-  Schema({required this.name, required this.fields});
-
-  factory Schema.fromJson(Map<String, dynamic> json) {
-    return Schema(
-      name: json['name'] as String,
-      fields: (json['fields'] as Map<String, dynamic>).map(
-        (key, value) =>
-            MapEntry(key, SchemaValue.fromJson(value as Map<String, dynamic>)),
-      ),
-    );
-  }
-}
-
-sealed class SchemaValue {
-  final bool showQrCode;
-  const SchemaValue({required this.showQrCode});
-
-  factory SchemaValue.fromJson(Map<String, dynamic> map) {
-    final type = map['type'] as String;
-    return switch (type) {
-      'string' => StringSchemaValue.fromJson(map),
-      'url' => UrlSchemaValue.fromJson(map),
-      'uuid' => UuidSchemaValue.fromJson(map),
-      'bytes' => BytesSchemaValue.fromJson(map),
-      'ssh-key' => SshKeySchemaValue.fromJson(map),
-      _ => throw UnsupportedError('Unsupported schema value type: $type'),
-    };
-  }
-}
-
-final class StringSchemaValue extends SchemaValue {
-  final String? value;
-  const StringSchemaValue({required super.showQrCode, this.value});
-
-  factory StringSchemaValue.fromJson(Map<String, dynamic> map) {
-    return StringSchemaValue(
-      value: map['default'] as String?,
-      showQrCode: (map['show-qr-code'] as bool?) ?? false,
-    );
-  }
-}
-
-final class UrlSchemaValue extends SchemaValue {
-  final String? value;
-  const UrlSchemaValue({required super.showQrCode, this.value});
-
-  factory UrlSchemaValue.fromJson(Map<String, dynamic> map) {
-    return UrlSchemaValue(
-      value: map['default'] as String?,
-      showQrCode: (map['show-qr-code'] as bool?) ?? false,
-    );
-  }
-}
-
-final class UuidSchemaValue extends SchemaValue {
-  final String? value;
-  const UuidSchemaValue({required super.showQrCode, this.value});
-
-  factory UuidSchemaValue.fromJson(Map<String, dynamic> map) {
-    return UuidSchemaValue(
-      value: map['default'] as String?,
-      showQrCode: (map['show-qr-code'] as bool?) ?? false,
-    );
-  }
-}
-
-enum BytesCategory {
-  password;
-
-  factory BytesCategory.fromString(String value) {
-    switch (value) {
-      case 'password':
-        return BytesCategory.password;
-      default:
-        throw ArgumentError('Unknown bytes category: $value');
-    }
-  }
-}
-
-enum BytesGenerator {
-  crytoRandom;
-
-  factory BytesGenerator.fromString(String value) {
-    switch (value) {
-      case 'crypto-random':
-        return BytesGenerator.crytoRandom;
-      default:
-        throw ArgumentError('Unknown bytes generator: $value');
-    }
-  }
-}
-
-final class BytesSchemaValue extends SchemaValue {
-  final Uint8List? value;
-  final int? min;
-  final int? max;
-  final BytesCategory? category;
-  final BytesGenerator? generator;
-
-  const BytesSchemaValue({
-    required super.showQrCode,
-    this.value,
-    this.min,
-    this.max,
-    this.category,
-    this.generator,
-  });
-
-  factory BytesSchemaValue.fromJson(Map<String, dynamic> map) {
-    final bytes = map['default'] as String?;
-    final min = map['min'] as int?;
-    final max = map['max'] as int?;
-    final category = BytesCategory.fromString(map['category'] as String);
-    final generator = BytesGenerator.fromString(map['generator'] as String);
-
-    Uint8List? value;
-    if (bytes != null) {
-      value = base64Url.decode(bytes);
-    }
-
-    return BytesSchemaValue(
-      value: value,
-      min: min,
-      max: max,
-      category: category,
-      generator: generator,
-      showQrCode: (map['show-qr-code'] as bool?) ?? false,
-    );
-  }
-}
-
-final class SshKeySchemaValue extends SchemaValue {
-  final String? value;
-  const SshKeySchemaValue({required super.showQrCode, this.value});
-
-  factory SshKeySchemaValue.fromJson(Map<String, dynamic> map) {
-    return SshKeySchemaValue(
-      value: map['default'] as String?,
-      showQrCode: (map['show-qr-code'] as bool?) ?? false,
-    );
-  }
-}
-
-enum ValueType {
-  url,
-  string,
-  bytes,
-  uuid;
-
-  static ValueType fromString(String value) {
-    switch (value) {
-      case 'url':
-        return ValueType.url;
-      case 'string':
-        return ValueType.string;
-      case 'bytes':
-        return ValueType.bytes;
-      case 'uuid':
-        return ValueType.uuid;
-      default:
-        throw ArgumentError('Unknown ValueType: $value');
-    }
-  }
-
-  String toJsonString() {
-    switch (this) {
-      case ValueType.url:
-        return 'url';
-      case ValueType.string:
-        return 'string';
-      case ValueType.bytes:
-        return 'bytes';
-      case ValueType.uuid:
-        return 'uuid';
-    }
-  }
-}
-
-class Value {
-  ValueType type;
-  dynamic content;
-
-  Value({required this.type, required this.content});
-
-  factory Value.fromJson(Map<String, dynamic> json) {
-    final type = ValueType.fromString(json['type'] as String);
-
-    dynamic content;
-    switch (type) {
-      case ValueType.url:
-      case ValueType.string:
-        content = json['content'] as String?;
-      case ValueType.uuid:
-        final value = json['content'] as String?;
-        content = value == null ? null : UuidValue.withValidation(value);
-      case ValueType.bytes:
-        final value = json['content'] as String?;
-        content = value == null ? null : Base64Codec.urlSafe().decode(value);
-    }
-
-    return Value(type: type, content: content);
-  }
-
-  Map<String, dynamic> toJson() {
-    dynamic result;
-    switch (type) {
-      case ValueType.url:
-      case ValueType.string:
-        result = content;
-      case ValueType.bytes:
-        final bytes = content as Uint8List?;
-        result = bytes == null ? null : Base64Codec.urlSafe().encode(bytes);
-      case ValueType.uuid:
-        result = (content as UuidValue?)?.toString();
-    }
-    return {'type': type.toJsonString(), 'content': result};
-  }
-
-  @override
-  String toString() {
-    final map = toJson();
-    return '${map['type']}:${map['content']}';
-  }
-}
-
-class Config {
-  Map<String, Value> fields;
-
-  Config({required this.fields});
-
-  factory Config.fromJson(Map<String, dynamic> json) {
-    final fieldsJson = json['fields'] as Map<String, dynamic>;
-
-    final fields = fieldsJson.map(
-      (key, value) =>
-          MapEntry(key, Value.fromJson(value as Map<String, dynamic>)),
-    );
-
-    return Config(fields: fields);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'fields': fields.map((key, value) => MapEntry(key, value.toJson())),
-    };
-  }
-}
-
 Uint8List generateCryptoRandomBytes(int length) {
   final secureRandom = Random.secure();
   final bytes = Uint8List(length);
@@ -346,7 +94,7 @@ class _ConfigSection extends StatefulWidget {
 class _ConfigSectionState extends State<_ConfigSection> {
   Future<List<SshKey>>? _sshKeys;
 
-  late Schema _schema;
+  late ConfigSchema _schema;
   late Config _config;
 
   @override
@@ -354,71 +102,122 @@ class _ConfigSectionState extends State<_ConfigSection> {
     super.initState();
 
     _sshKeys = sshKeys();
-    final configJson = widget.record.instance.configuration;
 
     // TODO: Verify that descriptor is not null.
-    final schemaJson =
-        jsonDecode(widget.record.descriptor!.schema) as Map<String, dynamic>;
-
-    _schema = Schema.fromJson(schemaJson);
-    _config = Config.fromJson(configJson);
+    _schema = widget.record.descriptor!.schema;
+    _config = widget.record.instance.config;
   }
 
   @override
   Widget build(BuildContext context) {
     final tiles = <Widget>[];
-    for (final entry in _schema.fields.entries) {
-      final name = entry.key;
-      final field = entry.value;
-      final value = _config.fields[name];
+    for (final field in _schema.fields) {
+      final value = _valueForField(field.id);
 
-      switch (field) {
-        case UrlSchemaValue(value: final defaultValue):
-        case StringSchemaValue(value: final defaultValue):
+      switch (field.value) {
+        case ConfigSchemaValue_Url(default_: final defaultValue):
           tiles.add(
             SettingsTileText(
-              title: Text(name),
-              text: (value?.content as String?) ?? defaultValue ?? '',
+              title: Text(field.name),
+              text: switch (value) {
+                ConfigValue_Url(value: final uri) => uri.toString(),
+                _ => defaultValue?.toString() ?? '',
+              },
               onChanged: (text) async {
                 setState(() {
-                  _config.fields[name] = Value(
-                    type: ValueType.string,
-                    content: text,
-                  );
+                  _setValue(field.id, ConfigValue.url(value: Uri.parse(text)));
+                });
+                await _save();
+              },
+              validator: (text) {
+                if (text == null || Uri.tryParse(text) != null) {
+                  return null;
+                }
+                return 'Enter a valid URL';
+              },
+            ),
+          );
+        case ConfigSchemaValue_String(default_: final defaultValue):
+          tiles.add(
+            SettingsTileText(
+              title: Text(field.name),
+              text: switch (value) {
+                ConfigValue_String(value: final content) => content,
+                _ => defaultValue ?? '',
+              },
+              onChanged: (text) async {
+                setState(() {
+                  _setValue(field.id, ConfigValue.string(value: text));
                 });
                 await _save();
               },
             ),
           );
 
-        case BytesSchemaValue():
-          tiles.add(_bytesProperty(field, name, value, context));
+        case final ConfigSchemaValue_Bytes bytesSchema:
+          tiles.add(_bytesProperty(field, bytesSchema, value, context));
 
-        case SshKeySchemaValue():
-          final uuid = value?.content as UuidValue?;
-          tiles.add(_sshKeyProperty(name, uuid));
+        case ConfigSchemaValue_SshKey(default_: final defaultValue):
+          final uuid = switch (value) {
+            ConfigValue_Uuid(value: final uuid) => uuid,
+            _ => defaultValue,
+          };
+          tiles.add(_sshKeyProperty(field.id, field.name, uuid));
 
-        case UuidSchemaValue():
-          tiles.add(_uuidProperty(name, value));
+        case ConfigSchemaValue_Uuid(default_: final defaultValue):
+          tiles.add(_uuidProperty(field.id, field.name, value, defaultValue));
       }
     }
     return SettingsList(sections: [SettingsSection(tiles: tiles)]);
   }
 
-  SettingsTileUuid _uuidProperty(String name, Value? value) {
+  ConfigValue? _valueForField(String id) {
+    for (final field in _config.fields) {
+      if (field.id == id) {
+        return field.value;
+      }
+    }
+    return null;
+  }
+
+  void _setValue(String id, ConfigValue value) {
+    final fields = [..._config.fields];
+    final index = fields.indexWhere((field) => field.id == id);
+    final field = ConfigField(id: id, value: value);
+    if (index == -1) {
+      fields.add(field);
+    } else {
+      fields[index] = field;
+    }
+    _config = _config.copyWith(fields: fields);
+  }
+
+  SettingsTileUuid _uuidProperty(
+    String id,
+    String name,
+    ConfigValue? value,
+    UuidValue? defaultValue,
+  ) {
     return SettingsTileUuid(
       title: Text(name),
-      value: value?.content as UuidValue?,
+      value: switch (value) {
+        ConfigValue_Uuid(value: final uuid) => uuid,
+        _ => defaultValue,
+      },
       onChanged: (uuid) async {
         setState(() {
-          _config.fields[name] = Value(type: ValueType.uuid, content: uuid);
+          _setValue(id, ConfigValue.uuid(value: uuid));
         });
         await _save();
       },
     );
   }
 
-  FutureBuilder<List<SshKey>> _sshKeyProperty(String name, UuidValue? uuid) {
+  FutureBuilder<List<SshKey>> _sshKeyProperty(
+    String id,
+    String name,
+    UuidValue? uuid,
+  ) {
     return FutureBuilder(
       future: _sshKeys,
       builder: (context, snapshot) {
@@ -431,7 +230,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
           keys: snapshot.data!,
           onChanged: (uuid) async {
             setState(() {
-              _config.fields[name] = Value(type: ValueType.uuid, content: uuid);
+              _setValue(id, ConfigValue.uuid(value: uuid));
             });
             await _save();
           },
@@ -452,10 +251,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
 
                 if (key != null) {
                   setState(() {
-                    _config.fields[name] = Value(
-                      type: ValueType.uuid,
-                      content: key,
-                    );
+                    _setValue(id, ConfigValue.uuid(value: key));
                     _sshKeys = sshKeys();
                   });
 
@@ -471,24 +267,24 @@ class _ConfigSectionState extends State<_ConfigSection> {
   }
 
   SettingsTileText _bytesProperty(
-    BytesSchemaValue field,
-    String name,
-    Value? value,
+    ConfigSchemaField field,
+    ConfigSchemaValue_Bytes schema,
+    ConfigValue? value,
     BuildContext context,
   ) {
-    final bytes = value?.content as Uint8List?;
-
-    final BytesSchemaValue(:min, :max, :category, :generator) = field;
+    final bytes = switch (value) {
+      ConfigValue_Bytes(value: final bytes) => bytes,
+      _ => schema.default_,
+    };
+    final ConfigSchemaValue_Bytes(:min, :max, :category, :generator) = schema;
     return SettingsTileText(
-      obscureText: category == BytesCategory.password,
-      title: Text(name),
+      obscureText: category == ConfigSchemaByteCategory.password,
+      title: Text(field.name),
       text: bytes == null ? '' : base64Url.encode(bytes),
       onChanged: (text) async {
+        final bytes = base64Url.decode(text);
         setState(() {
-          _config.fields[name] = Value(
-            type: ValueType.bytes,
-            content: base64Url.decode(text),
-          );
+          _setValue(field.id, ConfigValue.bytes(value: bytes));
         });
         await _save();
       },
@@ -503,7 +299,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
             return 'input too small must be $min length, got: ${bytes.length}';
           }
           if (max != null && bytes.length > max) {
-            return 'input too small must be $max length, got: ${bytes.length}';
+            return 'input too large must be $max length, got: ${bytes.length}';
           }
         } on FormatException catch (error) {
           return error.message;
@@ -512,7 +308,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
       },
       trailing: Wrap(
         children: [
-          if (field.showQrCode && value != null)
+          if (field.showQrCode && bytes != null)
             Tooltip(
               message: 'Show QR Code',
               child: IconButton(
@@ -531,7 +327,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
                               maxWidth: 128,
                               maxHeight: 128,
                               child: QrImageView(
-                                data: value.toString(),
+                                data: base64Url.encode(bytes),
                                 backgroundColor: Colors.white,
                                 padding: const EdgeInsets.all(16.0),
                               ),
@@ -545,7 +341,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
                 icon: Icon(Icons.qr_code),
               ),
             ),
-          if (generator == BytesGenerator.crytoRandom)
+          if (generator == ConfigSchemaByteGenerator.cryptoRandom)
             Tooltip(
               message: 'Generate',
               child: IconButton(
@@ -562,10 +358,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
 
                   if (key != null) {
                     setState(() {
-                      _config.fields[name] = Value(
-                        type: ValueType.bytes,
-                        content: key,
-                      );
+                      _setValue(field.id, ConfigValue.bytes(value: key));
                     });
                     await _save();
                   }
@@ -579,8 +372,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
   }
 
   Future<void> _save() async {
-    final json = _config.toJson();
-    final instance = widget.record.instance.copyWith(configuration: json);
+    final instance = widget.record.instance.copyWith(config: _config);
 
     await RepositoryBackendSetMethod(
       repositoryId: widget.repositoryId,

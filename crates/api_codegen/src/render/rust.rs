@@ -43,6 +43,8 @@ fn render_type(this: &TypeNode) -> Option<String> {
         Some(render_enum(enum_))
     } else if let TypeNode::Array(array) = &this {
         render_type(array.as_ref())
+    } else if let TypeNode::Map(value) = &this {
+        render_type(value.as_ref())
     } else {
         None
     }
@@ -60,7 +62,9 @@ fn render_struct(this: &StructNode) -> String {
     for doc in &this.doc {
         lines.push(format!("/// {doc}"));
     }
-    lines.push("#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]".to_owned());
+    lines.push(
+        "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
+    );
     lines.push("#[serde(rename_all = \"kebab-case\")]".to_owned());
     lines.push("#[allow(missing_copy_implementations)]".to_owned());
     lines.push(format!("pub struct {} {{", this.name));
@@ -73,7 +77,18 @@ fn render_struct(this: &StructNode) -> String {
         let rust_name = rust_field_name(&field.name);
         let field_type = render_type_node(&field.typ);
         if field.required {
+            if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                lines.push(format!(
+                    "    #[serde(with = \"{}\")]",
+                    bytes_serde_adapter(true)
+                ));
+            }
             lines.push(format!("    pub {rust_name}: {field_type},"));
+        } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+            lines.push(format!(
+                "    #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n    pub {rust_name}: Option<{field_type}>,",
+                bytes_serde_adapter(false)
+            ));
         } else {
             lines.push(format!(
                 "    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub {rust_name}: Option<{field_type}>,"
@@ -86,12 +101,16 @@ fn render_struct(this: &StructNode) -> String {
 }
 
 fn render_enum(this: &EnumNode) -> String {
+    if this.tag.is_some() {
+        return render_tagged_enum(this);
+    }
+
     let mut lines = Vec::new();
     if let Some(description) = &this.description {
         lines.push(format!("/// {description}"));
     }
     lines.push(
-        "#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]"
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]"
             .to_owned(),
     );
     lines.push(format!("pub enum {} {{", this.name));
@@ -104,6 +123,66 @@ fn render_enum(this: &EnumNode) -> String {
             variant.value, variant.name
         ));
     }
+    lines.push("}\n".to_owned());
+    lines.join("\n")
+}
+
+fn render_tagged_enum(this: &EnumNode) -> String {
+    let mut lines = Vec::new();
+
+    let tag = this.tag.as_deref().unwrap_or_default();
+    for variant in &this.variants {
+        for field in &variant.fields {
+            if let Some(rendered) = render_type(&field.typ) {
+                lines.push(rendered);
+            }
+        }
+    }
+
+    for doc in &this.doc {
+        lines.push(format!("/// {doc}"));
+    }
+    lines.push(
+        "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
+    );
+    lines.push(format!(
+        "#[serde(tag = \"{tag}\", rename_all = \"kebab-case\", rename_all_fields = \"kebab-case\")]"
+    ));
+    lines.push(format!("pub enum {} {{", this.name));
+
+    for variant in &this.variants {
+        lines.push(format!(
+            "    #[serde(rename = \"{}\")]\n    {} {{",
+            variant.value, variant.name
+        ));
+        for field in &variant.fields {
+            if let Some(description) = &field.description {
+                lines.push(format!("        /// {description}"));
+            }
+            let rust_name = rust_field_name(&field.name);
+            let field_type = render_type_node(&field.typ);
+            if field.required {
+                if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                    lines.push(format!(
+                        "        #[serde(with = \"{}\")]",
+                        bytes_serde_adapter(true)
+                    ));
+                }
+                lines.push(format!("        {rust_name}: {field_type},"));
+            } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                lines.push(format!(
+                    "        #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n        {rust_name}: Option<{field_type}>,",
+                    bytes_serde_adapter(false)
+                ));
+            } else {
+                lines.push(format!(
+                    "        #[serde(default, skip_serializing_if = \"Option::is_none\")]\n        {rust_name}: Option<{field_type}>,"
+                ));
+            }
+        }
+        lines.push("    },".to_owned());
+    }
+
     lines.push("}\n".to_owned());
     lines.join("\n")
 }
@@ -137,13 +216,30 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "Box<str>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "uuid::Uuid".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Bytes) => "Box<[u8]>".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Uri) => "url::Url".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer) => "i64".to_owned(),
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => "usize".to_owned(),
         TypeNode::Primitive(PrimitiveType::Number) => "f64".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
         TypeNode::Array(inner) => format!("Vec<{}>", render_type_node(inner)),
+        TypeNode::Map(value) => {
+            format!(
+                "std::collections::HashMap<String, {}>",
+                render_type_node(value)
+            )
+        }
         TypeNode::Reference(name) => name.clone(),
         TypeNode::Any => "Value".to_owned(),
         TypeNode::Unit => "()".to_owned(),
+    }
+}
+
+fn bytes_serde_adapter(required: bool) -> &'static str {
+    if required {
+        "::serde_with::As::<::serde_with::base64::Base64>"
+    } else {
+        "::serde_with::As::<Option<::serde_with::base64::Base64>>"
     }
 }
 

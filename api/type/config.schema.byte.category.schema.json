@@ -1,0 +1,11 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.byte.category.schema.json",
+    "type": "string",
+    "oneOf": [
+        {
+            "const": "password",
+            "description": "Password category."
+        }
+    ]
+}

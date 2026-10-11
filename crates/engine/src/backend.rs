@@ -10,10 +10,8 @@ use std::{
     sync::Arc,
 };
 
-use stride_core::{
-    backend::{Config, Schema},
-    state::KnownPaths,
-};
+use stride_api::{Config, ConfigSchema};
+use stride_core::state::KnownPaths;
 use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
@@ -32,7 +30,7 @@ pub trait BackendHandler: Debug + Sync + Send {
             .join(self.name().as_ref())
     }
 
-    fn config_schema(&self) -> Schema;
+    fn config_schema(&self) -> ConfigSchema;
     fn create(
         &self,
         config: &Config,

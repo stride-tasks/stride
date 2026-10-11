@@ -2,6 +2,8 @@
 
 mod value;
 
+pub mod config;
+
 pub use value::{Map, Value};
 
 pub trait Method: Sized + serde::Serialize + for<'de> serde::Deserialize<'de> {

@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json",
+    "type": "object",
+    "required": [
+        "id",
+        "name",
+        "value",
+        "show-qr-code"
+    ],
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "value": {
+            "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.value.schema.json"
+        },
+        "show-qr-code": {
+            "type": "boolean",
+            "description": "Whether to show a QR code for this field."
+        }
+    }
+}

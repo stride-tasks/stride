@@ -1,5 +1,5 @@
 use crate::node::{
-    EnumNode, MethodNode, Node, NotificationNode, PrimitiveType, StructNode, TypeNode,
+    EnumNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType, StructNode, TypeNode,
 };
 
 const PRELUDE: &str = r"
@@ -10,6 +10,8 @@ const PRELUDE: &str = r"
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:uuid/uuid_value.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 part 'generated.freezed.dart';
 part 'generated.g.dart';
@@ -32,6 +34,26 @@ class NullableUuidValueJsonConverter implements JsonConverter<UuidValue?, String
 
   @override
   String? toJson(UuidValue? object) => object?.uuid;
+}
+
+class Base64BytesJsonConverter implements JsonConverter<Uint8List, String> {
+  const Base64BytesJsonConverter();
+
+  @override
+  Uint8List fromJson(String json) => Uint8List.fromList(base64.decode(json));
+
+  @override
+  String toJson(Uint8List object) => base64.encode(object);
+}
+
+class NullableBase64BytesJsonConverter implements JsonConverter<Uint8List?, String?> {
+  const NullableBase64BytesJsonConverter();
+
+  @override
+  Uint8List? fromJson(String? json) => json == null ? null : Uint8List.fromList(base64.decode(json));
+
+  @override
+  String? toJson(Uint8List? object) => object == null ? null : base64.encode(object);
 }
 
 abstract class Serde<T> {
@@ -65,10 +87,10 @@ pub fn render_dart(nodes: &[Node]) -> String {
   static final Map<Type, SerdeFactory<dynamic>> _registry = {"
             .into(),
     );
-    for (is_struct, type_name) in type_names {
-        output.push(format!("    {type_name}: const _{type_name}Serde(),"));
+    for (is_struct, type_name, serde_name) in type_names {
+        output.push(format!("    {type_name}: const _{serde_name}Serde(),"));
         if is_struct {
-            output.push(format!("    _{type_name}: const _{type_name}Serde(),"));
+            output.push(format!("    _{type_name}: const _{serde_name}Serde(),"));
         }
     }
     output.push(
@@ -144,14 +166,15 @@ pub fn render_dart(nodes: &[Node]) -> String {
     output.join("\n")
 }
 
-fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String)> {
+fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String, String)> {
     fn add_name(
         is_struct: bool,
         name: &str,
-        names: &mut Vec<(bool, String)>,
-        seen: &mut std::collections::HashSet<(bool, String)>,
+        serde_name: &str,
+        names: &mut Vec<(bool, String, String)>,
+        seen: &mut std::collections::HashSet<(bool, String, String)>,
     ) {
-        let entry = (is_struct, name.to_owned());
+        let entry = (is_struct, name.to_owned(), serde_name.to_owned());
         if seen.insert(entry.clone()) {
             names.push(entry);
         }
@@ -160,10 +183,11 @@ fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String)> {
     fn collect_struct(
         strukt: &StructNode,
         name_override: Option<&str>,
-        names: &mut Vec<(bool, String)>,
-        seen: &mut std::collections::HashSet<(bool, String)>,
+        names: &mut Vec<(bool, String, String)>,
+        seen: &mut std::collections::HashSet<(bool, String, String)>,
     ) {
-        add_name(true, name_override.unwrap_or(&strukt.name), names, seen);
+        let name = name_override.unwrap_or(&strukt.name);
+        add_name(true, name, name, names, seen);
         for field in &strukt.fields {
             collect_type(&field.typ, names, seen);
         }
@@ -171,13 +195,21 @@ fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String)> {
 
     fn collect_type(
         type_node: &TypeNode,
-        names: &mut Vec<(bool, String)>,
-        seen: &mut std::collections::HashSet<(bool, String)>,
+        names: &mut Vec<(bool, String, String)>,
+        seen: &mut std::collections::HashSet<(bool, String, String)>,
     ) {
         match type_node {
             TypeNode::Struct(strukt) => collect_struct(strukt, None, names, seen),
-            TypeNode::Enum(enum_) => add_name(false, &enum_.name, names, seen),
-            TypeNode::Array(inner) => collect_type(inner, names, seen),
+            TypeNode::Enum(enum_) => {
+                add_name(false, &enum_.name, &enum_.name, names, seen);
+                if enum_.tag.is_some() {
+                    for variant in &enum_.variants {
+                        let variant_name = format!("{}_{}", enum_.name, variant.name);
+                        add_name(false, &variant_name, &enum_.name, names, seen);
+                    }
+                }
+            }
+            TypeNode::Array(inner) | TypeNode::Map(inner) => collect_type(inner, names, seen),
             TypeNode::Primitive(_) | TypeNode::Reference(_) | TypeNode::Any | TypeNode::Unit => {}
         }
     }
@@ -220,6 +252,8 @@ fn render_type(this: &TypeNode) -> Option<String> {
         Some(render_enum(enum_))
     } else if let TypeNode::Array(array) = &this {
         render_type(array.as_ref())
+    } else if let TypeNode::Map(value) = &this {
+        render_type(value.as_ref())
     } else {
         None
     }
@@ -269,38 +303,7 @@ fn render_struct(this: &StructNode, operation: Option<Operation<'_>>) -> String 
         lines.push("    {".to_owned());
     }
 
-    for field in &this.fields {
-        if let Some(description) = &field.description {
-            lines.push(format!("    /// {description}"));
-        }
-
-        let field_name = dart_field_name(&field.name);
-        let json_name = field.name.clone();
-        let field_type = render_type_node(&field.typ);
-        let dart_type = if field.required {
-            field_type.clone()
-        } else {
-            format!("{field_type}?")
-        };
-        let uuid_converter = match &field.typ {
-            TypeNode::Primitive(PrimitiveType::Uuid) if field.required => {
-                "    @UuidValueJsonConverter()".to_owned()
-            }
-            TypeNode::Primitive(PrimitiveType::Uuid) => {
-                "    @NullableUuidValueJsonConverter()".to_owned()
-            }
-            _ => String::new(),
-        };
-
-        if !uuid_converter.is_empty() {
-            lines.push(uuid_converter);
-        }
-
-        lines.push(format!(
-            "    @JsonKey(name: '{json_name}') {}{dart_type} {field_name},",
-            if field.required { "required " } else { "" }
-        ));
-    }
+    lines.extend(render_factory_params(&this.fields));
     if !this.fields.is_empty() {
         lines.push("    }".to_owned());
     }
@@ -343,7 +346,119 @@ class _{name}Serde implements SerdeFactory<{name}> {{
     lines.join("\n")
 }
 
+fn render_factory_params(fields: &[FieldNode]) -> Vec<String> {
+    let mut lines = Vec::new();
+    for field in fields {
+        if let Some(description) = &field.description {
+            lines.push(format!("    /// {description}"));
+        }
+
+        let field_name = dart_field_name(&field.name);
+        let json_name = field.name.clone();
+        let field_type = render_type_node(&field.typ);
+        let dart_type = if field.required {
+            field_type.clone()
+        } else {
+            format!("{field_type}?")
+        };
+        match &field.typ {
+            TypeNode::Primitive(PrimitiveType::Uuid) if field.required => {
+                lines.push("    @UuidValueJsonConverter()".to_owned());
+            }
+            TypeNode::Primitive(PrimitiveType::Uuid) => {
+                lines.push("    @NullableUuidValueJsonConverter()".to_owned());
+            }
+            TypeNode::Primitive(PrimitiveType::Bytes) if field.required => {
+                lines.push("    @Base64BytesJsonConverter()".to_owned());
+            }
+            TypeNode::Primitive(PrimitiveType::Bytes) => {
+                lines.push("    @NullableBase64BytesJsonConverter()".to_owned());
+            }
+            _ => {}
+        }
+
+        lines.push(format!(
+            "    @JsonKey(name: '{json_name}') {}{dart_type} {field_name},",
+            if field.required { "required " } else { "" }
+        ));
+    }
+    lines
+}
+
+/// Renders a tagged enum as a Freezed union keyed by the discriminant property.
+fn render_tagged_enum(this: &EnumNode) -> String {
+    let name = &this.name;
+    let tag = this.tag.as_deref().unwrap_or_default();
+    let mut lines = Vec::new();
+
+    for variant in &this.variants {
+        for field in &variant.fields {
+            if let Some(rendered) = render_type(&field.typ) {
+                lines.push(rendered);
+            }
+        }
+    }
+
+    for doc in &this.doc {
+        if doc.is_empty() {
+            lines.push("///".to_owned());
+        } else {
+            lines.push(format!("/// {doc}"));
+        }
+    }
+    lines.push(format!("@Freezed(unionKey: '{tag}')"));
+    lines.push(format!(
+        "sealed class {name} with _${name} implements Serde<{name}> {{"
+    ));
+    lines.push(format!("  const {name}._();"));
+
+    for variant in &this.variants {
+        lines.push(String::new());
+        if let Some(description) = &variant.description {
+            lines.push(format!("  /// {description}"));
+        }
+        lines.push(format!("  @FreezedUnionValue('{}')", variant.value));
+        lines.push(format!(
+            "  const factory {name}.{}(",
+            dart_field_name(&variant.value)
+        ));
+        if !variant.fields.is_empty() {
+            lines.push("    {".to_owned());
+            lines.extend(render_factory_params(&variant.fields));
+            lines.push("    }".to_owned());
+        }
+        lines.push(format!("  ) = {name}_{};", variant.name));
+    }
+
+    lines.push(String::new());
+    lines.push(format!(
+        "  factory {name}.fromJson(Map<String, dynamic> json) => _${name}FromJson(json);"
+    ));
+    lines.push(String::new());
+    lines.push("  @override".to_owned());
+    lines.push(format!(
+        "  SerdeFactory<{name}> get serde => const _{name}Serde();"
+    ));
+    lines.push("}".to_owned());
+    lines.push(format!(
+        r"// Implement methods of Serde<{name}> for {name}
+class _{name}Serde implements SerdeFactory<{name}> {{
+  const _{name}Serde();
+  @override
+  dynamic serialize({name} value) => value.toJson();
+
+  @override
+  {name} deserialize(dynamic json) => {name}.fromJson(json as Map<String, dynamic>);
+}}"
+    ));
+    lines.join("\n")
+}
+
 fn render_enum(this: &EnumNode) -> String {
+    if this.tag.is_some() {
+        return render_tagged_enum(this);
+    }
+
     let mut lines = Vec::new();
     if let Some(description) = &this.description {
         lines.push(format!("/// {description}"));
@@ -425,10 +540,15 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "String".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "UuidValue".to_owned(),
-        TypeNode::Primitive(PrimitiveType::Integer) => "int".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Bytes) => "Uint8List".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Uri) => "Uri".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Integer | PrimitiveType::UnsignedInteger) => {
+            "int".to_owned()
+        }
         TypeNode::Primitive(PrimitiveType::Number) => "double".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
         TypeNode::Array(inner) => format!("List<{}>", render_type_node(inner)),
+        TypeNode::Map(value) => format!("Map<String, {}>", render_type_node(value)),
         TypeNode::Reference(name) => name.clone(),
         TypeNode::Any => "Map<String, dynamic>".to_owned(),
         TypeNode::Unit => "Object?".to_owned(),

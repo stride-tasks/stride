@@ -1,0 +1,61 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/config.value.schema.json",
+    "type": "object",
+    "required": [
+        "type",
+        "value"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "$comment": "@discriminant"
+        }
+    },
+    "oneOf": [
+        {
+            "properties": {
+                "type": {
+                    "const": "string"
+                },
+                "value": {
+                    "type": "string",
+                    "description": "The value of the form field."
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "uuid"
+                },
+                "value": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "bytes"
+                },
+                "value": {
+                    "type": "string",
+                    "contentEncoding": "base64"
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "url"
+                },
+                "value": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        }
+    ]
+}

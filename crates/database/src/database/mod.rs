@@ -4,8 +4,8 @@ mod tests;
 use chrono::DateTime;
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
+use stride_api::{BackendInstance, BackendInstanceState, Config, ConfigField, ConfigValue};
 use stride_core::{
-    backend::{BackendRecord, Config, Value},
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -13,11 +13,7 @@ use stride_crdt::{actor::ActorId, hlc::Clock};
 use url::Url;
 use uuid::Uuid;
 
-use std::{
-    collections::{HashMap, HashSet},
-    path::Path,
-    rc::Rc,
-};
+use std::{collections::HashSet, path::Path, rc::Rc};
 
 use crate::{
     Result, Sql, apply_migrations, database::transaction::Transaction, task_status_to_sql,
@@ -397,7 +393,7 @@ impl Database {
             .map_err(Into::into)
     }
 
-    pub fn add_backend(&mut self, backend: &BackendRecord) -> Result<()> {
+    pub fn add_backend(&mut self, backend: &BackendInstance) -> Result<()> {
         let transaction = self.connection.transaction()?;
 
         transaction.execute(
@@ -409,10 +405,14 @@ impl Database {
                 )
                 VALUES (?1, ?2, ?3)
             "},
-            (backend.id.as_bytes(), &backend.name, &backend.enabled),
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                backend.state == BackendInstanceState::Enabled,
+            ),
         )?;
 
-        for (name, value) in &backend.config.fields {
+        for field in &backend.config.fields {
             transaction.execute(
                 indoc! {"
                     INSERT INTO backend_config_table (
@@ -424,9 +424,9 @@ impl Database {
                 "},
                 (
                     backend.id.as_bytes(),
-                    name,
-                    value.as_type_name(),
-                    value.as_value_boxed_slice(),
+                    &field.id,
+                    field.value.as_type_name(),
+                    field.value.as_value_boxed_slice(),
                 ),
             )?;
         }
@@ -434,7 +434,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn backends(&mut self) -> Result<Vec<BackendRecord>> {
+    pub fn backends(&mut self) -> Result<Vec<BackendInstance>> {
         let transaction = self.connection.transaction()?;
         let mut backend_sql = transaction.prepare(indoc! {"
             SELECT
@@ -472,29 +472,41 @@ impl Database {
                                 rusqlite::Error::Utf8Error(error.valid_up_to(), error)
                             })?;
                             if typ == "string" {
-                                Value::String(string.into_boxed_str())
+                                ConfigValue::String {
+                                    value: string.into_boxed_str(),
+                                }
                             } else {
-                                Value::Url(Url::parse(&string).map_err(|e| {
-                                    rusqlite::types::FromSqlError::Other(Box::new(e))
-                                })?)
+                                ConfigValue::Url {
+                                    value: Url::parse(&string).map_err(|e| {
+                                        rusqlite::types::FromSqlError::Other(Box::new(e))
+                                    })?,
+                                }
                             }
                         }
-                        "uuid" => Value::Uuid(row.get::<_, Uuid>("value")?),
-                        "bytes" => Value::Bytes(row.get::<_, Vec<u8>>("value")?.into_boxed_slice()),
+                        "uuid" => ConfigValue::Uuid {
+                            value: row.get::<_, Uuid>("value")?,
+                        },
+                        "bytes" => ConfigValue::Bytes {
+                            value: row.get::<_, Vec<u8>>("value")?.into_boxed_slice(),
+                        },
                         _ => todo!(),
                     },
                 ))
             })?;
 
-            let mut fields = HashMap::new();
+            let mut fields = Vec::new();
             for field in rows {
                 let (name, value) = field?;
-                fields.insert(name, value);
+                fields.push(ConfigField { id: name, value });
             }
-            Ok(BackendRecord {
+            Ok(BackendInstance {
                 id: row.get::<_, Uuid>("id")?,
                 name: row.get::<_, Box<str>>("name")?,
-                enabled: row.get::<_, bool>("enabled")?,
+                state: if row.get::<_, bool>("enabled")? {
+                    BackendInstanceState::Enabled
+                } else {
+                    BackendInstanceState::Disabled
+                },
                 config: Config { fields },
             })
         })?;
@@ -572,7 +584,7 @@ impl Database {
         Ok(new_state)
     }
 
-    pub fn update_backend(&mut self, backend: &BackendRecord) -> Result<()> {
+    pub fn update_backend(&mut self, backend: &BackendInstance) -> Result<()> {
         let transaction = self.connection.transaction()?;
 
         // TODO: Maybe instead of deleting them all,
@@ -583,12 +595,12 @@ impl Database {
         )?;
         let mut sql = transaction
             .prepare_cached("INSERT INTO backend_config_table (backend_id, name, type, value) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING")?;
-        for (name, value) in &backend.config.fields {
+        for field in &backend.config.fields {
             sql.execute((
                 backend.id,
-                name,
-                value.as_type_name(),
-                value.as_value_boxed_slice(),
+                &field.id,
+                field.value.as_type_name(),
+                field.value.as_value_boxed_slice(),
             ))?;
         }
         drop(sql);
@@ -602,7 +614,11 @@ impl Database {
                 WHERE
                     id = ?1
             "},
-            (backend.id.as_bytes(), &backend.name, &backend.enabled),
+            (
+                backend.id.as_bytes(),
+                &backend.name,
+                backend.state == BackendInstanceState::Enabled,
+            ),
         )?;
 
         transaction.commit()?;

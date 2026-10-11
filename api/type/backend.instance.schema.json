@@ -6,7 +6,7 @@
         "id",
         "name",
         "state",
-        "configuration"
+        "config"
     ],
     "properties": {
         "id": {
@@ -22,8 +22,9 @@
             "description": "The current state of the instance.",
             "$ref": "https://stride-tasks.github.io/stride/api/type/backend.instance.state.schema.json"
         },
-        "configuration": {
-            "description": "The configuration of the instance. TODO: provide a detailed schema for the configuration."
+        "config": {
+            "description": "The config of the instance.",
+            "$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.json"
         }
     }
 }
