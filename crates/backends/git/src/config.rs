@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use stride_core::{
-    backend::{Config, Schema},
+    backend::{Config, ConfigSchema},
     state::KnownPaths,
 };
 use stride_engine::{Backend, BackendHandler, api};
@@ -18,8 +18,8 @@ impl BackendHandler for Handler {
         "git".into()
     }
 
-    fn config_schema(&self) -> Schema {
-        Schema::builder(self.name())
+    fn config_schema(&self) -> ConfigSchema {
+        ConfigSchema::builder(self.name())
             .field(
                 "origin",
                 "Origin",

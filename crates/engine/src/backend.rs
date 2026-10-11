@@ -11,7 +11,7 @@ use std::{
 };
 
 use stride_core::{
-    backend::{Config, Schema},
+    backend::{Config, ConfigSchema},
     state::KnownPaths,
 };
 use stride_crdt::version_vector::VersionDifference;
@@ -32,7 +32,7 @@ pub trait BackendHandler: Debug + Sync + Send {
             .join(self.name().as_ref())
     }
 
-    fn config_schema(&self) -> Schema;
+    fn config_schema(&self) -> ConfigSchema;
     fn create(
         &self,
         config: &Config,

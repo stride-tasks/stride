@@ -8,12 +8,12 @@ use uuid::Uuid;
 // TODO: add a Config builder.
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct SchemaBuilder {
+pub struct ConfigSchemaBuilder {
     id: Box<str>,
     fields: HashMap<Box<str>, ConfigSchemaField>,
 }
 
-impl SchemaBuilder {
+impl ConfigSchemaBuilder {
     pub fn new<T>(id: T) -> Self
     where
         T: Into<Box<str>>,
@@ -50,8 +50,8 @@ impl SchemaBuilder {
     }
 
     #[must_use]
-    pub fn build(self) -> Schema {
-        Schema {
+    pub fn build(self) -> ConfigSchema {
+        ConfigSchema {
             name: self.id,
             fields: self.fields,
         }
@@ -59,17 +59,17 @@ impl SchemaBuilder {
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct Schema {
+pub struct ConfigSchema {
     pub name: Box<str>,
     pub fields: HashMap<Box<str>, ConfigSchemaField>,
 }
 
-impl Schema {
-    pub fn builder<T>(id: T) -> SchemaBuilder
+impl ConfigSchema {
+    pub fn builder<T>(id: T) -> ConfigSchemaBuilder
     where
         T: Into<Box<str>>,
     {
-        SchemaBuilder::new(id)
+        ConfigSchemaBuilder::new(id)
     }
 
     #[must_use]
@@ -154,7 +154,7 @@ impl Config {
         self.fields.get_mut(id)
     }
 
-    pub fn align(&self, schema: &Schema) -> Result<Config, Error> {
+    pub fn align(&self, schema: &ConfigSchema) -> Result<Config, Error> {
         let mut fields = HashMap::default();
         for (name, field) in &schema.fields {
             if let Some(value) = self.get(name)
@@ -166,7 +166,7 @@ impl Config {
         Ok(Config { fields })
     }
 
-    pub fn fill(&self, schema: &Schema) -> Result<Config, Error> {
+    pub fn fill(&self, schema: &ConfigSchema) -> Result<Config, Error> {
         let mut fields = self.fields.clone();
         for (name, field) in &schema.fields {
             if self.get(name).is_none()
