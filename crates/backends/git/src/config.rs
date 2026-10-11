@@ -4,7 +4,7 @@ use stride_core::{
     backend::{Config, Schema, SchemaValue},
     state::KnownPaths,
 };
-use stride_engine::{Backend, BackendHandler};
+use stride_engine::{Backend, BackendHandler, api};
 
 use crate::GitBackend;
 
@@ -58,7 +58,7 @@ impl BackendHandler for Handler {
                     min: Some(32),
                     max: Some(32),
                     category: Some(stride_core::backend::BytesCategory::Password),
-                    generator: Some(stride_core::backend::BytesGenerator::CryptoRandom),
+                    generator: Some(api::ConfigSchemaByteGenerator::CryptoRandom),
                 },
                 true,
             )

@@ -4,6 +4,7 @@ use std::{
 };
 
 use base64::Engine;
+use stride_api::ConfigSchemaByteGenerator;
 use url::Url;
 use uuid::Uuid;
 
@@ -96,12 +97,6 @@ pub enum BytesCategory {
     Password,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum BytesGenerator {
-    CryptoRandom,
-}
-
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[serde(tag = "type")]
@@ -136,7 +131,7 @@ pub enum SchemaValue {
 
         #[serde(default)]
         #[serde(skip_serializing_if = "Option::is_none")]
-        generator: Option<BytesGenerator>,
+        generator: Option<ConfigSchemaByteGenerator>,
     },
     Url {
         #[serde(default)]
