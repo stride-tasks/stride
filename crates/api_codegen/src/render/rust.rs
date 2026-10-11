@@ -73,7 +73,18 @@ fn render_struct(this: &StructNode) -> String {
         let rust_name = rust_field_name(&field.name);
         let field_type = render_type_node(&field.typ);
         if field.required {
+            if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                lines.push(format!(
+                    "    #[serde(with = \"{}\")]",
+                    bytes_serde_adapter(true)
+                ));
+            }
             lines.push(format!("    pub {rust_name}: {field_type},"));
+        } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+            lines.push(format!(
+                "    #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n    pub {rust_name}: Option<{field_type}>,",
+                bytes_serde_adapter(false)
+            ));
         } else {
             lines.push(format!(
                 "    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub {rust_name}: Option<{field_type}>,"
@@ -146,7 +157,18 @@ fn render_tagged_enum(this: &EnumNode) -> String {
             let rust_name = rust_field_name(&field.name);
             let field_type = render_type_node(&field.typ);
             if field.required {
+                if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                    lines.push(format!(
+                        "        #[serde(with = \"{}\")]",
+                        bytes_serde_adapter(true)
+                    ));
+                }
                 lines.push(format!("        {rust_name}: {field_type},"));
+            } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                lines.push(format!(
+                    "        #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n        {rust_name}: Option<{field_type}>,",
+                    bytes_serde_adapter(false)
+                ));
             } else {
                 lines.push(format!(
                     "        #[serde(default, skip_serializing_if = \"Option::is_none\")]\n        {rust_name}: Option<{field_type}>,"
@@ -189,6 +211,8 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "Box<str>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "uuid::Uuid".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Bytes) => "Box<[u8]>".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Uri) => "url::Url".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer) => "i64".to_owned(),
         TypeNode::Primitive(PrimitiveType::Number) => "f64".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
@@ -196,6 +220,14 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Reference(name) => name.clone(),
         TypeNode::Any => "Value".to_owned(),
         TypeNode::Unit => "()".to_owned(),
+    }
+}
+
+fn bytes_serde_adapter(required: bool) -> &'static str {
+    if required {
+        "::serde_with::As::<::serde_with::base64::Base64>"
+    } else {
+        "::serde_with::As::<Option<::serde_with::base64::Base64>>"
     }
 }
 

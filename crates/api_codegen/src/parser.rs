@@ -8,7 +8,7 @@ use crate::node::{
     EnumNode, EnumVariantNode, FieldNode, MethodNode, Node, NotificationNode, PrimitiveType,
     StructNode, TypeNode,
 };
-use crate::schema::{SchemaObject, SchemaString, SchemaType};
+use crate::schema::{ContentEncoding, SchemaObject, SchemaString, SchemaType};
 use crate::{Error, Result, Schema, SchemaConcreteType};
 
 #[derive(Debug, Default)]
@@ -239,13 +239,29 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
             SchemaString::Enum { .. } | SchemaString::OneOf { .. } => {
                 panic!("Enum or OneOf variant is empty: {fallback_name}");
             }
-            SchemaString::String { format } => {
-                if format.as_deref() == Some("uuid") {
-                    TypeNode::Primitive(PrimitiveType::Uuid)
-                } else {
-                    TypeNode::Primitive(PrimitiveType::String)
+            SchemaString::String {
+                format,
+                content_encoding,
+            } => match content_encoding {
+                Some(ContentEncoding::Base64) => {
+                    if format.is_some() {
+                        panic!(
+                            "Base64 encoding is not compatible with format: {:?}",
+                            format
+                        );
+                    }
+                    TypeNode::Primitive(PrimitiveType::Bytes)
                 }
-            }
+                None => {
+                    if format.as_deref() == Some("uuid") {
+                        TypeNode::Primitive(PrimitiveType::Uuid)
+                    } else if format.as_deref() == Some("uri") {
+                        TypeNode::Primitive(PrimitiveType::Uri)
+                    } else {
+                        TypeNode::Primitive(PrimitiveType::String)
+                    }
+                }
+            },
         },
         SchemaConcreteType::Array { items } => TypeNode::Array(Box::new(type_for_schema(
             items,

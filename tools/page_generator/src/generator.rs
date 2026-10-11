@@ -197,9 +197,9 @@ fn enum_doc(
     };
 
     let description = match (&node.description, tag) {
-        (Some(description), Some(tag)) => {
-            Some(format!("{description} Discriminated by the `{tag}` property."))
-        }
+        (Some(description), Some(tag)) => Some(format!(
+            "{description} Discriminated by the `{tag}` property."
+        )),
         (None, Some(tag)) => Some(format!("Discriminated by the `{tag}` property.")),
         (description, None) => description.clone(),
     };
@@ -447,6 +447,8 @@ fn type_node_to_string(
         TypeNode::Primitive(kind) => match kind {
             stride_api_codegen::PrimitiveType::String => "string".to_string(),
             stride_api_codegen::PrimitiveType::Uuid => "uuid".to_string(),
+            stride_api_codegen::PrimitiveType::Bytes => "bytes (base64)".to_string(),
+            stride_api_codegen::PrimitiveType::Uri => "uri".to_string(),
             stride_api_codegen::PrimitiveType::Integer => "integer".to_string(),
             stride_api_codegen::PrimitiveType::Number => "number".to_string(),
             stride_api_codegen::PrimitiveType::Boolean => "boolean".to_string(),

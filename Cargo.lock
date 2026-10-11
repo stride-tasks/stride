@@ -2320,7 +2320,9 @@ dependencies = [
  "indexmap 2.14.2",
  "serde",
  "serde_json",
+ "serde_with",
  "stride_api_codegen",
+ "url",
  "uuid",
 ]
 

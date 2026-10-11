@@ -10,6 +10,8 @@ const PRELUDE: &str = r"
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:uuid/uuid_value.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 part 'generated.freezed.dart';
 part 'generated.g.dart';
@@ -32,6 +34,26 @@ class NullableUuidValueJsonConverter implements JsonConverter<UuidValue?, String
 
   @override
   String? toJson(UuidValue? object) => object?.uuid;
+}
+
+class Base64BytesJsonConverter implements JsonConverter<Uint8List, String> {
+  const Base64BytesJsonConverter();
+
+  @override
+  Uint8List fromJson(String json) => Uint8List.fromList(base64.decode(json));
+
+  @override
+  String toJson(Uint8List object) => base64.encode(object);
+}
+
+class NullableBase64BytesJsonConverter implements JsonConverter<Uint8List?, String?> {
+  const NullableBase64BytesJsonConverter();
+
+  @override
+  Uint8List? fromJson(String? json) => json == null ? null : Uint8List.fromList(base64.decode(json));
+
+  @override
+  String? toJson(Uint8List? object) => object == null ? null : base64.encode(object);
 }
 
 abstract class Serde<T> {
@@ -344,6 +366,12 @@ fn render_factory_params(fields: &[FieldNode]) -> Vec<String> {
             TypeNode::Primitive(PrimitiveType::Uuid) => {
                 lines.push("    @NullableUuidValueJsonConverter()".to_owned());
             }
+            TypeNode::Primitive(PrimitiveType::Bytes) if field.required => {
+                lines.push("    @Base64BytesJsonConverter()".to_owned());
+            }
+            TypeNode::Primitive(PrimitiveType::Bytes) => {
+                lines.push("    @NullableBase64BytesJsonConverter()".to_owned());
+            }
             _ => {}
         }
 
@@ -510,6 +538,8 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "String".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "UuidValue".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Bytes) => "Uint8List".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Uri) => "Uri".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer) => "int".to_owned(),
         TypeNode::Primitive(PrimitiveType::Number) => "double".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),

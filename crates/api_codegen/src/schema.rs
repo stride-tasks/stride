@@ -11,6 +11,13 @@ pub struct EnumOneOfValue {
     pub description: Option<String>,
 }
 
+/// https://www.learnjsonschema.com/2020-12/content/contentencoding/
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub enum ContentEncoding {
+    #[serde(rename = "base64")]
+    Base64,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)] // Evaluates from top to bottom
 pub enum SchemaString {
@@ -30,6 +37,8 @@ pub enum SchemaString {
     String {
         #[serde(skip_serializing_if = "Option::is_none")]
         format: Option<String>,
+        #[serde(rename = "contentEncoding", skip_serializing_if = "Option::is_none")]
+        content_encoding: Option<ContentEncoding>,
     },
 }
 

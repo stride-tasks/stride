@@ -281,3 +281,32 @@ fn generates_uuid_as_uuid_value_in_dart() {
     assert!(output.contains("@UuidValueJsonConverter()"));
     assert!(!output.contains("String uuid"));
 }
+
+#[test]
+fn generates_base64_and_uri_types() {
+    let schema = r#"{
+        "title": "Encoded Values",
+        "type": "object",
+        "properties": {
+            "bytes": { "type": "string", "contentEncoding": "base64" },
+            "url": { "type": "string", "format": "uri" }
+        },
+        "required": ["url"]
+    }"#;
+    let rust = generate_with_schema(schema).unwrap();
+    assert!(rust.contains("pub bytes: Option<Box<[u8]>>"));
+    assert!(rust.contains("pub url: url::Url"));
+    assert!(rust.contains("serde_with::base64::Base64"));
+
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_encoded_dart_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(dir.join("type").join("generated.schema.json"), schema).unwrap();
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("Uint8List? bytes"));
+    assert!(dart.contains("Uri url"));
+    assert!(dart.contains("@NullableBase64BytesJsonConverter()"));
+}
