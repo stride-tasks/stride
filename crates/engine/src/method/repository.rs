@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use stride_api::Config;
-use stride_core::backend::BackendRecord;
+use stride_core::backend::BackendInstance;
 use uuid::Uuid;
 
 use crate::{Engine, Result, TypedCommandHandler};
@@ -22,7 +22,7 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
         let backend_id = Uuid::now_v7();
 
         let repository = engine.open_repository(method.repository_id)?;
-        repository.lock_database().add_backend(&BackendRecord {
+        repository.lock_database().add_backend(&BackendInstance {
             id: backend_id,
             name,
             enabled: false,
@@ -130,7 +130,7 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
         let repository = engine.open_repository(method.repository_id)?;
-        repository.lock_database().update_backend(&BackendRecord {
+        repository.lock_database().update_backend(&BackendInstance {
             id: method.backend_instance.id,
             name: method.backend_instance.name,
             enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,

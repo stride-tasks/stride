@@ -6,7 +6,7 @@ use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
 use stride_api::{Config, ConfigField, ConfigValue};
 use stride_core::{
-    backend::BackendRecord,
+    backend::BackendInstance,
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -394,7 +394,7 @@ impl Database {
             .map_err(Into::into)
     }
 
-    pub fn add_backend(&mut self, backend: &BackendRecord) -> Result<()> {
+    pub fn add_backend(&mut self, backend: &BackendInstance) -> Result<()> {
         let transaction = self.connection.transaction()?;
 
         transaction.execute(
@@ -431,7 +431,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn backends(&mut self) -> Result<Vec<BackendRecord>> {
+    pub fn backends(&mut self) -> Result<Vec<BackendInstance>> {
         let transaction = self.connection.transaction()?;
         let mut backend_sql = transaction.prepare(indoc! {"
             SELECT
@@ -496,7 +496,7 @@ impl Database {
                 let (name, value) = field?;
                 fields.push(ConfigField { id: name, value });
             }
-            Ok(BackendRecord {
+            Ok(BackendInstance {
                 id: row.get::<_, Uuid>("id")?,
                 name: row.get::<_, Box<str>>("name")?,
                 enabled: row.get::<_, bool>("enabled")?,
@@ -577,7 +577,7 @@ impl Database {
         Ok(new_state)
     }
 
-    pub fn update_backend(&mut self, backend: &BackendRecord) -> Result<()> {
+    pub fn update_backend(&mut self, backend: &BackendInstance) -> Result<()> {
         let transaction = self.connection.transaction()?;
 
         // TODO: Maybe instead of deleting them all,

@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use anyhow::{Context, bail};
 use stride_api::ConfigField;
-use stride_core::backend::BackendRecord;
+use stride_core::backend::BackendInstance;
 use stride_database::Database;
 use stride_engine::{BackendRegistry, api::Config};
 use uuid::Uuid;
@@ -26,7 +26,7 @@ pub(crate) fn handle_command(
         }
         Some(BackendCommand::New { backend_name: name }) => {
             let handler = backend_registry.get_or_error(name.as_str())?;
-            let record = BackendRecord {
+            let record = BackendInstance {
                 id: Uuid::now_v7(),
                 enabled: true,
                 name: handler.name(),

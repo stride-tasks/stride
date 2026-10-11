@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct BackendRecord {
+pub struct BackendInstance {
     pub id: Uuid,
     pub name: Box<str>,
     pub enabled: bool,
