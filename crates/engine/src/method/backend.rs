@@ -18,9 +18,7 @@ impl TypedCommandHandler for BackendListHandler {
             .values()
             .map(|handler| crate::api::BackendDescriptor {
                 name: handler.name(),
-                schema: crate::api::Value::from_type(handler.config_schema())
-                    .to_string()
-                    .into_boxed_str(),
+                schema: handler.config_schema(),
             })
             .collect::<Vec<_>>();
 
@@ -42,9 +40,7 @@ impl TypedCommandHandler for BackendGetHandler {
         let backend_descriptor = engine.backends().get(&method.backend_name).map(|handler| {
             crate::api::BackendDescriptor {
                 name: handler.name(),
-                schema: crate::api::Value::from_type(handler.config_schema())
-                    .to_string()
-                    .into_boxed_str(),
+                schema: handler.config_schema(),
             }
         });
 

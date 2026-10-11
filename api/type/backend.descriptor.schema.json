@@ -16,7 +16,7 @@
 			]
 		},
 		"schema": {
-			"type": "string",
+			"$ref": "https://stride-tasks.github.io/stride/api/type/config.schema.schema.json",
 			"description": "The schema of the backend."
 		}
 	}

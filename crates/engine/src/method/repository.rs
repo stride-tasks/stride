@@ -105,9 +105,7 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
             let descriptor = engine.backends().get(&instance.name);
             let descriptor = descriptor.map(|handler| crate::api::BackendDescriptor {
                 name: handler.name(),
-                schema: Value::from_type(handler.config_schema())
-                    .to_string()
-                    .into_boxed_str(),
+                schema: handler.config_schema(),
             });
 
             crate::api::BackendRecord {
