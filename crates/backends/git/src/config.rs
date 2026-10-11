@@ -57,7 +57,7 @@ impl BackendHandler for Handler {
                     default: None,
                     min: Some(32),
                     max: Some(32),
-                    category: Some(stride_core::backend::BytesCategory::Password),
+                    category: Some(api::ConfigSchemaByteCategory::Password),
                     generator: Some(api::ConfigSchemaByteGenerator::CryptoRandom),
                 },
                 true,
