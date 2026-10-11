@@ -1,9 +1,9 @@
 use std::process::ExitCode;
 
 use anyhow::{Context, bail};
-use stride_core::backend::{BackendRecord, Config, Value};
+use stride_core::backend::{BackendRecord, Config};
 use stride_database::Database;
-use stride_engine::BackendRegistry;
+use stride_engine::{BackendRegistry, api::ConfigValue};
 use uuid::Uuid;
 
 use crate::cli::BackendCommand;
@@ -73,7 +73,7 @@ pub(crate) fn handle_command(
                         schema_field.value.as_type_name(),
                         value.map_or_else(
                             || String::from("none").into(),
-                            |value: Value| value.as_value_string()
+                            |value: ConfigValue| value.as_value_string()
                         )
                     );
                 }

@@ -1,10 +1,7 @@
-use std::{
-    collections::HashMap,
-    fmt::{Debug, Display},
-};
+use std::{collections::HashMap, fmt::Debug};
 
 use base64::Engine;
-use stride_api::{ConfigSchemaByteCategory, ConfigSchemaByteGenerator};
+use stride_api::{ConfigSchemaField, ConfigSchemaValue, ConfigValue, config::Error};
 use url::Url;
 use uuid::Uuid;
 
@@ -13,7 +10,7 @@ use uuid::Uuid;
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct SchemaBuilder {
     id: Box<str>,
-    fields: HashMap<Box<str>, SchemaField>,
+    fields: HashMap<Box<str>, ConfigSchemaField>,
 }
 
 impl SchemaBuilder {
@@ -35,14 +32,14 @@ impl SchemaBuilder {
     where
         T: Into<Box<str>>,
         U: Into<Box<str>>,
-        D: Into<SchemaValue>,
+        D: Into<ConfigSchemaValue>,
     {
         let id = id.into();
         let name = name.into();
 
         let inserted = self.fields.insert(
             id.clone(),
-            SchemaField {
+            ConfigSchemaField {
                 name,
                 value: value.into(),
                 show_qr_code,
@@ -64,7 +61,7 @@ impl SchemaBuilder {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Schema {
     pub name: Box<str>,
-    pub fields: HashMap<Box<str>, SchemaField>,
+    pub fields: HashMap<Box<str>, ConfigSchemaField>,
 }
 
 impl Schema {
@@ -76,7 +73,7 @@ impl Schema {
     }
 
     #[must_use]
-    pub fn field(&self, id: &str) -> Option<&SchemaField> {
+    pub fn field(&self, id: &str) -> Option<&ConfigSchemaField> {
         self.fields.get(id)
     }
 
@@ -84,275 +81,21 @@ impl Schema {
         &'a self,
         config: &'b mut Config,
         id: &str,
-    ) -> Option<(&'a SchemaField, &'b mut Value)> {
+    ) -> Option<(&'a ConfigSchemaField, &'b mut ConfigValue)> {
         let value = config.fields.get_mut(id)?;
         let schema = self.field(id)?;
         Some((schema, value))
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
-#[serde(tag = "type")]
-pub enum SchemaValue {
-    String {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        default: Option<Box<str>>,
-    },
-    Uuid {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        default: Option<Uuid>,
-    },
-    Bytes {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        #[serde(with = "::serde_with::As::<Option<serde_with::base64::Base64>>")]
-        default: Option<Box<[u8]>>,
-
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        min: Option<usize>,
-
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        max: Option<usize>,
-
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        category: Option<ConfigSchemaByteCategory>,
-
-        #[serde(default)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        generator: Option<ConfigSchemaByteGenerator>,
-    },
-    Url {
-        #[serde(default)]
-        default: Option<Url>,
-    },
-    // TODO: Should SshKey variant be a Uuid type with a SshKey category type?
-    SshKey {
-        #[serde(skip_serializing_if = "Option::is_none")]
-        default: Option<Uuid>,
-    },
-}
-
-impl SchemaValue {
-    #[must_use]
-    pub fn as_type_name(&self) -> &str {
-        match self {
-            Self::String { .. } => "string",
-            Self::Uuid { .. } => "uuid",
-            Self::Bytes { .. } => "bytes",
-            Self::Url { .. } => "url",
-            Self::SshKey { .. } => "ssh-key",
-        }
-    }
-
-    #[must_use]
-    pub fn as_value(&self) -> Option<Value> {
-        match self {
-            SchemaValue::String { default: None }
-            | SchemaValue::Uuid { default: None }
-            | SchemaValue::Bytes { default: None, .. }
-            | SchemaValue::Url { default: None }
-            | SchemaValue::SshKey { default: None } => None,
-            SchemaValue::String {
-                default: Some(default),
-            } => Some(Value::String(default.clone())),
-            SchemaValue::Uuid {
-                default: Some(default),
-            }
-            | SchemaValue::SshKey {
-                default: Some(default),
-            } => Some(Value::Uuid(*default)),
-            SchemaValue::Bytes {
-                default: Some(default),
-                ..
-            } => Some(Value::Bytes(default.clone())),
-            SchemaValue::Url {
-                default: Some(default),
-            } => Some(Value::Url(default.clone())),
-        }
-    }
-}
-
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct SchemaField {
-    pub name: Box<str>,
-    #[serde(flatten)]
-    pub value: SchemaValue,
-    pub show_qr_code: bool,
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("missing schema field: {id}")]
-    MissingField { id: Box<str> },
-    #[error("missing config field: {id}")]
-    MissingValue { id: Box<str> },
-    #[error("property {id} does not match type, expected {expected} got {actual}")]
-    TypeMismatch {
-        id: Box<str>,
-        expected: Box<str>,
-        actual: Box<str>,
-    },
-    #[error("property {id} is out of range: expected [{min}, {max}] (inclusive), got {size}")]
-    OutOfRange {
-        id: Box<str>,
-        min: usize,
-        max: usize,
-        size: usize,
-    },
-    #[error("property {id} invalid uuid: {error}")]
-    UuidParse {
-        id: Box<str>,
-        #[source]
-        error: uuid::Error,
-    },
-    #[error("property {id} invalid url: {error}")]
-    UrlParse {
-        id: Box<str>,
-        #[source]
-        error: url::ParseError,
-    },
-    #[error("property {id} invalid base64: {error}")]
-    Base64Decode {
-        id: Box<str>,
-        #[source]
-        error: base64::DecodeError,
-    },
-    #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
-#[serde(tag = "type", content = "content")]
-pub enum Value {
-    String(Box<str>),
-    Uuid(Uuid),
-    Bytes(
-        #[serde(
-            with = "::serde_with::As::<serde_with::base64::Base64::<serde_with::base64::UrlSafe>>"
-        )]
-        Box<[u8]>,
-    ),
-    Url(Url),
-}
-
-impl Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Value::String(value) => Debug::fmt(value, f),
-            Value::Uuid(value) => Debug::fmt(value, f),
-            Value::Bytes(value) => Debug::fmt(value, f),
-            Value::Url(value) => Debug::fmt(value, f),
-        }
-    }
-}
-
-impl Value {
-    #[must_use]
-    pub fn as_type_name(&self) -> &str {
-        match self {
-            Value::String(_) => "string",
-            Value::Uuid(_) => "uuid",
-            Value::Bytes(_) => "bytes",
-            Value::Url(_) => "url",
-        }
-    }
-
-    pub fn string<T>(value: T) -> Self
-    where
-        T: Into<Box<str>>,
-    {
-        Self::String(value.into())
-    }
-
-    #[must_use]
-    pub fn as_value_string(&self) -> Box<str> {
-        match self {
-            Value::String(v) => v.clone(),
-            Value::Uuid(v) => v.to_string().into_boxed_str(),
-            Value::Bytes(v) => base64::prelude::BASE64_URL_SAFE.encode(v).into_boxed_str(),
-            Value::Url(v) => v.to_string().into_boxed_str(),
-        }
-    }
-
-    #[must_use]
-    pub fn as_value_boxed_slice(&self) -> Box<[u8]> {
-        match self {
-            Value::String(v) => v.as_bytes().to_vec().into_boxed_slice(),
-            Value::Uuid(v) => v.as_bytes().to_vec().into_boxed_slice(),
-            Value::Bytes(v) => v.clone(),
-            Value::Url(v) => v.as_str().as_bytes().to_vec().into_boxed_slice(),
-        }
-    }
-
-    pub fn align(&self, schema: &SchemaField) -> Result<Option<Self>, Error> {
-        match (&schema.value, self) {
-            (SchemaValue::String { .. }, Value::String(_))
-            | (SchemaValue::Uuid { .. } | SchemaValue::SshKey { .. }, Value::Uuid(_))
-            | (SchemaValue::Url { .. }, Value::Url(_)) => return Ok(Some(self.clone())),
-            (SchemaValue::Bytes { min, max, .. }, Value::Bytes(bytes)) => {
-                let min = min.unwrap_or(0);
-                let max = max.unwrap_or(usize::MAX);
-                if !(min..=max).contains(&bytes.len()) {
-                    return Err(Error::OutOfRange {
-                        id: schema.name.clone(),
-                        min,
-                        max,
-                        size: bytes.len(),
-                    });
-                }
-                return Ok(Some(Value::Bytes(bytes.clone())));
-            }
-            (SchemaValue::String { .. }, Value::Uuid(uuid)) => {
-                return Ok(Some(Value::String(uuid.to_string().into_boxed_str())));
-            }
-            (SchemaValue::String { .. }, Value::Url(url)) => {
-                return Ok(Some(Value::String(url.as_str().into())));
-            }
-            (SchemaValue::Uuid { .. }, Value::String(value)) => match Uuid::parse_str(value) {
-                Ok(value) => return Ok(Some(Value::Uuid(value))),
-                Err(error) => {
-                    return Err(Error::UuidParse {
-                        id: schema.name.clone(),
-                        error,
-                    });
-                }
-            },
-            (SchemaValue::Url { .. }, Value::String(value)) => {
-                return match Url::parse(value) {
-                    Ok(value) => Ok(Some(Value::Url(value))),
-                    Err(error) => Err(Error::UrlParse {
-                        id: schema.name.clone(),
-                        error,
-                    }),
-                };
-            }
-            (_, _) => {}
-        }
-
-        Err(Error::TypeMismatch {
-            id: schema.name.clone(),
-            expected: schema.value.as_type_name().into(),
-            actual: self.as_type_name().into(),
-        })
-    }
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
-    pub fields: HashMap<Box<str>, Value>,
+    pub fields: HashMap<Box<str>, ConfigValue>,
 }
 
 impl Config {
-    pub fn value(&self, id: &str) -> Result<&Value, Error> {
+    pub fn value(&self, id: &str) -> Result<&ConfigValue, Error> {
         let Some(field) = self.fields.get(id) else {
             return Err(Error::MissingField { id: id.into() });
         };
@@ -361,7 +104,7 @@ impl Config {
 
     pub fn string_value(&self, name: &str) -> Result<&str, Error> {
         let value = self.value(name)?;
-        let Value::String(value) = value else {
+        let ConfigValue::String { value } = value else {
             return Err(Error::TypeMismatch {
                 id: name.into(),
                 expected: "string".into(),
@@ -373,7 +116,7 @@ impl Config {
 
     pub fn url_value(&self, name: &str) -> Result<&Url, Error> {
         let value = self.value(name)?;
-        let Value::Url(value) = value else {
+        let ConfigValue::Url { value } = value else {
             return Err(Error::TypeMismatch {
                 id: name.into(),
                 expected: "url".into(),
@@ -385,7 +128,7 @@ impl Config {
 
     pub fn uuid_value(&self, name: &str) -> Result<Uuid, Error> {
         let value = self.value(name)?;
-        let Value::Uuid(value) = value else {
+        let ConfigValue::Uuid { value } = value else {
             return Err(Error::TypeMismatch {
                 id: name.into(),
                 expected: "uuid".into(),
@@ -397,7 +140,7 @@ impl Config {
 
     pub fn bytes_value(&self, name: &str) -> Result<&[u8], Error> {
         let value = self.value(name)?;
-        let Value::Bytes(value) = value else {
+        let ConfigValue::Bytes { value } = value else {
             return Err(Error::TypeMismatch {
                 id: name.into(),
                 expected: "bytes".into(),
@@ -407,7 +150,7 @@ impl Config {
         Ok(value)
     }
 
-    pub fn find_field_mut(&mut self, id: &str) -> Option<&mut Value> {
+    pub fn find_field_mut(&mut self, id: &str) -> Option<&mut ConfigValue> {
         self.fields.get_mut(id)
     }
 
@@ -436,34 +179,36 @@ impl Config {
     }
 
     #[must_use]
-    pub fn get(&self, id: &str) -> Option<&Value> {
+    pub fn get(&self, id: &str) -> Option<&ConfigValue> {
         self.fields.get(id)
     }
 
     #[must_use]
-    pub fn get_mut(&mut self, id: &str) -> Option<&mut Value> {
+    pub fn get_mut(&mut self, id: &str) -> Option<&mut ConfigValue> {
         self.fields.get_mut(id)
     }
 
-    pub fn unset(&mut self, id: &str) -> Option<Value> {
+    pub fn unset(&mut self, id: &str) -> Option<ConfigValue> {
         self.fields.remove(id)
     }
 
     pub fn set(
         &mut self,
-        schema_field: &SchemaField,
+        schema_field: &ConfigSchemaField,
         id: &str,
         value_string: &str,
-    ) -> Result<Option<Value>, Error> {
+    ) -> Result<Option<ConfigValue>, Error> {
         let value = match &schema_field.value {
-            SchemaValue::Uuid { .. } => Value::Uuid(Uuid::parse_str(value_string).map_err(
-                |error| Error::UuidParse {
+            ConfigSchemaValue::Uuid { .. } => ConfigValue::Uuid {
+                value: Uuid::parse_str(value_string).map_err(|error| Error::UuidParse {
                     id: id.into(),
                     error,
-                },
-            )?),
-            SchemaValue::String { .. } => Value::String(value_string.into()),
-            SchemaValue::Bytes { min, max, .. } => {
+                })?,
+            },
+            ConfigSchemaValue::String { .. } => ConfigValue::String {
+                value: value_string.into(),
+            },
+            ConfigSchemaValue::Bytes { min, max, .. } => {
                 let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
                     .decode(value_string)
                     .map_err(|error| Error::Base64Decode {
@@ -481,20 +226,22 @@ impl Config {
                         size: bytes.len(),
                     });
                 }
-                Value::Bytes(bytes.into_boxed_slice())
+                ConfigValue::Bytes {
+                    value: bytes.into_boxed_slice(),
+                }
             }
-            SchemaValue::Url { .. } => {
-                Value::Url(Url::parse(value_string).map_err(|error| Error::UrlParse {
+            ConfigSchemaValue::Url { .. } => ConfigValue::Url {
+                value: Url::parse(value_string).map_err(|error| Error::UrlParse {
                     id: id.into(),
                     error,
-                })?)
-            }
-            SchemaValue::SshKey { .. } => Value::Uuid(Uuid::parse_str(value_string).map_err(
-                |error| Error::UuidParse {
+                })?,
+            },
+            ConfigSchemaValue::SshKey { .. } => ConfigValue::Uuid {
+                value: Uuid::parse_str(value_string).map_err(|error| Error::UuidParse {
                     id: id.into(),
                     error,
-                },
-            )?),
+                })?,
+            },
         };
 
         Ok(self.fields.insert(id.into(), value))

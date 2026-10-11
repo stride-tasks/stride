@@ -4,8 +4,9 @@ mod tests;
 use chrono::DateTime;
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
+use stride_api::ConfigValue;
 use stride_core::{
-    backend::{BackendRecord, Config, Value},
+    backend::{BackendRecord, Config},
     event::TaskQuery,
     task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
 };
@@ -472,15 +473,23 @@ impl Database {
                                 rusqlite::Error::Utf8Error(error.valid_up_to(), error)
                             })?;
                             if typ == "string" {
-                                Value::String(string.into_boxed_str())
+                                ConfigValue::String {
+                                    value: string.into_boxed_str(),
+                                }
                             } else {
-                                Value::Url(Url::parse(&string).map_err(|e| {
-                                    rusqlite::types::FromSqlError::Other(Box::new(e))
-                                })?)
+                                ConfigValue::Url {
+                                    value: Url::parse(&string).map_err(|e| {
+                                        rusqlite::types::FromSqlError::Other(Box::new(e))
+                                    })?,
+                                }
                             }
                         }
-                        "uuid" => Value::Uuid(row.get::<_, Uuid>("value")?),
-                        "bytes" => Value::Bytes(row.get::<_, Vec<u8>>("value")?.into_boxed_slice()),
+                        "uuid" => ConfigValue::Uuid {
+                            value: row.get::<_, Uuid>("value")?,
+                        },
+                        "bytes" => ConfigValue::Bytes {
+                            value: row.get::<_, Vec<u8>>("value")?.into_boxed_slice(),
+                        },
                         _ => todo!(),
                     },
                 ))

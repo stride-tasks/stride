@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use stride_core::{
-    backend::{Config, Schema, SchemaValue},
+    backend::{Config, Schema},
     state::KnownPaths,
 };
 use stride_engine::{Backend, BackendHandler, api};
@@ -23,13 +23,13 @@ impl BackendHandler for Handler {
             .field(
                 "origin",
                 "Origin",
-                SchemaValue::String { default: None },
+                api::ConfigSchemaValue::String { default: None },
                 false,
             )
             .field(
                 "author",
                 "Author",
-                SchemaValue::String {
+                api::ConfigSchemaValue::String {
                     default: Some("Stride".into()),
                 },
                 false,
@@ -37,7 +37,7 @@ impl BackendHandler for Handler {
             .field(
                 "email",
                 "E-mail",
-                SchemaValue::String {
+                api::ConfigSchemaValue::String {
                     default: Some("noreply.stride.tasks@gmail.com".into()),
                 },
                 false,
@@ -45,7 +45,7 @@ impl BackendHandler for Handler {
             .field(
                 "branch",
                 "Git Branch",
-                SchemaValue::String {
+                api::ConfigSchemaValue::String {
                     default: Some("main".into()),
                 },
                 false,
@@ -53,7 +53,7 @@ impl BackendHandler for Handler {
             .field(
                 "encryption_key",
                 "Encryption Key",
-                SchemaValue::Bytes {
+                api::ConfigSchemaValue::Bytes {
                     default: None,
                     min: Some(32),
                     max: Some(32),
@@ -65,7 +65,7 @@ impl BackendHandler for Handler {
             .field(
                 "ssh_key",
                 "SSH Key",
-                SchemaValue::SshKey { default: None },
+                api::ConfigSchemaValue::SshKey { default: None },
                 false,
             )
             .build()
