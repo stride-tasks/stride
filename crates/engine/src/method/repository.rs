@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use stride_api::{Config, Value};
+use stride_api::Config;
 use stride_core::backend::BackendRecord;
 use uuid::Uuid;
 
-use crate::{Engine, Error, Result, TypedCommandHandler};
+use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendAddHandler;
@@ -98,7 +98,7 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
                 } else {
                     crate::api::BackendInstanceState::Disabled
                 },
-                configuration: Value::from_type(backend.config),
+                configuration: backend.config,
             });
 
         let backend_record = backend_instance.map(|instance| {
@@ -134,11 +134,7 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
             id: method.backend_instance.id,
             name: method.backend_instance.name,
             enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
-            config: method
-                .backend_instance
-                .configuration
-                .to_type()
-                .map_err(Error::Other)?,
+            config: method.backend_instance.configuration,
         })?;
 
         Ok(crate::api::RepositoryBackendSetMethodResult {})
@@ -170,7 +166,7 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
                     } else {
                         crate::api::BackendInstanceState::Disabled
                     },
-                    configuration: Value::from_type(backend.config),
+                    configuration: backend.config,
                 })
                 .collect(),
         })
