@@ -3,11 +3,15 @@
     "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json",
     "type": "object",
     "required": [
+        "id",
         "name",
         "value",
         "show-qr-code"
     ],
     "properties": {
+        "id": {
+            "type": "string"
+        },
         "name": {
             "type": "string"
         },
