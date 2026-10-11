@@ -270,7 +270,13 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
             &append_type_name(fallback_name, "Item"),
         ))),
         SchemaConcreteType::Boolean { .. } => TypeNode::Primitive(PrimitiveType::Boolean),
-        SchemaConcreteType::Integer { .. } => TypeNode::Primitive(PrimitiveType::Integer),
+        SchemaConcreteType::Integer { format, .. } => {
+            TypeNode::Primitive(if format.as_deref() == Some("uint") {
+                PrimitiveType::UnsignedInteger
+            } else {
+                PrimitiveType::Integer
+            })
+        }
         SchemaConcreteType::Number { .. } => TypeNode::Primitive(PrimitiveType::Number),
         SchemaConcreteType::Null {} => TypeNode::Any,
         SchemaConcreteType::Object {

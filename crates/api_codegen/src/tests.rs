@@ -76,6 +76,40 @@ fn generates_schema_additional_properties_as_a_typed_map() {
 }
 
 #[test]
+fn generates_uint_as_usize_in_rust_and_int_in_dart() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_uint_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "max": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                },
+                "min": { "type": "integer" }
+            },
+            "required": ["max", "min"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(rust.contains("pub max: usize,"), "output was:\n{rust}");
+    assert!(rust.contains("pub min: i64,"), "output was:\n{rust}");
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("int max"), "output was:\n{dart}");
+    assert!(dart.contains("int min"), "output was:\n{dart}");
+}
+
+#[test]
 fn keeps_explicitly_named_nested_objects_with_method_fields() {
     let output = generate_with_schema(
         r#"{

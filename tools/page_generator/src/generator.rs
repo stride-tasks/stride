@@ -454,6 +454,7 @@ fn type_node_to_string(
             stride_api_codegen::PrimitiveType::Bytes => "bytes (base64)".to_string(),
             stride_api_codegen::PrimitiveType::Uri => "uri".to_string(),
             stride_api_codegen::PrimitiveType::Integer => "integer".to_string(),
+            stride_api_codegen::PrimitiveType::UnsignedInteger => "unsigned integer".to_string(),
             stride_api_codegen::PrimitiveType::Number => "number".to_string(),
             stride_api_codegen::PrimitiveType::Boolean => "boolean".to_string(),
         },

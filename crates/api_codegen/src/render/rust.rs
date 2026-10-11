@@ -216,6 +216,7 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Primitive(PrimitiveType::Bytes) => "Box<[u8]>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uri) => "url::Url".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer) => "i64".to_owned(),
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => "usize".to_owned(),
         TypeNode::Primitive(PrimitiveType::Number) => "f64".to_owned(),
         TypeNode::Primitive(PrimitiveType::Boolean) => "bool".to_owned(),
         TypeNode::Array(inner) => format!("Vec<{}>", render_type_node(inner)),
