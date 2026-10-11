@@ -98,7 +98,7 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
                 } else {
                     crate::api::BackendInstanceState::Disabled
                 },
-                configuration: backend.config,
+                config: backend.config,
             });
 
         let backend_record = backend_instance.map(|instance| {
@@ -134,7 +134,7 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
             id: method.backend_instance.id,
             name: method.backend_instance.name,
             enabled: method.backend_instance.state == crate::api::BackendInstanceState::Enabled,
-            config: method.backend_instance.configuration,
+            config: method.backend_instance.config,
         })?;
 
         Ok(crate::api::RepositoryBackendSetMethodResult {})
@@ -166,7 +166,7 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
                     } else {
                         crate::api::BackendInstanceState::Disabled
                     },
-                    configuration: backend.config,
+                    config: backend.config,
                 })
                 .collect(),
         })
