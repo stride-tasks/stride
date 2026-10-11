@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -18,36 +18,69 @@ struct Context {
     output: Vec<Node>,
 }
 
+#[derive(Debug)]
+struct SchemaEntry {
+    path: PathBuf,
+    schema: Schema,
+}
+
 /// Parse all schema files beneath a directory into generated Rust/Flutter model nodes.
 ///
 /// # Errors
-/// Returns an error if a schema file cannot be read or its JSON cannot be parsed.
+/// Returns an error if a schema file cannot be read or parsed, schema IDs are duplicated, or a
+/// reference points to an ID that was not loaded.
 pub fn parse(dir: &Path) -> Result<Vec<Node>> {
     let mut files = collect_schema_files(dir)?;
 
     // Sort files to ensure consistent order of processing and output generation.
     files.sort();
 
-    let mut context = Context::default();
+    let mut entries = Vec::with_capacity(files.len());
     for path in &files {
         let json = fs::read_to_string(path)?;
         let schema = Schema::from_str(&json).map_err(|source| Error::Json {
             path: path.to_string_lossy().into(),
             source,
         })?;
+        entries.push(SchemaEntry {
+            path: path.clone(),
+            schema,
+        });
+    }
 
-        match module_name_for_path(path) {
+    let mut schemas_by_id = HashMap::new();
+    for entry in &entries {
+        if let Some(id) = &entry.schema.id {
+            if schemas_by_id
+                .insert(
+                    id.clone(),
+                    SchemaEntry {
+                        path: entry.path.clone(),
+                        schema: entry.schema.clone(),
+                    },
+                )
+                .is_some()
+            {
+                return Err(Error::DuplicateSchemaId { id: id.clone() });
+            }
+        }
+    }
+
+    let mut context = Context::default();
+    for entry in &entries {
+        match module_name_for_path(&entry.path) {
             "r#type" => {
-                let root_name = schema_name_from_path(path, &schema);
-                let type_node = type_for_schema(&schema, &root_name);
+                let root_name = schema_name_from_path(&entry.path, &entry.schema);
+                let type_node = type_for_schema(&entry.schema, &root_name, &schemas_by_id)?;
                 context.output.push(Node::Type(type_node));
             }
             "method" => {
-                let method = emit_method_schema(&schema, path);
+                let method = emit_method_schema(&entry.schema, &entry.path, &schemas_by_id)?;
                 context.output.push(Node::Method(method));
             }
             "notification" => {
-                let notification = emit_notification_schema(&schema, path);
+                let notification =
+                    emit_notification_schema(&entry.schema, &entry.path, &schemas_by_id)?;
                 context.output.push(Node::Notification(notification));
             }
             _ => unreachable!(),
@@ -87,7 +120,11 @@ fn module_name_for_path(path: &Path) -> &str {
     }
 }
 
-fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
+fn emit_method_schema(
+    schema: &Schema,
+    path: &Path,
+    schemas_by_id: &HashMap<String, SchemaEntry>,
+) -> Result<MethodNode> {
     let SchemaType::Concrete(concrete_type) = &schema.schema_type else {
         panic!("method should not be a reference: {}", path.display());
     };
@@ -108,13 +145,14 @@ fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
         .expect("method must have result property");
 
     let params_name = schema_name_from_path(path, schema);
-    let params_type = type_for_schema(params_schema, &params_name);
+    let params_type = type_for_schema(params_schema, &params_name, schemas_by_id)?;
     let result_type = type_for_schema(
         result_schema,
         &format!("{}Result", schema_name_from_path(path, schema)),
-    );
+        schemas_by_id,
+    )?;
 
-    MethodNode {
+    Ok(MethodNode {
         id: schema
             .id
             .clone()
@@ -124,10 +162,14 @@ fn emit_method_schema(schema: &Schema, path: &Path) -> MethodNode {
         method_name: method_name.clone(),
         params: params_type,
         result: result_type,
-    }
+    })
 }
 
-fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
+fn emit_notification_schema(
+    schema: &Schema,
+    path: &Path,
+    schemas_by_id: &HashMap<String, SchemaEntry>,
+) -> Result<NotificationNode> {
     let method_name =
         root_method_name(schema).unwrap_or_else(|| schema_name_from_path(path, schema));
 
@@ -143,9 +185,9 @@ fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
         .get("params")
         .expect("notification must have params property");
     let params_name = schema_name_from_path(path, schema);
-    let params_type = type_for_schema(params_schema, &params_name);
+    let params_type = type_for_schema(params_schema, &params_name, schemas_by_id)?;
 
-    NotificationNode {
+    Ok(NotificationNode {
         id: schema
             .id
             .clone()
@@ -154,7 +196,7 @@ fn emit_notification_schema(schema: &Schema, path: &Path) -> NotificationNode {
         name: params_name,
         method_name: method_name.clone(),
         params: params_type,
-    }
+    })
 }
 
 fn enum_type_from_variants(
@@ -192,13 +234,26 @@ fn enum_type_from_variants(
 }
 
 #[allow(clippy::too_many_lines)]
-fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
+fn type_for_schema(
+    schema: &Schema,
+    fallback_name: &str,
+    schemas_by_id: &HashMap<String, SchemaEntry>,
+) -> Result<TypeNode> {
     let concrete_type = match &schema.schema_type {
         SchemaType::Any { .. } => {
-            return TypeNode::Any;
+            return Ok(TypeNode::Any);
         }
         SchemaType::Reference { ref_ } => {
-            return TypeNode::Reference(resolve_reference(ref_));
+            let entry = schemas_by_id
+                .get(ref_)
+                .ok_or_else(|| Error::UnknownReference {
+                    reference: ref_.clone(),
+                })?;
+            let name = entry
+                .schema
+                .explicit_name()
+                .unwrap_or_else(|| schema_name_from_path(&entry.path, &entry.schema));
+            return Ok(TypeNode::Reference(name));
         }
         SchemaType::Concrete(concrete_type) => concrete_type,
     };
@@ -208,7 +263,7 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
         .clone()
         .unwrap_or_else(|| fallback_name.to_owned());
 
-    match concrete_type {
+    Ok(match concrete_type {
         SchemaConcreteType::String { kind, .. } => match kind {
             SchemaString::Enum { enum_values } if !enum_values.is_empty() => {
                 enum_type_from_variants(
@@ -268,7 +323,8 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
         SchemaConcreteType::Array { items } => TypeNode::Array(Box::new(type_for_schema(
             items,
             &append_type_name(fallback_name, "Item"),
-        ))),
+            schemas_by_id,
+        )?)),
         SchemaConcreteType::Boolean { .. } => TypeNode::Primitive(PrimitiveType::Boolean),
         SchemaConcreteType::Integer { format, .. } => {
             TypeNode::Primitive(if format.as_deref() == Some("uint") {
@@ -289,7 +345,14 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
             one_of,
         } => {
             if let Some(one_of) = one_of {
-                return union_type(schema, &target_name, properties, required, one_of);
+                return Ok(union_type(
+                    schema,
+                    &target_name,
+                    properties,
+                    required,
+                    one_of,
+                    schemas_by_id,
+                )?);
             }
 
             match additional_properties {
@@ -299,10 +362,11 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                             "schema based additionalProperties with existing properties is not supported yet"
                         );
                     }
-                    return TypeNode::Map(Box::new(type_for_schema(
+                    return Ok(TypeNode::Map(Box::new(type_for_schema(
                         value_schema,
                         &append_type_name(&target_name, "Value"),
-                    )));
+                        schemas_by_id,
+                    )?)));
                 }
                 Some(AdditionalProperties::Boolean(_)) => {
                     panic!("boolean additionalProperties is not supported yet");
@@ -314,7 +378,8 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
 
             let mut fields = Vec::new();
             for (key, value) in properties {
-                let field_type = type_for_schema(value, &append_type_name(&target_name, key));
+                let field_type =
+                    type_for_schema(value, &append_type_name(&target_name, key), schemas_by_id)?;
 
                 fields.push(FieldNode {
                     name: key.clone(),
@@ -344,7 +409,7 @@ fn type_for_schema(schema: &Schema, fallback_name: &str) -> TypeNode {
                 fields,
             })
         }
-    }
+    })
 }
 
 fn doc_lines(schema: &Schema) -> Vec<String> {
@@ -367,7 +432,8 @@ fn union_type(
     base_properties: &indexmap::IndexMap<String, Schema>,
     base_required: &Vec<String>,
     one_of: &[SchemaObject],
-) -> TypeNode {
+    schemas_by_id: &HashMap<String, SchemaEntry>,
+) -> Result<TypeNode> {
     let tag = base_properties
         .iter()
         .find(|(_, value)| value.comment.as_deref().map(str::trim) == Some("@discriminant"))
@@ -376,7 +442,7 @@ fn union_type(
 
     let variants = one_of
         .iter()
-        .map(|variant| {
+        .map(|variant| -> Result<EnumVariantNode> {
             let value = match variant
                 .properties
                 .get(&tag)
@@ -403,41 +469,37 @@ fn union_type(
                 .properties
                 .iter()
                 .filter(|(key, _)| **key != tag)
-                .map(|(key, field)| FieldNode {
-                    name: key.clone(),
-                    typ: type_for_schema(field, &append_type_name(&variant_prefix, key)),
-                    required: base_required.contains(key) || variant.required.contains(key),
-                    description: field.description.clone(),
+                .map(|(key, field)| {
+                    Ok(FieldNode {
+                        name: key.clone(),
+                        typ: type_for_schema(
+                            field,
+                            &append_type_name(&variant_prefix, key),
+                            schemas_by_id,
+                        )?,
+                        required: base_required.contains(key) || variant.required.contains(key),
+                        description: field.description.clone(),
+                    })
                 })
-                .collect();
+                .collect::<Result<Vec<_>>>()?;
 
-            EnumVariantNode {
+            Ok(EnumVariantNode {
                 name: variant_name,
                 value,
                 description: None,
                 fields,
-            }
+            })
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
-    TypeNode::Enum(EnumNode {
+    Ok(TypeNode::Enum(EnumNode {
         name: name.to_owned(),
         id: schema.id.clone().unwrap_or_default(),
         doc: doc_lines(schema),
         description: schema.description.clone(),
         tag: Some(tag),
         variants,
-    })
-}
-
-fn resolve_reference(reference: &str) -> String {
-    let stem = Path::new(reference)
-        .file_stem()
-        .and_then(|part| part.to_str())
-        .unwrap_or(reference)
-        .strip_suffix(".schema")
-        .unwrap_or(reference);
-    normalize_path_name(stem)
+    }))
 }
 
 fn root_method_name(schema: &Schema) -> Option<String> {

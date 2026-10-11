@@ -61,6 +61,17 @@ fn generates_schema_additional_properties_as_a_typed_map() {
         }"#,
     )
     .unwrap();
+    fs::write(
+        dir.join("type").join("config.schema.field.schema.json"),
+        r#"{
+            "$id": "https://stride-tasks.github.io/stride/api/type/config.schema.field.schema.json",
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            }
+        }"#,
+    )
+    .unwrap();
 
     let rust = generate_rust(&dir).unwrap();
     assert!(
@@ -72,6 +83,24 @@ fn generates_schema_additional_properties_as_a_typed_map() {
     assert!(
         dart.contains("Map<String, ConfigSchemaField> fields"),
         "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn fails_when_reference_id_is_not_in_loaded_schemas() {
+    let error = generate_with_schema(
+        r#"{
+            "type": "object",
+            "properties": {
+                "value": { "$ref": "https://example.com/missing.schema.json" }
+            }
+        }"#,
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(error, Error::UnknownReference { ref reference } if reference == "https://example.com/missing.schema.json"),
+        "unexpected error: {error}"
     );
 }
 
@@ -204,6 +233,17 @@ fn generates_freezed_dart_with_json_keys() {
                 "key": { "$ref": "https://example.com/type/stride.ssh.key.public.schema.json" }
             },
             "required": ["hostname", "key"]
+        }"#,
+    )
+    .unwrap();
+    fs::write(
+        dir.join("type").join("stride.ssh.key.public.schema.json"),
+        r#"{
+            "$id": "https://example.com/type/stride.ssh.key.public.schema.json",
+            "type": "object",
+            "properties": {
+                "value": { "type": "string" }
+            }
         }"#,
     )
     .unwrap();
