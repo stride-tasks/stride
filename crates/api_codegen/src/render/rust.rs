@@ -53,6 +53,7 @@ fn render_type(this: &TypeNode) -> Option<String> {
 fn render_struct(this: &StructNode) -> String {
     let mut lines = Vec::new();
     let default_impl = render_default_impl(this);
+    let default_helpers = render_default_helpers(this);
 
     for field in &this.fields {
         if let Some(rendered) = render_type(&field.typ) {
@@ -73,38 +74,90 @@ fn render_struct(this: &StructNode) -> String {
     lines.push("#[allow(missing_copy_implementations)]".to_owned());
     lines.push(format!("pub struct {} {{", this.name));
 
-    for field in &this.fields {
+    for (index, field) in this.fields.iter().enumerate() {
         if let Some(description) = &field.description {
             lines.push(format!("    /// {description}"));
         }
 
         let rust_name = rust_field_name(&field.name);
         let field_type = render_type_node(&field.typ);
+        let serde_attributes = rust_field_serde_attributes(field, index, this);
         if field.required {
-            if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
-                lines.push(format!(
-                    "    #[serde(with = \"{}\")]",
-                    bytes_serde_adapter(true)
-                ));
+            if !serde_attributes.is_empty() {
+                lines.push(format!("    #[serde({})]", serde_attributes.join(", ")));
             }
             lines.push(format!("    pub {rust_name}: {field_type},"));
-        } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
-            lines.push(format!(
-                "    #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n    pub {rust_name}: Option<{field_type}>,",
-                bytes_serde_adapter(false)
-            ));
         } else {
             lines.push(format!(
-                "    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub {rust_name}: Option<{field_type}>,"
+                "    #[serde({})]\n    pub {rust_name}: Option<{field_type}>,",
+                serde_attributes.join(", ")
             ));
         }
     }
 
     lines.push("}\n".to_owned());
+    if let Some(default_helpers) = default_helpers {
+        lines.push(default_helpers);
+    }
     if let Some(default_impl) = default_impl {
         lines.push(default_impl);
     }
     lines.join("\n")
+}
+
+fn rust_field_serde_attributes(
+    field: &crate::node::FieldNode,
+    index: usize,
+    strukt: &StructNode,
+) -> Vec<String> {
+    let mut attributes = Vec::new();
+    if field.default.is_some() {
+        attributes.push(format!(
+            "default = \"{}::__serde_default_{index}\"",
+            strukt.name
+        ));
+    } else if !field.required {
+        attributes.push("default".to_owned());
+    }
+
+    if !field.required {
+        attributes.push("skip_serializing_if = \"Option::is_none\"".to_owned());
+    }
+    if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+        attributes.push(format!(
+            "with = \"{}\"",
+            bytes_serde_adapter(field.required)
+        ));
+    }
+    attributes
+}
+
+fn render_default_helpers(this: &StructNode) -> Option<String> {
+    let mut methods = Vec::new();
+    for (index, field) in this.fields.iter().enumerate() {
+        let Some(default) = &field.default else {
+            continue;
+        };
+        let value = rust_default_value(&field.typ, default)
+            .expect("schema defaults are validated during parsing");
+        let (return_type, value) = if field.required {
+            (render_type_node(&field.typ), value)
+        } else {
+            (
+                format!("Option<{}>", render_type_node(&field.typ)),
+                format!("Some({value})"),
+            )
+        };
+        methods.push(format!(
+            "    fn __serde_default_{index}() -> {return_type} {{\n        {value}\n    }}"
+        ));
+    }
+
+    if methods.is_empty() {
+        return None;
+    }
+
+    Some(format!("impl {} {{\n{}\n}}", this.name, methods.join("\n")))
 }
 
 fn render_default_impl(this: &StructNode) -> Option<String> {
@@ -116,7 +169,8 @@ fn render_default_impl(this: &StructNode) -> Option<String> {
     for field in &this.fields {
         let value = match &field.default {
             Some(value) => {
-                let value = rust_default_value(&field.typ, value)?;
+                let value = rust_default_value(&field.typ, value)
+                    .expect("schema defaults are validated during parsing");
                 if field.required {
                     value
                 } else {

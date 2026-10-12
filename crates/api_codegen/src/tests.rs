@@ -99,6 +99,35 @@ fn rejects_defaults_that_cannot_be_generated() {
 }
 
 #[test]
+fn generates_field_level_serde_defaults_without_struct_default_impl() {
+    let rust = generate_with_schema(
+        r#"{
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "name": { "type": "string" }
+            },
+            "required": ["enabled", "name"]
+        }"#,
+    )
+    .unwrap();
+
+    assert!(
+        rust.contains("#[serde(default = \"Generated::__serde_default_0\")]"),
+        "output was:\n{rust}"
+    );
+    assert!(
+        rust.contains("fn __serde_default_0() -> bool"),
+        "output was:\n{rust}"
+    );
+    assert!(
+        !rust.contains("impl Default for Generated"),
+        "output was:\n{rust}"
+    );
+    assert!(!rust.contains("#[serde(default)]"), "output was:\n{rust}");
+}
+
+#[test]
 fn generates_schema_additional_properties_as_a_typed_map() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)
