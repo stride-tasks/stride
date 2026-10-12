@@ -223,6 +223,27 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskAddHandler;
+
+impl TypedCommandHandler for RepositoryTaskAddHandler {
+    type Method = crate::api::RepositoryTaskAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskAddMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let mut database = repository.lock_database();
+        let mut transaction = database.transaction()?;
+        transaction.insert_task(&method.task)?;
+        transaction.commit()?;
+
+        Ok(crate::api::RepositoryTaskAddMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskQueryHandler;
 
 impl TypedCommandHandler for RepositoryTaskQueryHandler {
