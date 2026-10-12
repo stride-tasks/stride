@@ -221,3 +221,22 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
         Ok(crate::api::RepositoryProjectListMethodResult { projects })
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskQueryHandler;
+
+impl TypedCommandHandler for RepositoryTaskQueryHandler {
+    type Method = crate::api::RepositoryTaskQueryMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskQueryMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let tasks = repository.lock_database().task_query(&method.query)?;
+
+        Ok(crate::api::RepositoryTaskQueryMethodResult { tasks })
+    }
+}
+
