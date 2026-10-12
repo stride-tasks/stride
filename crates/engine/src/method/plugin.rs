@@ -3,6 +3,27 @@ use std::{path::Path, sync::Arc};
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
+pub struct PluginListHandler;
+
+impl TypedCommandHandler for PluginListHandler {
+    type Method = crate::api::PluginListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _method: Self::Method,
+    ) -> Result<crate::api::PluginListMethodResult> {
+        let plugins = engine
+            .lock_plugin_manager()
+            .list()
+            .map(|plugin| plugin.instance.clone())
+            .collect::<Vec<_>>();
+
+        Ok(crate::api::PluginListMethodResult { plugins })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct PluginImportHandler;
 
 impl TypedCommandHandler for PluginImportHandler {

@@ -6,7 +6,7 @@ use crate::{
     Result,
     method::{
         BackendGetHandler, BackendListHandler, PluginDisableHandler, PluginImportHandler,
-        PluginRemoveHandler, PluginToggleHandler, RepositoryBackendAddHandler,
+        PluginListHandler, PluginRemoveHandler, PluginToggleHandler, RepositoryBackendAddHandler,
         RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
         RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
         RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
@@ -74,6 +74,7 @@ impl EngineBuilder {
     pub fn insert_default_methods(self) -> Self {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)
+            .command("plugin.list", PluginListHandler)
             .command("plugin.import", PluginImportHandler)
             .command("plugin.remove", PluginRemoveHandler)
             .command("plugin.disable", PluginDisableHandler)

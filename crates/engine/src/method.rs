@@ -4,7 +4,8 @@ mod repository;
 
 pub use backend::{BackendGetHandler, BackendListHandler};
 pub use plugin::{
-    PluginDisableHandler, PluginImportHandler, PluginRemoveHandler, PluginToggleHandler,
+    PluginDisableHandler, PluginImportHandler, PluginListHandler, PluginRemoveHandler,
+    PluginToggleHandler,
 };
 pub use repository::{
     RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
