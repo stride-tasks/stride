@@ -218,7 +218,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   }
 
   Future<void> remove(String pluginName) async {
-    await pm.remove(pluginName: pluginName);
+    await PluginRemoveMethod(pluginName: pluginName).execute();
     add(PluginManagerFetchEvent());
   }
 
