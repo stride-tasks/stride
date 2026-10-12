@@ -5,10 +5,11 @@ use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
     Result,
     method::{
-        BackendGetHandler, BackendListHandler, PluginImportHandler, RepositoryBackendAddHandler,
-        RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
-        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
-        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
+        BackendGetHandler, BackendListHandler, PluginImportHandler, PluginRemoveHandler,
+        RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
+        RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
+        RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
+        RepositorySyncHandler, RepositoryTagListHandler,
     },
 };
 
@@ -72,6 +73,7 @@ impl EngineBuilder {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)
             .command("plugin.import", PluginImportHandler)
+            .command("plugin.remove", PluginRemoveHandler)
             .command("repository.backend.add", RepositoryBackendAddHandler)
             .command("repository.backend.list", RepositoryBackendListHandler)
             .command("repository.backend.remove", RepositoryBackendRemoveHandler)
