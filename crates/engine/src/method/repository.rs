@@ -244,6 +244,27 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskRemoveHandler;
+
+impl TypedCommandHandler for RepositoryTaskRemoveHandler {
+    type Method = crate::api::RepositoryTaskRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskRemoveMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let mut database = repository.lock_database();
+        let mut transaction = database.transaction()?;
+        transaction.delete_task(method.task_id)?;
+        transaction.commit()?;
+
+        Ok(crate::api::RepositoryTaskRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskQueryHandler;
 
 impl TypedCommandHandler for RepositoryTaskQueryHandler {
