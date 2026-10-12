@@ -18,6 +18,7 @@ stride_crdt.workspace = true
 stride_database.workspace = true
 stride_plugin_manager.workspace = true
 
+chrono.workspace = true
 uuid.workspace = true
 thiserror.workspace = true
 

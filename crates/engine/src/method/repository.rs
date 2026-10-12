@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chrono::Utc;
 use stride_api::Config;
 use uuid::Uuid;
 
@@ -240,6 +241,30 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
         transaction.commit()?;
 
         Ok(crate::api::RepositoryTaskAddMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskUpdateHandler;
+
+impl TypedCommandHandler for RepositoryTaskUpdateHandler {
+    type Method = crate::api::RepositoryTaskUpdateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskUpdateMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let mut task = method.task;
+        task.modified = Some(Utc::now());
+
+        let mut database = repository.lock_database();
+        let mut transaction = database.transaction()?;
+        transaction.update_task_with(task.id, |_| Ok(task))?;
+        transaction.commit()?;
+
+        Ok(crate::api::RepositoryTaskUpdateMethodResult {})
     }
 }
 
