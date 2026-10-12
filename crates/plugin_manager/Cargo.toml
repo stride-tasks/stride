@@ -18,7 +18,6 @@ stride_api.workspace = true
 zip.workspace = true
 wasmi.workspace = true
 wasmi_wasi.workspace = true
-serde.workspace = true
 toml.workspace = true
 serde_json.workspace = true
 log.workspace = true

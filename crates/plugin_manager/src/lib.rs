@@ -13,8 +13,9 @@ use std::{
 
 use error::ToPluginError;
 use logging::PluginLogger;
-use manifest::{PluginManifest, PluginState};
-use stride_api::{PluginEvent as HostEvent, event::PluginEvent};
+use stride_api::{
+    PluginEvent, PluginHostEvent, PluginManifest, PluginManifestInstance, PluginState,
+};
 use stride_core::constant::StorageErrorCode;
 use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
@@ -23,13 +24,10 @@ use zip::ZipArchive;
 mod error;
 mod logging;
 pub mod manager;
-pub mod manifest;
 
 pub use error::{Error, Result};
 
 pub use manager::PluginManager;
-
-use crate::manifest::PluginManifestInstance;
 
 const EVENT_HANDLER_NAME: &str = "stride__event_handler";
 const STORAGE_SET_NAME: &str = "stride__storage_set";
@@ -75,7 +73,7 @@ struct HostState {
 
 #[derive(Debug)]
 pub struct EventQueue {
-    plugin_name: String,
+    plugin_name: Box<str>,
     events: VecDeque<PluginEvent>,
 }
 
@@ -91,70 +89,75 @@ pub struct Plugin {
 }
 
 impl Plugin {
-    fn can_accept_event(&self, event: &HostEvent) -> bool {
-        if !self.instance.state.is_enabled() {
+    fn can_accept_event(&self, event: &PluginHostEvent) -> bool {
+        // TOOD: Implement is_* functions for enums in rust (api_codegen).
+        if !matches!(self.instance.state, PluginState::Enable {}) {
             return false;
         }
         match event {
-            HostEvent::TaskCreate { .. }
+            PluginHostEvent::TaskCreate { .. }
                 if !self
                     .instance
                     .manifest
                     .event
                     .task
+                    .as_ref()
                     .is_some_and(|task| task.create) =>
             {
                 return false;
             }
-            HostEvent::TaskModify { .. }
+            PluginHostEvent::TaskModify { .. }
                 if !self
                     .instance
                     .manifest
                     .event
                     .task
+                    .as_ref()
                     .is_some_and(|task| task.modify) =>
             {
                 return false;
             }
-            HostEvent::TaskSync {}
+            PluginHostEvent::TaskSync {}
                 if !self
                     .instance
                     .manifest
                     .event
                     .task
+                    .as_ref()
                     .is_some_and(|task| task.sync) =>
             {
                 return false;
             }
-            HostEvent::Timer { interval } => {
+            PluginHostEvent::Timer { interval } => {
                 let Some(timer) = &self.instance.manifest.event.timer else {
                     return false;
                 };
-                return timer.interval == (*interval) as u32;
+                return timer.interval == *interval;
             }
-            HostEvent::TaskQuery { .. }
+            PluginHostEvent::TaskQuery { .. }
                 if !self
                     .instance
                     .manifest
                     .permission
                     .task
+                    .as_ref()
                     .is_some_and(|task| task.query) =>
             {
                 return false;
             }
-            HostEvent::NetworkResponse { host, .. } => {
+            PluginHostEvent::NetworkResponse { host, .. } => {
                 let Some(network) = &self.instance.manifest.permission.network else {
                     return false;
                 };
 
-                if !network.urls.contains(&host.as_str().to_string()) {
+                if !network.urls.contains(&host) {
                     return false;
                 }
             }
-            HostEvent::TaskCreate { .. }
-            | HostEvent::TaskModify { .. }
-            | HostEvent::TaskSync {}
-            | HostEvent::TaskQuery { .. } => {}
+            PluginHostEvent::TaskCreate { .. }
+            | PluginHostEvent::TaskModify { .. }
+            | PluginHostEvent::TaskSync {}
+            | PluginHostEvent::TaskQuery { .. } => {}
         }
         true
     }
@@ -274,7 +277,7 @@ impl PluginManager {
 
         if manifest.name.is_empty() || manifest.name.len() > 255 || !manifest.name.is_ascii() {
             return Err(Error::InvalidName {
-                name: manifest.name.clone(),
+                name: manifest.name.to_string(),
             });
         }
 
@@ -292,7 +295,7 @@ impl PluginManager {
                     event: manifest.event,
                     permission: manifest.permission,
                 },
-                state: PluginState::default(),
+                state: PluginState::Enable {},
             },
             code: code_content.into_boxed_slice(),
         })
@@ -311,11 +314,13 @@ impl PluginManager {
         };
 
         plugin.instance.state = match plugin.instance.state {
-            PluginState::Disable { .. } => PluginState::Enable,
-            PluginState::Enable => PluginState::Disable { reason: None },
+            PluginState::Disable { .. } => PluginState::Enable {},
+            PluginState::Enable {} => PluginState::Disable { reason: None },
         };
 
-        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
+        let plugin_path = self
+            .plugins_path
+            .join(plugin.instance.manifest.name.as_ref());
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
@@ -328,7 +333,9 @@ impl PluginManager {
     }
 
     fn install(&mut self, plugin: ParsePlugin) -> Result<()> {
-        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
+        let plugin_path = self
+            .plugins_path
+            .join(plugin.instance.manifest.name.as_ref());
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
@@ -354,7 +361,7 @@ impl PluginManager {
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn emit_event(&mut self, plugin_name: Option<&str>, event: &HostEvent) -> Result<()> {
+    pub fn emit_event(&mut self, plugin_name: Option<&str>, event: &PluginHostEvent) -> Result<()> {
         if let Some(plugin_name) = plugin_name {
             let Some(plugin) = self.plugin(plugin_name) else {
                 return Ok(());
@@ -391,11 +398,13 @@ impl PluginManager {
             return Ok(false);
         };
 
-        if !plugin.instance.state.is_enabled() {
+        if !matches!(plugin.instance.state, PluginState::Enable {}) {
             return Ok(false);
         }
 
-        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
+        let plugin_path = self
+            .plugins_path
+            .join(plugin.instance.manifest.name.as_ref());
         let source_path = plugin_path.join("source");
         let code_path = source_path.join("code.wasm");
         let wasm = std::fs::read(code_path)?;
@@ -445,7 +454,8 @@ impl PluginManager {
                     .manifest
                     .permission
                     .storage
-                    .map_or(0, |storage| storage.max_size as usize)
+                    .as_ref()
+                    .map_or(0, |storage| storage.max_size)
                     * 1024,
                 needs_save: false,
             }),

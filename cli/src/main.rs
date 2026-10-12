@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 use stride_api::{
-    self as api, PluginEvent as HostEvent, Task, TaskPriority, TaskStatus, event::PluginEvent,
+    self as api, PluginAction, PluginEvent, PluginHostEvent, Task, TaskPriority, TaskStatus,
 };
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
@@ -22,7 +22,7 @@ use stride_crdt::{
 use stride_database::Database;
 use stride_engine::{Backend, Engine};
 use stride_logging::LogLevelGuard;
-use stride_plugin_manager::{PluginManager, manifest::PluginAction};
+use stride_plugin_manager::PluginManager;
 use uuid::Uuid;
 
 use crate::{
@@ -405,7 +405,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let mut task = Task::new(title.into());
             apply_modifications(&mut task, &modifications);
 
-            let event = HostEvent::TaskCreate { task: task.clone() };
+            let event = PluginHostEvent::TaskCreate { task: task.clone() };
 
             let mut transaction = database.transaction()?;
             transaction.insert_task(&task)?;
@@ -440,7 +440,7 @@ fn main() -> anyhow::Result<ExitCode> {
                         })?;
                         transaction.commit()?;
                     }
-                    PluginEvent::TaskSync => {
+                    PluginEvent::TaskSync {} => {
                         engine.backends().sync_all(
                             current_repository,
                             &mut database,
@@ -450,11 +450,13 @@ fn main() -> anyhow::Result<ExitCode> {
                     }
                     PluginEvent::TaskQuery { query } => {
                         let tasks = database.task_query(&query)?;
-                        plugin_manager
-                            .emit_event(Some(&plugin_name), &HostEvent::TaskQuery { tasks })?;
+                        plugin_manager.emit_event(
+                            Some(&plugin_name),
+                            &PluginHostEvent::TaskQuery { tasks },
+                        )?;
                     }
-                    PluginEvent::NetworkRequest { ty, host } => {
-                        todo!("{:?}: {}", ty, host)
+                    PluginEvent::NetworkRequest { method, host } => {
+                        todo!("{method:?}: {host}")
                     }
                 }
             }

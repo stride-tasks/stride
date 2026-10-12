@@ -51,7 +51,7 @@ impl TypedCommandHandler for PluginDisableHandler {
     ) -> Result<crate::api::PluginDisableMethodResult> {
         engine
             .lock_plugin_manager()
-            .disable(&method.plugin_name, method.reason.map(String::from))?;
+            .disable(&method.plugin_name, method.reason)?;
 
         Ok(crate::api::PluginDisableMethodResult {})
     }

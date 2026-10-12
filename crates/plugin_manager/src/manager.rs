@@ -3,23 +3,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use stride_api::{PluginEvent as HostEvent, event::PluginEvent};
+use stride_api::{PluginAction, PluginEvent, PluginHostEvent, PluginManifestInstance, PluginState};
 use wasmi::{Config, Engine};
 
-use crate::{
-    Error, EventQueue, Plugin, Result,
-    manifest::{PluginAction, PluginManifestInstance, PluginState},
-};
+use crate::{Error, EventQueue, Plugin, Result};
 
 /// flutter_rust_bridge:unignore
 #[derive(Debug, Default)]
 pub struct PluginManager {
     pub(crate) plugins_path: PathBuf,
-    pub(crate) plugins: HashMap<String, Plugin>,
+    pub(crate) plugins: HashMap<Box<str>, Plugin>,
 
     pub(crate) engine: Engine,
 
-    pub(crate) host_events: VecDeque<(String, HostEvent)>,
+    pub(crate) host_events: VecDeque<(Box<str>, PluginHostEvent)>,
     pub(crate) plugin_events: VecDeque<EventQueue>,
 }
 
@@ -77,21 +74,21 @@ impl PluginManager {
         self.plugins.values()
     }
 
-    pub fn disable(&mut self, plugin_name: &str, reason: Option<String>) -> Result<bool> {
+    pub fn disable(&mut self, plugin_name: &str, reason: Option<Box<str>>) -> Result<bool> {
         let Some(plugin) = self.plugins.get_mut(plugin_name) else {
             return Ok(false);
         };
 
         match plugin.instance.state {
             PluginState::Disable { .. } => return Ok(false),
-            PluginState::Enable => {}
+            PluginState::Enable {} => {}
         }
 
-        plugin.instance.state = PluginState::Disable {
-            reason: reason.map(String::into_boxed_str),
-        };
+        plugin.instance.state = PluginState::Disable { reason };
 
-        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
+        let plugin_path = self
+            .plugins_path
+            .join(plugin.instance.manifest.name.as_ref());
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
@@ -108,7 +105,9 @@ impl PluginManager {
             return Ok(false);
         };
 
-        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
+        let plugin_path = self
+            .plugins_path
+            .join(plugin.instance.manifest.name.as_ref());
         std::fs::remove_dir_all(plugin_path)?;
 
         Ok(true)
@@ -128,42 +127,50 @@ impl PluginManager {
         let event = event?;
 
         match &event {
-            PluginEvent::TaskCreate { .. } if !permissions.task.is_some_and(|task| task.create) => {
+            PluginEvent::TaskCreate { .. }
+                if !permissions.task.as_ref().is_some_and(|task| task.create) =>
+            {
                 return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name,
-                    reason: "missing 'task.create' permission".to_string(),
+                    plugin_name: instance.manifest.name.clone(),
+                    reason: "missing 'task.create' permission".into(),
                 });
             }
-            PluginEvent::TaskModify { .. } if !permissions.task.is_some_and(|task| task.modify) => {
+            PluginEvent::TaskModify { .. }
+                if !permissions.task.as_ref().is_some_and(|task| task.modify) =>
+            {
                 return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name,
-                    reason: "missing 'task.modify' permission".to_string(),
+                    plugin_name: instance.manifest.name.clone(),
+                    reason: "missing 'task.modify' permission".into(),
                 });
             }
-            PluginEvent::TaskSync if !permissions.task.is_some_and(|task| task.sync) => {
+            PluginEvent::TaskSync {}
+                if !permissions.task.as_ref().is_some_and(|task| task.sync) =>
+            {
                 return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name,
-                    reason: "missing 'task.sync' permission".to_string(),
+                    plugin_name: instance.manifest.name.clone(),
+                    reason: "missing 'task.sync' permission".into(),
                 });
             }
-            PluginEvent::TaskQuery { .. } if !permissions.task.is_some_and(|task| task.query) => {
+            PluginEvent::TaskQuery { .. }
+                if !permissions.task.as_ref().is_some_and(|task| task.query) =>
+            {
                 return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name,
-                    reason: "missing 'task.query' permission".to_string(),
+                    plugin_name: instance.manifest.name.clone(),
+                    reason: "missing 'task.query' permission".into(),
                 });
             }
             PluginEvent::NetworkRequest { host, .. } => {
                 let Some(network) = permissions.network else {
                     return Some(PluginAction::Disable {
-                        plugin_name: instance.manifest.name,
-                        reason: "missing 'network' permission".to_string(),
+                        plugin_name: instance.manifest.name.clone(),
+                        reason: "missing 'network' permission".into(),
                     });
                 };
 
                 if !network.urls.contains(host) {
                     return Some(PluginAction::Disable {
-                        plugin_name: instance.manifest.name,
-                        reason: format!("missing requested url in 'network.url': {host}"),
+                        plugin_name: instance.manifest.name.clone(),
+                        reason: format!("missing requested url in 'network.url': {host}").into(),
                     });
                 }
             }
@@ -171,7 +178,7 @@ impl PluginManager {
         }
 
         Some(PluginAction::Event {
-            plugin_name: instance.manifest.name,
+            plugin_name: instance.manifest.name.clone(),
             event,
         })
     }
