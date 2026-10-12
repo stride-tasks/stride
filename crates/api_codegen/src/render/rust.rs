@@ -245,7 +245,7 @@ fn render_enum(this: &EnumNode) -> String {
         lines.push(format!("/// {description}"));
     }
     lines.push(
-        "#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]"
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]"
             .to_owned(),
     );
     lines.push(format!("pub enum {} {{", this.name));
