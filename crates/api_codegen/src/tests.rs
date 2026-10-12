@@ -587,6 +587,8 @@ fn generates_uuid_as_uuid_value_in_dart() {
     assert!(output.contains("UuidValue uuid"));
     assert!(output.contains("@UuidValueListJsonConverter()"));
     assert!(output.contains("List<UuidValue> related"));
+    assert!(output.contains("JsonConverter<List<UuidValue>, List<dynamic>>"));
+    assert!(output.contains("List<UuidValue> fromJson(List<dynamic> json)"));
     assert!(output.contains("@NullableUuidValueListJsonConverter()"));
     assert!(output.contains("@UuidValueJsonConverter()"));
     assert!(output.contains("List<UuidValue>? optionalRelated"));

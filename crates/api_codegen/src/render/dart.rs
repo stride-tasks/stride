@@ -36,12 +36,12 @@ class NullableUuidValueJsonConverter implements JsonConverter<UuidValue?, String
   String? toJson(UuidValue? object) => object?.uuid;
 }
 
-class UuidValueListJsonConverter implements JsonConverter<List<UuidValue>, List<String>> {
+class UuidValueListJsonConverter implements JsonConverter<List<UuidValue>, List<dynamic>> {
   const UuidValueListJsonConverter();
 
   @override
-  List<UuidValue> fromJson(List<String> json) =>
-      json.map(UuidValue.fromString).toList();
+  List<UuidValue> fromJson(List<dynamic> json) =>
+      json.map((value) => UuidValue.fromString(value as String)).toList();
 
   @override
   List<String> toJson(List<UuidValue> object) =>
