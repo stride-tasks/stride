@@ -468,6 +468,7 @@ fn type_node_to_string(
         TypeNode::Primitive(kind) => match kind {
             stride_api_codegen::PrimitiveType::String => "string".to_string(),
             stride_api_codegen::PrimitiveType::Uuid => "uuid".to_string(),
+            stride_api_codegen::PrimitiveType::DateTime => "date-time".to_string(),
             stride_api_codegen::PrimitiveType::Bytes => "bytes (base64)".to_string(),
             stride_api_codegen::PrimitiveType::Uri => "uri".to_string(),
             stride_api_codegen::PrimitiveType::Integer => "integer".to_string(),

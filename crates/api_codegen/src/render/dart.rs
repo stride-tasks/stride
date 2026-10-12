@@ -609,6 +609,7 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "String".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "UuidValue".to_owned(),
+        TypeNode::Primitive(PrimitiveType::DateTime) => "DateTime".to_owned(),
         TypeNode::Primitive(PrimitiveType::Bytes) => "Uint8List".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uri) => "Uri".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer | PrimitiveType::UnsignedInteger) => {

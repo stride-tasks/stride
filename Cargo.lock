@@ -2318,6 +2318,7 @@ name = "stride_api"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "chrono",
  "indexmap 2.14.2",
  "serde",
  "serde_json",

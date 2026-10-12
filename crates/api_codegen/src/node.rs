@@ -23,6 +23,7 @@ pub enum TypeNode {
 pub enum PrimitiveType {
     String,
     Uuid,
+    DateTime,
     Bytes,
     Uri,
     Integer,

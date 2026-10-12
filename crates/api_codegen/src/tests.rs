@@ -582,6 +582,42 @@ fn generates_uuid_as_uuid_value_in_dart() {
 }
 
 #[test]
+fn generates_date_time_as_chrono_and_dart_datetime() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_date_time_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "created": { "type": "string", "format": "date-time" },
+                "updated": { "type": "string", "format": "date-time" }
+            },
+            "required": ["created"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(
+        rust.contains("pub created: chrono::DateTime<chrono::Utc>"),
+        "output was:\n{rust}"
+    );
+    assert!(
+        rust.contains("pub updated: Option<chrono::DateTime<chrono::Utc>>"),
+        "output was:\n{rust}"
+    );
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("DateTime created"), "output was:\n{dart}");
+    assert!(dart.contains("DateTime? updated"), "output was:\n{dart}");
+}
+
+#[test]
 fn generates_base64_and_uri_types() {
     let schema = r#"{
         "title": "Encoded Values",

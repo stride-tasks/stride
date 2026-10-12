@@ -331,6 +331,8 @@ fn type_for_schema(
                         TypeNode::Primitive(PrimitiveType::Uuid)
                     } else if format.as_deref() == Some("uri") {
                         TypeNode::Primitive(PrimitiveType::Uri)
+                    } else if format.as_deref() == Some("date-time") {
+                        TypeNode::Primitive(PrimitiveType::DateTime)
                     } else {
                         TypeNode::Primitive(PrimitiveType::String)
                     }
