@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/plugin.validate.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "plugin.validate"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "file-path": {
+                    "type": "string",
+                    "description": "The file path of the plugin archive to validate."
+                }
+            },
+            "required": [
+                "file-path"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "plugin": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.instance.schema.json"
+                }
+            },
+            "required": [
+                "plugin"
+            ]
+        }
+    }
+}
