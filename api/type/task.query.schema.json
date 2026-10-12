@@ -1,0 +1,54 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/task.query.schema.json",
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "$comment": "@discriminant"
+        }
+    },
+    "oneOf": [
+        {
+            "properties": {
+                "type": {
+                    "const": "id"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            },
+            "required": [
+                "id"
+            ]
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "title"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "statuses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/task.status.schema.json"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "format": "uint"
+                }
+            },
+            "required": [
+                "title",
+                "statuses"
+            ]
+        }
+    ]
+}
