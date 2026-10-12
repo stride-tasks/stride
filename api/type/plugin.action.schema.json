@@ -1,0 +1,50 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.action.schema.json",
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "$comment": "@discriminant"
+        }
+    },
+    "oneOf": [
+        {
+            "properties": {
+                "type": {
+                    "const": "event"
+                },
+                "plugin-name": {
+                    "type": "string"
+                },
+                "event": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/plugin.event.schema.json"
+                }
+            },
+            "required": [
+                "plugin-name",
+                "event"
+            ]
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "disable"
+                },
+                "plugin-name": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "plugin-name",
+                "reason"
+            ]
+        }
+    ]
+}
