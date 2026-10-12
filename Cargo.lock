@@ -2393,7 +2393,6 @@ dependencies = [
  "stride_crdt",
  "stride_database",
  "stride_engine",
- "stride_flutter_bridge",
  "stride_logging",
  "stride_plugin_manager",
  "uuid",

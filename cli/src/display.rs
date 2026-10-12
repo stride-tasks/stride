@@ -1,6 +1,6 @@
 use chrono::{DateTime, Datelike, Utc};
 use comfy_table::{Cell, Color, ContentArrangement, Row, Table, presets::NOTHING};
-use stride_core::task::Task;
+use stride_api::Task;
 
 #[derive(Debug, Clone)]
 pub struct TaskItem {

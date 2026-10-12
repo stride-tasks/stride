@@ -21,7 +21,6 @@ stride_database.workspace = true
 stride_backend_git.workspace = true
 stride_plugin_manager.workspace = true
 stride_engine.workspace = true
-stride_flutter_bridge.workspace = true
 
 chrono.workspace = true
 anyhow.workspace = true
