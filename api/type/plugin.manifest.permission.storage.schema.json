@@ -1,0 +1,14 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.permission.storage.schema.json",
+    "type": "object",
+    "required": [
+        "max-size"
+    ],
+    "properties": {
+        "max-size": {
+            "type": "integer",
+            "format": "uint"
+        }
+    }
+}
