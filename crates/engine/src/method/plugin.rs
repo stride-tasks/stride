@@ -24,6 +24,27 @@ impl TypedCommandHandler for PluginListHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct PluginValidateHandler;
+
+impl TypedCommandHandler for PluginValidateHandler {
+    type Method = crate::api::PluginValidateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginValidateMethodResult> {
+        let plugin = engine
+            .lock_plugin_manager()
+            .parse_plugin(Path::new(method.file_path.as_ref()))?;
+
+        Ok(crate::api::PluginValidateMethodResult {
+            plugin: plugin.instance,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct PluginImportHandler;
 
 impl TypedCommandHandler for PluginImportHandler {

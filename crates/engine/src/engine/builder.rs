@@ -6,12 +6,12 @@ use crate::{
     Result,
     method::{
         BackendGetHandler, BackendListHandler, PluginDisableHandler, PluginImportHandler,
-        PluginListHandler, PluginRemoveHandler, PluginToggleHandler, RepositoryBackendAddHandler,
-        RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
-        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
-        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
-        RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
-        RepositoryTaskUpdateHandler,
+        PluginListHandler, PluginRemoveHandler, PluginToggleHandler, PluginValidateHandler,
+        RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
+        RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
+        RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
+        RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
+        RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
     },
 };
 
@@ -75,6 +75,7 @@ impl EngineBuilder {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)
             .command("plugin.list", PluginListHandler)
+            .command("plugin.validate", PluginValidateHandler)
             .command("plugin.import", PluginImportHandler)
             .command("plugin.remove", PluginRemoveHandler)
             .command("plugin.disable", PluginDisableHandler)
