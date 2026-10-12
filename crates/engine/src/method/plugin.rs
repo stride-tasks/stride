@@ -56,3 +56,20 @@ impl TypedCommandHandler for PluginDisableHandler {
         Ok(crate::api::PluginDisableMethodResult {})
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginToggleHandler;
+
+impl TypedCommandHandler for PluginToggleHandler {
+    type Method = crate::api::PluginToggleMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginToggleMethodResult> {
+        engine.lock_plugin_manager().toggle(&method.plugin_name)?;
+
+        Ok(crate::api::PluginToggleMethodResult {})
+    }
+}
