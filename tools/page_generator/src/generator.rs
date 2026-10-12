@@ -18,6 +18,7 @@ struct PropertyRow {
     name: String,
     type_name: String,
     required: bool,
+    default: Option<String>,
     description: String,
 }
 
@@ -121,6 +122,7 @@ fn struct_doc(
             name: field.name.clone(),
             type_name: type_node_to_string(&field.typ, type_titles),
             required: field.required,
+            default: field.default.as_ref().map(serde_json::Value::to_string),
             description: field
                 .description
                 .clone()
@@ -155,6 +157,11 @@ fn enum_doc(
             name: variant.value.clone(),
             type_name: "enum".to_string(),
             required: true,
+            default: node
+                .default
+                .as_deref()
+                .filter(|default| *default == variant.value)
+                .map(|_| "default".to_string()),
             description: variant
                 .description
                 .clone()
@@ -183,6 +190,7 @@ fn enum_doc(
                             name: field.name.clone(),
                             type_name: type_node_to_string(&field.typ, type_titles),
                             required: field.required,
+                            default: field.default.as_ref().map(serde_json::Value::to_string),
                             description: field
                                 .description
                                 .clone()
@@ -201,6 +209,13 @@ fn enum_doc(
             "{description} Discriminated by the `{tag}` property."
         )),
         (None, Some(tag)) => Some(format!("Discriminated by the `{tag}` property.")),
+        (description, None) => description.clone(),
+    };
+    let description = match (&description, &node.default) {
+        (Some(description), Some(_)) => Some(format!(
+            "{description} The default variant is highlighted below."
+        )),
+        (None, Some(_)) => Some("The default variant is highlighted below.".to_string()),
         (description, None) => description.clone(),
     };
 
@@ -285,6 +300,7 @@ fn method_properties_for_type_node(
                 },
                 type_name: type_node_to_string(type_node, type_titles),
                 required: true,
+                default: None,
                 description: description.to_string(),
             }],
         }
@@ -432,6 +448,7 @@ fn properties_for_type_node(
                 name: field.name.clone(),
                 type_name: type_node_to_string(&field.typ, type_titles),
                 required: field.required,
+                default: field.default.as_ref().map(serde_json::Value::to_string),
                 description: field
                     .description
                     .clone()
@@ -636,8 +653,12 @@ fn render_page(docs: &[SchemaDoc]) -> String {
                     .iter()
                     .map(|row| {
                         format!(
-                            "{} {} {} {}",
-                            row.name, row.type_name, row.description, row.required
+                            "{} {} {} {} {}",
+                            row.name,
+                            row.type_name,
+                            row.description,
+                            row.required,
+                            row.default.as_deref().unwrap_or_default()
                         )
                     })
                     .collect::<Vec<_>>()
@@ -714,12 +735,19 @@ fn render_table_html(
             vec!["Variant", "Description"],
             rows.iter()
                 .map(|row| {
+                    let name = escape_html(&row.name);
+                    let name = if row.default.is_some() {
+                        format!(
+                            r#"{name} <span aria-label="Default value" class="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">default</span>"#
+                        )
+                    } else {
+                        name
+                    };
                     TemplateValue::Map(HashMap::from([(
                         "columns".to_string(),
                         TemplateValue::List(vec![
                             TemplateValue::Html(format!(
-                                r#"<td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">{name}</td>"#,
-                                name = escape_html(&row.name),
+                                r#"<td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">{name}</td>"#
                             )),
                             TemplateValue::Html(format!(
                                 r#"<td class="px-3 py-3 text-slate-600 dark:text-slate-300">{description}</td>"#,
@@ -731,9 +759,14 @@ fn render_table_html(
                 .collect::<Vec<_>>(),
         )
     } else {
+        let has_default = rows.iter().any(|row| row.default.is_some());
         (
-            vec!["Field", "Type", "Required", "Description"],
-            render_rows(rows, type_anchor_lookup),
+            if has_default {
+                vec!["Field", "Type", "Required", "Default", "Description"]
+            } else {
+                vec!["Field", "Type", "Required", "Description"]
+            },
+            render_rows(rows, type_anchor_lookup, has_default),
         )
     };
 
@@ -755,29 +788,41 @@ fn render_table_html(
 fn render_rows(
     rows: &[PropertyRow],
     type_anchor_lookup: &HashMap<String, String>,
+    include_default: bool,
 ) -> Vec<TemplateValue> {
     rows.iter()
         .map(|row| {
+            let mut columns = vec![
+                TemplateValue::Html(format!(
+                    r#"<td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">{name}</td>"#,
+                    name = escape_html(&row.name),
+                )),
+                TemplateValue::Html(format!(
+                    r#"<td class="px-3 py-3 text-slate-700 dark:text-slate-300">{type_name}</td>"#,
+                    type_name = render_type_name_html(&row.type_name, type_anchor_lookup),
+                )),
+                TemplateValue::Html(format!(
+                    r#"<td class="px-3 py-3 text-slate-700 dark:text-slate-300">{required}</td>"#,
+                    required = if row.required { "yes" } else { "no" },
+                )),
+            ];
+            if include_default {
+                columns.push(TemplateValue::Html(format!(
+                    r#"<td class="px-3 py-3 font-mono text-slate-600 dark:text-slate-300">{default}</td>"#,
+                    default = row
+                        .default
+                        .as_deref()
+                        .map(escape_html)
+                        .unwrap_or_else(|| "-".to_string()),
+                )));
+            }
+            columns.push(TemplateValue::Html(format!(
+                r#"<td class="px-3 py-3 text-slate-600 dark:text-slate-300">{description}</td>"#,
+                description = escape_html(&row.description),
+            )));
             TemplateValue::Map(HashMap::from([(
                 "columns".to_string(),
-                TemplateValue::List(vec![
-                    TemplateValue::Html(format!(
-                        r#"<td class="px-3 py-3 font-mono text-slate-900 dark:text-slate-100">{name}</td>"#,
-                        name = escape_html(&row.name),
-                    )),
-                    TemplateValue::Html(format!(
-                        r#"<td class="px-3 py-3 text-slate-700 dark:text-slate-300">{type_name}</td>"#,
-                        type_name = render_type_name_html(&row.type_name, type_anchor_lookup),
-                    )),
-                    TemplateValue::Html(format!(
-                        r#"<td class="px-3 py-3 text-slate-700 dark:text-slate-300">{required}</td>"#,
-                        required = if row.required { "yes" } else { "no" },
-                    )),
-                    TemplateValue::Html(format!(
-                        r#"<td class="px-3 py-3 text-slate-600 dark:text-slate-300">{description}</td>"#,
-                        description = escape_html(&row.description),
-                    )),
-                ]),
+                TemplateValue::List(columns),
             )]))
         })
         .collect()
@@ -866,6 +911,7 @@ fn escape_html(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn displays_map_types_with_linked_value_types() {
@@ -886,6 +932,82 @@ mod tests {
         assert_eq!(
             render_type_name_html(&type_name, &anchors),
             "map&lt;string, <a href=\"#config-schema-field\" class=\"break-all text-emerald-700 hover:underline dark:text-emerald-400\">Config Schema Field</a>&gt;"
+        );
+    }
+
+    #[test]
+    fn omits_default_column_when_no_defaults_exist() {
+        let rows = [PropertyRow {
+            name: "name".to_string(),
+            type_name: "string".to_string(),
+            required: true,
+            default: None,
+            description: "A name.".to_string(),
+        }];
+        let html = render_table_html(Some(&rows), &HashMap::new());
+
+        assert!(!html.contains(">Default</th>"), "table was:\n{html}");
+        assert!(html.contains(">Description</th>"), "table was:\n{html}");
+    }
+
+    #[test]
+    fn displays_field_and_enum_defaults() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!("stride_page_generator_defaults_{unique}"));
+        std::fs::create_dir_all(dir.join("type")).unwrap();
+        std::fs::write(
+            dir.join("type").join("settings.schema.json"),
+            r#"{
+                "type": "object",
+                "properties": {
+                    "enabled": { "type": "boolean", "default": false },
+                    "urls": {
+                        "type": "array",
+                        "items": { "type": "string", "format": "uri" },
+                        "default": []
+                    }
+                }
+            }"#,
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("type").join("manifest.api.schema.json"),
+            r#"{
+                "type": "string",
+                "default": "v1",
+                "oneOf": [{ "const": "v1" }, { "const": "v2" }]
+            }"#,
+        )
+        .unwrap();
+
+        let nodes = parse(&dir).unwrap();
+        let html = render_page(&build_docs_from_nodes(&nodes));
+
+        assert!(html.contains("<th"), "generated page was:\n{html}");
+        assert!(
+            html.contains(">Default</th>"),
+            "generated page was:\n{html}"
+        );
+        assert!(html.contains(">false</td>"), "generated page was:\n{html}");
+        assert!(html.contains(">[]</td>"), "generated page was:\n{html}");
+        assert!(html.contains("The default variant is highlighted below."));
+        assert!(html.contains("aria-label=\"Default value\""));
+        let enum_table = render_table_html(
+            Some(&[PropertyRow {
+                name: "v1".to_string(),
+                type_name: "enum".to_string(),
+                required: true,
+                default: None,
+                description: "Version 1.".to_string(),
+            }]),
+            &HashMap::new(),
+        );
+        assert!(
+            !enum_table.contains(">Default</th>"),
+            "enum table was:\n{enum_table}"
         );
     }
 }
