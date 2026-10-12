@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/plugin.remove.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "plugin.remove"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "plugin-name": {
+                    "type": "string",
+                    "description": "The name of the plugin to be removed."
+                }
+            },
+            "required": [
+                "plugin-name"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}
