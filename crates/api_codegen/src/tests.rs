@@ -38,6 +38,61 @@ fn generates_empty_object_as_struct() {
 }
 
 #[test]
+fn generates_defaults_for_one_of_string_types() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_enum_default_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("manifest.api.schema.json"),
+        r#"{
+            "type": "string",
+            "default": "v1",
+            "oneOf": [
+                { "const": "v1", "description": "Version 1." }
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(
+        rust.contains("impl Default for ManifestApi"),
+        "output was:\n{rust}"
+    );
+    assert!(rust.contains("Self::V1"), "output was:\n{rust}");
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(
+        dart.contains("static const defaultValue = ManifestApi.v1;"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn rejects_one_of_enum_default_that_is_not_a_variant() {
+    let error = generate_with_schema(
+        r#"{
+            "type": "string",
+            "default": "v2",
+            "oneOf": [{ "const": "v1" }]
+        }"#,
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(
+            error,
+            Error::InvalidEnumDefault { ref type_name, ref value }
+                if type_name == "Generated" && value == "v2"
+        ),
+        "unexpected error: {error}"
+    );
+}
+
+#[test]
 fn generates_field_defaults_for_rust_and_dart() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)

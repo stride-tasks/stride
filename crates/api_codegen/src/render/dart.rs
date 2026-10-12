@@ -543,6 +543,19 @@ fn render_enum(this: &EnumNode) -> String {
         lines.push(format!("  @JsonValue({json_value}) {variant_name};"));
     }
 
+    if let Some(default) = &this.default {
+        let variant = this
+            .variants
+            .iter()
+            .find(|variant| &variant.value == default)
+            .expect("enum defaults are validated during parsing");
+        lines.push(format!(
+            "  static const defaultValue = {}.{};",
+            this.name,
+            dart_variant_name(&variant.name)
+        ));
+    }
+
     lines.push(String::new());
     lines.push(format!(
         "  dynamic toJson() => _${}EnumMap[this];",

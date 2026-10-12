@@ -54,6 +54,7 @@ pub struct EnumNode {
     pub id: String,
     pub doc: Vec<String>,
     pub description: Option<String>,
+    pub default: Option<String>,
     /// Discriminant property name; set for tagged enums whose variants carry fields.
     pub tag: Option<String>,
     pub variants: Vec<EnumVariantNode>,

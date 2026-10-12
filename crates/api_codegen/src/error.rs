@@ -19,4 +19,6 @@ pub enum Error {
         field: String,
         value: serde_json::Value,
     },
+    #[error("default `{value}` is not a variant of enum `{type_name}`")]
+    InvalidEnumDefault { type_name: String, value: String },
 }

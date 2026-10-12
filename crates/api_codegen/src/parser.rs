@@ -201,10 +201,30 @@ fn enum_type_from_variants(
     schema: &Schema,
     fallback_name: &str,
     variants: Vec<EnumVariantNode>,
-) -> TypeNode {
+) -> Result<TypeNode> {
     if variants.is_empty() {
-        return TypeNode::Primitive(PrimitiveType::String);
+        return Ok(TypeNode::Primitive(PrimitiveType::String));
     }
+
+    let default = match &schema.default {
+        Some(Value::String(value)) => {
+            if variants.iter().any(|variant| variant.value == *value) {
+                Some(value.clone())
+            } else {
+                return Err(Error::InvalidEnumDefault {
+                    type_name: fallback_name.to_owned(),
+                    value: value.clone(),
+                });
+            }
+        }
+        Some(value) => {
+            return Err(Error::UnsupportedDefault {
+                field: fallback_name.to_owned(),
+                value: value.clone(),
+            });
+        }
+        None => None,
+    };
 
     let mut doc = Vec::new();
     if let Some(title) = &schema.title {
@@ -224,11 +244,12 @@ fn enum_type_from_variants(
         id: schema.id.clone().unwrap_or_default(),
         doc,
         description: schema.description.clone(),
+        default,
         tag: None,
         variants,
     };
 
-    TypeNode::Enum(enum_node)
+    Ok(TypeNode::Enum(enum_node))
 }
 
 #[allow(clippy::too_many_lines)]
@@ -276,7 +297,7 @@ fn type_for_schema(
                             fields: Vec::new(),
                         })
                         .collect(),
-                )
+                )?
             }
             SchemaString::OneOf { one_of } if !one_of.is_empty() => enum_type_from_variants(
                 schema,
@@ -290,7 +311,7 @@ fn type_for_schema(
                         fields: Vec::new(),
                     })
                     .collect(),
-            ),
+            )?,
             SchemaString::Enum { .. } | SchemaString::OneOf { .. } => {
                 panic!("Enum or OneOf variant is empty: {fallback_name}");
             }
@@ -505,6 +526,7 @@ fn union_type(
         id: schema.id.clone().unwrap_or_default(),
         doc: doc_lines(schema),
         description: schema.description.clone(),
+        default: None,
         tag: Some(tag),
         variants,
     }))
