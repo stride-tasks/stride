@@ -37,3 +37,22 @@ impl TypedCommandHandler for PluginRemoveHandler {
         Ok(crate::api::PluginRemoveMethodResult {})
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginDisableHandler;
+
+impl TypedCommandHandler for PluginDisableHandler {
+    type Method = crate::api::PluginDisableMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginDisableMethodResult> {
+        engine
+            .lock_plugin_manager()
+            .disable(&method.plugin_name, method.reason.map(String::from))?;
+
+        Ok(crate::api::PluginDisableMethodResult {})
+    }
+}
