@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/bridge/frb_generated.dart';
 
@@ -38,5 +39,14 @@ Future<void> main() async {
     expect(roundTrip.name, equals(original.name));
     expect(roundTrip.inputData, equals(original.inputData));
     expect(roundTrip.done, isTrue);
+  });
+
+  test('Task deserializes dependency UUIDs from JSON lists', () {
+    final task = Task.fromJson({
+      'id': '019b9b4a-0000-7000-8000-000000000001',
+      'depends': const <String>[],
+    });
+
+    expect(task.depends, isEmpty);
   });
 }
