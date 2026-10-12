@@ -95,16 +95,6 @@ pub struct ManifestPermission {
 }
 
 /// flutter_rust_bridge:ignore
-pub trait ManifestState: Sized {
-    /// flutter_rust_bridge:ignore
-    fn skip_serializing(&self) -> bool {
-        true
-    }
-}
-
-impl ManifestState for () {}
-
-/// flutter_rust_bridge:ignore
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum PluginState {
@@ -115,12 +105,6 @@ pub enum PluginState {
         #[serde(skip_serializing_if = "Option::is_none")]
         reason: Option<Box<str>>,
     },
-}
-
-impl ManifestState for PluginState {
-    fn skip_serializing(&self) -> bool {
-        false
-    }
 }
 
 impl PluginState {
