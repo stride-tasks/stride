@@ -31,6 +31,8 @@ pub use error::{Error, Result};
 
 pub use manager::PluginManager;
 
+use crate::manifest::PluginManifestInstance;
+
 const EVENT_HANDLER_NAME: &str = "stride__event_handler";
 const STORAGE_SET_NAME: &str = "stride__storage_set";
 const STORAGE_GET_NAME: &str = "stride__storage_get";
@@ -81,47 +83,69 @@ pub struct EventQueue {
 
 #[derive(Debug)]
 pub struct ParsePlugin {
-    pub manifest: PluginManifest<PluginState>,
+    pub instance: PluginManifestInstance,
     pub code: Box<[u8]>,
 }
 
 #[derive(Debug)]
 pub struct Plugin {
-    pub manifest: PluginManifest<PluginState>,
+    pub instance: PluginManifestInstance,
 }
 
 impl Plugin {
     fn can_accept_event(&self, event: &HostEvent) -> bool {
-        if !self.manifest.state.is_enabled() {
+        if !self.instance.state.is_enabled() {
             return false;
         }
         match event {
             HostEvent::TaskCreate { .. }
-                if !self.manifest.event.task.is_some_and(|task| task.create) =>
+                if !self
+                    .instance
+                    .manifest
+                    .event
+                    .task
+                    .is_some_and(|task| task.create) =>
             {
                 return false;
             }
             HostEvent::TaskModify { .. }
-                if !self.manifest.event.task.is_some_and(|task| task.modify) =>
+                if !self
+                    .instance
+                    .manifest
+                    .event
+                    .task
+                    .is_some_and(|task| task.modify) =>
             {
                 return false;
             }
-            HostEvent::TaskSync if !self.manifest.event.task.is_some_and(|task| task.sync) => {
+            HostEvent::TaskSync
+                if !self
+                    .instance
+                    .manifest
+                    .event
+                    .task
+                    .is_some_and(|task| task.sync) =>
+            {
                 return false;
             }
             HostEvent::Timer { interval } => {
-                let Some(timer) = &self.manifest.event.timer else {
+                let Some(timer) = &self.instance.manifest.event.timer else {
                     return false;
                 };
                 return timer.interval == *interval;
             }
             HostEvent::TaskQuery { .. }
-                if !self.manifest.permission.task.is_some_and(|task| task.query) =>
+                if !self
+                    .instance
+                    .manifest
+                    .permission
+                    .task
+                    .is_some_and(|task| task.query) =>
             {
                 return false;
             }
             HostEvent::NetworkResponse { host, .. } => {
-                let Some(network) = &self.manifest.permission.network else {
+                let Some(network) = &self.instance.manifest.permission.network else {
                     return false;
                 };
 
@@ -263,11 +287,13 @@ impl PluginManager {
         self.validate_wasm_code(&manifest, &code_content)?;
 
         Ok(ParsePlugin {
-            manifest: PluginManifest::<PluginState> {
-                api: manifest.api,
-                name: manifest.name,
-                event: manifest.event,
-                permission: manifest.permission,
+            instance: PluginManifestInstance {
+                manifest: PluginManifest {
+                    api: manifest.api,
+                    name: manifest.name,
+                    event: manifest.event,
+                    permission: manifest.permission,
+                },
                 state: PluginState::default(),
             },
             code: code_content.into_boxed_slice(),
@@ -286,40 +312,40 @@ impl PluginManager {
             return Ok(false);
         };
 
-        plugin.manifest.state = match plugin.manifest.state {
+        plugin.instance.state = match plugin.instance.state {
             PluginState::Disable { .. } => PluginState::Enable,
             PluginState::Enable => PluginState::Disable { reason: None },
         };
 
-        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
         let manifest_path = source_path.join("manifest.toml");
         let manifest_content =
-            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
+            toml::to_string_pretty(&plugin.instance).map_err(Error::Serialize)?;
         std::fs::write(&manifest_path, manifest_content)?;
 
         Ok(true)
     }
 
     fn install(&mut self, plugin: ParsePlugin) -> Result<()> {
-        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
         let manifest_path = source_path.join("manifest.toml");
         let manifest_content =
-            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
+            toml::to_string_pretty(&plugin.instance).map_err(Error::Serialize)?;
         std::fs::write(&manifest_path, manifest_content)?;
 
         let code_path = source_path.join("code.wasm");
         std::fs::write(&code_path, &plugin.code)?;
 
         self.plugins.insert(
-            plugin.manifest.name.clone(),
+            plugin.instance.manifest.name.clone(),
             Plugin {
-                manifest: plugin.manifest,
+                instance: plugin.instance,
             },
         );
         Ok(())
@@ -337,7 +363,7 @@ impl PluginManager {
             };
             if plugin.can_accept_event(event) {
                 self.host_events
-                    .push_back((plugin.manifest.name.clone(), event.clone()));
+                    .push_back((plugin.instance.manifest.name.clone(), event.clone()));
             }
             return Ok(());
         }
@@ -347,7 +373,7 @@ impl PluginManager {
             }
 
             self.host_events
-                .push_back((plugin.manifest.name.clone(), event.clone()));
+                .push_back((plugin.instance.manifest.name.clone(), event.clone()));
         }
 
         Ok(())
@@ -367,17 +393,17 @@ impl PluginManager {
             return Ok(false);
         };
 
-        if !plugin.manifest.state.is_enabled() {
+        if !plugin.instance.state.is_enabled() {
             return Ok(false);
         }
 
-        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
         let source_path = plugin_path.join("source");
         let code_path = source_path.join("code.wasm");
         let wasm = std::fs::read(code_path)?;
         let module = Module::new(&self.engine, &wasm).expect("already validated");
 
-        let has_storage_permission = plugin.manifest.permission.storage.is_some();
+        let has_storage_permission = plugin.instance.manifest.permission.storage.is_some();
 
         let storage_filepath = plugin_path.join("store");
 
@@ -409,7 +435,7 @@ impl PluginManager {
             }
         }
 
-        let wasi_ctx = wasi_context(&plugin.manifest.name);
+        let wasi_ctx = wasi_context(&plugin.instance.manifest.name);
         let host_state = HostState {
             wasi: wasi_ctx,
             events: VecDeque::default(),
@@ -417,6 +443,7 @@ impl PluginManager {
                 data: storage,
                 size: storage_size,
                 max: plugin
+                    .instance
                     .manifest
                     .permission
                     .storage
@@ -578,34 +605,38 @@ impl PluginManager {
 
         let instance = linker
             .instantiate_and_start(&mut store, &module)
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         let stride_allocate = instance
             .get_typed_func::<i32, i32>(&store, "stride__allocate")
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         let stride_deallocate = instance
             .get_typed_func::<(i32, i32), ()>(&store, "stride__deallocate")
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         let stride_init = instance
             .get_typed_func::<(), ()>(&store, "stride__init")
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         let event_handler = instance
             .get_typed_func::<(i32, i32), i32>(&store, EVENT_HANDLER_NAME)
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
-        store.set_fuel(100_000).to_error(&plugin.manifest.name)?;
+        store
+            .set_fuel(100_000)
+            .to_error(&plugin.instance.manifest.name)?;
         stride_init
             .call(&mut store, ())
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         let event_data = serde_json::to_string(&event).expect("shouldn't fail");
-        store.set_fuel(100_000).to_error(&plugin.manifest.name)?;
+        store
+            .set_fuel(100_000)
+            .to_error(&plugin.instance.manifest.name)?;
         let ret = stride_allocate
             .call(&mut store, event_data.len() as i32)
-            .to_error(&plugin.manifest.name)? as usize;
+            .to_error(&plugin.instance.manifest.name)? as usize;
 
         let memory = instance
             .get_memory(&mut store, "memory")
@@ -616,14 +647,14 @@ impl PluginManager {
         // TODO: Add computation limit.
         store
             .set_fuel(100_000_000_000)
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
         event_handler
             .call(&mut store, (ret as i32, event_data.len() as i32))
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         stride_deallocate
             .call(&mut store, (ret as i32, event_data.len() as i32))
-            .to_error(&plugin.manifest.name)?;
+            .to_error(&plugin.instance.manifest.name)?;
 
         if let Some(storage) = store.data_mut().storage.take()
             && storage.needs_save
@@ -642,7 +673,7 @@ impl PluginManager {
         }
 
         self.plugin_events.push_back(EventQueue {
-            plugin_name: plugin.manifest.name.clone(),
+            plugin_name: plugin.instance.manifest.name.clone(),
             events: std::mem::take(&mut store.data_mut().events),
         });
 

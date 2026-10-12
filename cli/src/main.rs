@@ -573,7 +573,7 @@ fn main() -> anyhow::Result<ExitCode> {
         Mode::Plugin { command } => match command {
             None => {
                 for plugin in plugin_manager.list() {
-                    println!("{}", plugin.manifest.name);
+                    println!("{}", plugin.instance.name);
                 }
             }
             Some(command) => match command {

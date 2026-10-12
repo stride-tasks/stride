@@ -6,7 +6,7 @@ use std::{
 };
 
 use stride_core::event::HostEvent;
-use stride_plugin_manager::manifest::{PluginAction, PluginInstanceManifest};
+use stride_plugin_manager::manifest::{PluginAction, PluginManifestInstance};
 
 use crate::{ErrorKind, RustError, api::context::ENGINE, frb_generated::StreamSink};
 
@@ -85,18 +85,18 @@ pub fn toggle(plugin_name: String) -> Result<bool, RustError> {
         .map_err(ErrorKind::Plugin)?)
 }
 
-pub fn plugin_manifests() -> Result<Vec<PluginInstanceManifest>, RustError> {
+pub fn plugin_manifests() -> Result<Vec<PluginManifestInstance>, RustError> {
     let plugin_manager = ENGINE.wait().lock_plugin_manager();
     Ok(plugin_manager
         .list()
-        .map(|plugin| plugin.manifest.clone())
+        .map(|plugin| plugin.instance.clone())
         .collect::<Vec<_>>())
 }
-pub fn parse_plugin(filepath: String) -> Result<PluginInstanceManifest, RustError> {
+pub fn parse_plugin(filepath: String) -> Result<PluginManifestInstance, RustError> {
     let plugin_manager = ENGINE.wait().lock_plugin_manager();
     plugin_manager
         .parse_plugin(Path::new(&filepath))
-        .map(|plugin| plugin.manifest)
+        .map(|plugin| plugin.instance)
         .map_err(ErrorKind::Plugin)
         .map_err(Into::into)
 }

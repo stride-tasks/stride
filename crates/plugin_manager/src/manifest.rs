@@ -130,9 +130,10 @@ impl PluginState {
     }
 }
 
+/// flutter_rust_bridge:opaque
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct PluginManifest<T: ManifestState = ()> {
+pub struct PluginManifest {
     pub api: PluginApi,
     pub name: PluginName,
 
@@ -141,24 +142,27 @@ pub struct PluginManifest<T: ManifestState = ()> {
 
     #[serde(default)]
     pub permission: ManifestPermission,
-
-    #[serde(default)]
-    #[serde(skip_serializing_if = "ManifestState::skip_serializing")]
-    pub state: T,
 }
 
-pub type PluginInstanceManifest = PluginManifest<PluginState>;
+/// flutter_rust_bridge:opaque
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct PluginManifestInstance {
+    #[serde(flatten)]
+    pub manifest: PluginManifest,
+    pub state: PluginState,
+}
 
-impl PluginInstanceManifest {
+impl PluginManifestInstance {
     /// flutter_rust_bridge:sync
     #[must_use]
     pub fn name(&self) -> &str {
-        &self.name
+        &self.manifest.name
     }
     /// flutter_rust_bridge:sync
     #[must_use]
     pub fn events(&self) -> &ManifestEvent {
-        &self.event
+        &self.manifest.event
     }
 }
 

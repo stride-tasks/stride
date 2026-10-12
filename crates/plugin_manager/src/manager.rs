@@ -8,7 +8,7 @@ use wasmi::{Config, Engine};
 
 use crate::{
     Error, EventQueue, Plugin, Result,
-    manifest::{PluginAction, PluginManifest, PluginState},
+    manifest::{PluginAction, PluginManifestInstance, PluginState},
 };
 
 /// flutter_rust_bridge:unignore
@@ -62,10 +62,10 @@ impl PluginManager {
 
             let manifest_content = std::fs::read_to_string(&manifest_path)?;
 
-            let manifest: PluginManifest<PluginState> =
+            let instance: PluginManifestInstance =
                 toml::from_str(&manifest_content).map_err(Error::Deserialize)?;
 
-            plugins.insert(manifest.name.clone(), Plugin { manifest });
+            plugins.insert(instance.manifest.name.clone(), Plugin { instance });
         }
 
         self.plugins = plugins;
@@ -82,22 +82,22 @@ impl PluginManager {
             return Ok(false);
         };
 
-        match plugin.manifest.state {
+        match plugin.instance.state {
             PluginState::Disable { .. } => return Ok(false),
             PluginState::Enable => {}
         }
 
-        plugin.manifest.state = PluginState::Disable {
+        plugin.instance.state = PluginState::Disable {
             reason: reason.map(String::into_boxed_str),
         };
 
-        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
         let source_path = plugin_path.join("source");
         std::fs::create_dir_all(&source_path)?;
 
         let manifest_path = source_path.join("manifest.toml");
         let manifest_content =
-            toml::to_string_pretty(&plugin.manifest).map_err(Error::Serialize)?;
+            toml::to_string_pretty(&plugin.instance).map_err(Error::Serialize)?;
         std::fs::write(&manifest_path, manifest_content)?;
 
         Ok(true)
@@ -108,7 +108,7 @@ impl PluginManager {
             return Ok(false);
         };
 
-        let plugin_path = self.plugins_path.join(&plugin.manifest.name);
+        let plugin_path = self.plugins_path.join(&plugin.instance.manifest.name);
         std::fs::remove_dir_all(plugin_path)?;
 
         Ok(true)
@@ -119,8 +119,8 @@ impl PluginManager {
         let mut events = self.plugin_events.pop_front()?;
         let event = events.events.pop_front();
 
-        let manifest = self.plugin(&events.plugin_name).unwrap().manifest.clone();
-        let permissions = manifest.permission;
+        let instance = self.plugin(&events.plugin_name).unwrap().instance.clone();
+        let permissions = instance.manifest.permission;
         if !events.events.is_empty() {
             self.plugin_events.push_back(events);
         }
@@ -130,39 +130,39 @@ impl PluginManager {
         match &event {
             PluginEvent::TaskCreate { .. } if !permissions.task.is_some_and(|task| task.create) => {
                 return Some(PluginAction::Disable {
-                    plugin_name: manifest.name,
+                    plugin_name: instance.manifest.name,
                     reason: "missing 'task.create' permission".to_string(),
                 });
             }
             PluginEvent::TaskModify { .. } if !permissions.task.is_some_and(|task| task.modify) => {
                 return Some(PluginAction::Disable {
-                    plugin_name: manifest.name,
+                    plugin_name: instance.manifest.name,
                     reason: "missing 'task.modify' permission".to_string(),
                 });
             }
             PluginEvent::TaskSync if !permissions.task.is_some_and(|task| task.sync) => {
                 return Some(PluginAction::Disable {
-                    plugin_name: manifest.name,
+                    plugin_name: instance.manifest.name,
                     reason: "missing 'task.sync' permission".to_string(),
                 });
             }
             PluginEvent::TaskQuery { .. } if !permissions.task.is_some_and(|task| task.query) => {
                 return Some(PluginAction::Disable {
-                    plugin_name: manifest.name,
+                    plugin_name: instance.manifest.name,
                     reason: "missing 'task.query' permission".to_string(),
                 });
             }
             PluginEvent::NetworkRequest { host, .. } => {
                 let Some(network) = permissions.network else {
                     return Some(PluginAction::Disable {
-                        plugin_name: manifest.name,
+                        plugin_name: instance.manifest.name,
                         reason: "missing 'network' permission".to_string(),
                     });
                 };
 
                 if !network.urls.contains(host) {
                     return Some(PluginAction::Disable {
-                        plugin_name: manifest.name,
+                        plugin_name: instance.manifest.name,
                         reason: format!("missing requested url in 'network.url': {host}"),
                     });
                 }
@@ -171,7 +171,7 @@ impl PluginManager {
         }
 
         Some(PluginAction::Event {
-            plugin_name: manifest.name,
+            plugin_name: instance.manifest.name,
             event,
         })
     }
