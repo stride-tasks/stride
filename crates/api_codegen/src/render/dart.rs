@@ -36,6 +36,32 @@ class NullableUuidValueJsonConverter implements JsonConverter<UuidValue?, String
   String? toJson(UuidValue? object) => object?.uuid;
 }
 
+class UuidValueListJsonConverter implements JsonConverter<List<UuidValue>, List<String>> {
+  const UuidValueListJsonConverter();
+
+  @override
+  List<UuidValue> fromJson(List<String> json) =>
+      json.map(UuidValue.fromString).toList();
+
+  @override
+  List<String> toJson(List<UuidValue> object) =>
+      object.map((value) => value.uuid).toList();
+}
+
+class NullableUuidValueListJsonConverter
+    implements JsonConverter<List<UuidValue>?, List<dynamic>?> {
+  const NullableUuidValueListJsonConverter();
+
+  @override
+  List<UuidValue>? fromJson(List<dynamic>? json) => json
+      ?.map((value) => UuidValue.fromString(value as String))
+      .toList();
+
+  @override
+  List<dynamic>? toJson(List<UuidValue>? object) =>
+      object?.map((value) => value.uuid).toList();
+}
+
 class Base64BytesJsonConverter implements JsonConverter<Uint8List, String> {
   const Base64BytesJsonConverter();
 
@@ -374,6 +400,15 @@ fn render_factory_params(fields: &[FieldNode]) -> Vec<String> {
             }
             TypeNode::Primitive(PrimitiveType::Uuid) => {
                 lines.push("    @NullableUuidValueJsonConverter()".to_owned());
+            }
+            TypeNode::Array(inner)
+                if matches!(inner.as_ref(), TypeNode::Primitive(PrimitiveType::Uuid)) =>
+            {
+                if field.required {
+                    lines.push("    @UuidValueListJsonConverter()".to_owned());
+                } else {
+                    lines.push("    @NullableUuidValueListJsonConverter()".to_owned());
+                }
             }
             TypeNode::Primitive(PrimitiveType::Bytes) if field.required => {
                 lines.push("    @Base64BytesJsonConverter()".to_owned());

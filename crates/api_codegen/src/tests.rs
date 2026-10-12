@@ -566,9 +566,17 @@ fn generates_uuid_as_uuid_value_in_dart() {
             "type": "object",
             "properties": {
                 "uuid": { "type": "string", "format": "uuid" },
+                "related": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uuid" }
+                },
+                "optional-related": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uuid" }
+                },
                 "name": { "type": "string" }
             },
-            "required": ["uuid", "name"]
+            "required": ["uuid", "related", "name"]
         }"#,
     )
     .unwrap();
@@ -577,7 +585,11 @@ fn generates_uuid_as_uuid_value_in_dart() {
 
     assert!(output.contains("import 'package:uuid/uuid.dart';"));
     assert!(output.contains("UuidValue uuid"));
+    assert!(output.contains("@UuidValueListJsonConverter()"));
+    assert!(output.contains("List<UuidValue> related"));
+    assert!(output.contains("@NullableUuidValueListJsonConverter()"));
     assert!(output.contains("@UuidValueJsonConverter()"));
+    assert!(output.contains("List<UuidValue>? optionalRelated"));
     assert!(!output.contains("String uuid"));
 }
 
