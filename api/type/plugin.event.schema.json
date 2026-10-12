@@ -1,0 +1,98 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/plugin.event.schema.json",
+	"type": "object",
+	"required": [
+		"type"
+	],
+	"properties": {
+		"type": {
+			"type": "string",
+			"$comment": "@discriminant"
+		}
+	},
+	"oneOf": [
+		{
+			"properties": {
+				"type": {
+					"const": "task-create"
+				},
+				"task": {
+					"$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+				}
+			},
+			"required": [
+				"task"
+			]
+		},
+		{
+			"properties": {
+				"type": {
+					"const": "task-modify"
+				},
+				"current": {
+					"$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+				},
+				"previous": {
+					"$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+				}
+			}
+		},
+		{
+			"properties": {
+				"type": {
+					"const": "task-query"
+				},
+				"tasks": {
+					"type": "array",
+					"items": {
+						"$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+					}
+				}
+			},
+			"required": [
+				"tasks"
+			]
+		},
+		{
+			"properties": {
+				"type": {
+					"const": "task-sync"
+				}
+			}
+		},
+		{
+			"properties": {
+				"type": {
+					"const": "network-response"
+				},
+				"host": {
+					"type": "string",
+					"format": "uri"
+				},
+				"content": {
+					"type": "string",
+					"contentEncoding": "base64"
+				}
+			},
+			"required": [
+				"host",
+				"content"
+			]
+		},
+		{
+			"properties": {
+				"type": {
+					"const": "timer"
+				},
+				"interval": {
+					"type": "integer",
+					"format": "uint32"
+				}
+			},
+			"required": [
+				"interval"
+			]
+		}
+	]
+}
