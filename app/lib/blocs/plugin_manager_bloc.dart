@@ -192,7 +192,10 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
               isError: true,
             ),
           );
-          pm.disable(pluginName: pluginName, reason: reason);
+          await PluginDisableMethod(
+            pluginName: pluginName,
+            reason: reason,
+          ).execute();
           add(PluginManagerFetchEvent());
       }
     }
@@ -203,7 +206,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   }
 
   Future<void> disable(String pluginName, {String? reason}) async {
-    await pm.disable(pluginName: pluginName, reason: reason);
+    await PluginDisableMethod(pluginName: pluginName, reason: reason).execute();
     add(PluginManagerFetchEvent());
   }
 
