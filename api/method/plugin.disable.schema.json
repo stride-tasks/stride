@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/plugin.disable.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "plugin.disable"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "plugin-name": {
+                    "type": "string",
+                    "description": "The name of the plugin to be disabled."
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Optional reason for disabling the plugin."
+                }
+            },
+            "required": [
+                "plugin-name"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}
