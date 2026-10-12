@@ -14,10 +14,8 @@ use std::{
 use error::ToPluginError;
 use logging::PluginLogger;
 use manifest::{PluginManifest, PluginState};
-use stride_core::{
-    constant::StorageErrorCode,
-    event::{HostEvent, PluginEvent},
-};
+use stride_api::{PluginEvent as HostEvent, event::PluginEvent};
+use stride_core::constant::StorageErrorCode;
 use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
@@ -118,7 +116,7 @@ impl Plugin {
             {
                 return false;
             }
-            HostEvent::TaskSync
+            HostEvent::TaskSync {}
                 if !self
                     .instance
                     .manifest
@@ -132,7 +130,7 @@ impl Plugin {
                 let Some(timer) = &self.instance.manifest.event.timer else {
                     return false;
                 };
-                return timer.interval == *interval;
+                return timer.interval == (*interval) as u32;
             }
             HostEvent::TaskQuery { .. }
                 if !self
@@ -149,13 +147,13 @@ impl Plugin {
                     return false;
                 };
 
-                if !network.urls.contains(host) {
+                if !network.urls.contains(&host.as_str().to_string()) {
                     return false;
                 }
             }
             HostEvent::TaskCreate { .. }
             | HostEvent::TaskModify { .. }
-            | HostEvent::TaskSync
+            | HostEvent::TaskSync {}
             | HostEvent::TaskQuery { .. } => {}
         }
         true

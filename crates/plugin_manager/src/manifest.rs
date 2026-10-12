@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use stride_core::event::PluginEvent;
+use stride_api::event::PluginEvent;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]

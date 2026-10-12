@@ -6,7 +6,6 @@ use stride_core::constant::StorageErrorCode;
 use stride_core::event::{HostEvent, PluginEvent};
 
 pub use stride_core::event;
-pub use stride_core::task;
 
 fn default_event_handler(_event: HostEvent) -> bool {
     false

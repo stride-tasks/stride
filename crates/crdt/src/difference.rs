@@ -1,6 +1,6 @@
 use std::{collections::HashSet, hash::Hash};
 
-use stride_core::task::{Annotation, Task};
+use stride_api::{Task, TaskAnnotation};
 use uuid::Uuid;
 
 use crate::change::{AnnotationOperation, Operation, TaskOperation};
@@ -43,7 +43,7 @@ pub fn push_task_diff_operations(
                 ops.push(Operation::new(
                     id,
                     TaskOperation::ModifyTitle {
-                        title: title.clone().into_boxed_str(),
+                        title: title.clone(),
                     },
                 ));
             }
@@ -51,7 +51,7 @@ pub fn push_task_diff_operations(
             ops.push(Operation::new(
                 id,
                 TaskOperation::ModifyTitle {
-                    title: title.clone().into_boxed_str(),
+                    title: title.clone(),
                 },
             ));
         }
@@ -218,8 +218,8 @@ pub fn push_task_diff_operations(
 
 pub fn push_annotation_diff_operations(
     id: Uuid,
-    current: &[Annotation],
-    previous: &[Annotation],
+    current: &[TaskAnnotation],
+    previous: &[TaskAnnotation],
     ops: &mut Vec<Operation>,
 ) {
     for current_annotation in current {
@@ -237,7 +237,7 @@ pub fn push_annotation_diff_operations(
             ops.push(Operation::new(
                 current_annotation.id,
                 AnnotationOperation::ModifyText {
-                    text: current_annotation.text.clone().into_boxed_str(),
+                    text: current_annotation.text.clone(),
                 },
             ));
             continue;
@@ -255,7 +255,7 @@ pub fn push_annotation_diff_operations(
             ops.push(Operation::new(
                 current_annotation.id,
                 AnnotationOperation::ModifyText {
-                    text: current_annotation.text.clone().into_boxed_str(),
+                    text: current_annotation.text.clone(),
                 },
             ));
         }

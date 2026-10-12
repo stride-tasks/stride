@@ -1,13 +1,12 @@
 #[cfg(test)]
 mod tests;
 
-use chrono::DateTime;
+use chrono::{DateTime, Utc};
 use indoc::indoc;
 use rusqlite::{Connection, OptionalExtension, Row, functions::FunctionFlags};
-use stride_api::{BackendInstance, BackendInstanceState, Config, ConfigField, ConfigValue};
-use stride_core::{
-    event::TaskQuery,
-    task::{Annotation, Date, Task, TaskPriority, TaskStatus, Uda},
+use stride_api::{
+    BackendInstance, BackendInstanceState, Config, ConfigField, ConfigValue, Task, TaskAnnotation,
+    TaskPriority, TaskQuery, TaskStatus, TaskUda,
 };
 use stride_crdt::{actor::ActorId, hlc::Clock};
 use url::Url;
@@ -245,23 +244,23 @@ impl Database {
 
     fn row_to_task(row: &Row<'_>) -> Result<Task, rusqlite::Error> {
         let id = row.get::<_, Uuid>("id")?;
-        let title = row.get::<_, Option<String>>("title")?;
-        let entry = row.get::<_, Sql<Option<Date>>>("entry")?.value;
+        let title = row.get::<_, Option<Box<str>>>("title")?;
+        let entry = row.get::<_, Sql<Option<DateTime<Utc>>>>("entry")?.value;
         let status = row.get::<_, Sql<Option<TaskStatus>>>("status")?.value;
         let priority = row.get::<_, Sql<Option<TaskPriority>>>("priority")?.value;
-        let project = row.get::<_, Option<String>>("project")?;
-        let modified = row.get::<_, Sql<Option<Date>>>("modified")?.value;
-        let due = row.get::<_, Sql<Option<Date>>>("due")?.value;
-        let wait = row.get::<_, Sql<Option<Date>>>("wait")?.value;
+        let project = row.get::<_, Option<Box<str>>>("project")?;
+        let modified = row.get::<_, Sql<Option<DateTime<Utc>>>>("modified")?.value;
+        let due = row.get::<_, Sql<Option<DateTime<Utc>>>>("due")?.value;
+        let wait = row.get::<_, Sql<Option<DateTime<Utc>>>>("wait")?.value;
         let depends = row.get::<_, Sql<Vec<Uuid>>>("depends")?.value;
         let annoation_ids = row.get::<_, Option<Vec<u8>>>("annotation_ids")?;
-        let annoation_entries = row.get::<_, Option<String>>("annotation_entries")?;
-        let annoation_texts = row.get::<_, Option<String>>("annotation_texts")?;
-        let uda_keys = row.get::<_, Option<String>>("uda_keys")?;
-        let uda_values = row.get::<_, Option<String>>("uda_values")?;
+        let annoation_entries = row.get::<_, Option<Box<str>>>("annotation_entries")?;
+        let annoation_texts = row.get::<_, Option<Box<str>>>("annotation_texts")?;
+        let uda_keys = row.get::<_, Option<Box<str>>>("uda_keys")?;
+        let uda_values = row.get::<_, Option<Box<str>>>("uda_values")?;
         let tags = row
             .get::<_, Option<String>>("tags")?
-            .map(|tags| tags.split('\0').map(String::from).collect::<Vec<_>>())
+            .map(|tags| tags.split('\0').map(Box::<str>::from).collect::<Vec<_>>())
             .unwrap_or_default();
 
         let mut annotations = Vec::new();
@@ -276,7 +275,7 @@ impl Database {
             {
                 let id = Uuid::from_bytes(*id);
                 let entry = entry.parse::<i64>().expect("should be a valid integer");
-                annotations.push(Annotation {
+                annotations.push(TaskAnnotation {
                     id,
                     entry: DateTime::from_timestamp_millis(entry)
                         .expect("should be a valid entry timestamp"),
@@ -288,7 +287,7 @@ impl Database {
         let mut udas = Vec::new();
         if let (Some(keys), Some(values)) = (uda_keys, uda_values) {
             for (key, value) in keys.split('\0').zip(values.split('\0')) {
-                udas.push(Uda {
+                udas.push(TaskUda {
                     key: key.into(),
                     value: value.into(),
                 });
@@ -322,22 +321,23 @@ impl Database {
 
     pub fn task_query(&mut self, query: &TaskQuery) -> Result<Vec<Task>> {
         match query {
-            TaskQuery::Uuid { uuid } => {
-                let Some(tasks) = self.task_by_id(*uuid).transpose() else {
+            TaskQuery::Id { id } => {
+                let Some(tasks) = self.task_by_id(*id).transpose() else {
                     return Ok(Vec::new());
                 };
                 Ok(vec![tasks?])
             }
             TaskQuery::Title {
                 title,
-                status,
+                statuses,
                 limit,
             } => {
                 // TODO: Optimize this by using sql directly.
+                let statuses: HashSet<TaskStatus> = statuses.iter().copied().collect();
                 let title = Some(title.to_lowercase());
-                let mut tasks = self.tasks_by_status(status)?;
+                let mut tasks = self.tasks_by_status(&statuses)?;
                 tasks.retain(|task| task.title.as_deref().map(str::to_uppercase) == title);
-                tasks.truncate(limit.unwrap_or(u32::MAX) as usize);
+                tasks.truncate(limit.unwrap_or(usize::MAX));
                 tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
                 Ok(tasks)
             }

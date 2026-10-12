@@ -13,6 +13,7 @@ publish = false
 
 [dependencies]
 stride_core.workspace = true
+stride_api.workspace = true
 
 zip.workspace = true
 wasmi.workspace = true

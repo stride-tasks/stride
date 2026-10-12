@@ -12,9 +12,10 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-stride_core.workspace = true
+stride_api.workspace = true
 
 uuid.workspace = true
+chrono.workspace = true
 thiserror.workspace = true
 vint64 = { workspace = true, features = ["std"] }
 

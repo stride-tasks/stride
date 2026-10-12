@@ -2403,10 +2403,6 @@ dependencies = [
 name = "stride_core"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "chrono",
- "serde",
- "serde_json",
  "uuid",
 ]
 
@@ -2415,7 +2411,7 @@ name = "stride_crdt"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "stride_core",
+ "stride_api",
  "stride_serialize",
  "thiserror 2.0.21",
  "uuid",
@@ -2440,7 +2436,6 @@ dependencies = [
  "log",
  "rusqlite",
  "stride_api",
- "stride_core",
  "stride_crdt",
  "stride_serialize",
  "thiserror 2.0.21",
@@ -2519,6 +2514,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "stride_api",
  "stride_core",
  "toml",
  "wasmi",
@@ -2530,7 +2526,8 @@ dependencies = [
 name = "stride_serialize"
 version = "0.1.0"
 dependencies = [
- "stride_core",
+ "chrono",
+ "stride_api",
  "thiserror 2.0.21",
  "uuid",
  "vint64",

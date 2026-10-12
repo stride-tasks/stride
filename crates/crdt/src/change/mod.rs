@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use stride_core::task::{TaskPriority, TaskStatus};
+use stride_api::{TaskPriority, TaskStatus};
 use uuid::Uuid;
 
 use crate::{actor::ActorId, hlc::Timestamp};
@@ -86,9 +86,9 @@ impl OperationKind {
                 "priority",
                 priority.map(|priority| {
                     match priority {
-                        TaskPriority::L => "low",
-                        TaskPriority::M => "medium",
-                        TaskPriority::H => "high",
+                        TaskPriority::Low => "low",
+                        TaskPriority::Medium => "medium",
+                        TaskPriority::High => "high",
                     }
                     .into()
                 }),
@@ -149,7 +149,7 @@ impl From<AnnotationOperation> for OperationKind {
 #[cfg(feature = "serialize")]
 pub mod serialize {
     use chrono::{DateTime, Utc};
-    use stride_core::task::{TaskPriority, TaskStatus};
+    use stride_api::{TaskPriority, TaskStatus};
     use stride_serialize::{FromBlob, ToBlob};
     use uuid::Uuid;
 

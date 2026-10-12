@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use stride_core::event::{HostEvent, PluginEvent};
+use stride_api::{PluginEvent as HostEvent, event::PluginEvent};
 use wasmi::{Config, Engine};
 
 use crate::{

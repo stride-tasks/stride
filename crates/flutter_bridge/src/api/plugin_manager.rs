@@ -5,7 +5,7 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-use stride_core::event::HostEvent;
+use stride_api::PluginEvent as HostEvent;
 use stride_plugin_manager::manifest::{PluginAction, PluginManifestInstance};
 
 use crate::{ErrorKind, RustError, api::context::ENGINE, frb_generated::StreamSink};

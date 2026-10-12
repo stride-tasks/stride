@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
-use stride_core::task::TaskStatus;
+use stride_api::TaskStatus;
 use uuid::Uuid;
 
 #[frb(dart_metadata=("freezed"))]

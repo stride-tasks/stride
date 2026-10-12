@@ -5,10 +5,7 @@ use std::{
 
 use chrono::Utc;
 use flutter_rust_bridge::frb;
-use stride_core::{
-    event::TaskQuery,
-    task::{Task, TaskStatus},
-};
+use stride_api::{Task, TaskQuery, TaskStatus};
 use stride_crdt::{
     actor::ActorId,
     hlc::{Clock, SystemTimeProvider},

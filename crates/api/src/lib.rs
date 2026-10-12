@@ -3,6 +3,8 @@
 mod value;
 
 pub mod config;
+pub mod event;
+pub mod task;
 
 pub use value::{Map, Value};
 

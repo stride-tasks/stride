@@ -1,8 +1,9 @@
+use chrono::{DateTime, Utc};
 use rusqlite::{
     Result, ToSql,
     types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, Value, ValueRef},
 };
-use stride_core::task::{Date, TaskPriority, TaskStatus};
+use stride_api::{TaskPriority, TaskStatus};
 use stride_crdt::change::RowId;
 use stride_serialize::{FromBlob, ToBlob};
 use uuid::Uuid;
@@ -18,23 +19,23 @@ impl<T> From<T> for Sql<T> {
     }
 }
 
-impl ToSql for Sql<Date> {
+impl ToSql for Sql<DateTime<Utc>> {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         let timestamp = self.value.timestamp_millis();
         Ok(ToSqlOutput::from(timestamp))
     }
 }
 
-impl FromSql for Sql<Date> {
+impl FromSql for Sql<DateTime<Utc>> {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         let timestamp = value.as_i64()?;
-        Date::from_timestamp_millis(timestamp)
+        DateTime::<Utc>::from_timestamp_millis(timestamp)
             .ok_or(FromSqlError::OutOfRange(timestamp))
             .map(Into::into)
     }
 }
 
-impl ToSql for Sql<Option<Date>> {
+impl ToSql for Sql<Option<DateTime<Utc>>> {
     fn to_sql(&self) -> Result<ToSqlOutput<'_>> {
         let Some(datetime) = self.value else {
             return Ok(ToSqlOutput::Owned(Value::Null));
@@ -45,12 +46,12 @@ impl ToSql for Sql<Option<Date>> {
     }
 }
 
-impl FromSql for Sql<Option<Date>> {
+impl FromSql for Sql<Option<DateTime<Utc>>> {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         let Some(timestamp) = value.as_i64_or_null()? else {
             return Ok(None.into());
         };
-        Date::from_timestamp_millis(timestamp)
+        DateTime::<Utc>::from_timestamp_millis(timestamp)
             .ok_or(FromSqlError::OutOfRange(timestamp))
             .map(Some)
             .map(Into::into)
@@ -89,9 +90,9 @@ impl FromSql for Sql<TaskStatus> {
 #[must_use]
 pub fn task_priority_to_sql(priority: TaskPriority) -> i64 {
     match priority {
-        TaskPriority::L => 0,
-        TaskPriority::M => 1,
-        TaskPriority::H => 2,
+        TaskPriority::Low => 0,
+        TaskPriority::Medium => 1,
+        TaskPriority::High => 2,
     }
 }
 
@@ -129,9 +130,9 @@ impl FromSql for Sql<Option<TaskPriority>> {
         };
 
         Ok(Some(match value {
-            0 => TaskPriority::L,
-            1 => TaskPriority::M,
-            2 => TaskPriority::H,
+            0 => TaskPriority::Low,
+            1 => TaskPriority::Medium,
+            2 => TaskPriority::High,
             _ => return Err(FromSqlError::OutOfRange(value)),
         })
         .into())
