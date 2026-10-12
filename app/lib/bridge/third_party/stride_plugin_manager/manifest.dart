@@ -20,13 +20,48 @@ import 'package:uuid/uuid.dart';
 
 part 'manifest.freezed.dart';
 
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `PluginApi`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `cmp`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `hash`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`, `partial_cmp`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `skip_serializing`, `skip_serializing`
-// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `events`, `is_enabled`, `name`, `skip_serializing`
+// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `is_enabled`, `skip_serializing`
 
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManifest < PluginState >>>
-abstract class PluginManifestPluginState implements RustOpaqueInterface {}
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManifest>>
+abstract class PluginManifest implements RustOpaqueInterface {
+  PluginApi get api;
+
+  ManifestEvent get event;
+
+  String get name;
+
+  ManifestPermission get permission;
+
+  set api(PluginApi api);
+
+  set event(ManifestEvent event);
+
+  set name(String name);
+
+  set permission(ManifestPermission permission);
+}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginManifestInstance>>
+abstract class PluginManifestInstance implements RustOpaqueInterface {
+  PluginManifest get manifest;
+
+  PluginState get state;
+
+  set manifest(PluginManifest manifest);
+
+  set state(PluginState state);
+
+  /// flutter_rust_bridge:sync
+  void events();
+
+  /// flutter_rust_bridge:sync
+  void name();
+}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PluginState>>
+abstract class PluginState implements RustOpaqueInterface {}
 
 class ManifestEvent {
   final ManifestEventTask? task;
@@ -200,3 +235,5 @@ sealed class PluginAction with _$PluginAction {
     required String reason,
   }) = PluginAction_Disable;
 }
+
+enum PluginApi { v1 }

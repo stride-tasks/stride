@@ -8,7 +8,7 @@ import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class PluginRoute extends StatelessWidget {
-  final PluginManifestPluginState plugin;
+  final PluginManifestInstance plugin;
   final String? importPath;
 
   const PluginRoute({super.key, required this.plugin, this.importPath});

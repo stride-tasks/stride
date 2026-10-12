@@ -20,7 +20,7 @@ abstract class PluginManagerEvent {}
 class PluginManagerFetchEvent extends PluginManagerEvent {}
 
 class PluginManagerState {
-  final List<PluginManifestPluginState> plugins;
+  final List<PluginManifestInstance> plugins;
   const PluginManagerState({required this.plugins});
 }
 
@@ -55,7 +55,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
     });
   }
 
-  void _initTimers(List<PluginManifestPluginState> plugins) {
+  void _initTimers(List<PluginManifestInstance> plugins) {
     final pluginNames = <String>[];
     for (final plugin in plugins) {
       final name = pluginInstanceManifestName(manifest: plugin);

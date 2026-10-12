@@ -77,7 +77,7 @@ class PluginListRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _plugin(BuildContext context, PluginManifestPluginState plugin) {
+  SettingsTile _plugin(BuildContext context, PluginManifestInstance plugin) {
     final name = pluginInstanceManifestName(manifest: plugin);
     final enabled = pluginInstanceManifestEnabled(manifest: plugin);
     final reason = pluginInstanceManifestDisabledReason(manifest: plugin);

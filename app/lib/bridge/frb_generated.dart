@@ -86,7 +86,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -1543491573;
+  int get rustContentHash => -2070603302;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -111,6 +111,72 @@ abstract class RustLibApi extends BaseApi {
   HostEvent strideCoreEventHostEventTaskSync();
 
   HostEvent strideCoreEventHostEventTimer({required int interval});
+
+  PluginManifest
+  stridePluginManagerManifestPluginManifestInstanceAutoAccessorGetManifest({
+    required PluginManifestInstance that,
+  });
+
+  PluginState
+  stridePluginManagerManifestPluginManifestInstanceAutoAccessorGetState({
+    required PluginManifestInstance that,
+  });
+
+  void
+  stridePluginManagerManifestPluginManifestInstanceAutoAccessorSetManifest({
+    required PluginManifestInstance that,
+    required PluginManifest manifest,
+  });
+
+  void stridePluginManagerManifestPluginManifestInstanceAutoAccessorSetState({
+    required PluginManifestInstance that,
+    required PluginState state,
+  });
+
+  void stridePluginManagerManifestPluginManifestInstanceEvents({
+    required PluginManifestInstance that,
+  });
+
+  void stridePluginManagerManifestPluginManifestInstanceName({
+    required PluginManifestInstance that,
+  });
+
+  PluginApi stridePluginManagerManifestPluginManifestAutoAccessorGetApi({
+    required PluginManifest that,
+  });
+
+  ManifestEvent stridePluginManagerManifestPluginManifestAutoAccessorGetEvent({
+    required PluginManifest that,
+  });
+
+  String stridePluginManagerManifestPluginManifestAutoAccessorGetName({
+    required PluginManifest that,
+  });
+
+  ManifestPermission
+  stridePluginManagerManifestPluginManifestAutoAccessorGetPermission({
+    required PluginManifest that,
+  });
+
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetApi({
+    required PluginManifest that,
+    required PluginApi api,
+  });
+
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetEvent({
+    required PluginManifest that,
+    required ManifestEvent event,
+  });
+
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetName({
+    required PluginManifest that,
+    required String name,
+  });
+
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetPermission({
+    required PluginManifest that,
+    required ManifestPermission permission,
+  });
 
   Future<List<Task>> crateApiRepositoryRepositoryAllTasks({
     required Repository that,
@@ -188,11 +254,6 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLoggingDebug({required String message});
 
-  Future<bool> crateApiPluginManagerDisable({
-    required String pluginName,
-    String? reason,
-  });
-
   Future<void> crateApiPluginManagerEmit({
     required HostEvent event,
     required String pluginName,
@@ -213,8 +274,6 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiGitHostKeyTypeName({required HostKeyType keyType});
 
-  Future<void> crateApiPluginManagerImport({required String filepath});
-
   Future<void> crateApiLoggingInfo({required String message});
 
   Future<KnownHosts> strideBackendGitKnownHostsKnownHostsDefault();
@@ -224,8 +283,6 @@ abstract class RustLibApi extends BaseApi {
   Future<void> strideBackendGitKnownHostsKnownHostsSave({
     required KnownHosts this_,
   });
-
-  Future<void> crateApiPluginManagerLoad({required String pluginPath});
 
   Future<ManifestEvent> stridePluginManagerManifestManifestEventDefault();
 
@@ -247,38 +304,35 @@ abstract class RustLibApi extends BaseApi {
   Future<ManifestPermissionTask>
   stridePluginManagerManifestManifestPermissionTaskDefault();
 
-  Future<PluginManifestPluginState> crateApiPluginManagerParsePlugin({
+  Future<PluginManifestInstance> crateApiPluginManagerParsePlugin({
     required String filepath,
   });
 
   String? crateApiPluginPluginInstanceManifestDisabledReason({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   });
 
   bool crateApiPluginPluginInstanceManifestEnabled({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   });
 
   ManifestEvent crateApiPluginPluginInstanceManifestEvent({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   });
 
   String crateApiPluginPluginInstanceManifestName({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   });
 
   ManifestPermission crateApiPluginPluginInstanceManifestPermission({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   });
 
-  Future<List<PluginManifestPluginState>>
-  crateApiPluginManagerPluginManifests();
+  Future<List<PluginManifestInstance>> crateApiPluginManagerPluginManifests();
 
   Future<bool> crateApiPluginManagerProcessHostEvent();
 
   Future<PluginAction?> crateApiPluginManagerProcessPluginEvent();
-
-  Future<bool> crateApiPluginManagerRemove({required String pluginName});
 
   Future<RepositorySpecification>
   crateApiSettingsRepositorySpecificationDefault();
@@ -318,8 +372,6 @@ abstract class RustLibApi extends BaseApi {
     required String title,
   });
 
-  Future<bool> crateApiPluginManagerToggle({required String pluginName});
-
   Future<void> crateApiLoggingTrace({required String message});
 
   Future<Uda> strideCoreTaskUdaUdaDefault();
@@ -335,13 +387,30 @@ abstract class RustLibApi extends BaseApi {
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_HostEventPtr;
 
   RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_PluginManifestPluginState;
+  get rust_arc_increment_strong_count_PluginManifest;
 
   RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_PluginManifestPluginState;
+  get rust_arc_decrement_strong_count_PluginManifest;
 
   CrossPlatformFinalizerArg
-  get rust_arc_decrement_strong_count_PluginManifestPluginStatePtr;
+  get rust_arc_decrement_strong_count_PluginManifestPtr;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_PluginManifestInstance;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_PluginManifestInstance;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_PluginManifestInstancePtr;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_PluginState;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_PluginState;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_PluginStatePtr;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_Repository;
@@ -538,6 +607,492 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'HostEvent_timer', argNames: ['interval']);
 
   @override
+  PluginManifest
+  stridePluginManagerManifestPluginManifestInstanceAutoAccessorGetManifest({
+    required PluginManifestInstance that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestInstanceAutoAccessorGetManifestConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestInstanceAutoAccessorGetManifestConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifestInstance_auto_accessor_get_manifest',
+        argNames: ['that'],
+      );
+
+  @override
+  PluginState
+  stridePluginManagerManifestPluginManifestInstanceAutoAccessorGetState({
+    required PluginManifestInstance that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestInstanceAutoAccessorGetStateConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestInstanceAutoAccessorGetStateConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifestInstance_auto_accessor_get_state',
+        argNames: ['that'],
+      );
+
+  @override
+  void
+  stridePluginManagerManifestPluginManifestInstanceAutoAccessorSetManifest({
+    required PluginManifestInstance that,
+    required PluginManifest manifest,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+            that,
+            serializer,
+          );
+          sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            manifest,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestInstanceAutoAccessorSetManifestConstMeta,
+        argValues: [that, manifest],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestInstanceAutoAccessorSetManifestConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifestInstance_auto_accessor_set_manifest',
+        argNames: ['that', 'manifest'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestInstanceAutoAccessorSetState({
+    required PluginManifestInstance that,
+    required PluginState state,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+            that,
+            serializer,
+          );
+          sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+            state,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestInstanceAutoAccessorSetStateConstMeta,
+        argValues: [that, state],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestInstanceAutoAccessorSetStateConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifestInstance_auto_accessor_set_state',
+        argNames: ['that', 'state'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestInstanceEvents({
+    required PluginManifestInstance that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestInstanceEventsConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestInstanceEventsConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifestInstance_events',
+        argNames: ['that'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestInstanceName({
+    required PluginManifestInstance that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestInstanceNameConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestInstanceNameConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifestInstance_name',
+        argNames: ['that'],
+      );
+
+  @override
+  PluginApi stridePluginManagerManifestPluginManifestAutoAccessorGetApi({
+    required PluginManifest that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_plugin_api,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorGetApiConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorGetApiConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_get_api',
+        argNames: ['that'],
+      );
+
+  @override
+  ManifestEvent stridePluginManagerManifestPluginManifestAutoAccessorGetEvent({
+    required PluginManifest that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_manifest_event,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorGetEventConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorGetEventConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_get_event',
+        argNames: ['that'],
+      );
+
+  @override
+  String stridePluginManagerManifestPluginManifestAutoAccessorGetName({
+    required PluginManifest that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorGetNameConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorGetNameConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_get_name',
+        argNames: ['that'],
+      );
+
+  @override
+  ManifestPermission
+  stridePluginManagerManifestPluginManifestAutoAccessorGetPermission({
+    required PluginManifest that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_manifest_permission,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorGetPermissionConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorGetPermissionConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_get_permission',
+        argNames: ['that'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetApi({
+    required PluginManifest that,
+    required PluginApi api,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          sse_encode_plugin_api(api, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorSetApiConstMeta,
+        argValues: [that, api],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorSetApiConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_set_api',
+        argNames: ['that', 'api'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetEvent({
+    required PluginManifest that,
+    required ManifestEvent event,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          sse_encode_manifest_event(event, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorSetEventConstMeta,
+        argValues: [that, event],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorSetEventConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_set_event',
+        argNames: ['that', 'event'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetName({
+    required PluginManifest that,
+    required String name,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          sse_encode_String(name, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorSetNameConstMeta,
+        argValues: [that, name],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorSetNameConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_set_name',
+        argNames: ['that', 'name'],
+      );
+
+  @override
+  void stridePluginManagerManifestPluginManifestAutoAccessorSetPermission({
+    required PluginManifest that,
+    required ManifestPermission permission,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+            that,
+            serializer,
+          );
+          sse_encode_manifest_permission(permission, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kStridePluginManagerManifestPluginManifestAutoAccessorSetPermissionConstMeta,
+        argValues: [that, permission],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kStridePluginManagerManifestPluginManifestAutoAccessorSetPermissionConstMeta =>
+      const TaskConstMeta(
+        debugName: 'PluginManifest_auto_accessor_set_permission',
+        argNames: ['that', 'permission'],
+      );
+
+  @override
   Future<List<Task>> crateApiRepositoryRepositoryAllTasks({
     required Repository that,
     required Filter filter,
@@ -554,7 +1109,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 21,
             port: port_,
           );
         },
@@ -593,7 +1148,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 22,
             port: port_,
           );
         },
@@ -622,7 +1177,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Uuid(uuid, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -657,7 +1212,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 24,
             port: port_,
           );
         },
@@ -696,7 +1251,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 25,
             port: port_,
           );
         },
@@ -735,7 +1290,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 26,
             port: port_,
           );
         },
@@ -774,7 +1329,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 27,
             port: port_,
           );
         },
@@ -813,7 +1368,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 28,
             port: port_,
           );
         },
@@ -845,7 +1400,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_host,
@@ -874,7 +1429,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -903,7 +1458,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
@@ -932,7 +1487,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -960,7 +1515,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 33,
             port: port_,
           );
         },
@@ -990,7 +1545,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1016,7 +1571,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1049,7 +1604,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1087,7 +1642,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1120,7 +1675,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_Uuid,
@@ -1148,7 +1703,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 39,
             port: port_,
           );
         },
@@ -1175,7 +1730,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 40,
             port: port_,
           );
         },
@@ -1205,7 +1760,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 27,
+              funcId: 41,
               port: port_,
             );
           },
@@ -1237,7 +1792,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 28,
+              funcId: 42,
               port: port_,
             );
           },
@@ -1267,7 +1822,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 43,
             port: port_,
           );
         },
@@ -1286,42 +1841,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'debug', argNames: ['message']);
 
   @override
-  Future<bool> crateApiPluginManagerDisable({
-    required String pluginName,
-    String? reason,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginName, serializer);
-          sse_encode_opt_String(reason, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 30,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerDisableConstMeta,
-        argValues: [pluginName, reason],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerDisableConstMeta =>
-      const TaskConstMeta(
-        debugName: 'disable',
-        argNames: ['pluginName', 'reason'],
-      );
-
-  @override
   Future<void> crateApiPluginManagerEmit({
     required HostEvent event,
     required String pluginName,
@@ -1338,7 +1857,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 44,
             port: port_,
           );
         },
@@ -1370,7 +1889,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 45,
             port: port_,
           );
         },
@@ -1399,7 +1918,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 46,
             port: port_,
           );
         },
@@ -1431,7 +1950,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 47,
             port: port_,
           );
         },
@@ -1459,7 +1978,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 35,
+            funcId: 48,
             port: port_,
           );
         },
@@ -1486,7 +2005,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 49,
             port: port_,
           );
         },
@@ -1511,7 +2030,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_host_key_type(keyType, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1530,35 +2049,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  Future<void> crateApiPluginManagerImport({required String filepath}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(filepath, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 38,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerImportConstMeta,
-        argValues: [filepath],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerImportConstMeta =>
-      const TaskConstMeta(debugName: 'import', argNames: ['filepath']);
-
-  @override
   Future<void> crateApiLoggingInfo({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -1568,7 +2058,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 51,
             port: port_,
           );
         },
@@ -1595,7 +2085,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 40,
+            funcId: 52,
             port: port_,
           );
         },
@@ -1622,7 +2112,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 41,
+            funcId: 53,
             port: port_,
           );
         },
@@ -1652,7 +2142,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 42,
+            funcId: 54,
             port: port_,
           );
         },
@@ -1671,35 +2161,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'known_hosts_save', argNames: ['this_']);
 
   @override
-  Future<void> crateApiPluginManagerLoad({required String pluginPath}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginPath, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 43,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerLoadConstMeta,
-        argValues: [pluginPath],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerLoadConstMeta =>
-      const TaskConstMeta(debugName: 'load', argNames: ['pluginPath']);
-
-  @override
   Future<ManifestEvent> stridePluginManagerManifestManifestEventDefault() {
     return handler.executeNormal(
       NormalTask(
@@ -1708,7 +2169,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 44,
+            funcId: 55,
             port: port_,
           );
         },
@@ -1736,7 +2197,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 45,
+            funcId: 56,
             port: port_,
           );
         },
@@ -1769,7 +2230,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 46,
+            funcId: 57,
             port: port_,
           );
         },
@@ -1802,7 +2263,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 47,
+            funcId: 58,
             port: port_,
           );
         },
@@ -1835,7 +2296,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 48,
+            funcId: 59,
             port: port_,
           );
         },
@@ -1868,7 +2329,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 49,
+            funcId: 60,
             port: port_,
           );
         },
@@ -1901,7 +2362,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 50,
+            funcId: 61,
             port: port_,
           );
         },
@@ -1925,7 +2386,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<PluginManifestPluginState> crateApiPluginManagerParsePlugin({
+  Future<PluginManifestInstance> crateApiPluginManagerParsePlugin({
     required String filepath,
   }) {
     return handler.executeNormal(
@@ -1936,13 +2397,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 51,
+            funcId: 62,
             port: port_,
           );
         },
         codec: SseCodec(
           decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState,
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance,
           decodeErrorData:
               sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
         ),
@@ -1958,17 +2419,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   String? crateApiPluginPluginInstanceManifestDisabledReason({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
             manifest,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 63)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
@@ -1990,17 +2451,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   bool crateApiPluginPluginInstanceManifestEnabled({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
             manifest,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 64)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -2021,17 +2482,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   ManifestEvent crateApiPluginPluginInstanceManifestEvent({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
             manifest,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 65)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_manifest_event,
@@ -2052,17 +2513,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   String crateApiPluginPluginInstanceManifestName({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
             manifest,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 66)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -2083,17 +2544,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   ManifestPermission crateApiPluginPluginInstanceManifestPermission({
-    required PluginManifestPluginState manifest,
+    required PluginManifestInstance manifest,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
             manifest,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 67)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_manifest_permission,
@@ -2113,8 +2574,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<List<PluginManifestPluginState>>
-  crateApiPluginManagerPluginManifests() {
+  Future<List<PluginManifestInstance>> crateApiPluginManagerPluginManifests() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -2122,13 +2582,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 57,
+            funcId: 68,
             port: port_,
           );
         },
         codec: SseCodec(
           decodeSuccessData:
-              sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState,
+              sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance,
           decodeErrorData:
               sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
         ),
@@ -2151,7 +2611,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 58,
+            funcId: 69,
             port: port_,
           );
         },
@@ -2179,7 +2639,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 59,
+            funcId: 70,
             port: port_,
           );
         },
@@ -2199,35 +2659,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'process_plugin_event', argNames: []);
 
   @override
-  Future<bool> crateApiPluginManagerRemove({required String pluginName}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginName, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 60,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerRemoveConstMeta,
-        argValues: [pluginName],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerRemoveConstMeta =>
-      const TaskConstMeta(debugName: 'remove', argNames: ['pluginName']);
-
-  @override
   Future<RepositorySpecification>
   crateApiSettingsRepositorySpecificationDefault() {
     return handler.executeNormal(
@@ -2237,7 +2668,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 61,
+            funcId: 71,
             port: port_,
           );
         },
@@ -2270,7 +2701,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 62,
+              funcId: 72,
               port: port_,
             );
           },
@@ -2302,7 +2733,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 63,
+            funcId: 73,
             port: port_,
           );
         },
@@ -2329,7 +2760,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 64,
+            funcId: 74,
             port: port_,
           );
         },
@@ -2359,7 +2790,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 65,
+            funcId: 75,
             port: port_,
           );
         },
@@ -2384,7 +2815,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 66)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 76)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_settings,
@@ -2410,7 +2841,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 67,
+            funcId: 77,
             port: port_,
           );
         },
@@ -2438,7 +2869,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 68,
+            funcId: 78,
             port: port_,
           );
         },
@@ -2467,7 +2898,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 69,
+            funcId: 79,
             port: port_,
           );
         },
@@ -2492,7 +2923,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(title, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 70)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 80)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_task,
@@ -2518,7 +2949,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 71,
+            funcId: 81,
             port: port_,
           );
         },
@@ -2548,7 +2979,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 72,
+            funcId: 82,
             port: port_,
           );
         },
@@ -2575,7 +3006,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 73,
+            funcId: 83,
             port: port_,
           );
         },
@@ -2603,7 +3034,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 74,
+            funcId: 84,
             port: port_,
           );
         },
@@ -2631,7 +3062,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_task(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 75)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 85)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_f_32,
@@ -2661,7 +3092,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 76,
+            funcId: 86,
             port: port_,
           );
         },
@@ -2680,35 +3111,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'task_with_id', argNames: ['id', 'title']);
 
   @override
-  Future<bool> crateApiPluginManagerToggle({required String pluginName}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginName, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 77,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerToggleConstMeta,
-        argValues: [pluginName],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerToggleConstMeta =>
-      const TaskConstMeta(debugName: 'toggle', argNames: ['pluginName']);
-
-  @override
   Future<void> crateApiLoggingTrace({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -2718,7 +3120,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 78,
+            funcId: 87,
             port: port_,
           );
         },
@@ -2745,7 +3147,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 79,
+            funcId: 88,
             port: port_,
           );
         },
@@ -2773,7 +3175,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 80,
+            funcId: 89,
             port: port_,
           );
         },
@@ -2800,12 +3202,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent;
 
   RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_PluginManifestPluginState => wire
-      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState;
+  get rust_arc_increment_strong_count_PluginManifest => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest;
 
   RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_PluginManifestPluginState => wire
-      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState;
+  get rust_arc_decrement_strong_count_PluginManifest => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_PluginManifestInstance => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_PluginManifestInstance => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_PluginState => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_PluginState => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_Repository => wire
@@ -2847,14 +3265,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PluginManifestPluginState
-  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  PluginManifest
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalDcoDecode(
+    return PluginManifestImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  PluginManifestInstance
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalDcoDecode(
       raw as List<dynamic>,
     );
+  }
+
+  @protected
+  PluginState
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginStateImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -2885,6 +3321,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginManifest
+  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginManifestImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  PluginManifestInstance
+  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalDcoDecode(
+      raw as List<dynamic>,
+    );
+  }
+
+  @protected
   Repository
   dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
     dynamic raw,
@@ -2894,12 +3350,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PluginManifestPluginState
-  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  PluginManifest
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalDcoDecode(
+    return PluginManifestImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  PluginManifestInstance
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalDcoDecode(
       raw as List<dynamic>,
     );
   }
@@ -2938,14 +3403,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PluginManifestPluginState
-  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  PluginManifest
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalDcoDecode(
+    return PluginManifestImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  PluginManifestInstance
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalDcoDecode(
       raw as List<dynamic>,
     );
+  }
+
+  @protected
+  PluginState
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginStateImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -3239,14 +3722,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<PluginManifestPluginState>
-  dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  List<PluginManifestInstance>
+  dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>)
         .map(
-          dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState,
+          dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance,
         )
         .toList();
   }
@@ -3557,6 +4040,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginApi dco_decode_plugin_api(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PluginApi.values[raw as int];
+  }
+
+  @protected
   PluginEvent dco_decode_plugin_event(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     switch (raw[0]) {
@@ -3720,12 +4209,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PluginManifestPluginState
-  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  PluginManifest
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalSseDecode(
+    return PluginManifestImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  PluginManifestInstance
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  PluginState
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginStateImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -3768,6 +4281,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginManifest
+  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginManifestImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  PluginManifestInstance
+  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   Repository
   sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
     SseDeserializer deserializer,
@@ -3780,12 +4317,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PluginManifestPluginState
-  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  PluginManifest
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalSseDecode(
+    return PluginManifestImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  PluginManifestInstance
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -3835,12 +4384,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PluginManifestPluginState
-  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  PluginManifest
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalSseDecode(
+    return PluginManifestImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  PluginManifestInstance
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginManifestInstanceImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  PluginState
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return PluginStateImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -4165,17 +4738,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<PluginManifestPluginState>
-  sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+  List<PluginManifestInstance>
+  sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <PluginManifestPluginState>[];
+    final ans_ = <PluginManifestInstance>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(
-        sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+        sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
           deserializer,
         ),
       );
@@ -4637,6 +5210,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginApi sse_decode_plugin_api(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return PluginApi.values[inner];
+  }
+
+  @protected
   PluginEvent sse_decode_plugin_event(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -4820,13 +5400,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    PluginManifestPluginState self,
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+    PluginManifest self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-      (self as PluginManifestPluginStateImpl).frbInternalSseEncode(move: true),
+      (self as PluginManifestImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    PluginManifestInstance self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginManifestInstanceImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+    PluginState self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginStateImpl).frbInternalSseEncode(move: true),
       serializer,
     );
   }
@@ -4872,6 +5478,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+    PluginManifest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginManifestImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    PluginManifestInstance self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginManifestInstanceImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
     Repository self,
     SseSerializer serializer,
@@ -4885,13 +5517,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    PluginManifestPluginState self,
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+    PluginManifest self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-      (self as PluginManifestPluginStateImpl).frbInternalSseEncode(move: false),
+      (self as PluginManifestImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    PluginManifestInstance self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginManifestInstanceImpl).frbInternalSseEncode(move: false),
       serializer,
     );
   }
@@ -4946,13 +5591,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    PluginManifestPluginState self,
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifest(
+    PluginManifest self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-      (self as PluginManifestPluginStateImpl).frbInternalSseEncode(),
+      (self as PluginManifestImpl).frbInternalSseEncode(),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    PluginManifestInstance self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginManifestInstanceImpl).frbInternalSseEncode(),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginState(
+    PluginState self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as PluginStateImpl).frbInternalSseEncode(),
       serializer,
     );
   }
@@ -5314,14 +5985,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-  sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    List<PluginManifestPluginState> self,
+  sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
+    List<PluginManifestInstance> self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
+      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestInstance(
         item,
         serializer,
       );
@@ -5738,6 +6409,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_plugin_api(PluginApi self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_plugin_event(PluginEvent self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     switch (self) {
@@ -5884,14 +6561,74 @@ class HostEventImpl extends RustOpaque implements HostEvent {
 }
 
 @sealed
-class PluginManifestPluginStateImpl extends RustOpaque
-    implements PluginManifestPluginState {
+class PluginManifestImpl extends RustOpaque implements PluginManifest {
   // Not to be used by end users
-  PluginManifestPluginStateImpl.frbInternalDcoDecode(List<dynamic> wire)
+  PluginManifestImpl.frbInternalDcoDecode(List<dynamic> wire)
     : super.frbInternalDcoDecode(wire, _kStaticData);
 
   // Not to be used by end users
-  PluginManifestPluginStateImpl.frbInternalSseDecode(
+  PluginManifestImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_PluginManifest,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_PluginManifest,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_PluginManifestPtr,
+  );
+
+  PluginApi get api => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorGetApi(that: this);
+
+  ManifestEvent get event => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorGetEvent(
+        that: this,
+      );
+
+  String get name => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorGetName(that: this);
+
+  ManifestPermission get permission => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorGetPermission(
+        that: this,
+      );
+
+  set api(PluginApi api) => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorSetApi(
+        that: this,
+        api: api,
+      );
+
+  set event(ManifestEvent event) => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorSetEvent(
+        that: this,
+        event: event,
+      );
+
+  set name(String name) => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorSetName(
+        that: this,
+        name: name,
+      );
+
+  set permission(ManifestPermission permission) => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestAutoAccessorSetPermission(
+        that: this,
+        permission: permission,
+      );
+}
+
+@sealed
+class PluginManifestInstanceImpl extends RustOpaque
+    implements PluginManifestInstance {
+  // Not to be used by end users
+  PluginManifestInstanceImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  PluginManifestInstanceImpl.frbInternalSseDecode(
     BigInt ptr,
     int externalSizeOnNative,
   ) : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
@@ -5900,15 +6637,65 @@ class PluginManifestPluginStateImpl extends RustOpaque
     rustArcIncrementStrongCount: RustLib
         .instance
         .api
-        .rust_arc_increment_strong_count_PluginManifestPluginState,
+        .rust_arc_increment_strong_count_PluginManifestInstance,
     rustArcDecrementStrongCount: RustLib
         .instance
         .api
-        .rust_arc_decrement_strong_count_PluginManifestPluginState,
+        .rust_arc_decrement_strong_count_PluginManifestInstance,
     rustArcDecrementStrongCountPtr: RustLib
         .instance
         .api
-        .rust_arc_decrement_strong_count_PluginManifestPluginStatePtr,
+        .rust_arc_decrement_strong_count_PluginManifestInstancePtr,
+  );
+
+  PluginManifest get manifest => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestInstanceAutoAccessorGetManifest(
+        that: this,
+      );
+
+  PluginState get state => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestInstanceAutoAccessorGetState(
+        that: this,
+      );
+
+  set manifest(PluginManifest manifest) => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestInstanceAutoAccessorSetManifest(
+        that: this,
+        manifest: manifest,
+      );
+
+  set state(PluginState state) => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestInstanceAutoAccessorSetState(
+        that: this,
+        state: state,
+      );
+
+  /// flutter_rust_bridge:sync
+  void events() => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestInstanceEvents(that: this);
+
+  /// flutter_rust_bridge:sync
+  void name() => RustLib.instance.api
+      .stridePluginManagerManifestPluginManifestInstanceName(that: this);
+}
+
+@sealed
+class PluginStateImpl extends RustOpaque implements PluginState {
+  // Not to be used by end users
+  PluginStateImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  PluginStateImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_PluginState,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_PluginState,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_PluginStatePtr,
   );
 }
 

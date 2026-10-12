@@ -13,32 +13,31 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 
-String pluginInstanceManifestName({
-  required PluginManifestPluginState manifest,
-}) => RustLib.instance.api.crateApiPluginPluginInstanceManifestName(
-  manifest: manifest,
-);
+String pluginInstanceManifestName({required PluginManifestInstance manifest}) =>
+    RustLib.instance.api.crateApiPluginPluginInstanceManifestName(
+      manifest: manifest,
+    );
 
 bool pluginInstanceManifestEnabled({
-  required PluginManifestPluginState manifest,
+  required PluginManifestInstance manifest,
 }) => RustLib.instance.api.crateApiPluginPluginInstanceManifestEnabled(
   manifest: manifest,
 );
 
 String? pluginInstanceManifestDisabledReason({
-  required PluginManifestPluginState manifest,
+  required PluginManifestInstance manifest,
 }) => RustLib.instance.api.crateApiPluginPluginInstanceManifestDisabledReason(
   manifest: manifest,
 );
 
 ManifestPermission pluginInstanceManifestPermission({
-  required PluginManifestPluginState manifest,
+  required PluginManifestInstance manifest,
 }) => RustLib.instance.api.crateApiPluginPluginInstanceManifestPermission(
   manifest: manifest,
 );
 
 ManifestEvent pluginInstanceManifestEvent({
-  required PluginManifestPluginState manifest,
+  required PluginManifestInstance manifest,
 }) => RustLib.instance.api.crateApiPluginPluginInstanceManifestEvent(
   manifest: manifest,
 );

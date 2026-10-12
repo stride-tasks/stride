@@ -22,9 +22,6 @@ import 'package:uuid/uuid.dart';
 Stream<void> createStream() =>
     RustLib.instance.api.crateApiPluginManagerCreateStream();
 
-Future<void> load({required String pluginPath}) =>
-    RustLib.instance.api.crateApiPluginManagerLoad(pluginPath: pluginPath);
-
 Future<void> emit({required HostEvent event, required String pluginName}) =>
     RustLib.instance.api.crateApiPluginManagerEmit(
       event: event,
@@ -40,22 +37,8 @@ Future<bool> processHostEvent() =>
 Future<PluginAction?> processPluginEvent() =>
     RustLib.instance.api.crateApiPluginManagerProcessPluginEvent();
 
-Future<void> import_({required String filepath}) =>
-    RustLib.instance.api.crateApiPluginManagerImport(filepath: filepath);
-
-Future<bool> remove({required String pluginName}) =>
-    RustLib.instance.api.crateApiPluginManagerRemove(pluginName: pluginName);
-
-Future<bool> disable({required String pluginName, String? reason}) => RustLib
-    .instance
-    .api
-    .crateApiPluginManagerDisable(pluginName: pluginName, reason: reason);
-
-Future<bool> toggle({required String pluginName}) =>
-    RustLib.instance.api.crateApiPluginManagerToggle(pluginName: pluginName);
-
-Future<List<PluginManifestPluginState>> pluginManifests() =>
+Future<List<PluginManifestInstance>> pluginManifests() =>
     RustLib.instance.api.crateApiPluginManagerPluginManifests();
 
-Future<PluginManifestPluginState> parsePlugin({required String filepath}) =>
+Future<PluginManifestInstance> parsePlugin({required String filepath}) =>
     RustLib.instance.api.crateApiPluginManagerParsePlugin(filepath: filepath);

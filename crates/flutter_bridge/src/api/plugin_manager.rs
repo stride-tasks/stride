@@ -17,11 +17,6 @@ pub fn create_stream(stream: StreamSink<()>) {
     *event_stream = Some(stream);
 }
 
-pub fn load(plugin_path: String) -> Result<(), RustError> {
-    drop(plugin_path);
-    Ok(())
-}
-
 pub fn emit(event: HostEvent, plugin_name: String) -> Result<(), RustError> {
     let mut event_stream = STREAM.lock().unwrap();
     if let Some(event_stream) = event_stream.as_mut() {
@@ -55,34 +50,6 @@ pub fn process_host_event() -> Result<bool, RustError> {
 pub fn process_plugin_event() -> Result<Option<PluginAction>, RustError> {
     let mut plugin_manager = ENGINE.wait().lock_plugin_manager();
     Ok(plugin_manager.process_plugin_event())
-}
-
-pub fn import(filepath: String) -> Result<(), RustError> {
-    let mut plugin_manager = ENGINE.wait().lock_plugin_manager();
-    Ok(plugin_manager
-        .import(Path::new(&filepath))
-        .map_err(ErrorKind::Plugin)?)
-}
-
-pub fn remove(plugin_name: String) -> Result<bool, RustError> {
-    let mut plugin_manager = ENGINE.wait().lock_plugin_manager();
-    Ok(plugin_manager
-        .remove(&plugin_name)
-        .map_err(ErrorKind::Plugin)?)
-}
-
-pub fn disable(plugin_name: String, reason: Option<String>) -> Result<bool, RustError> {
-    let mut plugin_manager = ENGINE.wait().lock_plugin_manager();
-    Ok(plugin_manager
-        .disable(&plugin_name, reason)
-        .map_err(ErrorKind::Plugin)?)
-}
-
-pub fn toggle(plugin_name: String) -> Result<bool, RustError> {
-    let mut plugin_manager = ENGINE.wait().lock_plugin_manager();
-    Ok(plugin_manager
-        .toggle(&plugin_name)
-        .map_err(ErrorKind::Plugin)?)
 }
 
 pub fn plugin_manifests() -> Result<Vec<PluginManifestInstance>, RustError> {
