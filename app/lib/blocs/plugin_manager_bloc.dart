@@ -211,7 +211,7 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
   }
 
   Future<void> toggle(String pluginName) async {
-    await pm.toggle(pluginName: pluginName);
+    await PluginToggleMethod(pluginName: pluginName).execute();
     add(PluginManagerFetchEvent());
   }
 
