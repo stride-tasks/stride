@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.event.schema.json",
+    "type": "object",
+    "properties": {
+        "task": {
+            "$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.event.task.schema.json"
+        },
+        "timer": {
+            "$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.event.timer.schema.json"
+        }
+    }
+}
