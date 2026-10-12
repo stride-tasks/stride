@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.instance.schema.json",
+	"type": "object",
+	"required": [
+		"manifest",
+		"state"
+	],
+	"properties": {
+		"manifest": {
+			"$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.schema.json"
+		},
+		"state": {
+			"$ref": "https://stride-tasks.github.io/stride/api/type/plugin.state.schema.json"
+		}
+	}
+}
