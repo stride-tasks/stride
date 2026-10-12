@@ -375,12 +375,16 @@ fn type_for_schema(
             for (key, value) in properties {
                 let field_type =
                     type_for_schema(value, &append_type_name(&target_name, key), schemas_by_id)?;
+                if let Some(default) = &value.default {
+                    validate_field_default(key, &field_type, default)?;
+                }
 
                 fields.push(FieldNode {
                     name: key.clone(),
                     typ: field_type,
                     required: required.contains(key),
                     description: value.description.clone(),
+                    default: value.default.clone(),
                 });
             }
 
@@ -469,15 +473,20 @@ fn union_type(
                 .iter()
                 .filter(|(key, _)| **key != tag)
                 .map(|(key, field)| {
+                    let typ = type_for_schema(
+                        field,
+                        &append_type_name(&variant_prefix, key),
+                        schemas_by_id,
+                    )?;
+                    if let Some(default) = &field.default {
+                        validate_field_default(key, &typ, default)?;
+                    }
                     Ok(FieldNode {
                         name: key.clone(),
-                        typ: type_for_schema(
-                            field,
-                            &append_type_name(&variant_prefix, key),
-                            schemas_by_id,
-                        )?,
+                        typ,
                         required: base_required.contains(key) || variant.required.contains(key),
                         description: field.description.clone(),
+                        default: field.default.clone(),
                     })
                 })
                 .collect::<Result<Vec<_>>>()?;
@@ -499,6 +508,29 @@ fn union_type(
         tag: Some(tag),
         variants,
     }))
+}
+
+fn validate_field_default(field: &str, typ: &TypeNode, value: &Value) -> Result<()> {
+    let supported = match typ {
+        TypeNode::Primitive(PrimitiveType::Boolean) => value.is_boolean(),
+        TypeNode::Primitive(PrimitiveType::Integer) => value.as_i64().is_some(),
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => value.as_u64().is_some(),
+        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().is_some(),
+        TypeNode::Primitive(PrimitiveType::String) => value.is_string(),
+        TypeNode::Enum(enum_) => value
+            .as_str()
+            .is_some_and(|value| enum_.variants.iter().any(|variant| variant.value == value)),
+        _ => false,
+    };
+
+    if supported {
+        Ok(())
+    } else {
+        Err(Error::UnsupportedDefault {
+            field: field.to_owned(),
+            value: value.clone(),
+        })
+    }
 }
 
 fn root_method_name(schema: &Schema) -> Option<String> {

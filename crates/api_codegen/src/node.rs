@@ -1,3 +1,5 @@
+use serde_json::Value;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Node {
     Type(TypeNode),
@@ -43,6 +45,7 @@ pub struct FieldNode {
     pub typ: TypeNode,
     pub required: bool,
     pub description: Option<String>,
+    pub default: Option<Value>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

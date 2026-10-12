@@ -52,6 +52,7 @@ fn render_type(this: &TypeNode) -> Option<String> {
 
 fn render_struct(this: &StructNode) -> String {
     let mut lines = Vec::new();
+    let default_impl = render_default_impl(this);
 
     for field in &this.fields {
         if let Some(rendered) = render_type(&field.typ) {
@@ -66,6 +67,9 @@ fn render_struct(this: &StructNode) -> String {
         "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
     );
     lines.push("#[serde(rename_all = \"kebab-case\")]".to_owned());
+    if default_impl.is_some() {
+        lines.push("#[serde(default)]".to_owned());
+    }
     lines.push("#[allow(missing_copy_implementations)]".to_owned());
     lines.push(format!("pub struct {} {{", this.name));
 
@@ -97,7 +101,77 @@ fn render_struct(this: &StructNode) -> String {
     }
 
     lines.push("}\n".to_owned());
+    if let Some(default_impl) = default_impl {
+        lines.push(default_impl);
+    }
     lines.join("\n")
+}
+
+fn render_default_impl(this: &StructNode) -> Option<String> {
+    if !this.fields.iter().any(|field| field.default.is_some()) {
+        return None;
+    }
+
+    let mut fields = Vec::new();
+    for field in &this.fields {
+        let value = match &field.default {
+            Some(value) => {
+                let value = rust_default_value(&field.typ, value)?;
+                if field.required {
+                    value
+                } else {
+                    format!("Some({value})")
+                }
+            }
+            None if !field.required => "None".to_owned(),
+            None => return None,
+        };
+        fields.push(format!(
+            "            {}: {value},",
+            rust_field_name(&field.name)
+        ));
+    }
+
+    Some(format!(
+        "impl Default for {} {{\n    fn default() -> Self {{\n        Self {{\n{}\n        }}\n    }}\n}}",
+        this.name,
+        fields.join("\n")
+    ))
+}
+
+fn rust_default_value(typ: &TypeNode, value: &serde_json::Value) -> Option<String> {
+    match typ {
+        TypeNode::Primitive(PrimitiveType::Boolean) => {
+            value.as_bool().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::Integer) => {
+            value.as_i64().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => {
+            value.as_u64().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().map(|value| {
+            let value = value.to_string();
+            if value.contains(['.', 'e', 'E']) {
+                value
+            } else {
+                format!("{value}.0")
+            }
+        }),
+        TypeNode::Primitive(PrimitiveType::String) => value
+            .as_str()
+            .and_then(|value| serde_json::to_string(value).ok())
+            .map(|value| format!("Box::<str>::from({value})")),
+        TypeNode::Enum(enum_) => {
+            let value = value.as_str()?;
+            let variant = enum_
+                .variants
+                .iter()
+                .find(|variant| variant.value == value)?;
+            Some(format!("{}::{}", enum_.name, variant.name))
+        }
+        _ => None,
+    }
 }
 
 fn render_enum(this: &EnumNode) -> String {

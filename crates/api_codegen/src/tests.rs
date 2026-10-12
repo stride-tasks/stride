@@ -38,6 +38,67 @@ fn generates_empty_object_as_struct() {
 }
 
 #[test]
+fn generates_field_defaults_for_rust_and_dart() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_defaults_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "create": { "type": "boolean", "default": false },
+                "enabled": { "type": "boolean", "default": true }
+            },
+            "required": ["create", "enabled"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(rust.contains("#[serde(default)]"), "output was:\n{rust}");
+    assert!(
+        rust.contains("impl Default for Generated"),
+        "output was:\n{rust}"
+    );
+    assert!(rust.contains("create: false,"), "output was:\n{rust}");
+    assert!(rust.contains("enabled: true,"), "output was:\n{rust}");
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("@Default(false)"), "output was:\n{dart}");
+    assert!(dart.contains("@Default(true)"), "output was:\n{dart}");
+    assert!(
+        dart.contains("@JsonKey(name: 'create') bool create,"),
+        "output was:\n{dart}"
+    );
+    assert!(
+        !dart.contains("required bool create"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn rejects_defaults_that_cannot_be_generated() {
+    let error = generate_with_schema(
+        r#"{
+            "type": "object",
+            "properties": {
+                "values": { "type": "array", "items": { "type": "string" }, "default": [] }
+            }
+        }"#,
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(error, Error::UnsupportedDefault { ref field, .. } if field == "values"),
+        "unexpected error: {error}"
+    );
+}
+
+#[test]
 fn generates_schema_additional_properties_as_a_typed_map() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -14,4 +14,9 @@ pub enum Error {
     DuplicateSchemaId { id: String },
     #[error("schema references unknown $id: {reference}")]
     UnknownReference { reference: String },
+    #[error("unsupported default for field `{field}`: {value}")]
+    UnsupportedDefault {
+        field: String,
+        value: serde_json::Value,
+    },
 }
