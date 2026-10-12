@@ -334,11 +334,32 @@ impl Database {
             } => {
                 // TODO: Optimize this by using sql directly.
                 let statuses: HashSet<TaskStatus> = statuses.iter().copied().collect();
-                let title = Some(title.to_lowercase());
+                let title = title.to_lowercase();
                 let mut tasks = self.tasks_by_status(&statuses)?;
-                tasks.retain(|task| task.title.as_deref().map(str::to_uppercase) == title);
-                tasks.truncate(limit.unwrap_or(usize::MAX));
+                tasks.retain(|task| {
+                    task.title
+                        .as_deref()
+                        .is_some_and(|task_title| task_title.to_lowercase() == title)
+                });
                 tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
+                tasks.truncate(limit.unwrap_or(usize::MAX));
+                Ok(tasks)
+            }
+            TaskQuery::Filter {
+                search,
+                statuses,
+                limit,
+            } => {
+                let statuses: HashSet<TaskStatus> = statuses.iter().copied().collect();
+                let search = search.to_lowercase();
+                let mut tasks = self.tasks_by_status(&statuses)?;
+                tasks.retain(|task| {
+                    task.title
+                        .as_deref()
+                        .is_some_and(|title| title.to_lowercase().contains(&search))
+                });
+                tasks.sort_unstable_by(|a, b| b.urgency().total_cmp(&a.urgency()));
+                tasks.truncate(limit.unwrap_or(usize::MAX));
                 Ok(tasks)
             }
         }

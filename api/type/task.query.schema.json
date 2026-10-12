@@ -49,6 +49,30 @@
                 "title",
                 "statuses"
             ]
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "filter"
+                },
+                "search": {
+                    "type": "string"
+                },
+                "statuses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/task.status.schema.json"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "format": "uint"
+                }
+            },
+            "required": [
+                "search",
+                "statuses"
+            ]
         }
     ]
 }
