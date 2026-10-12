@@ -216,6 +216,13 @@ fn rust_default_value(typ: &TypeNode, value: &serde_json::Value) -> Option<Strin
             .as_str()
             .and_then(|value| serde_json::to_string(value).ok())
             .map(|value| format!("Box::<str>::from({value})")),
+        TypeNode::Array(inner) => value.as_array().and_then(|values| {
+            values
+                .iter()
+                .map(|value| rust_default_value(inner, value))
+                .collect::<Option<Vec<_>>>()
+                .map(|values| format!("vec![{}]", values.join(", ")))
+        }),
         TypeNode::Enum(enum_) => {
             let value = value.as_str()?;
             let variant = enum_

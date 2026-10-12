@@ -86,7 +86,7 @@ fn rejects_defaults_that_cannot_be_generated() {
         r#"{
             "type": "object",
             "properties": {
-                "values": { "type": "array", "items": { "type": "string" }, "default": [] }
+                "values": { "type": "object", "properties": {}, "default": {} }
             }
         }"#,
     )
@@ -95,6 +95,48 @@ fn rejects_defaults_that_cannot_be_generated() {
     assert!(
         matches!(error, Error::UnsupportedDefault { ref field, .. } if field == "values"),
         "unexpected error: {error}"
+    );
+}
+
+#[test]
+fn generates_empty_array_defaults_for_rust_and_dart() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_array_defaults_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uri" },
+                    "default": []
+                }
+            },
+            "required": ["urls"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(rust.contains("urls: vec![],"), "output was:\n{rust}");
+    assert!(
+        rust.contains("fn __serde_default_0() -> Vec<url::Url>"),
+        "output was:\n{rust}"
+    );
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(
+        dart.contains("@Default(const <Uri>[])"),
+        "output was:\n{dart}"
+    );
+    assert!(
+        dart.contains("@JsonKey(name: 'urls') List<Uri> urls,"),
+        "output was:\n{dart}"
     );
 }
 

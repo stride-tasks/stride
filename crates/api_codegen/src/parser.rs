@@ -511,25 +511,32 @@ fn union_type(
 }
 
 fn validate_field_default(field: &str, typ: &TypeNode, value: &Value) -> Result<()> {
-    let supported = match typ {
-        TypeNode::Primitive(PrimitiveType::Boolean) => value.is_boolean(),
-        TypeNode::Primitive(PrimitiveType::Integer) => value.as_i64().is_some(),
-        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => value.as_u64().is_some(),
-        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().is_some(),
-        TypeNode::Primitive(PrimitiveType::String) => value.is_string(),
-        TypeNode::Enum(enum_) => value
-            .as_str()
-            .is_some_and(|value| enum_.variants.iter().any(|variant| variant.value == value)),
-        _ => false,
-    };
-
-    if supported {
+    if supports_field_default(typ, value) {
         Ok(())
     } else {
         Err(Error::UnsupportedDefault {
             field: field.to_owned(),
             value: value.clone(),
         })
+    }
+}
+
+fn supports_field_default(typ: &TypeNode, value: &Value) -> bool {
+    match typ {
+        TypeNode::Primitive(PrimitiveType::Boolean) => value.is_boolean(),
+        TypeNode::Primitive(PrimitiveType::Integer) => value.as_i64().is_some(),
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => value.as_u64().is_some(),
+        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().is_some(),
+        TypeNode::Primitive(PrimitiveType::String) => value.is_string(),
+        TypeNode::Array(inner) => value.as_array().is_some_and(|values| {
+            values
+                .iter()
+                .all(|value| supports_field_default(inner, value))
+        }),
+        TypeNode::Enum(enum_) => value
+            .as_str()
+            .is_some_and(|value| enum_.variants.iter().any(|variant| variant.value == value)),
+        _ => false,
     }
 }
 

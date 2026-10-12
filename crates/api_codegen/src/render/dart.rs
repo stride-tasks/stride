@@ -418,6 +418,13 @@ fn dart_default_value(typ: &TypeNode, value: &serde_json::Value) -> Option<Strin
         TypeNode::Primitive(PrimitiveType::String) => value
             .as_str()
             .and_then(|value| serde_json::to_string(value).ok()),
+        TypeNode::Array(inner) => value.as_array().and_then(|values| {
+            values
+                .iter()
+                .map(|value| dart_default_value(inner, value))
+                .collect::<Option<Vec<_>>>()
+                .map(|values| format!("const <{}>[{}]", render_type_node(inner), values.join(", ")))
+        }),
         TypeNode::Enum(enum_) => {
             let value = value.as_str()?;
             let variant = enum_
