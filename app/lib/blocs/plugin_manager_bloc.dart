@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
@@ -10,6 +11,7 @@ import 'package:stride/bridge/api/plugin.dart';
 import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/third_party/stride_core/event.dart';
 import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
+import 'package:stride/context.dart';
 import 'package:uuid/uuid.dart';
 
 @immutable
@@ -210,8 +212,8 @@ class PluginManagerBloc extends Bloc<PluginManagerEvent, PluginManagerState> {
     add(PluginManagerFetchEvent());
   }
 
-  Future<void> import(String filepath) async {
-    await pm.import_(filepath: filepath);
+  Future<void> import(String filePath) async {
+    await PluginImportMethod(filePath: filePath).execute();
     add(PluginManagerFetchEvent());
   }
 
