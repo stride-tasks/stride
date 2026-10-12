@@ -20,3 +20,20 @@ impl TypedCommandHandler for PluginImportHandler {
         Ok(crate::api::PluginImportMethodResult {})
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginRemoveHandler;
+
+impl TypedCommandHandler for PluginRemoveHandler {
+    type Method = crate::api::PluginRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginRemoveMethodResult> {
+        engine.lock_plugin_manager().remove(&method.plugin_name)?;
+
+        Ok(crate::api::PluginRemoveMethodResult {})
+    }
+}
