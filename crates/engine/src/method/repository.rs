@@ -239,6 +239,12 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
         let mut transaction = database.transaction()?;
         transaction.insert_task(&method.task)?;
         transaction.commit()?;
+        drop(database);
+
+        engine.notify(Box::new(crate::api::RepositoryTaskAddedNotification {
+            repository_id: method.repository_id,
+            task: method.task,
+        }))?;
 
         Ok(crate::api::RepositoryTaskAddMethodResult {})
     }
@@ -306,4 +312,3 @@ impl TypedCommandHandler for RepositoryTaskQueryHandler {
         Ok(crate::api::RepositoryTaskQueryMethodResult { tasks })
     }
 }
-
