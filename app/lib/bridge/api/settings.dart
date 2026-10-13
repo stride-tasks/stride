@@ -12,9 +12,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
@@ -104,8 +102,6 @@ sealed class Settings with _$Settings {
   const factory Settings.raw({
     required bool darkMode,
     required bool periodicSync,
-    required List<Filter> filters,
-    FilterSelection? selectedFilter,
     UuidValue? currentRepository,
     required List<RepositorySpecification> repositories,
   }) = _Settings;

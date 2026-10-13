@@ -268,7 +268,7 @@ as String,
 /// @nodoc
 mixin _$Settings {
 
- bool get darkMode; bool get periodicSync; List<Filter> get filters; FilterSelection? get selectedFilter; UuidValue? get currentRepository; List<RepositorySpecification> get repositories;
+ bool get darkMode; bool get periodicSync; UuidValue? get currentRepository; List<RepositorySpecification> get repositories;
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -279,16 +279,16 @@ $SettingsCopyWith<Settings> get copyWith => _$SettingsCopyWithImpl<Settings>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&const DeepCollectionEquality().equals(other.filters, filters)&&(identical(other.selectedFilter, selectedFilter) || other.selectedFilter == selectedFilter)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository)&&const DeepCollectionEquality().equals(other.repositories, repositories));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository)&&const DeepCollectionEquality().equals(other.repositories, repositories));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,const DeepCollectionEquality().hash(filters),selectedFilter,currentRepository,const DeepCollectionEquality().hash(repositories));
+int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,currentRepository,const DeepCollectionEquality().hash(repositories));
 
 @override
 String toString() {
-  return 'Settings(darkMode: $darkMode, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter, currentRepository: $currentRepository, repositories: $repositories)';
+  return 'Settings(darkMode: $darkMode, periodicSync: $periodicSync, currentRepository: $currentRepository, repositories: $repositories)';
 }
 
 
@@ -299,11 +299,11 @@ abstract mixin class $SettingsCopyWith<$Res>  {
   factory $SettingsCopyWith(Settings value, $Res Function(Settings) _then) = _$SettingsCopyWithImpl;
 @useResult
 $Res call({
- bool darkMode, bool periodicSync, List<Filter> filters, FilterSelection? selectedFilter, UuidValue? currentRepository, List<RepositorySpecification> repositories
+ bool darkMode, bool periodicSync, UuidValue? currentRepository, List<RepositorySpecification> repositories
 });
 
 
-$FilterSelectionCopyWith<$Res>? get selectedFilter;
+
 
 }
 /// @nodoc
@@ -316,30 +316,16 @@ class _$SettingsCopyWithImpl<$Res>
 
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? darkMode = null,Object? periodicSync = null,Object? filters = null,Object? selectedFilter = freezed,Object? currentRepository = freezed,Object? repositories = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? darkMode = null,Object? periodicSync = null,Object? currentRepository = freezed,Object? repositories = null,}) {
   return _then(_self.copyWith(
 darkMode: null == darkMode ? _self.darkMode : darkMode // ignore: cast_nullable_to_non_nullable
 as bool,periodicSync: null == periodicSync ? _self.periodicSync : periodicSync // ignore: cast_nullable_to_non_nullable
-as bool,filters: null == filters ? _self.filters : filters // ignore: cast_nullable_to_non_nullable
-as List<Filter>,selectedFilter: freezed == selectedFilter ? _self.selectedFilter : selectedFilter // ignore: cast_nullable_to_non_nullable
-as FilterSelection?,currentRepository: freezed == currentRepository ? _self.currentRepository : currentRepository // ignore: cast_nullable_to_non_nullable
+as bool,currentRepository: freezed == currentRepository ? _self.currentRepository : currentRepository // ignore: cast_nullable_to_non_nullable
 as UuidValue?,repositories: null == repositories ? _self.repositories : repositories // ignore: cast_nullable_to_non_nullable
 as List<RepositorySpecification>,
   ));
 }
-/// Create a copy of Settings
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$FilterSelectionCopyWith<$Res>? get selectedFilter {
-    if (_self.selectedFilter == null) {
-    return null;
-  }
 
-  return $FilterSelectionCopyWith<$Res>(_self.selectedFilter!, (value) {
-    return _then(_self.copyWith(selectedFilter: value));
-  });
-}
 }
 
 
@@ -418,10 +404,10 @@ return raw(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bool darkMode,  bool periodicSync,  List<Filter> filters,  FilterSelection? selectedFilter,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)?  raw,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)?  raw,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Settings() when raw != null:
-return raw(_that.darkMode,_that.periodicSync,_that.filters,_that.selectedFilter,_that.currentRepository,_that.repositories);case _:
+return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repositories);case _:
   return orElse();
 
 }
@@ -439,10 +425,10 @@ return raw(_that.darkMode,_that.periodicSync,_that.filters,_that.selectedFilter,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bool darkMode,  bool periodicSync,  List<Filter> filters,  FilterSelection? selectedFilter,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)  raw,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)  raw,}) {final _that = this;
 switch (_that) {
 case _Settings():
-return raw(_that.darkMode,_that.periodicSync,_that.filters,_that.selectedFilter,_that.currentRepository,_that.repositories);}
+return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repositories);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -456,10 +442,10 @@ return raw(_that.darkMode,_that.periodicSync,_that.filters,_that.selectedFilter,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bool darkMode,  bool periodicSync,  List<Filter> filters,  FilterSelection? selectedFilter,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)?  raw,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)?  raw,}) {final _that = this;
 switch (_that) {
 case _Settings() when raw != null:
-return raw(_that.darkMode,_that.periodicSync,_that.filters,_that.selectedFilter,_that.currentRepository,_that.repositories);case _:
+return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repositories);case _:
   return null;
 
 }
@@ -471,19 +457,11 @@ return raw(_that.darkMode,_that.periodicSync,_that.filters,_that.selectedFilter,
 
 
 class _Settings extends Settings {
-  const _Settings({required this.darkMode, required this.periodicSync, required final  List<Filter> filters, this.selectedFilter, this.currentRepository, required final  List<RepositorySpecification> repositories}): _filters = filters,_repositories = repositories,super._();
+  const _Settings({required this.darkMode, required this.periodicSync, this.currentRepository, required final  List<RepositorySpecification> repositories}): _repositories = repositories,super._();
   
 
 @override final  bool darkMode;
 @override final  bool periodicSync;
- final  List<Filter> _filters;
-@override List<Filter> get filters {
-  if (_filters is EqualUnmodifiableListView) return _filters;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_filters);
-}
-
-@override final  FilterSelection? selectedFilter;
 @override final  UuidValue? currentRepository;
  final  List<RepositorySpecification> _repositories;
 @override List<RepositorySpecification> get repositories {
@@ -503,16 +481,16 @@ _$SettingsCopyWith<_Settings> get copyWith => __$SettingsCopyWithImpl<_Settings>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&const DeepCollectionEquality().equals(other._filters, _filters)&&(identical(other.selectedFilter, selectedFilter) || other.selectedFilter == selectedFilter)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository)&&const DeepCollectionEquality().equals(other._repositories, _repositories));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository)&&const DeepCollectionEquality().equals(other._repositories, _repositories));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,const DeepCollectionEquality().hash(_filters),selectedFilter,currentRepository,const DeepCollectionEquality().hash(_repositories));
+int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,currentRepository,const DeepCollectionEquality().hash(_repositories));
 
 @override
 String toString() {
-  return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, filters: $filters, selectedFilter: $selectedFilter, currentRepository: $currentRepository, repositories: $repositories)';
+  return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, currentRepository: $currentRepository, repositories: $repositories)';
 }
 
 
@@ -523,11 +501,11 @@ abstract mixin class _$SettingsCopyWith<$Res> implements $SettingsCopyWith<$Res>
   factory _$SettingsCopyWith(_Settings value, $Res Function(_Settings) _then) = __$SettingsCopyWithImpl;
 @override @useResult
 $Res call({
- bool darkMode, bool periodicSync, List<Filter> filters, FilterSelection? selectedFilter, UuidValue? currentRepository, List<RepositorySpecification> repositories
+ bool darkMode, bool periodicSync, UuidValue? currentRepository, List<RepositorySpecification> repositories
 });
 
 
-@override $FilterSelectionCopyWith<$Res>? get selectedFilter;
+
 
 }
 /// @nodoc
@@ -540,31 +518,17 @@ class __$SettingsCopyWithImpl<$Res>
 
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? darkMode = null,Object? periodicSync = null,Object? filters = null,Object? selectedFilter = freezed,Object? currentRepository = freezed,Object? repositories = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? darkMode = null,Object? periodicSync = null,Object? currentRepository = freezed,Object? repositories = null,}) {
   return _then(_Settings(
 darkMode: null == darkMode ? _self.darkMode : darkMode // ignore: cast_nullable_to_non_nullable
 as bool,periodicSync: null == periodicSync ? _self.periodicSync : periodicSync // ignore: cast_nullable_to_non_nullable
-as bool,filters: null == filters ? _self._filters : filters // ignore: cast_nullable_to_non_nullable
-as List<Filter>,selectedFilter: freezed == selectedFilter ? _self.selectedFilter : selectedFilter // ignore: cast_nullable_to_non_nullable
-as FilterSelection?,currentRepository: freezed == currentRepository ? _self.currentRepository : currentRepository // ignore: cast_nullable_to_non_nullable
+as bool,currentRepository: freezed == currentRepository ? _self.currentRepository : currentRepository // ignore: cast_nullable_to_non_nullable
 as UuidValue?,repositories: null == repositories ? _self._repositories : repositories // ignore: cast_nullable_to_non_nullable
 as List<RepositorySpecification>,
   ));
 }
 
-/// Create a copy of Settings
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$FilterSelectionCopyWith<$Res>? get selectedFilter {
-    if (_self.selectedFilter == null) {
-    return null;
-  }
 
-  return $FilterSelectionCopyWith<$Res>(_self.selectedFilter!, (value) {
-    return _then(_self.copyWith(selectedFilter: value));
-  });
-}
 }
 
 // dart format on

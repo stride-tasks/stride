@@ -2469,7 +2469,6 @@ dependencies = [
  "stride_api",
  "stride_backend_git",
  "stride_core",
- "stride_crdt",
  "stride_database",
  "stride_engine",
  "stride_logging",

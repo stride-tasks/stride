@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/third_party/stride_core/event.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
-import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
-import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
 import 'package:stride/context.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
@@ -30,7 +25,7 @@ class _TaskRouteState extends State<TaskRoute> {
   List<(UuidValue, DateTime, TextEditingController)> annotations = [];
   List<UuidValue> depends = [];
   TaskPriority? priority;
-  List<Uda> udas = [];
+  List<TaskUda> udas = [];
 
   Future<Set<String>>? availableTags;
   Future<Set<String>>? availableProjects;
@@ -318,17 +313,17 @@ class _TaskRouteState extends State<TaskRoute> {
             child: SegmentedButton<TaskPriority>(
               segments: const <ButtonSegment<TaskPriority>>[
                 ButtonSegment<TaskPriority>(
-                  value: TaskPriority.h,
+                  value: TaskPriority.high,
                   icon: Icon(Icons.priority_high),
                   label: Text('High'),
                 ),
                 ButtonSegment<TaskPriority>(
-                  value: TaskPriority.m,
+                  value: TaskPriority.medium,
                   icon: Icon(Icons.density_medium),
                   label: Text('Medium'),
                 ),
                 ButtonSegment<TaskPriority>(
-                  value: TaskPriority.l,
+                  value: TaskPriority.low,
                   icon: Icon(Icons.low_priority),
                   label: Text('Low'),
                 ),
@@ -406,17 +401,17 @@ class _TaskRouteState extends State<TaskRoute> {
       return;
     }
 
-    final task = Task.raw(
+    final task = Task(
       id: widget.task?.id ?? UuidValue.fromString(const Uuid().v7()),
       entry: entry ?? DateTime.now().toUtc(),
       title: title,
       project: project,
       tags: _tags.toList(),
       due: due,
-      status: .pending,
+      status: widget.task?.status ?? TaskStatus.pending,
       annotations: annotations
-          .map<Annotation>(
-            (annotation) => Annotation(
+          .map<TaskAnnotation>(
+            (annotation) => TaskAnnotation(
               id: annotation.$1,
               entry: annotation.$2,
               text: annotation.$3.text,
@@ -430,15 +425,9 @@ class _TaskRouteState extends State<TaskRoute> {
 
     if (widget.task == null) {
       context.read<TaskBloc>().add(TaskAddEvent(task: task));
-      context.read<PluginManagerBloc>().emitHostEvent(
-        HostEvent.taskCreate(task: task),
-      );
     } else {
       context.read<TaskBloc>().add(
         TaskUpdateEvent(current: task, previous: widget.task),
-      );
-      context.read<PluginManagerBloc>().emitHostEvent(
-        HostEvent.taskModify(current: task, previous: widget.task),
       );
     }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/context.dart';
 import 'package:stride/routes/backend/config_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -10,11 +9,9 @@ import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
 
 class BackendListRoute extends StatefulWidget {
-  final Repository repository;
   final UuidValue repositoryUuid;
   const BackendListRoute({
     super.key,
-    required this.repository,
     required this.repositoryUuid,
   });
 
@@ -114,7 +111,6 @@ class _BackendListRouteState extends State<BackendListRoute> {
                 ],
               ),
               builder: (context) => BackendConfigRoute(
-                repository: widget.repository,
                 repositoryId: widget.repositoryUuid,
                 backendId: backend.id,
               ),

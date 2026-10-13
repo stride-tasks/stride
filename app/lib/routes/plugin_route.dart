@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intersperse/intersperse.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
-import 'package:stride/bridge/api/plugin.dart';
-import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class PluginRoute extends StatelessWidget {
@@ -21,9 +20,10 @@ class PluginRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = pluginInstanceManifestName(manifest: plugin);
-    final event = pluginInstanceManifestEvent(manifest: plugin);
-    final permission = pluginInstanceManifestPermission(manifest: plugin);
+    final manifest = plugin.manifest;
+    final name = manifest.name;
+    final event = manifest.event;
+    final permission = manifest.permission;
     return Scaffold(
       appBar: AppBar(title: const Text('Plugin')),
       body: SettingsList(
@@ -46,8 +46,8 @@ class PluginRoute extends StatelessWidget {
                 _manifestBoolField('task.create', event.task?.create),
               if (event.task?.modify ?? false)
                 _manifestBoolField('task.modify', event.task?.modify),
-              if (event.task?.sync_ ?? false)
-                _manifestBoolField('task.sync', event.task?.sync_),
+              if (event.task?.sync ?? false)
+                _manifestBoolField('task.sync', event.task?.sync),
             ],
           ),
           SettingsSection(
@@ -57,8 +57,8 @@ class PluginRoute extends StatelessWidget {
                 _manifestBoolField('task.create', permission.task?.create),
               if (permission.task?.modify ?? false)
                 _manifestBoolField('task.modify', permission.task?.modify),
-              if (permission.task?.sync_ ?? false)
-                _manifestBoolField('task.sync', permission.task?.sync_),
+              if (permission.task?.sync ?? false)
+                _manifestBoolField('task.sync', permission.task?.sync),
               if (permission.task?.query ?? false)
                 _manifestBoolField('task.query', permission.task?.query),
               if (permission.storage != null)
@@ -125,7 +125,9 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestStorageField(ManifestPermissionStorage storage) {
+  SettingsTile _manifestStorageField(
+    PluginManifestPermissionStorage storage,
+  ) {
     var size = storage.maxSize.toString();
     var unit = 'KB';
     if (storage.maxSize > 1024) {
@@ -157,7 +159,9 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestNetworkField(ManifestPermissionNetwork network) {
+  SettingsTile _manifestNetworkField(
+    PluginManifestPermissionNetwork network,
+  ) {
     final urls = network.urls
         .map(
           (url) => ListTile(

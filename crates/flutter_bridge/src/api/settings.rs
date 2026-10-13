@@ -8,10 +8,7 @@ use uuid::Uuid;
 
 use crate::{RustError, frb_generated::StreamSink};
 
-use super::{
-    error::SettingsError,
-    filter::{Filter, FilterSelection},
-};
+use super::error::SettingsError;
 
 use stride_backend_git::ssh_key::SshKey as InnerSshKey;
 
@@ -159,11 +156,6 @@ pub struct Settings {
     #[serde(default)]
     pub periodic_sync: bool,
 
-    #[serde(default)]
-    pub filters: Vec<Filter>,
-    #[serde(default)]
-    pub selected_filter: Option<FilterSelection>,
-
     /// The current selected repository.
     #[serde(default)]
     pub current_repository: Option<Uuid>,
@@ -177,8 +169,6 @@ impl Default for Settings {
         Self {
             dark_mode: default_theme_mode(),
             periodic_sync: false,
-            filters: Vec::default(),
-            selected_filter: None,
             current_repository: None,
             repositories: Vec::default(),
         }

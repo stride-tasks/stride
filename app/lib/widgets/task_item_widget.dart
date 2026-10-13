@@ -1,7 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
+import 'package:stride/api.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+double _urgency(Task task) {
+  const threeDaysInSeconds = 3 * 24 * 60 * 60;
+  var urgency = 0.0;
+
+  if (task.due case final due?) {
+    final seconds = due.difference(DateTime.now().toUtc()).inSeconds;
+    urgency += 1.0;
+    if (seconds < 0) {
+      urgency += 11.0;
+    } else if (seconds <= threeDaysInSeconds) {
+      urgency += seconds / threeDaysInSeconds * 11.0;
+    }
+  }
+
+  urgency += switch (task.priority) {
+    TaskPriority.high => 6.0,
+    TaskPriority.medium => 3.0,
+    TaskPriority.low => -3.0,
+    null => 0.0,
+  };
+  return urgency;
+}
 
 class TaskItem extends StatelessWidget {
   final Task task;
@@ -78,7 +101,7 @@ class TaskItem extends StatelessWidget {
       onLongPress: onLongPress,
       subtitle: subtitle,
       onTap: onTap,
-      trailing: Text(task.urgency().toStringAsFixed(2)),
+      trailing: Text(_urgency(task).toStringAsFixed(2)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
       leading: onTap == null ? null : const Icon(Icons.open_in_new),
     );
@@ -111,19 +134,19 @@ class TaskItem extends StatelessWidget {
       const borderWidth = 4.0;
       const borderRadius = BorderRadius.all(Radius.circular(5));
       final decoration = switch (task.priority!) {
-        TaskPriority.h => BoxDecoration(
+        TaskPriority.high => BoxDecoration(
           borderRadius: borderRadius,
           border: const Border(
             left: BorderSide(color: Colors.red, width: borderWidth),
           ),
         ),
-        TaskPriority.m => BoxDecoration(
+        TaskPriority.medium => BoxDecoration(
           borderRadius: borderRadius,
           border: const Border(
             left: BorderSide(color: Color(0xAAfd8c00), width: borderWidth),
           ),
         ),
-        TaskPriority.l => BoxDecoration(
+        TaskPriority.low => BoxDecoration(
           borderRadius: borderRadius,
           border: const Border(
             left: BorderSide(color: Colors.green, width: borderWidth),

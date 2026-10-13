@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/plugin_manager.dart' as pm;
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/context.dart';
@@ -55,7 +55,7 @@ Future<void> main() async {
   await Background.init();
   await NotificationService.init();
 
-  final plugins = await pm.pluginManifests();
+  final plugins = (await PluginListMethod().execute()).plugins;
   final pluginManagerState = PluginManagerState(plugins: plugins);
 
   runApp(MyApp(settings: settings, pluginManagerState: pluginManagerState));
@@ -93,7 +93,6 @@ class MyApp extends StatelessWidget {
           create: (context) => PluginManagerBloc(
             logBloc: context.read<LogBloc>(),
             state: pluginManagerState,
-            taskBloc: context.read<TaskBloc>(),
           ),
           lazy: false,
         ),
