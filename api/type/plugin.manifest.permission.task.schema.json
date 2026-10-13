@@ -5,6 +5,7 @@
     "required": [
         "create",
         "modify",
+        "remove",
         "query",
         "sync"
     ],
@@ -14,6 +15,10 @@
             "default": false
         },
         "modify": {
+            "type": "boolean",
+            "default": false
+        },
+        "remove": {
             "type": "boolean",
             "default": false
         },
