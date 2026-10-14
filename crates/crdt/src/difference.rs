@@ -1,6 +1,6 @@
 use std::{collections::HashSet, hash::Hash};
 
-use stride_core::task::{Annotation, Task};
+use stride_api::{Task, TaskAnnotation};
 use uuid::Uuid;
 
 use crate::change::{AnnotationOperation, Operation, TaskOperation};
@@ -43,7 +43,7 @@ pub fn push_task_diff_operations(
                 ops.push(Operation::new(
                     id,
                     TaskOperation::ModifyTitle {
-                        title: title.clone().into_boxed_str(),
+                        title: title.clone(),
                     },
                 ));
             }
@@ -51,7 +51,7 @@ pub fn push_task_diff_operations(
             ops.push(Operation::new(
                 id,
                 TaskOperation::ModifyTitle {
-                    title: title.clone().into_boxed_str(),
+                    title: title.clone(),
                 },
             ));
         }
@@ -124,7 +124,7 @@ pub fn push_task_diff_operations(
             ops.push(Operation::new(
                 id,
                 TaskOperation::ModifyProject {
-                    project: current.project.clone().map(Into::into),
+                    project: current.project.clone(),
                 },
             ));
         }
@@ -132,7 +132,7 @@ pub fn push_task_diff_operations(
             ops.push(Operation::new(
                 id,
                 TaskOperation::ModifyProject {
-                    project: current.project.clone().map(Into::into),
+                    project: current.project.clone(),
                 },
             ));
         }
@@ -162,12 +162,8 @@ pub fn push_task_diff_operations(
         Some(previous) if current.tags != previous.tags => {
             for (tag, ty) in difference_between(&previous.tags, &current.tags) {
                 let kind = match ty {
-                    DifferenceType::Addition => TaskOperation::AddTag {
-                        tag: tag.clone().into(),
-                    },
-                    DifferenceType::Deletion => TaskOperation::RemoveTag {
-                        tag: tag.clone().into(),
-                    },
+                    DifferenceType::Addition => TaskOperation::AddTag { tag: tag.clone() },
+                    DifferenceType::Deletion => TaskOperation::RemoveTag { tag: tag.clone() },
                 };
                 ops.push(Operation::new(id, kind));
             }
@@ -176,9 +172,7 @@ pub fn push_task_diff_operations(
             for tag in &current.tags {
                 ops.push(Operation::new(
                     id,
-                    TaskOperation::AddTag {
-                        tag: tag.clone().into(),
-                    },
+                    TaskOperation::AddTag { tag: tag.clone() },
                 ));
             }
         }
@@ -218,8 +212,8 @@ pub fn push_task_diff_operations(
 
 pub fn push_annotation_diff_operations(
     id: Uuid,
-    current: &[Annotation],
-    previous: &[Annotation],
+    current: &[TaskAnnotation],
+    previous: &[TaskAnnotation],
     ops: &mut Vec<Operation>,
 ) {
     for current_annotation in current {
@@ -237,7 +231,7 @@ pub fn push_annotation_diff_operations(
             ops.push(Operation::new(
                 current_annotation.id,
                 AnnotationOperation::ModifyText {
-                    text: current_annotation.text.clone().into_boxed_str(),
+                    text: current_annotation.text.clone(),
                 },
             ));
             continue;
@@ -255,7 +249,7 @@ pub fn push_annotation_diff_operations(
             ops.push(Operation::new(
                 current_annotation.id,
                 AnnotationOperation::ModifyText {
-                    text: current_annotation.text.clone().into_boxed_str(),
+                    text: current_annotation.text.clone(),
                 },
             ));
         }

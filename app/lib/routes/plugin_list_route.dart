@@ -1,12 +1,11 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/bridge/api/logging.dart' as logging;
-import 'package:stride/bridge/api/plugin.dart';
-import 'package:stride/bridge/api/plugin_manager.dart' as pm;
-import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/plugin_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -59,7 +58,9 @@ class PluginListRoute extends StatelessWidget {
             }
 
             final filepath = file.xFile.path;
-            final manifest = await pm.parsePlugin(filepath: filepath);
+            final manifest = (await PluginValidateMethod(
+              filePath: filepath,
+            ).execute()).plugin;
             if (context.mounted) {
               Navigator.of(context).push<void>(
                 MaterialPageRoute(
@@ -77,10 +78,13 @@ class PluginListRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _plugin(BuildContext context, PluginManifestPluginState plugin) {
-    final name = pluginInstanceManifestName(manifest: plugin);
-    final enabled = pluginInstanceManifestEnabled(manifest: plugin);
-    final reason = pluginInstanceManifestDisabledReason(manifest: plugin);
+  SettingsTile _plugin(BuildContext context, PluginManifestInstance plugin) {
+    final name = plugin.manifest.name;
+    final enabled = plugin.state is PluginState_Enable;
+    final reason = switch (plugin.state) {
+      PluginState_Disable(:final reason) => reason,
+      PluginState_Enable() => null,
+    };
     return SettingsTile(
       title: Text(name),
       leading: enabled

@@ -1,3 +1,5 @@
+use serde_json::Value;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Node {
     Type(TypeNode),
@@ -21,6 +23,7 @@ pub enum TypeNode {
 pub enum PrimitiveType {
     String,
     Uuid,
+    DateTime,
     Bytes,
     Uri,
     Integer,
@@ -43,6 +46,7 @@ pub struct FieldNode {
     pub typ: TypeNode,
     pub required: bool,
     pub description: Option<String>,
+    pub default: Option<Value>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -51,6 +55,7 @@ pub struct EnumNode {
     pub id: String,
     pub doc: Vec<String>,
     pub description: Option<String>,
+    pub default: Option<String>,
     /// Discriminant property name; set for tagged enums whose variants carry fields.
     pub tag: Option<String>,
     pub variants: Vec<EnumVariantNode>,

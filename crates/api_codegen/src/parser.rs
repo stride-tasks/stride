@@ -201,10 +201,30 @@ fn enum_type_from_variants(
     schema: &Schema,
     fallback_name: &str,
     variants: Vec<EnumVariantNode>,
-) -> TypeNode {
+) -> Result<TypeNode> {
     if variants.is_empty() {
-        return TypeNode::Primitive(PrimitiveType::String);
+        return Ok(TypeNode::Primitive(PrimitiveType::String));
     }
+
+    let default = match &schema.default {
+        Some(Value::String(value)) => {
+            if variants.iter().any(|variant| variant.value == *value) {
+                Some(value.clone())
+            } else {
+                return Err(Error::InvalidEnumDefault {
+                    type_name: fallback_name.to_owned(),
+                    value: value.clone(),
+                });
+            }
+        }
+        Some(value) => {
+            return Err(Error::UnsupportedDefault {
+                field: fallback_name.to_owned(),
+                value: value.clone(),
+            });
+        }
+        None => None,
+    };
 
     let mut doc = Vec::new();
     if let Some(title) = &schema.title {
@@ -224,11 +244,12 @@ fn enum_type_from_variants(
         id: schema.id.clone().unwrap_or_default(),
         doc,
         description: schema.description.clone(),
+        default,
         tag: None,
         variants,
     };
 
-    TypeNode::Enum(enum_node)
+    Ok(TypeNode::Enum(enum_node))
 }
 
 #[allow(clippy::too_many_lines)]
@@ -276,7 +297,7 @@ fn type_for_schema(
                             fields: Vec::new(),
                         })
                         .collect(),
-                )
+                )?
             }
             SchemaString::OneOf { one_of } if !one_of.is_empty() => enum_type_from_variants(
                 schema,
@@ -290,7 +311,7 @@ fn type_for_schema(
                         fields: Vec::new(),
                     })
                     .collect(),
-            ),
+            )?,
             SchemaString::Enum { .. } | SchemaString::OneOf { .. } => {
                 panic!("Enum or OneOf variant is empty: {fallback_name}");
             }
@@ -310,6 +331,8 @@ fn type_for_schema(
                         TypeNode::Primitive(PrimitiveType::Uuid)
                     } else if format.as_deref() == Some("uri") {
                         TypeNode::Primitive(PrimitiveType::Uri)
+                    } else if format.as_deref() == Some("date-time") {
+                        TypeNode::Primitive(PrimitiveType::DateTime)
                     } else {
                         TypeNode::Primitive(PrimitiveType::String)
                     }
@@ -375,12 +398,16 @@ fn type_for_schema(
             for (key, value) in properties {
                 let field_type =
                     type_for_schema(value, &append_type_name(&target_name, key), schemas_by_id)?;
+                if let Some(default) = &value.default {
+                    validate_field_default(key, &field_type, default)?;
+                }
 
                 fields.push(FieldNode {
                     name: key.clone(),
                     typ: field_type,
                     required: required.contains(key),
                     description: value.description.clone(),
+                    default: value.default.clone(),
                 });
             }
 
@@ -469,15 +496,20 @@ fn union_type(
                 .iter()
                 .filter(|(key, _)| **key != tag)
                 .map(|(key, field)| {
+                    let typ = type_for_schema(
+                        field,
+                        &append_type_name(&variant_prefix, key),
+                        schemas_by_id,
+                    )?;
+                    if let Some(default) = &field.default {
+                        validate_field_default(key, &typ, default)?;
+                    }
                     Ok(FieldNode {
                         name: key.clone(),
-                        typ: type_for_schema(
-                            field,
-                            &append_type_name(&variant_prefix, key),
-                            schemas_by_id,
-                        )?,
+                        typ,
                         required: base_required.contains(key) || variant.required.contains(key),
                         description: field.description.clone(),
+                        default: field.default.clone(),
                     })
                 })
                 .collect::<Result<Vec<_>>>()?;
@@ -496,9 +528,40 @@ fn union_type(
         id: schema.id.clone().unwrap_or_default(),
         doc: doc_lines(schema),
         description: schema.description.clone(),
+        default: None,
         tag: Some(tag),
         variants,
     }))
+}
+
+fn validate_field_default(field: &str, typ: &TypeNode, value: &Value) -> Result<()> {
+    if supports_field_default(typ, value) {
+        Ok(())
+    } else {
+        Err(Error::UnsupportedDefault {
+            field: field.to_owned(),
+            value: value.clone(),
+        })
+    }
+}
+
+fn supports_field_default(typ: &TypeNode, value: &Value) -> bool {
+    match typ {
+        TypeNode::Primitive(PrimitiveType::Boolean) => value.is_boolean(),
+        TypeNode::Primitive(PrimitiveType::Integer) => value.as_i64().is_some(),
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => value.as_u64().is_some(),
+        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().is_some(),
+        TypeNode::Primitive(PrimitiveType::String) => value.is_string(),
+        TypeNode::Array(inner) => value.as_array().is_some_and(|values| {
+            values
+                .iter()
+                .all(|value| supports_field_default(inner, value))
+        }),
+        TypeNode::Enum(enum_) => value
+            .as_str()
+            .is_some_and(|value| enum_.variants.iter().any(|variant| variant.value == value)),
+        _ => false,
+    }
 }
 
 fn root_method_name(schema: &Schema) -> Option<String> {

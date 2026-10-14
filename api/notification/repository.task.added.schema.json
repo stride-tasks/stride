@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/notification/repository.task.added.schema.json",
+    "title": "repository.task.added",
+    "description": "Emitted after a task is added to a repository.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "repository.task.added"
+        },
+        "params": {
+            "type": "object",
+            "required": [
+                "repository-id",
+                "task"
+            ],
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "UUID of the repository that received the task."
+                },
+                "task": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json",
+                    "description": "The task that was added."
+                }
+            }
+        }
+    }
+}

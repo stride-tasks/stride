@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/routes/backend/list_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -33,7 +32,6 @@ class RepositoryRoute extends StatelessWidget {
           }
           final repositorySpec = settings.repositories[repositoryIndex];
 
-          final repository = Repository.open(uuid: repositoryUuid);
           return SettingsList(
             sections: [
               SettingsSection(
@@ -74,10 +72,8 @@ class RepositoryRoute extends StatelessWidget {
                   SettingsTileNavigation(
                     leading: const Icon(Icons.backup),
                     title: const Text('Backends'),
-                    builder: (context) => BackendListRoute(
-                      repository: repository,
-                      repositoryUuid: repositorySpec.uuid,
-                    ),
+                    builder: (context) =>
+                        BackendListRoute(repositoryUuid: repositorySpec.uuid),
                   ),
                 ],
               ),

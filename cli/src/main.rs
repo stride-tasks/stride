@@ -2,29 +2,23 @@ use anyhow::{Context as AnyhowContext, bail};
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
+use serde_json::{Value, json};
 use std::{
     path::{Path, PathBuf},
     process::ExitCode,
     sync::Arc,
 };
-use stride_api as api;
+use stride_api::{self as api, Task, TaskPriority, TaskStatus};
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
-};
-use stride_core::{
-    event::{HostEvent, PluginEvent},
-    state::KnownPaths,
-    task::{Task, TaskPriority, TaskStatus},
 };
 use stride_crdt::{
     actor::ActorId,
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::{Backend, Engine};
-use stride_flutter_bridge::api::settings::{ApplicationPaths, RepositorySpecification, Settings};
+use stride_engine::{Backend, Engine, KnownPaths};
 use stride_logging::LogLevelGuard;
-use stride_plugin_manager::{PluginManager, manifest::PluginAction};
 use uuid::Uuid;
 
 use crate::{
@@ -54,6 +48,68 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
     }
 
     path.join(APPLICATION_ID)
+}
+
+fn load_settings(path: &Path) -> anyhow::Result<Value> {
+    let mut settings = if path.exists() {
+        serde_json::from_str(&std::fs::read_to_string(path)?)?
+    } else {
+        json!({})
+    };
+
+    if !settings.is_object() {
+        bail!("settings must be a JSON object");
+    }
+    if settings.get("repositories").is_none() {
+        settings["repositories"] = json!([]);
+    }
+    if settings
+        .get("repositories")
+        .is_some_and(|repositories| !repositories.is_array())
+    {
+        bail!("settings repositories must be a JSON array");
+    }
+
+    Ok(settings)
+}
+
+fn setting_uuid(settings: &Value, field: &str) -> anyhow::Result<Option<Uuid>> {
+    let Some(value) = settings.get(field) else {
+        return Ok(None);
+    };
+    if value.is_null() {
+        return Ok(None);
+    }
+
+    let value = value
+        .as_str()
+        .with_context(|| format!("settings field {field} must be a UUID string"))?;
+    Ok(Some(Uuid::parse_str(value).with_context(|| {
+        format!("settings field {field} contains an invalid UUID")
+    })?))
+}
+
+fn repository_uuid(repository: &Value) -> anyhow::Result<Uuid> {
+    let value = repository
+        .get("uuid")
+        .and_then(Value::as_str)
+        .context("repository is missing a valid UUID")?;
+    Uuid::parse_str(value).context("repository contains an invalid UUID")
+}
+
+fn first_repository_uuid(settings: &Value) -> anyhow::Result<Option<Uuid>> {
+    let Some(repositories) = settings.get("repositories") else {
+        return Ok(None);
+    };
+    let repositories = repositories
+        .as_array()
+        .context("settings repositories must be a JSON array")?;
+    repositories.first().map(repository_uuid).transpose()
+}
+
+fn save_settings(path: &Path, settings: &Value) -> anyhow::Result<()> {
+    std::fs::write(path, serde_json::to_vec_pretty(settings)?)?;
+    Ok(())
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -162,9 +218,9 @@ fn parse_task_modifications(modifiers: &[cli::TaskModifier]) -> anyhow::Result<T
             cli::TaskModifier::Priority(value) => {
                 modifications.priority = match value.as_str() {
                     "" => Some(None),
-                    "L" => Some(Some(TaskPriority::L)),
-                    "M" => Some(Some(TaskPriority::M)),
-                    "H" => Some(Some(TaskPriority::H)),
+                    "L" => Some(Some(TaskPriority::Low)),
+                    "M" => Some(Some(TaskPriority::Medium)),
+                    "H" => Some(Some(TaskPriority::High)),
                     _ => bail!("unknown priority: {value}"),
                 };
             }
@@ -204,18 +260,18 @@ fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bo
     }
 
     if let Some(new_project) = &modifications.project {
-        task.project.clone_from(new_project);
+        task.project = new_project.as_ref().map(|project| project.clone().into());
         modified = true;
     }
 
     for (remove, tag) in &modifications.tag_operations {
         if *remove {
-            if let Some(index) = task.tags.iter().position(|value| value == tag) {
+            if let Some(index) = task.tags.iter().position(|value| value.as_ref() == tag) {
                 task.tags.remove(index);
                 modified = true;
             }
-        } else if !task.tags.iter().any(|value| value == tag) {
-            task.tags.push(tag.clone());
+        } else if !task.tags.iter().any(|value| value.as_ref() == tag) {
+            task.tags.push(tag.clone().into());
             modified = true;
         }
     }
@@ -241,44 +297,34 @@ fn main() -> anyhow::Result<ExitCode> {
         Err(err) => return Err(err.into()),
     };
 
-    let mut settings = Settings::load(ApplicationPaths {
-        support_path: support_dir.to_string_lossy().to_string(),
-        cache_path: cache_dir.to_string_lossy().to_string(),
-        log_path: cache_dir
-            .join("logs")
-            .join("log.txt")
-            .to_string_lossy()
-            .to_string(),
-    })?;
-
+    std::fs::create_dir_all(support_dir.join(".ssh"))?;
     let known_paths = KnownPaths::new(support_dir.clone(), cache_dir.clone());
+    stride_logging::init(&known_paths.logs);
+    let settings_path = support_dir.join("settings.json");
+    let mut settings = load_settings(&settings_path)?;
 
-    let current_repository = settings.current_repository.or_else(|| {
-        settings
-            .repositories
-            .first()
-            .map(|repository| repository.uuid)
-    });
+    let current_repository = match setting_uuid(&settings, "current_repository")? {
+        Some(uuid) => Some(uuid),
+        None => first_repository_uuid(&settings)?,
+    };
 
     let current_repository = if let Some(uuid) = current_repository {
         uuid
     } else {
-        let repository = RepositorySpecification::default();
-        let uuid = repository.uuid;
+        let uuid = Uuid::now_v7();
         std::fs::create_dir_all(support_dir.join("repository").join(uuid.to_string()))?;
 
-        settings.repositories.push(repository);
-        settings.current_repository = Some(uuid);
-        Settings::save(settings.clone())?;
+        settings["repositories"]
+            .as_array_mut()
+            .context("settings repositories must be a JSON array")?
+            .push(json!({ "uuid": uuid, "name": "unnamed" }));
+        settings["current_repository"] = json!(uuid);
+        save_settings(&settings_path, &settings)?;
         uuid
     };
 
     let time_provider = Arc::new(SystemTimeProvider::default());
     let clock = Clock::new(time_provider);
-
-    let plugins_path = support_dir.join("plugins");
-    let mut plugin_manager = PluginManager::new(&plugins_path)?;
-    plugin_manager.load()?;
 
     // let repository_path = known_paths.repository_path(current_repository);
     let database_filepath = known_paths.database_filepath(current_repository);
@@ -288,7 +334,7 @@ fn main() -> anyhow::Result<ExitCode> {
     database.apply_migrations()?;
 
     let notifier = Box::new(CliNotifier);
-    let engine = Engine::builder(known_paths)
+    let engine = Engine::builder(known_paths)?
         .notifier(notifier)
         .insert_default_methods()
         .backend(GitBackend::handler())
@@ -348,64 +394,13 @@ fn main() -> anyhow::Result<ExitCode> {
                 content.split_whitespace().collect::<Vec<_>>().join(" ")
             };
 
-            let mut task = Task::new(title);
+            let mut task = Task::new(title.into());
             apply_modifications(&mut task, &modifications);
 
-            let event = HostEvent::TaskCreate {
-                task: Some(Box::new(task.clone())),
-            };
-
-            let mut transaction = database.transaction()?;
-            transaction.insert_task(&task)?;
-            transaction.commit()?;
-
-            plugin_manager.emit_event(None, &event)?;
-            while plugin_manager.process_host_event()? {}
-            while let Some(action) = plugin_manager.process_plugin_event() {
-                let (plugin_name, event) = match action {
-                    PluginAction::Event { plugin_name, event } => (plugin_name, event),
-                    PluginAction::Disable {
-                        plugin_name,
-                        reason,
-                    } => {
-                        log::error!("Disabling plugin {plugin_name}: {reason}");
-                        plugin_manager.disable(&plugin_name, Some(reason))?;
-                        continue;
-                    }
-                };
-
-                match event {
-                    PluginEvent::TaskCreate { task } => {
-                        let mut transaction = database.transaction()?;
-                        transaction.insert_task(&task)?;
-                        transaction.commit()?;
-                    }
-                    PluginEvent::TaskModify { mut task } => {
-                        let mut transaction = database.transaction()?;
-                        transaction.update_task_with(task.id, |_| {
-                            task.modified = Some(Utc::now());
-                            Ok(task)
-                        })?;
-                        transaction.commit()?;
-                    }
-                    PluginEvent::TaskSync => {
-                        engine.backends().sync_all(
-                            current_repository,
-                            &mut database,
-                            engine.known_paths(),
-                            &engine,
-                        )?;
-                    }
-                    PluginEvent::TaskQuery { query } => {
-                        let tasks = database.task_query(&query)?;
-                        plugin_manager
-                            .emit_event(Some(&plugin_name), &HostEvent::TaskQuery { tasks })?;
-                    }
-                    PluginEvent::NetworkRequest { ty, host } => {
-                        todo!("{:?}: {}", ty, host)
-                    }
-                }
-            }
+            engine.execute(api::RepositoryTaskAddMethod {
+                repository_id: current_repository,
+                task,
+            })?;
         }
         Mode::Done { id } => {
             let id = if let Ok(id) = id.parse::<Uuid>() {
@@ -463,7 +458,7 @@ fn main() -> anyhow::Result<ExitCode> {
             transaction.update_task_with(id, |mut task| {
                 let mut modified = apply_modifications(&mut task, &modifications);
                 if let Some(new_title) = new_title {
-                    task.title = Some(new_title);
+                    task.title = Some(new_title.into());
                     modified = true;
                 }
                 if modified {
@@ -557,31 +552,41 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!()
         }
         Mode::Repository { uuid } => {
-            let mut settings = Settings::get();
-            let repository = settings
-                .repositories
-                .iter()
-                .find(|repository| repository.uuid == uuid)
-                .context("Repository with specified uuid was not found")?;
-            println!("Switching to repository: {}", repository.name);
-            settings.current_repository = Some(uuid);
-            Settings::save(settings)?;
+            let repositories = settings
+                .get("repositories")
+                .and_then(Value::as_array)
+                .context("settings repositories must be a JSON array")?;
+            let mut repository = None;
+            for candidate in repositories {
+                if repository_uuid(candidate)? == uuid {
+                    repository = Some(candidate);
+                    break;
+                }
+            }
+            let repository = repository.context("Repository with specified uuid was not found")?;
+            let name = repository
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or("unnamed");
+            println!("Switching to repository: {name}");
+            settings["current_repository"] = json!(uuid);
+            save_settings(&settings_path, &settings)?;
         }
         Mode::Backend { command } => {
             backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;
         }
         Mode::Plugin { command } => match command {
             None => {
-                for plugin in plugin_manager.list() {
-                    println!("{}", plugin.manifest.name);
+                for plugin in engine.lock_plugin_manager().list() {
+                    println!("{}", plugin.instance.manifest.name);
                 }
             }
             Some(command) => match command {
                 cli::PluginCommand::Import { filepath } => {
-                    plugin_manager.import(&filepath)?;
+                    engine.lock_plugin_manager().import(&filepath)?;
                 }
                 cli::PluginCommand::Toggle { plugin_name } => {
-                    plugin_manager.toggle(&plugin_name)?;
+                    engine.lock_plugin_manager().toggle(&plugin_name)?;
                 }
             },
         },
@@ -633,6 +638,8 @@ fn main() -> anyhow::Result<ExitCode> {
             println!("{result}");
         }
     }
+
+    engine.wait_for_plugin_messages()?;
 
     Ok(ExitCode::SUCCESS)
 }

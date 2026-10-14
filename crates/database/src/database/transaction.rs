@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use indoc::{concatdoc, indoc};
 use rusqlite::OptionalExtension;
-use stride_api as api;
-use stride_core::task::Task;
+use stride_api::{self as api, Task};
 use stride_crdt::{
     actor::{Actor, ActorId},
     change::{

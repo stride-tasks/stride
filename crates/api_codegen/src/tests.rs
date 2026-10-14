@@ -38,6 +38,193 @@ fn generates_empty_object_as_struct() {
 }
 
 #[test]
+fn generates_defaults_for_one_of_string_types() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_enum_default_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("manifest.api.schema.json"),
+        r#"{
+            "type": "string",
+            "default": "v1",
+            "oneOf": [
+                { "const": "v1", "description": "Version 1." }
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(
+        rust.contains("serde::Deserialize, Default)]"),
+        "output was:\n{rust}"
+    );
+    assert!(rust.contains("#[default]"), "output was:\n{rust}");
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(
+        dart.contains("static const defaultValue = ManifestApi.v1;"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn rejects_one_of_enum_default_that_is_not_a_variant() {
+    let error = generate_with_schema(
+        r#"{
+            "type": "string",
+            "default": "v2",
+            "oneOf": [{ "const": "v1" }]
+        }"#,
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(
+            error,
+            Error::InvalidEnumDefault { ref type_name, ref value }
+                if type_name == "Generated" && value == "v2"
+        ),
+        "unexpected error: {error}"
+    );
+}
+
+#[test]
+fn generates_field_defaults_for_rust_and_dart() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_defaults_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "create": { "type": "boolean", "default": false },
+                "enabled": { "type": "boolean", "default": true }
+            },
+            "required": ["create", "enabled"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(rust.contains("#[serde(default)]"), "output was:\n{rust}");
+    assert!(
+        rust.contains("impl Default for Generated"),
+        "output was:\n{rust}"
+    );
+    assert!(rust.contains("create: false,"), "output was:\n{rust}");
+    assert!(rust.contains("enabled: true,"), "output was:\n{rust}");
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("@Default(false)"), "output was:\n{dart}");
+    assert!(dart.contains("@Default(true)"), "output was:\n{dart}");
+    assert!(
+        dart.contains("@JsonKey(name: 'create') bool create,"),
+        "output was:\n{dart}"
+    );
+    assert!(
+        !dart.contains("required bool create"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn rejects_defaults_that_cannot_be_generated() {
+    let error = generate_with_schema(
+        r#"{
+            "type": "object",
+            "properties": {
+                "values": { "type": "object", "properties": {}, "default": {} }
+            }
+        }"#,
+    )
+    .unwrap_err();
+
+    assert!(
+        matches!(error, Error::UnsupportedDefault { ref field, .. } if field == "values"),
+        "unexpected error: {error}"
+    );
+}
+
+#[test]
+fn generates_empty_array_defaults_for_rust_and_dart() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_array_defaults_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uri" },
+                    "default": []
+                }
+            },
+            "required": ["urls"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(rust.contains("urls: vec![],"), "output was:\n{rust}");
+    assert!(
+        rust.contains("fn __serde_default_0() -> Vec<url::Url>"),
+        "output was:\n{rust}"
+    );
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(
+        dart.contains("@Default(const <Uri>[])"),
+        "output was:\n{dart}"
+    );
+    assert!(
+        dart.contains("@JsonKey(name: 'urls') List<Uri> urls,"),
+        "output was:\n{dart}"
+    );
+}
+
+#[test]
+fn generates_field_level_serde_defaults_without_struct_default_impl() {
+    let rust = generate_with_schema(
+        r#"{
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "name": { "type": "string" }
+            },
+            "required": ["enabled", "name"]
+        }"#,
+    )
+    .unwrap();
+
+    assert!(
+        rust.contains("#[serde(default = \"Generated::__serde_default_0\")]"),
+        "output was:\n{rust}"
+    );
+    assert!(
+        rust.contains("fn __serde_default_0() -> bool"),
+        "output was:\n{rust}"
+    );
+    assert!(
+        !rust.contains("impl Default for Generated"),
+        "output was:\n{rust}"
+    );
+    assert!(!rust.contains("#[serde(default)]"), "output was:\n{rust}");
+}
+
+#[test]
 fn generates_schema_additional_properties_as_a_typed_map() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -379,9 +566,17 @@ fn generates_uuid_as_uuid_value_in_dart() {
             "type": "object",
             "properties": {
                 "uuid": { "type": "string", "format": "uuid" },
+                "related": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uuid" }
+                },
+                "optional-related": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uuid" }
+                },
                 "name": { "type": "string" }
             },
-            "required": ["uuid", "name"]
+            "required": ["uuid", "related", "name"]
         }"#,
     )
     .unwrap();
@@ -390,8 +585,50 @@ fn generates_uuid_as_uuid_value_in_dart() {
 
     assert!(output.contains("import 'package:uuid/uuid.dart';"));
     assert!(output.contains("UuidValue uuid"));
+    assert!(output.contains("@UuidValueListJsonConverter()"));
+    assert!(output.contains("List<UuidValue> related"));
+    assert!(output.contains("JsonConverter<List<UuidValue>, List<dynamic>>"));
+    assert!(output.contains("List<UuidValue> fromJson(List<dynamic> json)"));
+    assert!(output.contains("@NullableUuidValueListJsonConverter()"));
     assert!(output.contains("@UuidValueJsonConverter()"));
+    assert!(output.contains("List<UuidValue>? optionalRelated"));
     assert!(!output.contains("String uuid"));
+}
+
+#[test]
+fn generates_date_time_as_chrono_and_dart_datetime() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("stride_api_codegen_date_time_{unique}"));
+    fs::create_dir_all(dir.join("type")).unwrap();
+    fs::write(
+        dir.join("type").join("generated.schema.json"),
+        r#"{
+            "type": "object",
+            "properties": {
+                "created": { "type": "string", "format": "date-time" },
+                "updated": { "type": "string", "format": "date-time" }
+            },
+            "required": ["created"]
+        }"#,
+    )
+    .unwrap();
+
+    let rust = generate_rust(&dir).unwrap();
+    assert!(
+        rust.contains("pub created: chrono::DateTime<chrono::Utc>"),
+        "output was:\n{rust}"
+    );
+    assert!(
+        rust.contains("pub updated: Option<chrono::DateTime<chrono::Utc>>"),
+        "output was:\n{rust}"
+    );
+
+    let dart = generate_dart(&dir).unwrap();
+    assert!(dart.contains("DateTime created"), "output was:\n{dart}");
+    assert!(dart.contains("DateTime? updated"), "output was:\n{dart}");
 }
 
 #[test]

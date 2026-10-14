@@ -11,12 +11,11 @@ use std::{
 };
 
 use stride_api::{Config, ConfigSchema};
-use stride_core::state::KnownPaths;
 use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
 
-use crate::{Engine, Result};
+use crate::{Engine, KnownPaths, Result};
 
 pub(crate) mod registry;
 

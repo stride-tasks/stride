@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chrono::Utc;
 use stride_api::Config;
 use uuid::Uuid;
 
@@ -219,5 +220,95 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
         let projects = repository.lock_database().used_projects()?;
 
         Ok(crate::api::RepositoryProjectListMethodResult { projects })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskAddHandler;
+
+impl TypedCommandHandler for RepositoryTaskAddHandler {
+    type Method = crate::api::RepositoryTaskAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskAddMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let mut database = repository.lock_database();
+        let mut transaction = database.transaction()?;
+        transaction.insert_task(&method.task)?;
+        transaction.commit()?;
+        drop(database);
+
+        engine.notify(Box::new(crate::api::RepositoryTaskAddedNotification {
+            repository_id: method.repository_id,
+            task: method.task,
+        }))?;
+
+        Ok(crate::api::RepositoryTaskAddMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskUpdateHandler;
+
+impl TypedCommandHandler for RepositoryTaskUpdateHandler {
+    type Method = crate::api::RepositoryTaskUpdateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskUpdateMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let mut task = method.task;
+        task.modified = Some(Utc::now());
+
+        let mut database = repository.lock_database();
+        let mut transaction = database.transaction()?;
+        transaction.update_task_with(task.id, |_| Ok(task))?;
+        transaction.commit()?;
+
+        Ok(crate::api::RepositoryTaskUpdateMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskRemoveHandler;
+
+impl TypedCommandHandler for RepositoryTaskRemoveHandler {
+    type Method = crate::api::RepositoryTaskRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskRemoveMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let mut database = repository.lock_database();
+        let mut transaction = database.transaction()?;
+        transaction.delete_task(method.task_id)?;
+        transaction.commit()?;
+
+        Ok(crate::api::RepositoryTaskRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryTaskQueryHandler;
+
+impl TypedCommandHandler for RepositoryTaskQueryHandler {
+    type Method = crate::api::RepositoryTaskQueryMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryTaskQueryMethodResult> {
+        let repository = engine.open_repository(method.repository_id)?;
+        let tasks = repository.lock_database().task_query(&method.query)?;
+
+        Ok(crate::api::RepositoryTaskQueryMethodResult { tasks })
     }
 }

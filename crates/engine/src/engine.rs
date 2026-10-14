@@ -4,15 +4,16 @@ use std::{
 };
 
 use stride_api as api;
-use stride_core::state::KnownPaths;
+use stride_plugin_manager::PluginManager;
 use uuid::Uuid;
 
 use crate::{
-    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier,
-    Repository, Result, cache::Cache,
+    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, KnownPaths,
+    Notifier, Repository, Result, cache::Cache,
 };
 
 pub(super) mod builder;
+pub(super) mod plugin;
 
 #[derive(Debug)]
 pub struct Engine {
@@ -21,25 +22,50 @@ pub struct Engine {
     commands: CommandRegistry,
     backends: BackendRegistry,
     repositories: Mutex<Cache<Repository>>,
+    plugins: plugin::PluginRuntime,
 }
 
 impl Engine {
     #[must_use]
     pub fn new(known_paths: KnownPaths, notifier: Box<dyn Notifier>) -> Arc<Self> {
-        Arc::new(Self {
+        Self::with_plugin_manager(
             known_paths,
             notifier,
-            commands: CommandRegistry::default(),
-            backends: BackendRegistry::default(),
+            CommandRegistry::default(),
+            BackendRegistry::default(),
+            PluginManager::default(),
+        )
+    }
+
+    pub(crate) fn with_plugin_manager(
+        known_paths: KnownPaths,
+        notifier: Box<dyn Notifier>,
+        commands: CommandRegistry,
+        backends: BackendRegistry,
+        plugin_manager: PluginManager,
+    ) -> Arc<Self> {
+        let (plugins, worker) = plugin::PluginRuntime::new(plugin_manager);
+        let engine = Arc::new(Self {
+            known_paths,
+            notifier,
+            commands,
+            backends,
             repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
-        })
+            plugins,
+        });
+
+        plugin::PluginRuntime::start_worker(&engine, worker);
+
+        engine
     }
 }
 
 impl Engine {
     /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
-    #[must_use]
-    pub fn builder(known_paths: KnownPaths) -> EngineBuilder {
+    /// # Errors
+    ///
+    /// Returns an error if the plugin directory cannot be loaded.
+    pub fn builder(known_paths: KnownPaths) -> Result<EngineBuilder> {
         EngineBuilder::new(known_paths)
     }
 
@@ -49,13 +75,29 @@ impl Engine {
     ///
     /// Returns an error if the notification could not be sent for any reason.
     pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
+        self.plugins
+            .notify(notification.name(), notification.to_value())?;
+
         self.clone().notifier.notify(self, notification)
+    }
+
+    /// Wait until all queued plugin notifications and resulting method calls finish.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the plugin worker has stopped before draining its queue.
+    pub fn wait_for_plugin_messages(self: &Arc<Self>) -> Result<()> {
+        self.plugins.wait_for_messages()
     }
 
     pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
         self.repositories
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    pub fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
+        self.plugins.lock_manager()
     }
 
     /// Open a repository instance and cache it for one minute of inactivity.

@@ -36,6 +36,32 @@ class NullableUuidValueJsonConverter implements JsonConverter<UuidValue?, String
   String? toJson(UuidValue? object) => object?.uuid;
 }
 
+class UuidValueListJsonConverter implements JsonConverter<List<UuidValue>, List<dynamic>> {
+  const UuidValueListJsonConverter();
+
+  @override
+  List<UuidValue> fromJson(List<dynamic> json) =>
+      json.map((value) => UuidValue.fromString(value as String)).toList();
+
+  @override
+  List<String> toJson(List<UuidValue> object) =>
+      object.map((value) => value.uuid).toList();
+}
+
+class NullableUuidValueListJsonConverter
+    implements JsonConverter<List<UuidValue>?, List<dynamic>?> {
+  const NullableUuidValueListJsonConverter();
+
+  @override
+  List<UuidValue>? fromJson(List<dynamic>? json) => json
+      ?.map((value) => UuidValue.fromString(value as String))
+      .toList();
+
+  @override
+  List<dynamic>? toJson(List<UuidValue>? object) =>
+      object?.map((value) => value.uuid).toList();
+}
+
 class Base64BytesJsonConverter implements JsonConverter<Uint8List, String> {
   const Base64BytesJsonConverter();
 
@@ -361,12 +387,28 @@ fn render_factory_params(fields: &[FieldNode]) -> Vec<String> {
         } else {
             format!("{field_type}?")
         };
+        let default = field
+            .default
+            .as_ref()
+            .and_then(|default| dart_default_value(&field.typ, default));
+        if let Some(default) = &default {
+            lines.push(format!("    @Default({default})"));
+        }
         match &field.typ {
             TypeNode::Primitive(PrimitiveType::Uuid) if field.required => {
                 lines.push("    @UuidValueJsonConverter()".to_owned());
             }
             TypeNode::Primitive(PrimitiveType::Uuid) => {
                 lines.push("    @NullableUuidValueJsonConverter()".to_owned());
+            }
+            TypeNode::Array(inner)
+                if matches!(inner.as_ref(), TypeNode::Primitive(PrimitiveType::Uuid)) =>
+            {
+                if field.required {
+                    lines.push("    @UuidValueListJsonConverter()".to_owned());
+                } else {
+                    lines.push("    @NullableUuidValueListJsonConverter()".to_owned());
+                }
             }
             TypeNode::Primitive(PrimitiveType::Bytes) if field.required => {
                 lines.push("    @Base64BytesJsonConverter()".to_owned());
@@ -379,10 +421,59 @@ fn render_factory_params(fields: &[FieldNode]) -> Vec<String> {
 
         lines.push(format!(
             "    @JsonKey(name: '{json_name}') {}{dart_type} {field_name},",
-            if field.required { "required " } else { "" }
+            if field.required && default.is_none() {
+                "required "
+            } else {
+                ""
+            }
         ));
     }
     lines
+}
+
+fn dart_default_value(typ: &TypeNode, value: &serde_json::Value) -> Option<String> {
+    match typ {
+        TypeNode::Primitive(PrimitiveType::Boolean) => {
+            value.as_bool().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::Integer) => {
+            value.as_i64().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => {
+            value.as_u64().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().map(|value| {
+            let value = value.to_string();
+            if value.contains(['.', 'e', 'E']) {
+                value
+            } else {
+                format!("{value}.0")
+            }
+        }),
+        TypeNode::Primitive(PrimitiveType::String) => value
+            .as_str()
+            .and_then(|value| serde_json::to_string(value).ok()),
+        TypeNode::Array(inner) => value.as_array().and_then(|values| {
+            values
+                .iter()
+                .map(|value| dart_default_value(inner, value))
+                .collect::<Option<Vec<_>>>()
+                .map(|values| format!("const <{}>[{}]", render_type_node(inner), values.join(", ")))
+        }),
+        TypeNode::Enum(enum_) => {
+            let value = value.as_str()?;
+            let variant = enum_
+                .variants
+                .iter()
+                .find(|variant| variant.value == value)?;
+            Some(format!(
+                "{}.{}",
+                enum_.name,
+                dart_variant_name(&variant.name)
+            ))
+        }
+        _ => None,
+    }
 }
 
 /// Renders a tagged enum as a Freezed union keyed by the discriminant property.
@@ -487,6 +578,19 @@ fn render_enum(this: &EnumNode) -> String {
         lines.push(format!("  @JsonValue({json_value}) {variant_name};"));
     }
 
+    if let Some(default) = &this.default {
+        let variant = this
+            .variants
+            .iter()
+            .find(|variant| &variant.value == default)
+            .expect("enum defaults are validated during parsing");
+        lines.push(format!(
+            "  static const defaultValue = {}.{};",
+            this.name,
+            dart_variant_name(&variant.name)
+        ));
+    }
+
     lines.push(String::new());
     lines.push(format!(
         "  dynamic toJson() => _${}EnumMap[this];",
@@ -540,6 +644,7 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "String".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "UuidValue".to_owned(),
+        TypeNode::Primitive(PrimitiveType::DateTime) => "DateTime".to_owned(),
         TypeNode::Primitive(PrimitiveType::Bytes) => "Uint8List".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uri) => "Uri".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer | PrimitiveType::UnsignedInteger) => {

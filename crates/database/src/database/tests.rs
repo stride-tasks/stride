@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use chrono::DateTime;
-use stride_core::task::{Task, TaskStatus};
+use stride_api::{Task, TaskStatus};
 use stride_crdt::{
     actor::ActorId,
     change::{Change, Operation, Sequence, TaskOperation},

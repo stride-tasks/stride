@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.event.task.schema.json",
+    "type": "object",
+    "required": [
+        "create",
+        "modify",
+        "sync"
+    ],
+    "properties": {
+        "create": {
+            "type": "boolean",
+            "default": false
+        },
+        "modify": {
+            "type": "boolean",
+            "default": false
+        },
+        "sync": {
+            "type": "boolean",
+            "default": false
+        }
+    }
+}

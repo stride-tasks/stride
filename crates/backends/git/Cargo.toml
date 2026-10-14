@@ -12,7 +12,6 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-stride_core.workspace = true
 stride_crdt = { workspace = true, features = ["serialize"] }
 stride_serialize.workspace = true
 stride_crypto.workspace = true

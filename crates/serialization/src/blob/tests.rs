@@ -1,4 +1,4 @@
-use stride_core::task::Date;
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use super::{FromBlob, ToBlob};
@@ -13,7 +13,7 @@ fn u8_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = u8::from_blob(&mut slice).unwrap();
     assert_eq!(value, 10);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -26,7 +26,7 @@ fn u32_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = u32::from_blob(&mut slice).unwrap();
     assert_eq!(value, u32::MAX);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -34,14 +34,14 @@ fn date_to_and_from_blob() {
     let mut blob = Vec::new();
 
     let timestamp = 10_000_000_000;
-    let date = Date::from_timestamp_micros(timestamp).unwrap();
+    let date = DateTime::<Utc>::from_timestamp_micros(timestamp).unwrap();
     date.to_blob(&mut blob);
     assert_eq!(blob, &[16, 0, 249, 2, 149]);
 
     let mut slice = &blob[..];
-    let value = Date::from_blob(&mut slice).unwrap();
+    let value = DateTime::<Utc>::from_blob(&mut slice).unwrap();
     assert_eq!(value, date);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn u8_slice_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <&[u8]>::from_blob(&mut slice).unwrap();
     assert_eq!(value, slice_value);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn str_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <&str>::from_blob(&mut slice).unwrap();
     assert_eq!(value, str);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn uuid_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = Uuid::from_blob(&mut slice).unwrap();
     assert_eq!(value, uuid);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn option_str_none_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <Option<&str>>::from_blob(&mut slice).unwrap();
     assert_eq!(value, str);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 #[test]
@@ -111,7 +111,7 @@ fn option_str_some_to_and_from_blob() {
     let mut slice = &blob[..];
     let value = <Option<&str>>::from_blob(&mut slice).unwrap();
     assert_eq!(value, str);
-    assert_eq!(slice, &[]);
+    assert_eq!(slice, &[0u8; 0]);
 }
 
 // TODO: Add tests for Operation

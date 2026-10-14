@@ -15,22 +15,13 @@ import 'dart:convert';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/api/context.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/git.dart';
 import 'package:stride/bridge/api/logging.dart';
-import 'package:stride/bridge/api/plugin.dart';
-import 'package:stride/bridge/api/plugin_manager.dart';
-import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
-import 'package:stride/bridge/third_party/stride_core/event.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
-import 'package:stride/bridge/third_party/stride_core/task/annotation.dart';
-import 'package:stride/bridge/third_party/stride_core/task/uda.dart';
-import 'package:stride/bridge/third_party/stride_plugin_manager/manifest.dart';
 import 'package:uuid/uuid.dart';
 
 /// Main entrypoint of the Rust API
@@ -86,7 +77,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -1543491573;
+  int get rustContentHash => 1104176444;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -97,58 +88,6 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  HostEvent strideCoreEventHostEventNetworkResponse({
-    required String host,
-    required List<int> content,
-  });
-
-  HostEvent strideCoreEventHostEventTaskCreate({Task? task});
-
-  HostEvent strideCoreEventHostEventTaskModify({Task? current, Task? previous});
-
-  HostEvent strideCoreEventHostEventTaskQuery({required List<Task> tasks});
-
-  HostEvent strideCoreEventHostEventTaskSync();
-
-  HostEvent strideCoreEventHostEventTimer({required int interval});
-
-  Future<List<Task>> crateApiRepositoryRepositoryAllTasks({
-    required Repository that,
-    required Filter filter,
-  });
-
-  Future<void> crateApiRepositoryRepositoryInsertTask({
-    required Repository that,
-    required Task task,
-  });
-
-  Repository crateApiRepositoryRepositoryOpen({required UuidValue uuid});
-
-  Future<Task?> crateApiRepositoryRepositoryPurgeTaskById({
-    required Repository that,
-    required UuidValue id,
-  });
-
-  Future<Task?> crateApiRepositoryRepositoryTaskById({
-    required Repository that,
-    required UuidValue id,
-  });
-
-  Future<List<Task>> crateApiRepositoryRepositoryTaskQuery({
-    required Repository that,
-    required TaskQuery query,
-  });
-
-  Future<List<Task>> crateApiRepositoryRepositoryTasksByStatus({
-    required Repository that,
-    required Set<TaskStatus> status,
-  });
-
-  Future<void> crateApiRepositoryRepositoryUpdateTask({
-    required Repository that,
-    required Task task,
-  });
-
   Host? crateApiErrorRustErrorAsUnknownHost({required RustError that});
 
   bool crateApiErrorRustErrorIsOutOfFuelTrapCode({required RustError that});
@@ -176,29 +115,11 @@ abstract class RustLibApi extends BaseApi {
 
   UuidValue crateApiSettingsSshKeyUuid({required SshKey that});
 
-  Future<Annotation> strideCoreTaskAnnotationAnnotationNow({
-    required String text,
-  });
-
   Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault();
 
   Stream<String> crateApiContextCreateContext();
 
-  Stream<void> crateApiPluginManagerCreateStream();
-
   Future<void> crateApiLoggingDebug({required String message});
-
-  Future<bool> crateApiPluginManagerDisable({
-    required String pluginName,
-    String? reason,
-  });
-
-  Future<void> crateApiPluginManagerEmit({
-    required HostEvent event,
-    required String pluginName,
-  });
-
-  Future<void> crateApiPluginManagerEmitBroadcast({required HostEvent event});
 
   Future<void> crateApiLoggingError({required String message});
 
@@ -207,13 +128,9 @@ abstract class RustLibApi extends BaseApi {
     required String args,
   });
 
-  Future<Filter> crateApiFilterFilterDefault();
-
   Future<String> crateApiLoggingGetLogs();
 
   String crateApiGitHostKeyTypeName({required HostKeyType keyType});
-
-  Future<void> crateApiPluginManagerImport({required String filepath});
 
   Future<void> crateApiLoggingInfo({required String message});
 
@@ -224,61 +141,6 @@ abstract class RustLibApi extends BaseApi {
   Future<void> strideBackendGitKnownHostsKnownHostsSave({
     required KnownHosts this_,
   });
-
-  Future<void> crateApiPluginManagerLoad({required String pluginPath});
-
-  Future<ManifestEvent> stridePluginManagerManifestManifestEventDefault();
-
-  Future<ManifestEventTask>
-  stridePluginManagerManifestManifestEventTaskDefault();
-
-  Future<ManifestEventTimer>
-  stridePluginManagerManifestManifestEventTimerDefault();
-
-  Future<ManifestPermission>
-  stridePluginManagerManifestManifestPermissionDefault();
-
-  Future<ManifestPermissionNetwork>
-  stridePluginManagerManifestManifestPermissionNetworkDefault();
-
-  Future<ManifestPermissionStorage>
-  stridePluginManagerManifestManifestPermissionStorageDefault();
-
-  Future<ManifestPermissionTask>
-  stridePluginManagerManifestManifestPermissionTaskDefault();
-
-  Future<PluginManifestPluginState> crateApiPluginManagerParsePlugin({
-    required String filepath,
-  });
-
-  String? crateApiPluginPluginInstanceManifestDisabledReason({
-    required PluginManifestPluginState manifest,
-  });
-
-  bool crateApiPluginPluginInstanceManifestEnabled({
-    required PluginManifestPluginState manifest,
-  });
-
-  ManifestEvent crateApiPluginPluginInstanceManifestEvent({
-    required PluginManifestPluginState manifest,
-  });
-
-  String crateApiPluginPluginInstanceManifestName({
-    required PluginManifestPluginState manifest,
-  });
-
-  ManifestPermission crateApiPluginPluginInstanceManifestPermission({
-    required PluginManifestPluginState manifest,
-  });
-
-  Future<List<PluginManifestPluginState>>
-  crateApiPluginManagerPluginManifests();
-
-  Future<bool> crateApiPluginManagerProcessHostEvent();
-
-  Future<PluginAction?> crateApiPluginManagerProcessPluginEvent();
-
-  Future<bool> crateApiPluginManagerRemove({required String pluginName});
 
   Future<RepositorySpecification>
   crateApiSettingsRepositorySpecificationDefault();
@@ -299,57 +161,9 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<SshKey>> crateApiSettingsSshKeys();
 
-  Future<Task> strideCoreTaskTaskDefault();
-
-  Task strideCoreTaskTaskNew({required String title});
-
-  Future<void> strideCoreTaskTaskPriorityAsStr({required TaskPriority that});
-
-  Future<TaskPriority> strideCoreTaskTaskPriorityDefault();
-
-  Future<TaskStatus> strideCoreTaskTaskStatusDefault();
-
-  Future<bool> strideCoreTaskTaskStatusIsPending({required TaskStatus that});
-
-  double strideCoreTaskTaskUrgency({required Task that});
-
-  Future<Task> strideCoreTaskTaskWithId({
-    required UuidValue id,
-    required String title,
-  });
-
-  Future<bool> crateApiPluginManagerToggle({required String pluginName});
-
   Future<void> crateApiLoggingTrace({required String message});
 
-  Future<Uda> strideCoreTaskUdaUdaDefault();
-
   Future<void> crateApiLoggingWarn({required String message});
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_HostEvent;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_HostEvent;
-
-  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_HostEventPtr;
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_PluginManifestPluginState;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_PluginManifestPluginState;
-
-  CrossPlatformFinalizerArg
-  get rust_arc_decrement_strong_count_PluginManifestPluginStatePtr;
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_Repository;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_Repository;
-
-  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RepositoryPtr;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_RustError;
@@ -375,467 +189,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  HostEvent strideCoreEventHostEventNetworkResponse({
-    required String host,
-    required List<int> content,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(host, serializer);
-          sse_encode_list_prim_u_8_loose(content, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreEventHostEventNetworkResponseConstMeta,
-        argValues: [host, content],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreEventHostEventNetworkResponseConstMeta =>
-      const TaskConstMeta(
-        debugName: 'HostEvent_network_response',
-        argNames: ['host', 'content'],
-      );
-
-  @override
-  HostEvent strideCoreEventHostEventTaskCreate({Task? task}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_opt_box_autoadd_task(task, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreEventHostEventTaskCreateConstMeta,
-        argValues: [task],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreEventHostEventTaskCreateConstMeta =>
-      const TaskConstMeta(
-        debugName: 'HostEvent_task_create',
-        argNames: ['task'],
-      );
-
-  @override
-  HostEvent strideCoreEventHostEventTaskModify({
-    Task? current,
-    Task? previous,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_opt_box_autoadd_task(current, serializer);
-          sse_encode_opt_box_autoadd_task(previous, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreEventHostEventTaskModifyConstMeta,
-        argValues: [current, previous],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreEventHostEventTaskModifyConstMeta =>
-      const TaskConstMeta(
-        debugName: 'HostEvent_task_modify',
-        argNames: ['current', 'previous'],
-      );
-
-  @override
-  HostEvent strideCoreEventHostEventTaskQuery({required List<Task> tasks}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_list_task(tasks, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreEventHostEventTaskQueryConstMeta,
-        argValues: [tasks],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreEventHostEventTaskQueryConstMeta =>
-      const TaskConstMeta(
-        debugName: 'HostEvent_task_query',
-        argNames: ['tasks'],
-      );
-
-  @override
-  HostEvent strideCoreEventHostEventTaskSync() {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreEventHostEventTaskSyncConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreEventHostEventTaskSyncConstMeta =>
-      const TaskConstMeta(debugName: 'HostEvent_task_sync', argNames: []);
-
-  @override
-  HostEvent strideCoreEventHostEventTimer({required int interval}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_u_32(interval, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreEventHostEventTimerConstMeta,
-        argValues: [interval],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreEventHostEventTimerConstMeta =>
-      const TaskConstMeta(debugName: 'HostEvent_timer', argNames: ['interval']);
-
-  @override
-  Future<List<Task>> crateApiRepositoryRepositoryAllTasks({
-    required Repository that,
-    required Filter filter,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_box_autoadd_filter(filter, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 7,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_task,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryAllTasksConstMeta,
-        argValues: [that, filter],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryAllTasksConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_all_tasks',
-        argNames: ['that', 'filter'],
-      );
-
-  @override
-  Future<void> crateApiRepositoryRepositoryInsertTask({
-    required Repository that,
-    required Task task,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_box_autoadd_task(task, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 8,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryInsertTaskConstMeta,
-        argValues: [that, task],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryInsertTaskConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_insert_task',
-        argNames: ['that', 'task'],
-      );
-
-  @override
-  Repository crateApiRepositoryRepositoryOpen({required UuidValue uuid}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Uuid(uuid, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryOpenConstMeta,
-        argValues: [uuid],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryOpenConstMeta =>
-      const TaskConstMeta(debugName: 'Repository_open', argNames: ['uuid']);
-
-  @override
-  Future<Task?> crateApiRepositoryRepositoryPurgeTaskById({
-    required Repository that,
-    required UuidValue id,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_Uuid(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 10,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_box_autoadd_task,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryPurgeTaskByIdConstMeta,
-        argValues: [that, id],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryPurgeTaskByIdConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_purge_task_by_id',
-        argNames: ['that', 'id'],
-      );
-
-  @override
-  Future<Task?> crateApiRepositoryRepositoryTaskById({
-    required Repository that,
-    required UuidValue id,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_Uuid(id, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 11,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_box_autoadd_task,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryTaskByIdConstMeta,
-        argValues: [that, id],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryTaskByIdConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_task_by_id',
-        argNames: ['that', 'id'],
-      );
-
-  @override
-  Future<List<Task>> crateApiRepositoryRepositoryTaskQuery({
-    required Repository that,
-    required TaskQuery query,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_box_autoadd_task_query(query, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 12,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_task,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryTaskQueryConstMeta,
-        argValues: [that, query],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryTaskQueryConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_task_query',
-        argNames: ['that', 'query'],
-      );
-
-  @override
-  Future<List<Task>> crateApiRepositoryRepositoryTasksByStatus({
-    required Repository that,
-    required Set<TaskStatus> status,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_Set_task_status_None(status, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 13,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_task,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryTasksByStatusConstMeta,
-        argValues: [that, status],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryTasksByStatusConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_tasks_by_status',
-        argNames: ['that', 'status'],
-      );
-
-  @override
-  Future<void> crateApiRepositoryRepositoryUpdateTask({
-    required Repository that,
-    required Task task,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-            that,
-            serializer,
-          );
-          sse_encode_box_autoadd_task(task, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 14,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiRepositoryRepositoryUpdateTaskConstMeta,
-        argValues: [that, task],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiRepositoryRepositoryUpdateTaskConstMeta =>
-      const TaskConstMeta(
-        debugName: 'Repository_update_task',
-        argNames: ['that', 'task'],
-      );
-
-  @override
   Host? crateApiErrorRustErrorAsUnknownHost({required RustError that}) {
     return handler.executeSync(
       SyncTask(
@@ -845,7 +198,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_host,
@@ -874,7 +227,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -903,7 +256,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
@@ -932,7 +285,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -960,7 +313,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 5,
             port: port_,
           );
         },
@@ -990,7 +343,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1016,7 +369,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 7,
             port: port_,
           );
         },
@@ -1049,7 +402,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 8,
             port: port_,
           );
         },
@@ -1087,7 +440,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 9,
             port: port_,
           );
         },
@@ -1120,7 +473,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_Uuid,
@@ -1137,36 +490,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'SshKey_uuid', argNames: ['that']);
 
   @override
-  Future<Annotation> strideCoreTaskAnnotationAnnotationNow({
-    required String text,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(text, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 25,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_annotation,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskAnnotationAnnotationNowConstMeta,
-        argValues: [text],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskAnnotationAnnotationNowConstMeta =>
-      const TaskConstMeta(debugName: 'annotation_now', argNames: ['text']);
-
-  @override
   Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault() {
     return handler.executeNormal(
       NormalTask(
@@ -1175,7 +498,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 11,
             port: port_,
           );
         },
@@ -1205,7 +528,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 27,
+              funcId: 12,
               port: port_,
             );
           },
@@ -1226,38 +549,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'create_context', argNames: ['stream']);
 
   @override
-  Stream<void> crateApiPluginManagerCreateStream() {
-    final stream = RustStreamSink<void>();
-    unawaited(
-      handler.executeNormal(
-        NormalTask(
-          callFfi: (port_) {
-            final serializer = SseSerializer(generalizedFrbRustBinding);
-            sse_encode_StreamSink_unit_Sse(stream, serializer);
-            pdeCallFfi(
-              generalizedFrbRustBinding,
-              serializer,
-              funcId: 28,
-              port: port_,
-            );
-          },
-          codec: SseCodec(
-            decodeSuccessData: sse_decode_unit,
-            decodeErrorData: null,
-          ),
-          constMeta: kCrateApiPluginManagerCreateStreamConstMeta,
-          argValues: [stream],
-          apiImpl: this,
-        ),
-      ),
-    );
-    return stream.stream;
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerCreateStreamConstMeta =>
-      const TaskConstMeta(debugName: 'create_stream', argNames: ['stream']);
-
-  @override
   Future<void> crateApiLoggingDebug({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -1267,7 +558,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 13,
             port: port_,
           );
         },
@@ -1286,110 +577,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'debug', argNames: ['message']);
 
   @override
-  Future<bool> crateApiPluginManagerDisable({
-    required String pluginName,
-    String? reason,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginName, serializer);
-          sse_encode_opt_String(reason, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 30,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerDisableConstMeta,
-        argValues: [pluginName, reason],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerDisableConstMeta =>
-      const TaskConstMeta(
-        debugName: 'disable',
-        argNames: ['pluginName', 'reason'],
-      );
-
-  @override
-  Future<void> crateApiPluginManagerEmit({
-    required HostEvent event,
-    required String pluginName,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-            event,
-            serializer,
-          );
-          sse_encode_String(pluginName, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 31,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerEmitConstMeta,
-        argValues: [event, pluginName],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerEmitConstMeta =>
-      const TaskConstMeta(debugName: 'emit', argNames: ['event', 'pluginName']);
-
-  @override
-  Future<void> crateApiPluginManagerEmitBroadcast({required HostEvent event}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-            event,
-            serializer,
-          );
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 32,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerEmitBroadcastConstMeta,
-        argValues: [event],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerEmitBroadcastConstMeta =>
-      const TaskConstMeta(debugName: 'emit_broadcast', argNames: ['event']);
-
-  @override
   Future<void> crateApiLoggingError({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -1399,7 +586,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 14,
             port: port_,
           );
         },
@@ -1431,7 +618,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 15,
             port: port_,
           );
         },
@@ -1451,33 +638,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'execute', argNames: ['method', 'args']);
 
   @override
-  Future<Filter> crateApiFilterFilterDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 35,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_filter,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiFilterFilterDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiFilterFilterDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'filter_default', argNames: []);
-
-  @override
   Future<String> crateApiLoggingGetLogs() {
     return handler.executeNormal(
       NormalTask(
@@ -1486,7 +646,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 16,
             port: port_,
           );
         },
@@ -1511,7 +671,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_host_key_type(keyType, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1530,35 +690,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  Future<void> crateApiPluginManagerImport({required String filepath}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(filepath, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 38,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerImportConstMeta,
-        argValues: [filepath],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerImportConstMeta =>
-      const TaskConstMeta(debugName: 'import', argNames: ['filepath']);
-
-  @override
   Future<void> crateApiLoggingInfo({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -1568,7 +699,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 18,
             port: port_,
           );
         },
@@ -1595,7 +726,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 40,
+            funcId: 19,
             port: port_,
           );
         },
@@ -1622,7 +753,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 41,
+            funcId: 20,
             port: port_,
           );
         },
@@ -1652,7 +783,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 42,
+            funcId: 21,
             port: port_,
           );
         },
@@ -1671,563 +802,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'known_hosts_save', argNames: ['this_']);
 
   @override
-  Future<void> crateApiPluginManagerLoad({required String pluginPath}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginPath, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 43,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerLoadConstMeta,
-        argValues: [pluginPath],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerLoadConstMeta =>
-      const TaskConstMeta(debugName: 'load', argNames: ['pluginPath']);
-
-  @override
-  Future<ManifestEvent> stridePluginManagerManifestManifestEventDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 44,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_event,
-          decodeErrorData: null,
-        ),
-        constMeta: kStridePluginManagerManifestManifestEventDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStridePluginManagerManifestManifestEventDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'manifest_event_default', argNames: []);
-
-  @override
-  Future<ManifestEventTask>
-  stridePluginManagerManifestManifestEventTaskDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 45,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_event_task,
-          decodeErrorData: null,
-        ),
-        constMeta:
-            kStridePluginManagerManifestManifestEventTaskDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kStridePluginManagerManifestManifestEventTaskDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'manifest_event_task_default',
-        argNames: [],
-      );
-
-  @override
-  Future<ManifestEventTimer>
-  stridePluginManagerManifestManifestEventTimerDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 46,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_event_timer,
-          decodeErrorData: null,
-        ),
-        constMeta:
-            kStridePluginManagerManifestManifestEventTimerDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kStridePluginManagerManifestManifestEventTimerDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'manifest_event_timer_default',
-        argNames: [],
-      );
-
-  @override
-  Future<ManifestPermission>
-  stridePluginManagerManifestManifestPermissionDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 47,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_permission,
-          decodeErrorData: null,
-        ),
-        constMeta:
-            kStridePluginManagerManifestManifestPermissionDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kStridePluginManagerManifestManifestPermissionDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'manifest_permission_default',
-        argNames: [],
-      );
-
-  @override
-  Future<ManifestPermissionNetwork>
-  stridePluginManagerManifestManifestPermissionNetworkDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 48,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_permission_network,
-          decodeErrorData: null,
-        ),
-        constMeta:
-            kStridePluginManagerManifestManifestPermissionNetworkDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kStridePluginManagerManifestManifestPermissionNetworkDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'manifest_permission_network_default',
-        argNames: [],
-      );
-
-  @override
-  Future<ManifestPermissionStorage>
-  stridePluginManagerManifestManifestPermissionStorageDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 49,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_permission_storage,
-          decodeErrorData: null,
-        ),
-        constMeta:
-            kStridePluginManagerManifestManifestPermissionStorageDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kStridePluginManagerManifestManifestPermissionStorageDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'manifest_permission_storage_default',
-        argNames: [],
-      );
-
-  @override
-  Future<ManifestPermissionTask>
-  stridePluginManagerManifestManifestPermissionTaskDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 50,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_permission_task,
-          decodeErrorData: null,
-        ),
-        constMeta:
-            kStridePluginManagerManifestManifestPermissionTaskDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kStridePluginManagerManifestManifestPermissionTaskDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'manifest_permission_task_default',
-        argNames: [],
-      );
-
-  @override
-  Future<PluginManifestPluginState> crateApiPluginManagerParsePlugin({
-    required String filepath,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(filepath, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 51,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerParsePluginConstMeta,
-        argValues: [filepath],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerParsePluginConstMeta =>
-      const TaskConstMeta(debugName: 'parse_plugin', argNames: ['filepath']);
-
-  @override
-  String? crateApiPluginPluginInstanceManifestDisabledReason({
-    required PluginManifestPluginState manifest,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-            manifest,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiPluginPluginInstanceManifestDisabledReasonConstMeta,
-        argValues: [manifest],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta
-  get kCrateApiPluginPluginInstanceManifestDisabledReasonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_disabled_reason',
-        argNames: ['manifest'],
-      );
-
-  @override
-  bool crateApiPluginPluginInstanceManifestEnabled({
-    required PluginManifestPluginState manifest,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-            manifest,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiPluginPluginInstanceManifestEnabledConstMeta,
-        argValues: [manifest],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginPluginInstanceManifestEnabledConstMeta =>
-      const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_enabled',
-        argNames: ['manifest'],
-      );
-
-  @override
-  ManifestEvent crateApiPluginPluginInstanceManifestEvent({
-    required PluginManifestPluginState manifest,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-            manifest,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_event,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiPluginPluginInstanceManifestEventConstMeta,
-        argValues: [manifest],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginPluginInstanceManifestEventConstMeta =>
-      const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_event',
-        argNames: ['manifest'],
-      );
-
-  @override
-  String crateApiPluginPluginInstanceManifestName({
-    required PluginManifestPluginState manifest,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-            manifest,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiPluginPluginInstanceManifestNameConstMeta,
-        argValues: [manifest],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginPluginInstanceManifestNameConstMeta =>
-      const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_name',
-        argNames: ['manifest'],
-      );
-
-  @override
-  ManifestPermission crateApiPluginPluginInstanceManifestPermission({
-    required PluginManifestPluginState manifest,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-            manifest,
-            serializer,
-          );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_manifest_permission,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiPluginPluginInstanceManifestPermissionConstMeta,
-        argValues: [manifest],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginPluginInstanceManifestPermissionConstMeta =>
-      const TaskConstMeta(
-        debugName: 'plugin_instance_manifest_permission',
-        argNames: ['manifest'],
-      );
-
-  @override
-  Future<List<PluginManifestPluginState>>
-  crateApiPluginManagerPluginManifests() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 57,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerPluginManifestsConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerPluginManifestsConstMeta =>
-      const TaskConstMeta(debugName: 'plugin_manifests', argNames: []);
-
-  @override
-  Future<bool> crateApiPluginManagerProcessHostEvent() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 58,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerProcessHostEventConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerProcessHostEventConstMeta =>
-      const TaskConstMeta(debugName: 'process_host_event', argNames: []);
-
-  @override
-  Future<PluginAction?> crateApiPluginManagerProcessPluginEvent() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 59,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_box_autoadd_plugin_action,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerProcessPluginEventConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerProcessPluginEventConstMeta =>
-      const TaskConstMeta(debugName: 'process_plugin_event', argNames: []);
-
-  @override
-  Future<bool> crateApiPluginManagerRemove({required String pluginName}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginName, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 60,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerRemoveConstMeta,
-        argValues: [pluginName],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerRemoveConstMeta =>
-      const TaskConstMeta(debugName: 'remove', argNames: ['pluginName']);
-
-  @override
   Future<RepositorySpecification>
   crateApiSettingsRepositorySpecificationDefault() {
     return handler.executeNormal(
@@ -2237,7 +811,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 61,
+            funcId: 22,
             port: port_,
           );
         },
@@ -2270,7 +844,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 62,
+              funcId: 23,
               port: port_,
             );
           },
@@ -2302,7 +876,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 63,
+            funcId: 24,
             port: port_,
           );
         },
@@ -2329,7 +903,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 64,
+            funcId: 25,
             port: port_,
           );
         },
@@ -2359,7 +933,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 65,
+            funcId: 26,
             port: port_,
           );
         },
@@ -2384,7 +958,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 66)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_settings,
@@ -2410,7 +984,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 67,
+            funcId: 28,
             port: port_,
           );
         },
@@ -2438,7 +1012,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 68,
+            funcId: 29,
             port: port_,
           );
         },
@@ -2459,256 +1033,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'ssh_keys', argNames: []);
 
   @override
-  Future<Task> strideCoreTaskTaskDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 69,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_task,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'task_default', argNames: []);
-
-  @override
-  Task strideCoreTaskTaskNew({required String title}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(title, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 70)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_task,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskNewConstMeta,
-        argValues: [title],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskNewConstMeta =>
-      const TaskConstMeta(debugName: 'task_new', argNames: ['title']);
-
-  @override
-  Future<void> strideCoreTaskTaskPriorityAsStr({required TaskPriority that}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_task_priority(that, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 71,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskPriorityAsStrConstMeta,
-        argValues: [that],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskPriorityAsStrConstMeta =>
-      const TaskConstMeta(
-        debugName: 'task_priority_as_str',
-        argNames: ['that'],
-      );
-
-  @override
-  Future<TaskPriority> strideCoreTaskTaskPriorityDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 72,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_task_priority,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskPriorityDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskPriorityDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'task_priority_default', argNames: []);
-
-  @override
-  Future<TaskStatus> strideCoreTaskTaskStatusDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 73,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_task_status,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskStatusDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskStatusDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'task_status_default', argNames: []);
-
-  @override
-  Future<bool> strideCoreTaskTaskStatusIsPending({required TaskStatus that}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_task_status(that, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 74,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskStatusIsPendingConstMeta,
-        argValues: [that],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskStatusIsPendingConstMeta =>
-      const TaskConstMeta(
-        debugName: 'task_status_is_pending',
-        argNames: ['that'],
-      );
-
-  @override
-  double strideCoreTaskTaskUrgency({required Task that}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_box_autoadd_task(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 75)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_f_32,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskUrgencyConstMeta,
-        argValues: [that],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskUrgencyConstMeta =>
-      const TaskConstMeta(debugName: 'task_urgency', argNames: ['that']);
-
-  @override
-  Future<Task> strideCoreTaskTaskWithId({
-    required UuidValue id,
-    required String title,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Uuid(id, serializer);
-          sse_encode_String(title, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 76,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_task,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskTaskWithIdConstMeta,
-        argValues: [id, title],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskTaskWithIdConstMeta =>
-      const TaskConstMeta(debugName: 'task_with_id', argNames: ['id', 'title']);
-
-  @override
-  Future<bool> crateApiPluginManagerToggle({required String pluginName}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(pluginName, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 77,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiPluginManagerToggleConstMeta,
-        argValues: [pluginName],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiPluginManagerToggleConstMeta =>
-      const TaskConstMeta(debugName: 'toggle', argNames: ['pluginName']);
-
-  @override
   Future<void> crateApiLoggingTrace({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -2718,7 +1042,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 78,
+            funcId: 30,
             port: port_,
           );
         },
@@ -2737,33 +1061,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'trace', argNames: ['message']);
 
   @override
-  Future<Uda> strideCoreTaskUdaUdaDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 79,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_uda,
-          decodeErrorData: null,
-        ),
-        constMeta: kStrideCoreTaskUdaUdaDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kStrideCoreTaskUdaUdaDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'uda_default', argNames: []);
-
-  @override
   Future<void> crateApiLoggingWarn({required String message}) {
     return handler.executeNormal(
       NormalTask(
@@ -2773,7 +1070,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 80,
+            funcId: 31,
             port: port_,
           );
         },
@@ -2790,30 +1087,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiLoggingWarnConstMeta =>
       const TaskConstMeta(debugName: 'warn', argNames: ['message']);
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_HostEvent => wire
-      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_HostEvent => wire
-      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent;
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_PluginManifestPluginState => wire
-      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_PluginManifestPluginState => wire
-      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState;
-
-  RustArcIncrementStrongCountFnType
-  get rust_arc_increment_strong_count_Repository => wire
-      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository;
-
-  RustArcDecrementStrongCountFnType
-  get rust_arc_decrement_strong_count_Repository => wire
-      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_RustError => wire
@@ -2838,35 +1111,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  HostEvent
-  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return HostEventImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
-  PluginManifestPluginState
-  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalDcoDecode(
-      raw as List<dynamic>,
-    );
-  }
-
-  @protected
-  Repository
-  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return RepositoryImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
   RustError
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
     dynamic raw,
@@ -2882,26 +1126,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return SshKeyImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
-  Repository
-  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return RepositoryImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
-  PluginManifestPluginState
-  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalDcoDecode(
-      raw as List<dynamic>,
-    );
   }
 
   @protected
@@ -2923,41 +1147,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime dco_decode_Chrono_Utc(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dcoDecodeTimestamp(ts: dco_decode_i_64(raw), isUtc: true);
-  }
-
-  @protected
-  HostEvent
-  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return HostEventImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
-  PluginManifestPluginState
-  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalDcoDecode(
-      raw as List<dynamic>,
-    );
-  }
-
-  @protected
-  Repository
-  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return RepositoryImpl.frbInternalDcoDecode(raw as List<dynamic>);
-  }
-
-  @protected
   RustError
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
     dynamic raw,
@@ -2976,12 +1165,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Set<TaskStatus> dco_decode_Set_task_status_None(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return Set.from(dco_decode_list_task_status(raw));
-  }
-
-  @protected
   RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
@@ -2989,12 +1172,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<Settings> dco_decode_StreamSink_settings_Sse(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    throw UnimplementedError();
-  }
-
-  @protected
-  RustStreamSink<void> dco_decode_StreamSink_unit_Sse(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
@@ -3009,19 +1186,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   UuidValue dco_decode_Uuid(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return UuidValue.fromByteList(dco_decode_list_prim_u_8_strict(raw));
-  }
-
-  @protected
-  Annotation dco_decode_annotation(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return Annotation(
-      id: dco_decode_Uuid(arr[0]),
-      entry: dco_decode_Chrono_Utc(arr[1]),
-      text: dco_decode_String(arr[2]),
-    );
   }
 
   @protected
@@ -3044,27 +1208,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime dco_decode_box_autoadd_Chrono_Utc(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_Chrono_Utc(raw);
-  }
-
-  @protected
   ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_application_paths(raw);
-  }
-
-  @protected
-  Filter dco_decode_box_autoadd_filter(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_filter(raw);
-  }
-
-  @protected
-  FilterSelection dco_decode_box_autoadd_filter_selection(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_filter_selection(raw);
   }
 
   @protected
@@ -3080,122 +1226,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  ManifestEventTask dco_decode_box_autoadd_manifest_event_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_manifest_event_task(raw);
-  }
-
-  @protected
-  ManifestEventTimer dco_decode_box_autoadd_manifest_event_timer(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_manifest_event_timer(raw);
-  }
-
-  @protected
-  ManifestPermissionNetwork dco_decode_box_autoadd_manifest_permission_network(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_manifest_permission_network(raw);
-  }
-
-  @protected
-  ManifestPermissionStorage dco_decode_box_autoadd_manifest_permission_storage(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_manifest_permission_storage(raw);
-  }
-
-  @protected
-  ManifestPermissionTask dco_decode_box_autoadd_manifest_permission_task(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_manifest_permission_task(raw);
-  }
-
-  @protected
-  PluginAction dco_decode_box_autoadd_plugin_action(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_plugin_action(raw);
-  }
-
-  @protected
-  PluginEvent dco_decode_box_autoadd_plugin_event(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_plugin_event(raw);
-  }
-
-  @protected
   Settings dco_decode_box_autoadd_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_settings(raw);
-  }
-
-  @protected
-  Task dco_decode_box_autoadd_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_task(raw);
-  }
-
-  @protected
-  TaskPriority dco_decode_box_autoadd_task_priority(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_task_priority(raw);
-  }
-
-  @protected
-  TaskQuery dco_decode_box_autoadd_task_query(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_task_query(raw);
-  }
-
-  @protected
-  TaskStatus dco_decode_box_autoadd_task_status(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_task_status(raw);
-  }
-
-  @protected
-  int dco_decode_box_autoadd_u_32(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw as int;
-  }
-
-  @protected
-  double dco_decode_f_32(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw as double;
-  }
-
-  @protected
-  Filter dco_decode_filter(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
-    return Filter(
-      uuid: dco_decode_Uuid(arr[0]),
-      name: dco_decode_String(arr[1]),
-      status: dco_decode_Set_task_status_None(arr[2]),
-      search: dco_decode_String(arr[3]),
-    );
-  }
-
-  @protected
-  FilterSelection dco_decode_filter_selection(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    switch (raw[0]) {
-      case 0:
-        return FilterSelection_Predefined(uuid: dco_decode_Uuid(raw[1]));
-      case 1:
-        return FilterSelection_Temporary(
-          filter: dco_decode_box_autoadd_filter(raw[1]),
-        );
-      default:
-        throw Exception('unreachable');
-    }
   }
 
   @protected
@@ -3224,31 +1257,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PlatformInt64 dco_decode_i_64(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dcoDecodeI64(raw);
-  }
-
-  @protected
   KnownHosts dco_decode_known_hosts(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
     if (arr.length != 1)
       throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
     return KnownHosts(hosts: dco_decode_list_host(arr[0]));
-  }
-
-  @protected
-  List<PluginManifestPluginState>
-  dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>)
-        .map(
-          dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState,
-        )
-        .toList();
   }
 
   @protected
@@ -3265,47 +1279,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<String> dco_decode_list_String(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_String).toList();
-  }
-
-  @protected
-  List<UuidValue> dco_decode_list_Uuid(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    const kUuidSizeInBytes = 16;
-    final bytes = dco_decode_list_prim_u_8_strict(raw);
-    return List.generate(
-      bytes.lengthInBytes ~/ kUuidSizeInBytes,
-      (i) => UuidValue.fromByteList(
-        Uint8List.view(bytes.buffer, i * kUuidSizeInBytes, kUuidSizeInBytes),
-      ),
-      growable: false,
-    );
-  }
-
-  @protected
-  List<Annotation> dco_decode_list_annotation(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_annotation).toList();
-  }
-
-  @protected
-  List<Filter> dco_decode_list_filter(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_filter).toList();
-  }
-
-  @protected
   List<Host> dco_decode_list_host(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_host).toList();
-  }
-
-  @protected
-  List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw as List<int>;
   }
 
   @protected
@@ -3325,113 +1301,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<Task> dco_decode_list_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_task).toList();
-  }
-
-  @protected
-  List<TaskStatus> dco_decode_list_task_status(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_task_status).toList();
-  }
-
-  @protected
-  List<Uda> dco_decode_list_uda(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_uda).toList();
-  }
-
-  @protected
-  ManifestEvent dco_decode_manifest_event(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return ManifestEvent(
-      task: dco_decode_opt_box_autoadd_manifest_event_task(arr[0]),
-      timer: dco_decode_opt_box_autoadd_manifest_event_timer(arr[1]),
-    );
-  }
-
-  @protected
-  ManifestEventTask dco_decode_manifest_event_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return ManifestEventTask(
-      create: dco_decode_bool(arr[0]),
-      modify: dco_decode_bool(arr[1]),
-      sync_: dco_decode_bool(arr[2]),
-    );
-  }
-
-  @protected
-  ManifestEventTimer dco_decode_manifest_event_timer(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1)
-      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return ManifestEventTimer(interval: dco_decode_u_32(arr[0]));
-  }
-
-  @protected
-  ManifestPermission dco_decode_manifest_permission(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return ManifestPermission(
-      task: dco_decode_opt_box_autoadd_manifest_permission_task(arr[0]),
-      network: dco_decode_opt_box_autoadd_manifest_permission_network(arr[1]),
-      storage: dco_decode_opt_box_autoadd_manifest_permission_storage(arr[2]),
-    );
-  }
-
-  @protected
-  ManifestPermissionNetwork dco_decode_manifest_permission_network(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1)
-      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return ManifestPermissionNetwork(urls: dco_decode_list_String(arr[0]));
-  }
-
-  @protected
-  ManifestPermissionStorage dco_decode_manifest_permission_storage(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1)
-      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return ManifestPermissionStorage(maxSize: dco_decode_u_32(arr[0]));
-  }
-
-  @protected
-  ManifestPermissionTask dco_decode_manifest_permission_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
-    return ManifestPermissionTask(
-      create: dco_decode_bool(arr[0]),
-      modify: dco_decode_bool(arr[1]),
-      query: dco_decode_bool(arr[2]),
-      sync_: dco_decode_bool(arr[3]),
-    );
-  }
-
-  @protected
-  NetworkRequestType dco_decode_network_request_type(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return NetworkRequestType.values[raw as int];
-  }
-
-  @protected
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
@@ -3444,144 +1313,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime? dco_decode_opt_box_autoadd_Chrono_Utc(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_Chrono_Utc(raw);
-  }
-
-  @protected
-  FilterSelection? dco_decode_opt_box_autoadd_filter_selection(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_filter_selection(raw);
-  }
-
-  @protected
   Host? dco_decode_opt_box_autoadd_host(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_host(raw);
-  }
-
-  @protected
-  ManifestEventTask? dco_decode_opt_box_autoadd_manifest_event_task(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_manifest_event_task(raw);
-  }
-
-  @protected
-  ManifestEventTimer? dco_decode_opt_box_autoadd_manifest_event_timer(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null
-        ? null
-        : dco_decode_box_autoadd_manifest_event_timer(raw);
-  }
-
-  @protected
-  ManifestPermissionNetwork?
-  dco_decode_opt_box_autoadd_manifest_permission_network(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null
-        ? null
-        : dco_decode_box_autoadd_manifest_permission_network(raw);
-  }
-
-  @protected
-  ManifestPermissionStorage?
-  dco_decode_opt_box_autoadd_manifest_permission_storage(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null
-        ? null
-        : dco_decode_box_autoadd_manifest_permission_storage(raw);
-  }
-
-  @protected
-  ManifestPermissionTask? dco_decode_opt_box_autoadd_manifest_permission_task(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null
-        ? null
-        : dco_decode_box_autoadd_manifest_permission_task(raw);
-  }
-
-  @protected
-  PluginAction? dco_decode_opt_box_autoadd_plugin_action(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_plugin_action(raw);
-  }
-
-  @protected
-  Task? dco_decode_opt_box_autoadd_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_task(raw);
-  }
-
-  @protected
-  TaskPriority? dco_decode_opt_box_autoadd_task_priority(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_task_priority(raw);
-  }
-
-  @protected
-  TaskStatus? dco_decode_opt_box_autoadd_task_status(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_task_status(raw);
-  }
-
-  @protected
-  int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
-  }
-
-  @protected
-  PluginAction dco_decode_plugin_action(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    switch (raw[0]) {
-      case 0:
-        return PluginAction_Event(
-          pluginName: dco_decode_String(raw[1]),
-          event: dco_decode_box_autoadd_plugin_event(raw[2]),
-        );
-      case 1:
-        return PluginAction_Disable(
-          pluginName: dco_decode_String(raw[1]),
-          reason: dco_decode_String(raw[2]),
-        );
-      default:
-        throw Exception('unreachable');
-    }
-  }
-
-  @protected
-  PluginEvent dco_decode_plugin_event(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    switch (raw[0]) {
-      case 0:
-        return PluginEvent_TaskCreate(
-          task: dco_decode_box_autoadd_task(raw[1]),
-        );
-      case 1:
-        return PluginEvent_TaskModify(
-          task: dco_decode_box_autoadd_task(raw[1]),
-        );
-      case 2:
-        return PluginEvent_TaskQuery(
-          query: dco_decode_box_autoadd_task_query(raw[1]),
-        );
-      case 3:
-        return PluginEvent_TaskSync();
-      case 4:
-        return PluginEvent_NetworkRequest(
-          ty: dco_decode_network_request_type(raw[1]),
-          host: dco_decode_String(raw[2]),
-        );
-      default:
-        throw Exception('unreachable');
-    }
   }
 
   @protected
@@ -3600,92 +1334,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
       periodicSync: dco_decode_bool(arr[1]),
-      filters: dco_decode_list_filter(arr[2]),
-      selectedFilter: dco_decode_opt_box_autoadd_filter_selection(arr[3]),
-      currentRepository: dco_decode_opt_Uuid(arr[4]),
-      repositories: dco_decode_list_repository_specification(arr[5]),
+      currentRepository: dco_decode_opt_Uuid(arr[2]),
+      repositories: dco_decode_list_repository_specification(arr[3]),
     );
-  }
-
-  @protected
-  Task dco_decode_task(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 13)
-      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
-    return Task.raw(
-      id: dco_decode_Uuid(arr[0]),
-      entry: dco_decode_opt_box_autoadd_Chrono_Utc(arr[1]),
-      status: dco_decode_opt_box_autoadd_task_status(arr[2]),
-      title: dco_decode_opt_String(arr[3]),
-      modified: dco_decode_opt_box_autoadd_Chrono_Utc(arr[4]),
-      due: dco_decode_opt_box_autoadd_Chrono_Utc(arr[5]),
-      project: dco_decode_opt_String(arr[6]),
-      tags: dco_decode_list_String(arr[7]),
-      annotations: dco_decode_list_annotation(arr[8]),
-      priority: dco_decode_opt_box_autoadd_task_priority(arr[9]),
-      wait: dco_decode_opt_box_autoadd_Chrono_Utc(arr[10]),
-      depends: dco_decode_list_Uuid(arr[11]),
-      udas: dco_decode_list_uda(arr[12]),
-    );
-  }
-
-  @protected
-  TaskPriority dco_decode_task_priority(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return TaskPriority.values[raw as int];
-  }
-
-  @protected
-  TaskQuery dco_decode_task_query(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    switch (raw[0]) {
-      case 0:
-        return TaskQuery_Uuid(uuid: dco_decode_Uuid(raw[1]));
-      case 1:
-        return TaskQuery_Title(
-          title: dco_decode_String(raw[1]),
-          status: dco_decode_Set_task_status_None(raw[2]),
-          limit: dco_decode_opt_box_autoadd_u_32(raw[3]),
-        );
-      default:
-        throw Exception('unreachable');
-    }
-  }
-
-  @protected
-  TaskStatus dco_decode_task_status(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return TaskStatus.values[raw as int];
-  }
-
-  @protected
-  int dco_decode_u_32(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw as int;
   }
 
   @protected
   int dco_decode_u_8(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
-  }
-
-  @protected
-  Uda dco_decode_uda(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return Uda(
-      key: dco_decode_String(arr[0]),
-      value: dco_decode_String(arr[1]),
-    );
   }
 
   @protected
@@ -3708,42 +1370,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  HostEvent
-  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return HostEventImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
-  PluginManifestPluginState
-  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
-  Repository
-  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return RepositoryImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
   RustError
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
     SseDeserializer deserializer,
@@ -3762,30 +1388,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return SshKeyImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
-  Repository
-  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return RepositoryImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
-  PluginManifestPluginState
-  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -3816,49 +1418,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime sse_decode_Chrono_Utc(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_64(deserializer);
-    return DateTime.fromMicrosecondsSinceEpoch(inner, isUtc: true);
-  }
-
-  @protected
-  HostEvent
-  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return HostEventImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
-  PluginManifestPluginState
-  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return PluginManifestPluginStateImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
-  Repository
-  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return RepositoryImpl.frbInternalSseDecode(
-      sse_decode_usize(deserializer),
-      sse_decode_i_32(deserializer),
-    );
-  }
-
-  @protected
   RustError
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
     SseDeserializer deserializer,
@@ -3883,15 +1442,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Set<TaskStatus> sse_decode_Set_task_status_None(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_list_task_status(deserializer);
-    return Set.from(inner);
-  }
-
-  @protected
   RustStreamSink<String> sse_decode_StreamSink_String_Sse(
     SseDeserializer deserializer,
   ) {
@@ -3901,14 +1451,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<Settings> sse_decode_StreamSink_settings_Sse(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    throw UnimplementedError('Unreachable ()');
-  }
-
-  @protected
-  RustStreamSink<void> sse_decode_StreamSink_unit_Sse(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -3927,15 +1469,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_list_prim_u_8_strict(deserializer);
     return UuidValue.fromByteList(inner);
-  }
-
-  @protected
-  Annotation sse_decode_annotation(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_id = sse_decode_Uuid(deserializer);
-    final var_entry = sse_decode_Chrono_Utc(deserializer);
-    final var_text = sse_decode_String(deserializer);
-    return Annotation(id: var_id, entry: var_entry, text: var_text);
   }
 
   @protected
@@ -3958,31 +1491,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime sse_decode_box_autoadd_Chrono_Utc(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_Chrono_Utc(deserializer);
-  }
-
-  @protected
   ApplicationPaths sse_decode_box_autoadd_application_paths(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_application_paths(deserializer);
-  }
-
-  @protected
-  Filter sse_decode_box_autoadd_filter(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_filter(deserializer);
-  }
-
-  @protected
-  FilterSelection sse_decode_box_autoadd_filter_selection(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_filter_selection(deserializer);
   }
 
   @protected
@@ -3998,135 +1511,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  ManifestEventTask sse_decode_box_autoadd_manifest_event_task(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_manifest_event_task(deserializer);
-  }
-
-  @protected
-  ManifestEventTimer sse_decode_box_autoadd_manifest_event_timer(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_manifest_event_timer(deserializer);
-  }
-
-  @protected
-  ManifestPermissionNetwork sse_decode_box_autoadd_manifest_permission_network(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_manifest_permission_network(deserializer);
-  }
-
-  @protected
-  ManifestPermissionStorage sse_decode_box_autoadd_manifest_permission_storage(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_manifest_permission_storage(deserializer);
-  }
-
-  @protected
-  ManifestPermissionTask sse_decode_box_autoadd_manifest_permission_task(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_manifest_permission_task(deserializer);
-  }
-
-  @protected
-  PluginAction sse_decode_box_autoadd_plugin_action(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_plugin_action(deserializer);
-  }
-
-  @protected
-  PluginEvent sse_decode_box_autoadd_plugin_event(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_plugin_event(deserializer);
-  }
-
-  @protected
   Settings sse_decode_box_autoadd_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_settings(deserializer);
-  }
-
-  @protected
-  Task sse_decode_box_autoadd_task(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_task(deserializer);
-  }
-
-  @protected
-  TaskPriority sse_decode_box_autoadd_task_priority(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_task_priority(deserializer);
-  }
-
-  @protected
-  TaskQuery sse_decode_box_autoadd_task_query(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_task_query(deserializer);
-  }
-
-  @protected
-  TaskStatus sse_decode_box_autoadd_task_status(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_task_status(deserializer);
-  }
-
-  @protected
-  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_u_32(deserializer);
-  }
-
-  @protected
-  double sse_decode_f_32(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getFloat32();
-  }
-
-  @protected
-  Filter sse_decode_filter(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_uuid = sse_decode_Uuid(deserializer);
-    final var_name = sse_decode_String(deserializer);
-    final var_status = sse_decode_Set_task_status_None(deserializer);
-    final var_search = sse_decode_String(deserializer);
-    return Filter(
-      uuid: var_uuid,
-      name: var_name,
-      status: var_status,
-      search: var_search,
-    );
-  }
-
-  @protected
-  FilterSelection sse_decode_filter_selection(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final tag_ = sse_decode_i_32(deserializer);
-    switch (tag_) {
-      case 0:
-        final var_uuid = sse_decode_Uuid(deserializer);
-        return FilterSelection_Predefined(uuid: var_uuid);
-      case 1:
-        final var_filter = sse_decode_box_autoadd_filter(deserializer);
-        return FilterSelection_Temporary(filter: var_filter);
-      default:
-        throw UnimplementedError('');
-    }
   }
 
   @protected
@@ -4152,35 +1539,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  PlatformInt64 sse_decode_i_64(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getPlatformInt64();
-  }
-
-  @protected
   KnownHosts sse_decode_known_hosts(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_hosts = sse_decode_list_host(deserializer);
     return KnownHosts(hosts: var_hosts);
-  }
-
-  @protected
-  List<PluginManifestPluginState>
-  sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <PluginManifestPluginState>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(
-        sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-          deserializer,
-        ),
-      );
-    }
-    return ans_;
   }
 
   @protected
@@ -4203,54 +1565,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<String> sse_decode_list_String(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <String>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_String(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<UuidValue> sse_decode_list_Uuid(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <UuidValue>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_Uuid(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<Annotation> sse_decode_list_annotation(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <Annotation>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_annotation(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<Filter> sse_decode_list_filter(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <Filter>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_filter(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
   List<Host> sse_decode_list_host(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -4260,13 +1574,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_host(deserializer));
     }
     return ans_;
-  }
-
-  @protected
-  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
-    return deserializer.buffer.getUint8List(len_);
   }
 
   @protected
@@ -4288,143 +1595,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_repository_specification(deserializer));
     }
     return ans_;
-  }
-
-  @protected
-  List<Task> sse_decode_list_task(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <Task>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_task(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<TaskStatus> sse_decode_list_task_status(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <TaskStatus>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_task_status(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  List<Uda> sse_decode_list_uda(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <Uda>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_uda(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
-  ManifestEvent sse_decode_manifest_event(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_task = sse_decode_opt_box_autoadd_manifest_event_task(
-      deserializer,
-    );
-    final var_timer = sse_decode_opt_box_autoadd_manifest_event_timer(
-      deserializer,
-    );
-    return ManifestEvent(task: var_task, timer: var_timer);
-  }
-
-  @protected
-  ManifestEventTask sse_decode_manifest_event_task(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_create = sse_decode_bool(deserializer);
-    final var_modify = sse_decode_bool(deserializer);
-    final var_sync_ = sse_decode_bool(deserializer);
-    return ManifestEventTask(
-      create: var_create,
-      modify: var_modify,
-      sync_: var_sync_,
-    );
-  }
-
-  @protected
-  ManifestEventTimer sse_decode_manifest_event_timer(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_interval = sse_decode_u_32(deserializer);
-    return ManifestEventTimer(interval: var_interval);
-  }
-
-  @protected
-  ManifestPermission sse_decode_manifest_permission(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_task = sse_decode_opt_box_autoadd_manifest_permission_task(
-      deserializer,
-    );
-    final var_network = sse_decode_opt_box_autoadd_manifest_permission_network(
-      deserializer,
-    );
-    final var_storage = sse_decode_opt_box_autoadd_manifest_permission_storage(
-      deserializer,
-    );
-    return ManifestPermission(
-      task: var_task,
-      network: var_network,
-      storage: var_storage,
-    );
-  }
-
-  @protected
-  ManifestPermissionNetwork sse_decode_manifest_permission_network(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_urls = sse_decode_list_String(deserializer);
-    return ManifestPermissionNetwork(urls: var_urls);
-  }
-
-  @protected
-  ManifestPermissionStorage sse_decode_manifest_permission_storage(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_maxSize = sse_decode_u_32(deserializer);
-    return ManifestPermissionStorage(maxSize: var_maxSize);
-  }
-
-  @protected
-  ManifestPermissionTask sse_decode_manifest_permission_task(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_create = sse_decode_bool(deserializer);
-    final var_modify = sse_decode_bool(deserializer);
-    final var_query = sse_decode_bool(deserializer);
-    final var_sync_ = sse_decode_bool(deserializer);
-    return ManifestPermissionTask(
-      create: var_create,
-      modify: var_modify,
-      query: var_query,
-      sync_: var_sync_,
-    );
-  }
-
-  @protected
-  NetworkRequestType sse_decode_network_request_type(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
-    return NetworkRequestType.values[inner];
   }
 
   @protected
@@ -4450,32 +1620,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  DateTime? sse_decode_opt_box_autoadd_Chrono_Utc(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_Chrono_Utc(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  FilterSelection? sse_decode_opt_box_autoadd_filter_selection(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_filter_selection(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
   Host? sse_decode_opt_box_autoadd_host(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -4483,182 +1627,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       return sse_decode_box_autoadd_host(deserializer);
     } else {
       return null;
-    }
-  }
-
-  @protected
-  ManifestEventTask? sse_decode_opt_box_autoadd_manifest_event_task(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_manifest_event_task(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  ManifestEventTimer? sse_decode_opt_box_autoadd_manifest_event_timer(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_manifest_event_timer(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  ManifestPermissionNetwork?
-  sse_decode_opt_box_autoadd_manifest_permission_network(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_manifest_permission_network(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  ManifestPermissionStorage?
-  sse_decode_opt_box_autoadd_manifest_permission_storage(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_manifest_permission_storage(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  ManifestPermissionTask? sse_decode_opt_box_autoadd_manifest_permission_task(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_manifest_permission_task(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  PluginAction? sse_decode_opt_box_autoadd_plugin_action(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_plugin_action(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  Task? sse_decode_opt_box_autoadd_task(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_task(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  TaskPriority? sse_decode_opt_box_autoadd_task_priority(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_task_priority(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  TaskStatus? sse_decode_opt_box_autoadd_task_status(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_task_status(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_u_32(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  PluginAction sse_decode_plugin_action(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final tag_ = sse_decode_i_32(deserializer);
-    switch (tag_) {
-      case 0:
-        final var_pluginName = sse_decode_String(deserializer);
-        final var_event = sse_decode_box_autoadd_plugin_event(deserializer);
-        return PluginAction_Event(pluginName: var_pluginName, event: var_event);
-      case 1:
-        final var_pluginName = sse_decode_String(deserializer);
-        final var_reason = sse_decode_String(deserializer);
-        return PluginAction_Disable(
-          pluginName: var_pluginName,
-          reason: var_reason,
-        );
-      default:
-        throw UnimplementedError('');
-    }
-  }
-
-  @protected
-  PluginEvent sse_decode_plugin_event(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final tag_ = sse_decode_i_32(deserializer);
-    switch (tag_) {
-      case 0:
-        final var_task = sse_decode_box_autoadd_task(deserializer);
-        return PluginEvent_TaskCreate(task: var_task);
-      case 1:
-        final var_task = sse_decode_box_autoadd_task(deserializer);
-        return PluginEvent_TaskModify(task: var_task);
-      case 2:
-        final var_query = sse_decode_box_autoadd_task_query(deserializer);
-        return PluginEvent_TaskQuery(query: var_query);
-      case 3:
-        return PluginEvent_TaskSync();
-      case 4:
-        final var_ty = sse_decode_network_request_type(deserializer);
-        final var_host = sse_decode_String(deserializer);
-        return PluginEvent_NetworkRequest(ty: var_ty, host: var_host);
-      default:
-        throw UnimplementedError('');
     }
   }
 
@@ -4677,10 +1645,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_darkMode = sse_decode_bool(deserializer);
     final var_periodicSync = sse_decode_bool(deserializer);
-    final var_filters = sse_decode_list_filter(deserializer);
-    final var_selectedFilter = sse_decode_opt_box_autoadd_filter_selection(
-      deserializer,
-    );
     final var_currentRepository = sse_decode_opt_Uuid(deserializer);
     final var_repositories = sse_decode_list_repository_specification(
       deserializer,
@@ -4688,101 +1652,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return Settings.raw(
       darkMode: var_darkMode,
       periodicSync: var_periodicSync,
-      filters: var_filters,
-      selectedFilter: var_selectedFilter,
       currentRepository: var_currentRepository,
       repositories: var_repositories,
     );
   }
 
   @protected
-  Task sse_decode_task(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_id = sse_decode_Uuid(deserializer);
-    final var_entry = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
-    final var_status = sse_decode_opt_box_autoadd_task_status(deserializer);
-    final var_title = sse_decode_opt_String(deserializer);
-    final var_modified = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
-    final var_due = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
-    final var_project = sse_decode_opt_String(deserializer);
-    final var_tags = sse_decode_list_String(deserializer);
-    final var_annotations = sse_decode_list_annotation(deserializer);
-    final var_priority = sse_decode_opt_box_autoadd_task_priority(deserializer);
-    final var_wait = sse_decode_opt_box_autoadd_Chrono_Utc(deserializer);
-    final var_depends = sse_decode_list_Uuid(deserializer);
-    final var_udas = sse_decode_list_uda(deserializer);
-    return Task.raw(
-      id: var_id,
-      entry: var_entry,
-      status: var_status,
-      title: var_title,
-      modified: var_modified,
-      due: var_due,
-      project: var_project,
-      tags: var_tags,
-      annotations: var_annotations,
-      priority: var_priority,
-      wait: var_wait,
-      depends: var_depends,
-      udas: var_udas,
-    );
-  }
-
-  @protected
-  TaskPriority sse_decode_task_priority(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
-    return TaskPriority.values[inner];
-  }
-
-  @protected
-  TaskQuery sse_decode_task_query(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final tag_ = sse_decode_i_32(deserializer);
-    switch (tag_) {
-      case 0:
-        final var_uuid = sse_decode_Uuid(deserializer);
-        return TaskQuery_Uuid(uuid: var_uuid);
-      case 1:
-        final var_title = sse_decode_String(deserializer);
-        final var_status = sse_decode_Set_task_status_None(deserializer);
-        final var_limit = sse_decode_opt_box_autoadd_u_32(deserializer);
-        return TaskQuery_Title(
-          title: var_title,
-          status: var_status,
-          limit: var_limit,
-        );
-      default:
-        throw UnimplementedError('');
-    }
-  }
-
-  @protected
-  TaskStatus sse_decode_task_status(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
-    return TaskStatus.values[inner];
-  }
-
-  @protected
-  int sse_decode_u_32(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint32();
-  }
-
-  @protected
   int sse_decode_u_8(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8();
-  }
-
-  @protected
-  Uda sse_decode_uda(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_key = sse_decode_String(deserializer);
-    final var_value = sse_decode_String(deserializer);
-    return Uda(key: var_key, value: var_value);
   }
 
   @protected
@@ -4807,45 +1685,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-    HostEvent self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as HostEventImpl).frbInternalSseEncode(move: true),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    PluginManifestPluginState self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as PluginManifestPluginStateImpl).frbInternalSseEncode(move: true),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    Repository self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as RepositoryImpl).frbInternalSseEncode(move: true),
-      serializer,
-    );
-  }
-
-  @protected
-  void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
     RustError self,
     SseSerializer serializer,
@@ -4866,32 +1705,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as SshKeyImpl).frbInternalSseEncode(move: true),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    Repository self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as RepositoryImpl).frbInternalSseEncode(move: false),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    PluginManifestPluginState self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as PluginManifestPluginStateImpl).frbInternalSseEncode(move: false),
       serializer,
     );
   }
@@ -4923,54 +1736,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_Chrono_Utc(DateTime self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_64(
-      PlatformInt64Util.from(self.microsecondsSinceEpoch),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerHostEvent(
-    HostEvent self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as HostEventImpl).frbInternalSseEncode(),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    PluginManifestPluginState self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as PluginManifestPluginStateImpl).frbInternalSseEncode(),
-      serializer,
-    );
-  }
-
-  @protected
-  void
-  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRepository(
-    Repository self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_usize(
-      (self as RepositoryImpl).frbInternalSseEncode(),
-      serializer,
-    );
-  }
-
-  @protected
   void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError(
     RustError self,
@@ -4991,15 +1756,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize((self as SshKeyImpl).frbInternalSseEncode(), serializer);
-  }
-
-  @protected
-  void sse_encode_Set_task_status_None(
-    Set<TaskStatus> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_task_status(self.toList(), serializer);
   }
 
   @protected
@@ -5037,23 +1793,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_StreamSink_unit_Sse(
-    RustStreamSink<void> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(
-      self.setupAndSerialize(
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-      ),
-      serializer,
-    );
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -5063,14 +1802,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_Uuid(UuidValue self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(self.toBytes(), serializer);
-  }
-
-  @protected
-  void sse_encode_annotation(Annotation self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Uuid(self.id, serializer);
-    sse_encode_Chrono_Utc(self.entry, serializer);
-    sse_encode_String(self.text, serializer);
   }
 
   @protected
@@ -5091,36 +1822,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_box_autoadd_Chrono_Utc(
-    DateTime self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Chrono_Utc(self, serializer);
-  }
-
-  @protected
   void sse_encode_box_autoadd_application_paths(
     ApplicationPaths self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_application_paths(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_filter(Filter self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_filter(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_filter_selection(
-    FilterSelection self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_filter_selection(self, serializer);
   }
 
   @protected
@@ -5139,145 +1846,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_box_autoadd_manifest_event_task(
-    ManifestEventTask self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_event_task(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_manifest_event_timer(
-    ManifestEventTimer self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_event_timer(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_manifest_permission_network(
-    ManifestPermissionNetwork self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_permission_network(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_manifest_permission_storage(
-    ManifestPermissionStorage self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_permission_storage(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_manifest_permission_task(
-    ManifestPermissionTask self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_manifest_permission_task(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_plugin_action(
-    PluginAction self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_plugin_action(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_plugin_event(
-    PluginEvent self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_plugin_event(self, serializer);
-  }
-
-  @protected
   void sse_encode_box_autoadd_settings(
     Settings self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_settings(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_task(Task self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_task(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_task_priority(
-    TaskPriority self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_task_priority(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_task_query(
-    TaskQuery self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_task_query(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_task_status(
-    TaskStatus self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_task_status(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_u_32(self, serializer);
-  }
-
-  @protected
-  void sse_encode_f_32(double self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putFloat32(self);
-  }
-
-  @protected
-  void sse_encode_filter(Filter self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Uuid(self.uuid, serializer);
-    sse_encode_String(self.name, serializer);
-    sse_encode_Set_task_status_None(self.status, serializer);
-    sse_encode_String(self.search, serializer);
-  }
-
-  @protected
-  void sse_encode_filter_selection(
-    FilterSelection self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    switch (self) {
-      case FilterSelection_Predefined(uuid: final uuid):
-        sse_encode_i_32(0, serializer);
-        sse_encode_Uuid(uuid, serializer);
-      case FilterSelection_Temporary(filter: final filter):
-        sse_encode_i_32(1, serializer);
-        sse_encode_box_autoadd_filter(filter, serializer);
-    }
   }
 
   @protected
@@ -5301,31 +1875,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putPlatformInt64(self);
-  }
-
-  @protected
   void sse_encode_known_hosts(KnownHosts self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_host(self.hosts, serializer);
-  }
-
-  @protected
-  void
-  sse_encode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-    List<PluginManifestPluginState> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPluginManifestPluginState(
-        item,
-        serializer,
-      );
-    }
   }
 
   @protected
@@ -5345,63 +1897,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_String(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_Uuid(List<UuidValue> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_Uuid(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_annotation(
-    List<Annotation> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_annotation(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_filter(List<Filter> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_filter(item, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_list_host(List<Host> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_host(item, serializer);
     }
-  }
-
-  @protected
-  void sse_encode_list_prim_u_8_loose(
-    List<int> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    serializer.buffer.putUint8List(
-      self is Uint8List ? self : Uint8List.fromList(self),
-    );
   }
 
   @protected
@@ -5427,119 +1928,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_task(List<Task> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_task(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_task_status(
-    List<TaskStatus> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_task_status(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_list_uda(List<Uda> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_uda(item, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_manifest_event(ManifestEvent self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_opt_box_autoadd_manifest_event_task(self.task, serializer);
-    sse_encode_opt_box_autoadd_manifest_event_timer(self.timer, serializer);
-  }
-
-  @protected
-  void sse_encode_manifest_event_task(
-    ManifestEventTask self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_bool(self.create, serializer);
-    sse_encode_bool(self.modify, serializer);
-    sse_encode_bool(self.sync_, serializer);
-  }
-
-  @protected
-  void sse_encode_manifest_event_timer(
-    ManifestEventTimer self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_u_32(self.interval, serializer);
-  }
-
-  @protected
-  void sse_encode_manifest_permission(
-    ManifestPermission self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_opt_box_autoadd_manifest_permission_task(self.task, serializer);
-    sse_encode_opt_box_autoadd_manifest_permission_network(
-      self.network,
-      serializer,
-    );
-    sse_encode_opt_box_autoadd_manifest_permission_storage(
-      self.storage,
-      serializer,
-    );
-  }
-
-  @protected
-  void sse_encode_manifest_permission_network(
-    ManifestPermissionNetwork self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_String(self.urls, serializer);
-  }
-
-  @protected
-  void sse_encode_manifest_permission_storage(
-    ManifestPermissionStorage self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_u_32(self.maxSize, serializer);
-  }
-
-  @protected
-  void sse_encode_manifest_permission_task(
-    ManifestPermissionTask self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_bool(self.create, serializer);
-    sse_encode_bool(self.modify, serializer);
-    sse_encode_bool(self.query, serializer);
-    sse_encode_bool(self.sync_, serializer);
-  }
-
-  @protected
-  void sse_encode_network_request_type(
-    NetworkRequestType self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.index, serializer);
-  }
-
-  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -5560,202 +1948,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_opt_box_autoadd_Chrono_Utc(
-    DateTime? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_Chrono_Utc(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_filter_selection(
-    FilterSelection? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_filter_selection(self, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_opt_box_autoadd_host(Host? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_host(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_manifest_event_task(
-    ManifestEventTask? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_manifest_event_task(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_manifest_event_timer(
-    ManifestEventTimer? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_manifest_event_timer(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_manifest_permission_network(
-    ManifestPermissionNetwork? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_manifest_permission_network(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_manifest_permission_storage(
-    ManifestPermissionStorage? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_manifest_permission_storage(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_manifest_permission_task(
-    ManifestPermissionTask? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_manifest_permission_task(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_plugin_action(
-    PluginAction? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_plugin_action(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_task(Task? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_task(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_task_priority(
-    TaskPriority? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_task_priority(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_task_status(
-    TaskStatus? self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_task_status(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_box_autoadd_u_32(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_plugin_action(PluginAction self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    switch (self) {
-      case PluginAction_Event(pluginName: final pluginName, event: final event):
-        sse_encode_i_32(0, serializer);
-        sse_encode_String(pluginName, serializer);
-        sse_encode_box_autoadd_plugin_event(event, serializer);
-      case PluginAction_Disable(
-        pluginName: final pluginName,
-        reason: final reason,
-      ):
-        sse_encode_i_32(1, serializer);
-        sse_encode_String(pluginName, serializer);
-        sse_encode_String(reason, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_plugin_event(PluginEvent self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    switch (self) {
-      case PluginEvent_TaskCreate(task: final task):
-        sse_encode_i_32(0, serializer);
-        sse_encode_box_autoadd_task(task, serializer);
-      case PluginEvent_TaskModify(task: final task):
-        sse_encode_i_32(1, serializer);
-        sse_encode_box_autoadd_task(task, serializer);
-      case PluginEvent_TaskQuery(query: final query):
-        sse_encode_i_32(2, serializer);
-        sse_encode_box_autoadd_task_query(query, serializer);
-      case PluginEvent_TaskSync():
-        sse_encode_i_32(3, serializer);
-      case PluginEvent_NetworkRequest(ty: final ty, host: final host):
-        sse_encode_i_32(4, serializer);
-        sse_encode_network_request_type(ty, serializer);
-        sse_encode_String(host, serializer);
     }
   }
 
@@ -5774,81 +1972,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.darkMode, serializer);
     sse_encode_bool(self.periodicSync, serializer);
-    sse_encode_list_filter(self.filters, serializer);
-    sse_encode_opt_box_autoadd_filter_selection(
-      self.selectedFilter,
-      serializer,
-    );
     sse_encode_opt_Uuid(self.currentRepository, serializer);
     sse_encode_list_repository_specification(self.repositories, serializer);
-  }
-
-  @protected
-  void sse_encode_task(Task self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Uuid(self.id, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Utc(self.entry, serializer);
-    sse_encode_opt_box_autoadd_task_status(self.status, serializer);
-    sse_encode_opt_String(self.title, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Utc(self.modified, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Utc(self.due, serializer);
-    sse_encode_opt_String(self.project, serializer);
-    sse_encode_list_String(self.tags, serializer);
-    sse_encode_list_annotation(self.annotations, serializer);
-    sse_encode_opt_box_autoadd_task_priority(self.priority, serializer);
-    sse_encode_opt_box_autoadd_Chrono_Utc(self.wait, serializer);
-    sse_encode_list_Uuid(self.depends, serializer);
-    sse_encode_list_uda(self.udas, serializer);
-  }
-
-  @protected
-  void sse_encode_task_priority(TaskPriority self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.index, serializer);
-  }
-
-  @protected
-  void sse_encode_task_query(TaskQuery self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    switch (self) {
-      case TaskQuery_Uuid(uuid: final uuid):
-        sse_encode_i_32(0, serializer);
-        sse_encode_Uuid(uuid, serializer);
-      case TaskQuery_Title(
-        title: final title,
-        status: final status,
-        limit: final limit,
-      ):
-        sse_encode_i_32(1, serializer);
-        sse_encode_String(title, serializer);
-        sse_encode_Set_task_status_None(status, serializer);
-        sse_encode_opt_box_autoadd_u_32(limit, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_task_status(TaskStatus self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.index, serializer);
-  }
-
-  @protected
-  void sse_encode_u_32(int self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint32(self);
   }
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self);
-  }
-
-  @protected
-  void sse_encode_uda(Uda self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.key, serializer);
-    sse_encode_String(self.value, serializer);
   }
 
   @protected
@@ -5861,100 +1992,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
   }
-}
-
-@sealed
-class HostEventImpl extends RustOpaque implements HostEvent {
-  // Not to be used by end users
-  HostEventImpl.frbInternalDcoDecode(List<dynamic> wire)
-    : super.frbInternalDcoDecode(wire, _kStaticData);
-
-  // Not to be used by end users
-  HostEventImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
-    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
-
-  static final _kStaticData = RustArcStaticData(
-    rustArcIncrementStrongCount:
-        RustLib.instance.api.rust_arc_increment_strong_count_HostEvent,
-    rustArcDecrementStrongCount:
-        RustLib.instance.api.rust_arc_decrement_strong_count_HostEvent,
-    rustArcDecrementStrongCountPtr:
-        RustLib.instance.api.rust_arc_decrement_strong_count_HostEventPtr,
-  );
-}
-
-@sealed
-class PluginManifestPluginStateImpl extends RustOpaque
-    implements PluginManifestPluginState {
-  // Not to be used by end users
-  PluginManifestPluginStateImpl.frbInternalDcoDecode(List<dynamic> wire)
-    : super.frbInternalDcoDecode(wire, _kStaticData);
-
-  // Not to be used by end users
-  PluginManifestPluginStateImpl.frbInternalSseDecode(
-    BigInt ptr,
-    int externalSizeOnNative,
-  ) : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
-
-  static final _kStaticData = RustArcStaticData(
-    rustArcIncrementStrongCount: RustLib
-        .instance
-        .api
-        .rust_arc_increment_strong_count_PluginManifestPluginState,
-    rustArcDecrementStrongCount: RustLib
-        .instance
-        .api
-        .rust_arc_decrement_strong_count_PluginManifestPluginState,
-    rustArcDecrementStrongCountPtr: RustLib
-        .instance
-        .api
-        .rust_arc_decrement_strong_count_PluginManifestPluginStatePtr,
-  );
-}
-
-@sealed
-class RepositoryImpl extends RustOpaque implements Repository {
-  // Not to be used by end users
-  RepositoryImpl.frbInternalDcoDecode(List<dynamic> wire)
-    : super.frbInternalDcoDecode(wire, _kStaticData);
-
-  // Not to be used by end users
-  RepositoryImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
-    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
-
-  static final _kStaticData = RustArcStaticData(
-    rustArcIncrementStrongCount:
-        RustLib.instance.api.rust_arc_increment_strong_count_Repository,
-    rustArcDecrementStrongCount:
-        RustLib.instance.api.rust_arc_decrement_strong_count_Repository,
-    rustArcDecrementStrongCountPtr:
-        RustLib.instance.api.rust_arc_decrement_strong_count_RepositoryPtr,
-  );
-
-  Future<List<Task>> allTasks({required Filter filter}) => RustLib.instance.api
-      .crateApiRepositoryRepositoryAllTasks(that: this, filter: filter);
-
-  Future<void> insertTask({required Task task}) => RustLib.instance.api
-      .crateApiRepositoryRepositoryInsertTask(that: this, task: task);
-
-  Future<Task?> purgeTaskById({required UuidValue id}) => RustLib.instance.api
-      .crateApiRepositoryRepositoryPurgeTaskById(that: this, id: id);
-
-  Future<Task?> taskById({required UuidValue id}) => RustLib.instance.api
-      .crateApiRepositoryRepositoryTaskById(that: this, id: id);
-
-  Future<List<Task>> taskQuery({required TaskQuery query}) => RustLib
-      .instance
-      .api
-      .crateApiRepositoryRepositoryTaskQuery(that: this, query: query);
-
-  Future<List<Task>> tasksByStatus({required Set<TaskStatus> status}) => RustLib
-      .instance
-      .api
-      .crateApiRepositoryRepositoryTasksByStatus(that: this, status: status);
-
-  Future<void> updateTask({required Task task}) => RustLib.instance.api
-      .crateApiRepositoryRepositoryUpdateTask(that: this, task: task);
 }
 
 @sealed

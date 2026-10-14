@@ -1,0 +1,34 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.permission.task.schema.json",
+    "type": "object",
+    "required": [
+        "create",
+        "modify",
+        "remove",
+        "query",
+        "sync"
+    ],
+    "properties": {
+        "create": {
+            "type": "boolean",
+            "default": false
+        },
+        "modify": {
+            "type": "boolean",
+            "default": false
+        },
+        "remove": {
+            "type": "boolean",
+            "default": false
+        },
+        "query": {
+            "type": "boolean",
+            "default": false
+        },
+        "sync": {
+            "type": "boolean",
+            "default": false
+        }
+    }
+}

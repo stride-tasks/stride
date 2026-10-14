@@ -1,0 +1,12 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.api.schema.json",
+	"description": "The version of the plugin manifest.",
+	"type": "string",
+	"oneOf": [
+		{
+			"const": "v1",
+			"description": "Version 1 of the plugin manifest."
+		}
+	]
+}

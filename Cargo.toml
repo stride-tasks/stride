@@ -4,7 +4,6 @@ members = [
   "crates/api",
   "crates/api_codegen",
   "crates/api_codegen_cli",
-  "crates/core",
   "crates/crdt",
   "crates/serialization",
   "crates/logging",
@@ -36,7 +35,6 @@ description = "An extensible task menagment application that uses git as it's da
 stride_api = { version = "~0.1.0", path = "crates/api" }
 stride_api_codegen = { version = "~0.1.0", path = "crates/api_codegen" }
 stride_api_codegen_cli = { version = "~0.1.0", path = "crates/api_codegen_cli" }
-stride_core = { version = "~0.1.0", path = "crates/core", default-features = false }
 stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
 stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
 stride_logging = { version = "~0.1.0", path = "crates/logging" }

@@ -1,0 +1,74 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/task.schema.json",
+    "type": "object",
+    "required": [
+        "id",
+        "tags",
+        "annotations",
+        "udas",
+        "depends"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "status": {
+            "$ref": "https://stride-tasks.github.io/stride/api/type/task.status.schema.json"
+        },
+        "entry": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "title": {
+            "type": "string"
+        },
+        "modified": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "due": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "project": {
+            "type": "string"
+        },
+        "tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "default": []
+        },
+        "annotations": {
+            "type": "array",
+            "items": {
+                "$ref": "https://stride-tasks.github.io/stride/api/type/task.annotation.schema.json"
+            },
+            "default": []
+        },
+        "priority": {
+            "$ref": "https://stride-tasks.github.io/stride/api/type/task.priority.schema.json"
+        },
+        "wait": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "depends": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uuid"
+            }
+        },
+        "udas": {
+            "type": "array",
+            "items": {
+                "$ref": "https://stride-tasks.github.io/stride/api/type/task.uda.schema.json"
+            },
+            "default": []
+        }
+    }
+}

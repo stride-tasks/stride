@@ -52,6 +52,8 @@ fn render_type(this: &TypeNode) -> Option<String> {
 
 fn render_struct(this: &StructNode) -> String {
     let mut lines = Vec::new();
+    let default_impl = render_default_impl(this);
+    let default_helpers = render_default_helpers(this);
 
     for field in &this.fields {
         if let Some(rendered) = render_type(&field.typ) {
@@ -66,38 +68,182 @@ fn render_struct(this: &StructNode) -> String {
         "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
     );
     lines.push("#[serde(rename_all = \"kebab-case\")]".to_owned());
+    if this
+        .fields
+        .iter()
+        .filter(|field| {
+            field.required && matches!(field.typ, TypeNode::Primitive(PrimitiveType::Boolean))
+        })
+        .count()
+        > 3
+    {
+        lines.push("#[allow(clippy::struct_excessive_bools)]".to_owned());
+    }
+    if default_impl.is_some() {
+        lines.push("#[serde(default)]".to_owned());
+    }
     lines.push("#[allow(missing_copy_implementations)]".to_owned());
     lines.push(format!("pub struct {} {{", this.name));
 
-    for field in &this.fields {
+    for (index, field) in this.fields.iter().enumerate() {
         if let Some(description) = &field.description {
             lines.push(format!("    /// {description}"));
         }
 
         let rust_name = rust_field_name(&field.name);
         let field_type = render_type_node(&field.typ);
+        let serde_attributes = rust_field_serde_attributes(field, index, this);
         if field.required {
-            if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
-                lines.push(format!(
-                    "    #[serde(with = \"{}\")]",
-                    bytes_serde_adapter(true)
-                ));
+            if !serde_attributes.is_empty() {
+                lines.push(format!("    #[serde({})]", serde_attributes.join(", ")));
             }
             lines.push(format!("    pub {rust_name}: {field_type},"));
-        } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
-            lines.push(format!(
-                "    #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n    pub {rust_name}: Option<{field_type}>,",
-                bytes_serde_adapter(false)
-            ));
         } else {
             lines.push(format!(
-                "    #[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub {rust_name}: Option<{field_type}>,"
+                "    #[serde({})]\n    pub {rust_name}: Option<{field_type}>,",
+                serde_attributes.join(", ")
             ));
         }
     }
 
     lines.push("}\n".to_owned());
+    if let Some(default_helpers) = default_helpers {
+        lines.push(default_helpers);
+    }
+    if let Some(default_impl) = default_impl {
+        lines.push(default_impl);
+    }
     lines.join("\n")
+}
+
+fn rust_field_serde_attributes(
+    field: &crate::node::FieldNode,
+    index: usize,
+    strukt: &StructNode,
+) -> Vec<String> {
+    let mut attributes = Vec::new();
+    if field.default.is_some() {
+        attributes.push(format!(
+            "default = \"{}::__serde_default_{index}\"",
+            strukt.name
+        ));
+    } else if !field.required {
+        attributes.push("default".to_owned());
+    }
+
+    if !field.required {
+        attributes.push("skip_serializing_if = \"Option::is_none\"".to_owned());
+    }
+    if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+        attributes.push(format!(
+            "with = \"{}\"",
+            bytes_serde_adapter(field.required)
+        ));
+    }
+    attributes
+}
+
+fn render_default_helpers(this: &StructNode) -> Option<String> {
+    let mut methods = Vec::new();
+    for (index, field) in this.fields.iter().enumerate() {
+        let Some(default) = &field.default else {
+            continue;
+        };
+        let value = rust_default_value(&field.typ, default)
+            .expect("schema defaults are validated during parsing");
+        let (return_type, value) = if field.required {
+            (render_type_node(&field.typ), value)
+        } else {
+            (
+                format!("Option<{}>", render_type_node(&field.typ)),
+                format!("Some({value})"),
+            )
+        };
+        methods.push(format!(
+            "    fn __serde_default_{index}() -> {return_type} {{\n        {value}\n    }}"
+        ));
+    }
+
+    if methods.is_empty() {
+        return None;
+    }
+
+    Some(format!("impl {} {{\n{}\n}}", this.name, methods.join("\n")))
+}
+
+fn render_default_impl(this: &StructNode) -> Option<String> {
+    if !this.fields.iter().any(|field| field.default.is_some()) {
+        return None;
+    }
+
+    let mut fields = Vec::new();
+    for field in &this.fields {
+        let value = match &field.default {
+            Some(value) => {
+                let value = rust_default_value(&field.typ, value)
+                    .expect("schema defaults are validated during parsing");
+                if field.required {
+                    value
+                } else {
+                    format!("Some({value})")
+                }
+            }
+            None if !field.required => "None".to_owned(),
+            None => return None,
+        };
+        fields.push(format!(
+            "            {}: {value},",
+            rust_field_name(&field.name)
+        ));
+    }
+
+    Some(format!(
+        "#[allow(clippy::derivable_impls)]\nimpl Default for {} {{\n    fn default() -> Self {{\n        Self {{\n{}\n        }}\n    }}\n}}",
+        this.name,
+        fields.join("\n")
+    ))
+}
+
+fn rust_default_value(typ: &TypeNode, value: &serde_json::Value) -> Option<String> {
+    match typ {
+        TypeNode::Primitive(PrimitiveType::Boolean) => {
+            value.as_bool().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::Integer) => {
+            value.as_i64().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::UnsignedInteger) => {
+            value.as_u64().map(|value| value.to_string())
+        }
+        TypeNode::Primitive(PrimitiveType::Number) => value.as_f64().map(|value| {
+            let value = value.to_string();
+            if value.contains(['.', 'e', 'E']) {
+                value
+            } else {
+                format!("{value}.0")
+            }
+        }),
+        TypeNode::Primitive(PrimitiveType::String) => value
+            .as_str()
+            .and_then(|value| serde_json::to_string(value).ok())
+            .map(|value| format!("Box::<str>::from({value})")),
+        TypeNode::Array(inner) => value.as_array().and_then(|values| {
+            values
+                .iter()
+                .map(|value| rust_default_value(inner, value))
+                .collect::<Option<Vec<_>>>()
+                .map(|values| format!("vec![{}]", values.join(", ")))
+        }),
+        TypeNode::Enum(enum_) => {
+            let value = value.as_str()?;
+            let variant = enum_
+                .variants
+                .iter()
+                .find(|variant| variant.value == value)?;
+            Some(format!("{}::{}", enum_.name, variant.name))
+        }
+        _ => None,
+    }
 }
 
 fn render_enum(this: &EnumNode) -> String {
@@ -109,14 +255,25 @@ fn render_enum(this: &EnumNode) -> String {
     if let Some(description) = &this.description {
         lines.push(format!("/// {description}"));
     }
-    lines.push(
-        "#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]"
-            .to_owned(),
-    );
+    let default_derive = if this.default.is_some() {
+        ", Default"
+    } else {
+        ""
+    };
+    lines.push(format!(
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize{default_derive})]"
+    ));
     lines.push(format!("pub enum {} {{", this.name));
     for variant in &this.variants {
         if let Some(description) = &variant.description {
             lines.push(format!("    /// {description}"));
+        }
+        if this
+            .default
+            .as_ref()
+            .is_some_and(|default| default == &variant.value)
+        {
+            lines.push("    #[default]".to_owned());
         }
         lines.push(format!(
             "    #[serde(rename = \"{}\")]\n    {},",
@@ -216,6 +373,7 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "Box<str>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "uuid::Uuid".to_owned(),
+        TypeNode::Primitive(PrimitiveType::DateTime) => "chrono::DateTime<chrono::Utc>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Bytes) => "Box<[u8]>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uri) => "url::Url".to_owned(),
         TypeNode::Primitive(PrimitiveType::Integer) => "i64".to_owned(),

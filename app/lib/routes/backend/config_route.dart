@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
 import 'package:stride/utils/functions.dart';
@@ -25,12 +24,10 @@ Uint8List generateCryptoRandomBytes(int length) {
 }
 
 class BackendConfigRoute extends StatefulWidget {
-  final Repository repository;
   final UuidValue repositoryId;
   final UuidValue backendId;
   const BackendConfigRoute({
     super.key,
-    required this.repository,
     required this.backendId,
     required this.repositoryId,
   });
@@ -67,7 +64,6 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
         return Scaffold(
           appBar: AppBar(title: Text(record.instance.name)),
           body: _ConfigSection(
-            repository: widget.repository,
             repositoryId: widget.repositoryId,
             record: record,
           ),
@@ -78,14 +74,9 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
 }
 
 class _ConfigSection extends StatefulWidget {
-  final Repository repository;
   final UuidValue repositoryId;
   final BackendRecord record;
-  const _ConfigSection({
-    required this.record,
-    required this.repository,
-    required this.repositoryId,
-  });
+  const _ConfigSection({required this.record, required this.repositoryId});
 
   @override
   State<_ConfigSection> createState() => _ConfigSectionState();

@@ -2318,6 +2318,7 @@ name = "stride_api"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "chrono",
  "indexmap 2.14.2",
  "serde",
  "serde_json",
@@ -2354,7 +2355,6 @@ dependencies = [
  "git2",
  "log",
  "serde",
- "stride_core",
  "stride_crdt",
  "stride_crypto",
  "stride_database",
@@ -2388,24 +2388,10 @@ dependencies = [
  "serde_json",
  "stride_api",
  "stride_backend_git",
- "stride_core",
  "stride_crdt",
  "stride_database",
  "stride_engine",
- "stride_flutter_bridge",
  "stride_logging",
- "stride_plugin_manager",
- "uuid",
-]
-
-[[package]]
-name = "stride_core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "serde",
- "serde_json",
  "uuid",
 ]
 
@@ -2414,7 +2400,7 @@ name = "stride_crdt"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "stride_core",
+ "stride_api",
  "stride_serialize",
  "thiserror 2.0.21",
  "uuid",
@@ -2439,7 +2425,6 @@ dependencies = [
  "log",
  "rusqlite",
  "stride_api",
- "stride_core",
  "stride_crdt",
  "stride_serialize",
  "thiserror 2.0.21",
@@ -2451,10 +2436,12 @@ dependencies = [
 name = "stride_engine"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "log",
  "stride_api",
- "stride_core",
  "stride_crdt",
  "stride_database",
+ "stride_plugin_manager",
  "thiserror 2.0.21",
  "uuid",
 ]
@@ -2464,15 +2451,12 @@ name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
  "base64",
- "chrono",
  "flutter_rust_bridge",
  "log",
  "serde",
  "serde_json",
  "stride_api",
  "stride_backend_git",
- "stride_core",
- "stride_crdt",
  "stride_database",
  "stride_engine",
  "stride_logging",
@@ -2507,7 +2491,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
- "stride_core",
+ "stride_api",
 ]
 
 [[package]]
@@ -2515,9 +2499,8 @@ name = "stride_plugin_manager"
 version = "0.1.0"
 dependencies = [
  "log",
- "serde",
  "serde_json",
- "stride_core",
+ "stride_api",
  "toml",
  "wasmi",
  "wasmi_wasi",
@@ -2528,7 +2511,8 @@ dependencies = [
 name = "stride_serialize"
 version = "0.1.0"
 dependencies = [
- "stride_core",
+ "chrono",
+ "stride_api",
  "thiserror 2.0.21",
  "uuid",
  "vint64",

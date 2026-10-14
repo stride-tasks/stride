@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.task.query.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "repository.task.query"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The unique identifier of the repository."
+                },
+                "query": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/task.query.schema.json",
+                    "description": "The query to execute."
+                }
+            },
+            "required": [
+                "repository-id",
+                "query"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "tasks"
+            ]
+        }
+    }
+}

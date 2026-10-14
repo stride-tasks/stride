@@ -1,11 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use stride_core::state::KnownPaths;
 use stride_crdt::version_vector::VersionDifference;
 use stride_database::Database;
 use uuid::Uuid;
 
-use crate::{BackendHandler, Engine, Error};
+use crate::{BackendHandler, Engine, Error, KnownPaths};
 
 #[derive(Debug, Default)]
 pub struct BackendRegistry {

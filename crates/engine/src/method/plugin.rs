@@ -1,0 +1,117 @@
+use std::{path::Path, sync::Arc};
+
+use crate::{Engine, Result, TypedCommandHandler};
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginListHandler;
+
+impl TypedCommandHandler for PluginListHandler {
+    type Method = crate::api::PluginListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _method: Self::Method,
+    ) -> Result<crate::api::PluginListMethodResult> {
+        let plugins = engine
+            .lock_plugin_manager()
+            .list()
+            .map(|plugin| plugin.instance.clone())
+            .collect::<Vec<_>>();
+
+        Ok(crate::api::PluginListMethodResult { plugins })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginValidateHandler;
+
+impl TypedCommandHandler for PluginValidateHandler {
+    type Method = crate::api::PluginValidateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginValidateMethodResult> {
+        let plugin = engine
+            .lock_plugin_manager()
+            .parse_plugin(Path::new(method.file_path.as_ref()))?;
+
+        Ok(crate::api::PluginValidateMethodResult {
+            plugin: plugin.instance,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginImportHandler;
+
+impl TypedCommandHandler for PluginImportHandler {
+    type Method = crate::api::PluginImportMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginImportMethodResult> {
+        engine
+            .lock_plugin_manager()
+            .import(Path::new(method.file_path.as_ref()))?;
+
+        Ok(crate::api::PluginImportMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginRemoveHandler;
+
+impl TypedCommandHandler for PluginRemoveHandler {
+    type Method = crate::api::PluginRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginRemoveMethodResult> {
+        engine.lock_plugin_manager().remove(&method.plugin_name)?;
+
+        Ok(crate::api::PluginRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginDisableHandler;
+
+impl TypedCommandHandler for PluginDisableHandler {
+    type Method = crate::api::PluginDisableMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginDisableMethodResult> {
+        engine
+            .lock_plugin_manager()
+            .disable(&method.plugin_name, method.reason)?;
+
+        Ok(crate::api::PluginDisableMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct PluginToggleHandler;
+
+impl TypedCommandHandler for PluginToggleHandler {
+    type Method = crate::api::PluginToggleMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::PluginToggleMethodResult> {
+        engine.lock_plugin_manager().toggle(&method.plugin_name)?;
+
+        Ok(crate::api::PluginToggleMethodResult {})
+    }
+}

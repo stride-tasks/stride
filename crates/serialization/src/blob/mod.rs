@@ -1,4 +1,4 @@
-use stride_core::task::{Date, TaskPriority, TaskStatus};
+use stride_api::{TaskPriority, TaskStatus};
 use uuid::Uuid;
 
 use crate::error::Error;
@@ -97,15 +97,16 @@ impl FromBlob<'_> for Uuid {
     }
 }
 
-impl ToBlob<'_> for Date {
+impl ToBlob<'_> for chrono::DateTime<chrono::Utc> {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         self.timestamp_micros().to_blob(blob);
     }
 }
-impl FromBlob<'_> for Date {
+impl FromBlob<'_> for chrono::DateTime<chrono::Utc> {
     fn from_blob(blob: &mut &[u8]) -> Result<Self, Error> {
         let timestamp = i64::from_blob(blob)?;
-        let datetime = Date::from_timestamp_micros(timestamp).ok_or(Error::InvalidTimestamp)?;
+        let datetime = chrono::DateTime::<chrono::Utc>::from_timestamp_micros(timestamp)
+            .ok_or(Error::InvalidTimestamp)?;
         Ok(datetime)
     }
 }
@@ -179,9 +180,9 @@ impl FromBlob<'_> for TaskStatus {
 impl ToBlob<'_> for TaskPriority {
     fn to_blob(&self, blob: &mut Vec<u8>) {
         let value = match self {
-            TaskPriority::L => 0,
-            TaskPriority::M => 1,
-            TaskPriority::H => 2,
+            TaskPriority::Low => 0,
+            TaskPriority::Medium => 1,
+            TaskPriority::High => 2,
         };
         blob.push(value);
     }
@@ -190,9 +191,9 @@ impl FromBlob<'_> for TaskPriority {
     fn from_blob(blob: &mut &[u8]) -> Result<Self, Error> {
         let value = u8::from_blob(blob)?;
         Ok(match value {
-            0 => TaskPriority::L,
-            1 => TaskPriority::M,
-            2 => TaskPriority::H,
+            0 => TaskPriority::Low,
+            1 => TaskPriority::Medium,
+            2 => TaskPriority::High,
             _ => return Err(Error::UnknownTaskPriority { kind: value }),
         })
     }

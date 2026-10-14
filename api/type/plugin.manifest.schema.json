@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.schema.json",
+	"type": "object",
+	"required": [
+		"api",
+		"name",
+		"event",
+		"permission"
+	],
+	"properties": {
+		"api": {
+			"$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.api.schema.json"
+		},
+		"name": {
+			"type": "string"
+		},
+		"event": {
+			"$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.event.schema.json"
+		},
+		"permission": {
+			"$ref": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.permission.schema.json"
+		}
+	}
+}

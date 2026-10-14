@@ -1,0 +1,16 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/task.priority.schema.json",
+    "type": "string",
+    "oneOf": [
+        {
+            "const": "low"
+        },
+        {
+            "const": "medium"
+        },
+        {
+            "const": "high"
+        }
+    ]
+}

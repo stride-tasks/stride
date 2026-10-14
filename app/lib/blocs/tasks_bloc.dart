@@ -8,13 +8,9 @@ import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/git.dart';
-import 'package:stride/bridge/api/repository.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
-import 'package:stride/bridge/third_party/stride_core/event.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/context.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
@@ -56,18 +52,20 @@ final class TaskSyncEvent extends TaskEvent {
 }
 
 final class TaskFilterEvent extends TaskEvent {
-  final Filter? filter;
-  TaskFilterEvent({this.filter});
+  final TaskQuery? query;
+  TaskFilterEvent({this.query});
 }
 
 class TaskState {
   final List<Task> tasks;
   final bool syncing;
   final Object? syncingError;
+  final TaskQuery? query;
   const TaskState({
     required this.tasks,
     this.syncing = false,
     this.syncingError,
+    this.query,
   });
 }
 
@@ -76,10 +74,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final SettingsBloc settingsBloc;
   final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
-
   UuidValue? repositoryUuid;
-  Repository? database;
-  Filter? filter;
+  TaskQuery? activeQuery;
 
   void _initializeSettingsStream() {
     repositoryUuid ??= settingsBloc.settings.currentRepositoryUuidOrFirst();
@@ -111,7 +107,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       final nextRepositoryUuid = event.settings.currentRepositoryUuidOrFirst();
       if (repositoryUuid != nextRepositoryUuid) {
-        database = null;
         repositoryUuid = nextRepositoryUuid;
         add(TaskFetchEvent());
       }
@@ -140,43 +135,39 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
-  Repository? repository() {
-    if (database != null) {
-      return database;
-    }
-    if (repositoryUuid == null) {
-      return null;
-    }
-    return database = Repository.open(uuid: repositoryUuid!);
-  }
-
   TaskBloc({
     required this.settingsBloc,
     required this.logBloc,
     required this.dialogBloc,
-    this.database,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
     on<TaskFetchEvent>((event, emit) async {
-      emit(TaskState(tasks: await _tasks()));
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
 
     on<TaskAddEvent>((event, emit) async {
-      await repository()?.insertTask(task: event.task);
-      emit(TaskState(tasks: await _tasks()));
+      await RepositoryTaskAddMethod(
+        repositoryId: _requireRepositoryUuid(),
+        task: event.task,
+      ).execute();
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
 
     on<TaskRemoveEvent>((event, emit) async {
       if (event.task.status == TaskStatus.deleted) {
-        await repository()?.purgeTaskById(id: event.task.id);
+        await RepositoryTaskRemoveMethod(
+          repositoryId: _requireRepositoryUuid(),
+          taskId: event.task.id,
+        ).execute();
       } else {
-        await repository()?.updateTask(
+        await RepositoryTaskUpdateMethod(
+          repositoryId: _requireRepositoryUuid(),
           task: event.task.copyWith(status: TaskStatus.deleted),
-        );
+        ).execute();
       }
 
-      emit(TaskState(tasks: await _tasks()));
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
 
     on<TaskRemoveRepositoryEvent>((event, emit) async {
@@ -184,20 +175,24 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
-      await repository()?.updateTask(
+      await RepositoryTaskUpdateMethod(
+        repositoryId: _requireRepositoryUuid(),
         task: event.task.copyWith(status: event.status),
-      );
-      emit(TaskState(tasks: await _tasks()));
+      ).execute();
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
 
     on<TaskUpdateEvent>((event, emit) async {
-      await repository()?.updateTask(task: event.current);
-      emit(TaskState(tasks: await _tasks()));
+      await RepositoryTaskUpdateMethod(
+        repositoryId: _requireRepositoryUuid(),
+        task: event.current,
+      ).execute();
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
 
     on<TaskSyncEvent>((event, emit) async {
       final tasks = await _tasks();
-      emit(TaskState(tasks: tasks, syncing: true));
+      emit(TaskState(tasks: tasks, syncing: true, query: activeQuery));
 
       try {
         final uuid =
@@ -210,29 +205,51 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           );
         }
       } catch (error) {
-        emit(TaskState(tasks: tasks, syncingError: error));
+        emit(TaskState(tasks: tasks, syncingError: error, query: activeQuery));
         rethrow;
       }
-      emit(TaskState(tasks: await _tasks()));
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
 
     on<TaskFilterEvent>((event, emit) async {
-      filter = event.filter;
-      emit(TaskState(tasks: await _tasks()));
+      activeQuery = event.query;
+      emit(TaskState(tasks: await _tasks(), query: activeQuery));
     });
   }
 
   Future<List<Task>> _tasks() async {
-    final tasks = await repository()?.allTasks(
-      filter: filter ?? await Filter.default_(),
-    );
-    return tasks ?? [];
+    final repositoryId =
+        repositoryUuid ?? settingsBloc.settings.currentRepositoryUuidOrFirst();
+    if (repositoryId == null) {
+      return const [];
+    }
+
+    final result = await RepositoryTaskQueryMethod(
+      repositoryId: repositoryId,
+      query:
+          activeQuery ??
+          TaskQuery.filter(search: '', statuses: [TaskStatus.pending]),
+    ).execute();
+    return result.tasks;
   }
 
   Future<List<Task>> query(TaskQuery query) async {
-    final tasks = await repository()?.taskQuery(query: query);
-    return tasks ?? [];
+    final repositoryId =
+        repositoryUuid ?? settingsBloc.settings.currentRepositoryUuidOrFirst();
+    if (repositoryId == null) {
+      return const [];
+    }
+    final result = await RepositoryTaskQueryMethod(
+      repositoryId: repositoryId,
+      query: query,
+    ).execute();
+    return result.tasks;
   }
+
+  UuidValue _requireRepositoryUuid() =>
+      repositoryUuid ??
+      settingsBloc.settings.currentRepositoryUuidOrFirst() ??
+      (throw StateError('No repository is selected'));
 
   Future<void> undo() async {
     throw UnimplementedError();

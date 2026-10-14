@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/task.annotation.schema.json",
+    "type": "object",
+    "required": [
+        "id",
+        "entry",
+        "text"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "entry": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "text": {
+            "type": "string"
+        }
+    }
+}

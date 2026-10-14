@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/task.uda.schema.json",
+    "type": "object",
+    "required": [
+        "key",
+        "value"
+    ],
+    "properties": {
+        "key": {
+            "type": "string"
+        },
+        "value": {
+            "type": "string"
+        }
+    }
+}

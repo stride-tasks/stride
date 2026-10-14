@@ -1,0 +1,14 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.event.timer.schema.json",
+    "type": "object",
+    "required": [
+        "interval"
+    ],
+    "properties": {
+        "interval": {
+            "type": "integer",
+            "format": "uint32"
+        }
+    }
+}

@@ -2,17 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/filter.dart';
 import 'package:stride/bridge/api/settings.dart';
-import 'package:stride/bridge/third_party/stride_core/event.dart';
-import 'package:stride/bridge/third_party/stride_core/task.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/repository_route.dart';
-import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/routes/task_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
@@ -87,7 +83,6 @@ class _TasksRouteState extends State<TasksRoute> {
   Future<void> _onRefresh() async {
     final stream = context.read<TaskBloc>().stream.asBroadcastStream();
     context.read<TaskBloc>().add(TaskSyncEvent());
-    context.read<PluginManagerBloc>().emitHostEvent(HostEvent.taskSync());
     await for (final state in stream) {
       if (!state.syncing) {
         break;
@@ -103,12 +98,6 @@ class _TasksRouteState extends State<TasksRoute> {
       }
       context.read<TaskBloc>().add(
         TaskChangeStatusEvent(task: task, status: status),
-      );
-      context.read<PluginManagerBloc>().emitHostEvent(
-        HostEvent.taskModify(
-          current: task.copyWith(status: status),
-          previous: task,
-        ),
       );
       return true;
     }
@@ -181,7 +170,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
         child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, state) {
             final settings = state.settings;
-            final filters = settings.filters;
             final repositories = settings.repositories;
             return Padding(
               padding: const EdgeInsets.all(10.0),
@@ -212,13 +200,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   ),
                   const Divider(),
                   _repositories(repositories, taskBloc, settings),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Filters',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const Divider(),
-                  _filters(filters, settings),
                 ],
               ),
             );
@@ -228,7 +209,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
-  StreamBuilder _repositories(
+  Widget _repositories(
     List<RepositorySpecification> repositories,
     TaskBloc taskBloc,
     Settings settings,
@@ -297,55 +278,4 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
-  ListView _filters(List<Filter> filters, Settings settings) {
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: filters.length,
-      itemBuilder: (context, index) {
-        final filter = filters[index];
-        var selected = false;
-        if (settings.selectedFilter is FilterSelection_Predefined) {
-          final predefined =
-              settings.selectedFilter! as FilterSelection_Predefined;
-          selected = filter.uuid == predefined.uuid;
-        }
-        return Card(
-          child: ListTile(
-            title: Text(filter.name),
-            selected: selected,
-            selectedColor: Colors.amber[900],
-            onLongPress: () {
-              Navigator.of(context).push<void>(
-                MaterialPageRoute(
-                  builder: (context) => TaskFilterRoute(filter: filter),
-                ),
-              );
-            },
-            onTap: () {
-              if (selected) {
-                context.read<SettingsBloc>().add(
-                  SettingsUpdateEvent(
-                    settings: settings.copyWith(selectedFilter: null),
-                  ),
-                );
-                context.read<TaskBloc>().add(TaskFilterEvent());
-                return;
-              }
-
-              context.read<SettingsBloc>().add(
-                SettingsUpdateEvent(
-                  settings: settings.copyWith(
-                    selectedFilter: FilterSelection.predefined(
-                      uuid: filter.uuid,
-                    ),
-                  ),
-                ),
-              );
-              context.read<TaskBloc>().add(TaskFilterEvent(filter: filter));
-            },
-          ),
-        );
-      },
-    );
-  }
 }

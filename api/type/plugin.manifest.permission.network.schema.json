@@ -1,0 +1,18 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/plugin.manifest.permission.network.schema.json",
+    "type": "object",
+    "required": [
+        "urls"
+    ],
+    "properties": {
+        "urls": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            },
+            "default": []
+        }
+    }
+}

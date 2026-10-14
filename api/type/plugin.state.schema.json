@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/plugin.state.schema.json",
+	"type": "object",
+	"required": [
+		"type"
+	],
+	"properties": {
+		"type": {
+			"type": "string",
+			"$comment": "@discriminant"
+		}
+	},
+	"oneOf": [
+		{
+			"properties": {
+				"type": {
+					"const": "enable"
+				}
+			}
+		},
+		{
+			"properties": {
+				"type": {
+					"const": "disable"
+				},
+				"reason": {
+					"type": "string"
+				}
+			}
+		}
+	]
+}
