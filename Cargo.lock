@@ -2394,7 +2394,6 @@ dependencies = [
  "stride_database",
  "stride_engine",
  "stride_logging",
- "stride_plugin_manager",
  "uuid",
 ]
 
