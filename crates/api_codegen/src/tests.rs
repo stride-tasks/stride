@@ -59,10 +59,10 @@ fn generates_defaults_for_one_of_string_types() {
 
     let rust = generate_rust(&dir).unwrap();
     assert!(
-        rust.contains("impl Default for ManifestApi"),
+        rust.contains("serde::Deserialize, Default)]"),
         "output was:\n{rust}"
     );
-    assert!(rust.contains("Self::V1"), "output was:\n{rust}");
+    assert!(rust.contains("#[default]"), "output was:\n{rust}");
 
     let dart = generate_dart(&dir).unwrap();
     assert!(
