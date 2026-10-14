@@ -42,11 +42,11 @@ impl PluginRuntime {
         )
     }
 
-    pub(super) fn start_worker(&self, engine: &Arc<Engine>, worker: PluginWorker) {
+    pub(super) fn start_worker(engine: &Arc<Engine>, worker: PluginWorker) {
         let weak_engine = Arc::downgrade(engine);
         std::thread::Builder::new()
             .name("stride-plugin-messages".into())
-            .spawn(move || worker.run(weak_engine))
+            .spawn(move || worker.run(&weak_engine))
             .expect("failed to start plugin message worker");
     }
 
@@ -75,14 +75,14 @@ impl PluginRuntime {
 }
 
 impl PluginWorker {
-    fn run(self, engine: Weak<Engine>) {
+    fn run(self, engine: &Weak<Engine>) {
         while let Ok(message) = self.receiver.recv() {
             match message {
                 PluginMessage::Notification(work) => {
                     let Some(engine) = engine.upgrade() else {
                         break;
                     };
-                    if let Err(error) = process_plugin_work(&engine, work) {
+                    if let Err(error) = process_plugin_work(&engine, &work) {
                         log::error!("failed to process plugin message: {error}");
                     }
                 }
@@ -94,7 +94,7 @@ impl PluginWorker {
     }
 }
 
-fn process_plugin_work(engine: &Arc<Engine>, work: PluginWork) -> Result<()> {
+fn process_plugin_work(engine: &Arc<Engine>, work: &PluginWork) -> Result<()> {
     engine
         .lock_plugin_manager()
         .emit_notification(&work.name, &work.value)?;

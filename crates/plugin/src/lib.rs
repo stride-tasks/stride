@@ -79,6 +79,10 @@ pub struct Storage;
 
 impl Storage {
     /// Retrieve a raw value, or `None` if the key does not exist.
+    ///
+    /// # Errors
+    ///
+    /// Returns a host error or a size-change error if the value cannot be read.
     pub fn get_raw(key: &str) -> Result<Option<Vec<u8>>, StorageError> {
         let size = unsafe { stride__storage_get(key.as_ptr(), key.len(), std::ptr::null_mut()) };
         if size == StorageErrorCode::NotFound as i32 {
@@ -88,22 +92,24 @@ impl Storage {
             return Err(StorageError::from_host_code(size));
         }
 
-        let expected = size as usize;
+        let expected = usize::try_from(size).map_err(|_| StorageError::UnknownHostCode(size))?;
         let mut result = vec![0; expected];
         let actual = unsafe { stride__storage_get(key.as_ptr(), key.len(), result.as_mut_ptr()) };
         if actual < 0 {
             return Err(StorageError::from_host_code(actual));
         }
-        if actual as usize != expected {
-            return Err(StorageError::ChangedSize {
-                expected,
-                actual: actual as usize,
-            });
+        let actual = usize::try_from(actual).map_err(|_| StorageError::UnknownHostCode(actual))?;
+        if actual != expected {
+            return Err(StorageError::ChangedSize { expected, actual });
         }
         Ok(Some(result))
     }
 
     /// Retrieve and deserialize a JSON value.
+    ///
+    /// # Errors
+    ///
+    /// Returns a host error or a JSON deserialization error.
     pub fn get<T: serde::de::DeserializeOwned>(key: &str) -> Result<Option<T>, StorageError> {
         Self::get_raw(key)?
             .map(|content| serde_json::from_slice(&content).map_err(StorageError::from))
@@ -117,6 +123,10 @@ impl Storage {
     }
 
     /// Serialize and store a JSON value.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the value cannot be serialized.
     pub fn set<T: serde::Serialize>(key: &str, value: &T) -> Result<bool, StorageError> {
         let json = serde_json::to_vec(value)?;
         Ok(Self::set_raw(key, &json))
@@ -188,6 +198,10 @@ struct MethodCall<'a, M> {
 }
 
 /// Emit a schema-backed API method call to the host.
+///
+/// # Errors
+///
+/// Returns an error if the method cannot be serialized.
 pub fn emit_method<M: api::Method>(method: &M) -> Result<(), serde_json::Error> {
     let call = MethodCall {
         method: M::NAME,

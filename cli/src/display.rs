@@ -36,7 +36,7 @@ impl TaskField {
                     .or(item.task.modified)
                     .map(|date| format_date_difference(date, now))
             }
-            Self::Project => item.task.project.clone().map(Into::into),
+            Self::Project => item.task.project.clone(),
             Self::Tags if item.task.tags.is_empty() => None,
             Self::Tags => Some(item.task.tags.join(" ").into()),
             Self::Due => item.task.due.map(|due| {
@@ -46,7 +46,7 @@ impl TaskField {
                     .into_boxed_str()
             }),
             Self::Priority => item.task.priority.map(|priority| priority.as_str().into()),
-            Self::Title => item.task.title.clone().map(Into::into),
+            Self::Title => item.task.title.clone(),
             Self::Urgency => Some(format!("{:.2}", item.task.urgency()).into()),
             Self::Custom { f } => f(item),
         }

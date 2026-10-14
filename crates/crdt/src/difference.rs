@@ -124,7 +124,7 @@ pub fn push_task_diff_operations(
             ops.push(Operation::new(
                 id,
                 TaskOperation::ModifyProject {
-                    project: current.project.clone().map(Into::into),
+                    project: current.project.clone(),
                 },
             ));
         }
@@ -132,7 +132,7 @@ pub fn push_task_diff_operations(
             ops.push(Operation::new(
                 id,
                 TaskOperation::ModifyProject {
-                    project: current.project.clone().map(Into::into),
+                    project: current.project.clone(),
                 },
             ));
         }
@@ -162,12 +162,8 @@ pub fn push_task_diff_operations(
         Some(previous) if current.tags != previous.tags => {
             for (tag, ty) in difference_between(&previous.tags, &current.tags) {
                 let kind = match ty {
-                    DifferenceType::Addition => TaskOperation::AddTag {
-                        tag: tag.clone().into(),
-                    },
-                    DifferenceType::Deletion => TaskOperation::RemoveTag {
-                        tag: tag.clone().into(),
-                    },
+                    DifferenceType::Addition => TaskOperation::AddTag { tag: tag.clone() },
+                    DifferenceType::Deletion => TaskOperation::RemoveTag { tag: tag.clone() },
                 };
                 ops.push(Operation::new(id, kind));
             }
@@ -176,9 +172,7 @@ pub fn push_task_diff_operations(
             for tag in &current.tags {
                 ops.push(Operation::new(
                     id,
-                    TaskOperation::AddTag {
-                        tag: tag.clone().into(),
-                    },
+                    TaskOperation::AddTag { tag: tag.clone() },
                 ));
             }
         }

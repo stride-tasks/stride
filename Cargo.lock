@@ -2461,7 +2461,6 @@ name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
  "base64",
- "chrono",
  "flutter_rust_bridge",
  "log",
  "serde",

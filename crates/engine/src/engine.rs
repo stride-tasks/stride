@@ -55,7 +55,7 @@ impl Engine {
             plugins,
         });
 
-        engine.plugins.start_worker(&engine, worker);
+        plugin::PluginRuntime::start_worker(&engine, worker);
 
         engine
     }
@@ -63,7 +63,9 @@ impl Engine {
 
 impl Engine {
     /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
-    #[must_use]
+    /// # Errors
+    ///
+    /// Returns an error if the plugin directory cannot be loaded.
     pub fn builder(known_paths: KnownPaths) -> Result<EngineBuilder> {
         EngineBuilder::new(known_paths)
     }

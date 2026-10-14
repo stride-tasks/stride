@@ -29,7 +29,9 @@ pub struct EngineBuilder {
 }
 
 impl EngineBuilder {
-    #[must_use]
+    /// # Errors
+    ///
+    /// Returns an error if the plugin directory cannot be loaded.
     pub fn new(known_paths: KnownPaths) -> Result<Self> {
         let mut plugin_manager =
             PluginManager::new(&known_paths.support.as_path().join("plugins"))?;

@@ -130,6 +130,7 @@ impl PluginManager {
         }
     }
 
+    #[must_use]
     pub fn method_permission_error(&self, plugin_name: &str, method: &str) -> Option<Box<str>> {
         let plugin = self.plugin(plugin_name)?;
         if !matches!(plugin.instance.state, PluginState::Enable {}) {
