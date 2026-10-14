@@ -636,16 +636,16 @@ fn main() -> anyhow::Result<ExitCode> {
         }
         Mode::Plugin { command } => match command {
             None => {
-                for plugin in plugin_manager.list() {
+                for plugin in engine.lock_plugin_manager().list() {
                     println!("{}", plugin.instance.manifest.name);
                 }
             }
             Some(command) => match command {
                 cli::PluginCommand::Import { filepath } => {
-                    plugin_manager.import(&filepath)?;
+                    engine.lock_plugin_manager().import(&filepath)?;
                 }
                 cli::PluginCommand::Toggle { plugin_name } => {
-                    plugin_manager.toggle(&plugin_name)?;
+                    engine.lock_plugin_manager().toggle(&plugin_name)?;
                 }
             },
         },
