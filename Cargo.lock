@@ -2396,10 +2396,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stride_core"
-version = "0.1.0"
-
-[[package]]
 name = "stride_crdt"
 version = "0.1.0"
 dependencies = [
