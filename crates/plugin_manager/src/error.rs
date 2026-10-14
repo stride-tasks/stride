@@ -16,6 +16,7 @@ pub enum Error {
     },
     MissingManifest,
     MissingCode,
+    InvalidPluginCall(Box<str>),
     InvalidName {
         name: String,
     },
@@ -124,6 +125,7 @@ impl std::fmt::Display for Error {
             Self::UnknownFile { filename } => write!(f, "unknown archive file: {filename}"),
             Self::MissingManifest => write!(f, "missing manifest.toml"),
             Self::MissingCode => write!(f, "missing code.wasm"),
+            Self::InvalidPluginCall(error) => write!(f, "invalid plugin API call: {error}"),
             Self::InvalidName { name } => write!(f, "invalid name error: {name}"),
             Self::InvalidEventHandlerName(name) => {
                 write!(f, "invalid event handler name error: {name}")
