@@ -13,8 +13,10 @@ use std::{
 
 use error::ToPluginError;
 use logging::PluginLogger;
-use stride_api::{self as api, Notification, PluginManifest, PluginManifestInstance, PluginState};
-use stride_core::constant::StorageErrorCode;
+use stride_api::{
+    self as api, Notification, PluginManifest, PluginManifestInstance, PluginState,
+    constant::StorageErrorCode,
+};
 use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;

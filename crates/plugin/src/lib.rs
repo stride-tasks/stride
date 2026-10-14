@@ -1,8 +1,6 @@
 //! Core component library of a stride plugin.
 
-use stride_core::constant::StorageErrorCode;
-
-pub use stride_api as api;
+pub use stride_api::{self as api, constant::StorageErrorCode};
 
 pub type PluginMessage = api::Value;
 

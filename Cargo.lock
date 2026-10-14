@@ -2496,7 +2496,6 @@ dependencies = [
  "serde",
  "serde_json",
  "stride_api",
- "stride_core",
 ]
 
 [[package]]
@@ -2506,7 +2505,6 @@ dependencies = [
  "log",
  "serde_json",
  "stride_api",
- "stride_core",
  "toml",
  "wasmi",
  "wasmi_wasi",
