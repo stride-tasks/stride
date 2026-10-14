@@ -398,9 +398,10 @@ fn main() -> anyhow::Result<ExitCode> {
             let mut task = Task::new(title.into());
             apply_modifications(&mut task, &modifications);
 
-            let mut transaction = database.transaction()?;
-            transaction.insert_task(&task)?;
-            transaction.commit()?;
+            engine.execute(api::RepositoryTaskAddMethod {
+                repository_id: current_repository,
+                task,
+            })?;
         }
         Mode::Done { id } => {
             let id = if let Ok(id) = id.parse::<Uuid>() {
