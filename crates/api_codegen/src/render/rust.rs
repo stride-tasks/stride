@@ -68,6 +68,17 @@ fn render_struct(this: &StructNode) -> String {
         "#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]".to_owned(),
     );
     lines.push("#[serde(rename_all = \"kebab-case\")]".to_owned());
+    if this
+        .fields
+        .iter()
+        .filter(|field| {
+            field.required && matches!(field.typ, TypeNode::Primitive(PrimitiveType::Boolean))
+        })
+        .count()
+        > 3
+    {
+        lines.push("#[allow(clippy::struct_excessive_bools)]".to_owned());
+    }
     if default_impl.is_some() {
         lines.push("#[serde(default)]".to_owned());
     }
@@ -187,7 +198,7 @@ fn render_default_impl(this: &StructNode) -> Option<String> {
     }
 
     Some(format!(
-        "impl Default for {} {{\n    fn default() -> Self {{\n        Self {{\n{}\n        }}\n    }}\n}}",
+        "#[allow(clippy::derivable_impls)]\nimpl Default for {} {{\n    fn default() -> Self {{\n        Self {{\n{}\n        }}\n    }}\n}}",
         this.name,
         fields.join("\n")
     ))
@@ -244,14 +255,25 @@ fn render_enum(this: &EnumNode) -> String {
     if let Some(description) = &this.description {
         lines.push(format!("/// {description}"));
     }
-    lines.push(
-        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]"
-            .to_owned(),
-    );
+    let default_derive = if this.default.is_some() {
+        ", Default"
+    } else {
+        ""
+    };
+    lines.push(format!(
+        "#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize{default_derive})]"
+    ));
     lines.push(format!("pub enum {} {{", this.name));
     for variant in &this.variants {
         if let Some(description) = &variant.description {
             lines.push(format!("    /// {description}"));
+        }
+        if this
+            .default
+            .as_ref()
+            .is_some_and(|default| default == &variant.value)
+        {
+            lines.push("    #[default]".to_owned());
         }
         lines.push(format!(
             "    #[serde(rename = \"{}\")]\n    {},",
@@ -259,17 +281,6 @@ fn render_enum(this: &EnumNode) -> String {
         ));
     }
     lines.push("}\n".to_owned());
-    if let Some(default) = &this.default {
-        let variant = this
-            .variants
-            .iter()
-            .find(|variant| &variant.value == default)
-            .expect("enum defaults are validated during parsing");
-        lines.push(format!(
-            "impl Default for {} {{\n    fn default() -> Self {{\n        Self::{}\n    }}\n}}",
-            this.name, variant.name
-        ));
-    }
     lines.join("\n")
 }
 
