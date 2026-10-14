@@ -8,9 +8,7 @@ use std::{
     process::ExitCode,
     sync::Arc,
 };
-use stride_api::{
-    self as api, PluginAction, PluginEvent, PluginHostEvent, Task, TaskPriority, TaskStatus,
-};
+use stride_api::{self as api, Task, TaskPriority, TaskStatus};
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
 };
@@ -22,7 +20,6 @@ use stride_crdt::{
 use stride_database::Database;
 use stride_engine::{Backend, Engine};
 use stride_logging::LogLevelGuard;
-use stride_plugin_manager::PluginManager;
 use uuid::Uuid;
 
 use crate::{
@@ -330,10 +327,6 @@ fn main() -> anyhow::Result<ExitCode> {
     let time_provider = Arc::new(SystemTimeProvider::default());
     let clock = Clock::new(time_provider);
 
-    let plugins_path = support_dir.join("plugins");
-    let mut plugin_manager = PluginManager::new(&plugins_path)?;
-    plugin_manager.load()?;
-
     // let repository_path = known_paths.repository_path(current_repository);
     let database_filepath = known_paths.database_filepath(current_repository);
 
@@ -405,61 +398,9 @@ fn main() -> anyhow::Result<ExitCode> {
             let mut task = Task::new(title.into());
             apply_modifications(&mut task, &modifications);
 
-            let event = PluginHostEvent::TaskCreate { task: task.clone() };
-
             let mut transaction = database.transaction()?;
             transaction.insert_task(&task)?;
             transaction.commit()?;
-
-            plugin_manager.emit_event(None, &event)?;
-            while plugin_manager.process_host_event()? {}
-            while let Some(action) = plugin_manager.process_plugin_event() {
-                let (plugin_name, event) = match action {
-                    PluginAction::Event { plugin_name, event } => (plugin_name, event),
-                    PluginAction::Disable {
-                        plugin_name,
-                        reason,
-                    } => {
-                        log::error!("Disabling plugin {plugin_name}: {reason}");
-                        plugin_manager.disable(&plugin_name, Some(reason))?;
-                        continue;
-                    }
-                };
-
-                match event {
-                    PluginEvent::TaskCreate { task } => {
-                        let mut transaction = database.transaction()?;
-                        transaction.insert_task(&task)?;
-                        transaction.commit()?;
-                    }
-                    PluginEvent::TaskModify { mut task } => {
-                        let mut transaction = database.transaction()?;
-                        transaction.update_task_with(task.id, |_| {
-                            task.modified = Some(Utc::now());
-                            Ok(task)
-                        })?;
-                        transaction.commit()?;
-                    }
-                    PluginEvent::TaskSync {} => {
-                        engine.backends().sync_all(
-                            current_repository,
-                            &mut database,
-                            engine.known_paths(),
-                            &engine,
-                        )?;
-                    }
-                    PluginEvent::TaskQuery { query } => {
-                        let tasks = database.task_query(&query)?;
-                        plugin_manager.emit_event(
-                            Some(&plugin_name),
-                            &PluginHostEvent::TaskQuery { tasks },
-                        )?;
-                    }
-                    PluginEvent::NetworkRequest { method, host } => {
-                        todo!("{method:?}: {host}")
-                    }
-                }
-            }
         }
         Mode::Done { id } => {
             let id = if let Ok(id) = id.parse::<Uuid>() {
