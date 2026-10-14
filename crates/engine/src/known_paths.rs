@@ -38,8 +38,3 @@ impl KnownPaths {
             .join(Self::DATABASE_FILE_NAME)
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct State {
-    pub known_paths: KnownPaths,
-}

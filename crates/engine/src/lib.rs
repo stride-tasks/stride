@@ -5,10 +5,13 @@ pub(crate) mod cache;
 mod command;
 mod engine;
 mod error;
+mod known_paths;
 mod notifier;
 mod repository;
 
 pub mod method;
+
+pub use known_paths::KnownPaths;
 
 pub use backend::{Backend, BackendHandler, registry::BackendRegistry};
 pub use command::{

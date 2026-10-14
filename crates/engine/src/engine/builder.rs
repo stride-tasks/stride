@@ -1,9 +1,8 @@
-use stride_core::state::KnownPaths;
 use stride_plugin_manager::PluginManager;
 
 use crate::{
-    BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, NoopNotifier, Notifier,
-    Result,
+    BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, KnownPaths, NoopNotifier,
+    Notifier, Result,
     method::{
         BackendGetHandler, BackendListHandler, PluginDisableHandler, PluginImportHandler,
         PluginListHandler, PluginRemoveHandler, PluginToggleHandler, PluginValidateHandler,

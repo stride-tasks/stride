@@ -2355,7 +2355,6 @@ dependencies = [
  "git2",
  "log",
  "serde",
- "stride_core",
  "stride_crdt",
  "stride_crypto",
  "stride_database",
@@ -2389,7 +2388,6 @@ dependencies = [
  "serde_json",
  "stride_api",
  "stride_backend_git",
- "stride_core",
  "stride_crdt",
  "stride_database",
  "stride_engine",
@@ -2400,9 +2398,6 @@ dependencies = [
 [[package]]
 name = "stride_core"
 version = "0.1.0"
-dependencies = [
- "uuid",
-]
 
 [[package]]
 name = "stride_crdt"
@@ -2448,7 +2443,6 @@ dependencies = [
  "chrono",
  "log",
  "stride_api",
- "stride_core",
  "stride_crdt",
  "stride_database",
  "stride_plugin_manager",
@@ -2467,7 +2461,6 @@ dependencies = [
  "serde_json",
  "stride_api",
  "stride_backend_git",
- "stride_core",
  "stride_database",
  "stride_engine",
  "stride_logging",

@@ -12,13 +12,12 @@ use stride_api::{self as api, Task, TaskPriority, TaskStatus};
 use stride_backend_git::{
     GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
 };
-use stride_core::state::KnownPaths;
 use stride_crdt::{
     actor::ActorId,
     hlc::{Clock, SystemTimeProvider},
 };
 use stride_database::Database;
-use stride_engine::{Backend, Engine};
+use stride_engine::{Backend, Engine, KnownPaths};
 use stride_logging::LogLevelGuard;
 use uuid::Uuid;
 

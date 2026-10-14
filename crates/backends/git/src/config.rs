@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use stride_core::state::KnownPaths;
-use stride_engine::{Backend, BackendHandler, api};
+use stride_engine::{Backend, BackendHandler, KnownPaths, api};
 
 use crate::GitBackend;
 

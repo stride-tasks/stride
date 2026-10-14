@@ -4,13 +4,12 @@ use std::{
 };
 
 use stride_api as api;
-use stride_core::state::KnownPaths;
 use stride_plugin_manager::PluginManager;
 use uuid::Uuid;
 
 use crate::{
-    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, Notifier,
-    Repository, Result, cache::Cache,
+    BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, KnownPaths,
+    Notifier, Repository, Result, cache::Cache,
 };
 
 pub(super) mod builder;

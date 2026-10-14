@@ -1,13 +1,12 @@
 use std::sync::{Mutex, MutexGuard};
 use std::{path::PathBuf, sync::Arc};
-use stride_core::state::KnownPaths;
 use stride_crdt::actor::ActorId;
 use stride_crdt::hlc::{Clock, SystemTimeProvider};
 use uuid::Uuid;
 
 use stride_database::Database;
 
-use crate::{Engine, Result};
+use crate::{Engine, KnownPaths, Result};
 
 #[derive(Debug)]
 pub struct Repository {

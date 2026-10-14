@@ -2,8 +2,7 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 
 use stride_api as api;
 use stride_backend_git::{GitBackend, method::SshHostAddHandler};
-use stride_core::state::KnownPaths;
-use stride_engine::{Backend, Engine, Notifier};
+use stride_engine::{Backend, Engine, KnownPaths, Notifier};
 
 use crate::{
     ErrorKind, RustError,
