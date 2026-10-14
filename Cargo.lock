@@ -2446,6 +2446,7 @@ name = "stride_engine"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "log",
  "stride_api",
  "stride_core",
  "stride_crdt",

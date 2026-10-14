@@ -17,10 +17,7 @@ use crate::{
 
 use super::Engine;
 
-use std::{
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct EngineBuilder {
@@ -28,16 +25,18 @@ pub struct EngineBuilder {
     notifier: Option<Box<dyn Notifier>>,
     commands: CommandRegistry,
     backends: BackendRegistry,
-    plugin_manager: Mutex<PluginManager>,
+    plugin_manager: PluginManager,
 }
 
 impl EngineBuilder {
     #[must_use]
     pub fn new(known_paths: KnownPaths) -> Result<Self> {
+        let mut plugin_manager =
+            PluginManager::new(&known_paths.support.as_path().join("plugins"))?;
+        plugin_manager.load()?;
+
         Ok(Self {
-            plugin_manager: Mutex::new(PluginManager::new(
-                &known_paths.support.as_path().join("plugins"),
-            )?),
+            plugin_manager,
             known_paths,
             notifier: None,
             commands: CommandRegistry::default(),
@@ -98,13 +97,12 @@ impl EngineBuilder {
 
     #[must_use]
     pub fn build(self) -> Arc<Engine> {
-        Arc::new(Engine {
-            known_paths: self.known_paths,
-            notifier: self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
-            commands: self.commands,
-            backends: self.backends,
-            repositories: Mutex::new(super::Cache::new(Duration::from_secs(60))),
-            plugin_manager: self.plugin_manager,
-        })
+        Engine::with_plugin_manager(
+            self.known_paths,
+            self.notifier.unwrap_or_else(|| Box::new(NoopNotifier)),
+            self.commands,
+            self.backends,
+            self.plugin_manager,
+        )
     }
 }

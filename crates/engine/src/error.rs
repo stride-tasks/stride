@@ -36,6 +36,8 @@ pub enum Error {
         #[source]
         stride_plugin_manager::Error,
     ),
+    #[error("plugin message worker has stopped")]
+    PluginWorkerStopped,
 
     #[error("api I/O error: {0}")]
     Io(
