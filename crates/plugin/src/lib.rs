@@ -1,151 +1,202 @@
-// //! Core component library of a stride plugin.
+//! Core component library of a stride plugin.
 
-// use std::marker::PhantomData;
+use stride_core::constant::StorageErrorCode;
 
-// use stride_core::constant::StorageErrorCode;
-// use stride_core::event::{HostEvent, PluginEvent};
+pub use stride_api as api;
 
-// pub use stride_core::event;
+pub type PluginMessage = api::Value;
 
-// fn default_event_handler(_event: HostEvent) -> bool {
-//     false
-// }
+#[link(wasm_import_module = "env")]
+unsafe extern "C" {
+    fn stride__emit(data: *const u8, len: usize);
+    fn stride__storage_get(key: *const u8, key_len: usize, value: *mut u8) -> i32;
+    fn stride__storage_set(
+        key: *const u8,
+        key_len: usize,
+        value: *const u8,
+        value_len: usize,
+    ) -> i32;
+    fn stride__storage_remove(key: *const u8, key_len: usize) -> i32;
+}
 
-// pub type EventHandler = fn(event: HostEvent) -> bool;
+/// Errors returned while accessing plugin storage.
+#[derive(Debug)]
+pub enum StorageError {
+    Host(StorageErrorCode),
+    UnknownHostCode(i32),
+    Serde(serde_json::Error),
+    ChangedSize { expected: usize, actual: usize },
+}
 
-// pub static mut EVENT_HANDLER: EventHandler = default_event_handler;
+impl StorageError {
+    fn from_host_code(code: i32) -> Self {
+        match code {
+            value if value == StorageErrorCode::MissingMemoryExport as i32 => {
+                Self::Host(StorageErrorCode::MissingMemoryExport)
+            }
+            value if value == StorageErrorCode::InvalidKey as i32 => {
+                Self::Host(StorageErrorCode::InvalidKey)
+            }
+            value if value == StorageErrorCode::InvalidValue as i32 => {
+                Self::Host(StorageErrorCode::InvalidValue)
+            }
+            value if value == StorageErrorCode::OutOfStorage as i32 => {
+                Self::Host(StorageErrorCode::OutOfStorage)
+            }
+            value if value == StorageErrorCode::Permission as i32 => {
+                Self::Host(StorageErrorCode::Permission)
+            }
+            _ => Self::UnknownHostCode(code),
+        }
+    }
+}
 
-// #[unsafe(no_mangle)]
-// pub extern "C" fn stride__allocate(size: usize) -> *mut core::ffi::c_void {
-//     let mut buffer = Vec::with_capacity(size);
-//     let pointer = buffer.as_mut_ptr();
-//     core::mem::forget(buffer);
-//     pointer
-// }
+impl std::fmt::Display for StorageError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Host(code) => write!(f, "plugin storage host error: {code:?}"),
+            Self::UnknownHostCode(code) => write!(f, "unknown plugin storage host error: {code}"),
+            Self::Serde(error) => write!(f, "plugin storage serialization error: {error}"),
+            Self::ChangedSize { expected, actual } => write!(
+                f,
+                "plugin storage value changed size from {expected} to {actual} while reading"
+            ),
+        }
+    }
+}
 
-// /// # Safety
-// #[unsafe(no_mangle)]
-// pub unsafe extern "C" fn stride__deallocate(pointer: *mut core::ffi::c_void, capacity: usize) {
-//     unsafe {
-//         drop(Vec::from_raw_parts(pointer, 0, capacity));
-//     }
-// }
+impl std::error::Error for StorageError {}
 
-// /// # Safety
-// #[unsafe(no_mangle)]
-// #[allow(clippy::missing_panics_doc)]
-// pub unsafe extern "C" fn stride__event_handler(event: *const u8, event_len: usize) -> bool {
-//     let event_data = unsafe { core::slice::from_raw_parts(event, event_len) };
-//     let event: HostEvent =
-//         serde_json::from_slice(event_data).expect("data passed from host should be valid");
+impl From<serde_json::Error> for StorageError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::Serde(error)
+    }
+}
 
-//     unsafe { EVENT_HANDLER(event) }
-// }
+/// Access storage provided by the plugin host.
+#[derive(Clone, Copy, Debug)]
+pub struct Storage;
 
-// unsafe extern "C" {
-//     pub fn stride__emit(event: *const u8, event_len: usize);
+impl Storage {
+    /// Retrieve a raw value, or `None` if the key does not exist.
+    pub fn get_raw(key: &str) -> Result<Option<Vec<u8>>, StorageError> {
+        let size = unsafe { stride__storage_get(key.as_ptr(), key.len(), std::ptr::null_mut()) };
+        if size == StorageErrorCode::NotFound as i32 {
+            return Ok(None);
+        }
+        if size < 0 {
+            return Err(StorageError::from_host_code(size));
+        }
 
-//     pub fn stride__storage_get(key: *const u8, key_len: usize, value: *mut u8) -> i32;
-//     pub fn stride__storage_set(
-//         key: *const u8,
-//         key_len: usize,
-//         value: *const u8,
-//         value_len: usize,
-//     ) -> i32;
-//     pub fn stride__storage_remove(key: *const u8, key_len: usize) -> i32;
-// }
+        let expected = size as usize;
+        let mut result = vec![0; expected];
+        let actual = unsafe { stride__storage_get(key.as_ptr(), key.len(), result.as_mut_ptr()) };
+        if actual < 0 {
+            return Err(StorageError::from_host_code(actual));
+        }
+        if actual as usize != expected {
+            return Err(StorageError::ChangedSize {
+                expected,
+                actual: actual as usize,
+            });
+        }
+        Ok(Some(result))
+    }
 
-// pub trait Plugin {
-//     fn init() -> Self;
-//     fn event(&mut self, event: HostEvent) -> bool;
-// }
+    /// Retrieve and deserialize a JSON value.
+    pub fn get<T: serde::de::DeserializeOwned>(key: &str) -> Result<Option<T>, StorageError> {
+        Self::get_raw(key)?
+            .map(|content| serde_json::from_slice(&content).map_err(StorageError::from))
+            .transpose()
+    }
 
-// #[macro_export]
-// macro_rules! plugin {
-//     ($plugin:ty) => {
-//         #[allow(non_snake_case)]
-//         /// # Safety
-//         #[no_mangle]
-//         pub unsafe extern "C" fn stride__init() {
-//             pub static PLUGIN_INSTANCE: std::sync::LazyLock<std::sync::Mutex<$plugin>> =
-//                 std::sync::LazyLock::new(|| std::sync::Mutex::new(<$plugin>::init()));
+    /// Store a raw value.
+    #[must_use]
+    pub fn set_raw(key: &str, value: &[u8]) -> bool {
+        unsafe { stride__storage_set(key.as_ptr(), key.len(), value.as_ptr(), value.len()) == 0 }
+    }
 
-//             unsafe {
-//                 $crate::EVENT_HANDLER = |event: $crate::event::HostEvent| {
-//                     PLUGIN_INSTANCE
-//                         .lock()
-//                         .expect("couldn't lock plugin instance")
-//                         .event(event)
-//                 };
-//             }
-//         }
-//     };
-// }
+    /// Serialize and store a JSON value.
+    pub fn set<T: serde::Serialize>(key: &str, value: &T) -> Result<bool, StorageError> {
+        let json = serde_json::to_vec(value)?;
+        Ok(Self::set_raw(key, &json))
+    }
 
-// #[allow(clippy::missing_panics_doc)]
-// pub fn emit(event: &PluginEvent) {
-//     let event = serde_json::to_string(event).expect("should not fail");
+    /// Remove a stored value; returns whether a value was removed.
+    #[must_use]
+    pub fn remove(key: &str) -> bool {
+        unsafe { stride__storage_remove(key.as_ptr(), key.len()) == 1 }
+    }
+}
 
-//     unsafe {
-//         stride__emit(event.as_bytes().as_ptr(), event.len());
-//     }
-// }
+/// Stateful plugin implementation used by [`plugin!`].
+pub trait Plugin: Sized {
+    fn init() -> Self;
+    fn event(&mut self, event: PluginMessage) -> bool;
+}
 
-// #[derive(Debug)]
-// pub enum StorageError {
-//     Host(StorageErrorCode),
-//     Serde(serde_json::Error),
-// }
+/// Export the plugin ABI for a [`Plugin`] implementation.
+#[macro_export]
+macro_rules! plugin {
+    ($plugin:ty) => {
+        static PLUGIN_INSTANCE: std::sync::LazyLock<std::sync::Mutex<$plugin>> =
+            std::sync::LazyLock::new(|| std::sync::Mutex::new(<$plugin as $crate::Plugin>::init()));
 
-// #[allow(missing_copy_implementations)]
-// #[allow(missing_debug_implementations)]
-// pub struct Storage {
-//     _phantom: PhantomData<()>,
-// }
+        #[allow(unreachable_pub)]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn stride__init() {
+            let _ = &*PLUGIN_INSTANCE;
+        }
 
-// #[allow(clippy::missing_errors_doc)]
-// #[allow(clippy::missing_panics_doc)]
-// #[allow(clippy::cast_sign_loss)]
-// impl Storage {
-//     pub fn get_raw(key: &str) -> Result<Option<Vec<u8>>, StorageError> {
-//         let size = unsafe { stride__storage_get(key.as_ptr(), key.len(), std::ptr::null_mut()) };
-//         if size == StorageErrorCode::NotFound as i32 {
-//             return Ok(None);
-//         }
-//         if size < 0 {
-//             return Err(StorageError::Host(StorageErrorCode::from(size)));
-//         }
-//         let mut result = vec![0u8; size as usize];
-//         let second_size =
-//             unsafe { stride__storage_get(key.as_ptr(), key.len(), result.as_mut_ptr()) };
-//         assert_eq!(size, second_size);
-//         Ok(Some(result))
-//     }
+        #[allow(unreachable_pub)]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn stride__allocate(size: usize) -> *mut u8 {
+            Box::into_raw(vec![0; size].into_boxed_slice()).cast()
+        }
 
-//     pub fn get<T: serde::de::DeserializeOwned>(key: &str) -> Result<Option<T>, StorageError> {
-//         let Some(content) = Self::get_raw(key)? else {
-//             return Ok(None);
-//         };
-//         serde_json::from_slice(&content)
-//             .map(Some)
-//             .map_err(StorageError::Serde)
-//     }
+        /// # Safety
+        /// `pointer` must have been returned by `stride__allocate` with the same size.
+        #[allow(unreachable_pub)]
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn stride__deallocate(pointer: *mut u8, size: usize) {
+            let allocation = std::ptr::slice_from_raw_parts_mut(pointer, size);
+            unsafe {
+                drop(Box::from_raw(allocation));
+            }
+        }
 
-//     #[must_use]
-//     pub fn set_raw(key: &str, value: &[u8]) -> bool {
-//         let retval =
-//             unsafe { stride__storage_set(key.as_ptr(), key.len(), value.as_ptr(), value.len()) };
-//         retval == 0
-//     }
+        /// # Safety
+        /// `data` must point to `len` readable bytes.
+        #[allow(unreachable_pub)]
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn stride__event_handler(data: *const u8, len: usize) -> i32 {
+            let data = unsafe { std::slice::from_raw_parts(data, len) };
+            let event: $crate::PluginMessage =
+                serde_json::from_slice(data).expect("host passed an invalid plugin message");
+            let mut plugin = PLUGIN_INSTANCE
+                .lock()
+                .expect("couldn't lock plugin instance");
+            i32::from(<$plugin as $crate::Plugin>::event(&mut *plugin, event))
+        }
+    };
+}
 
-//     pub fn set<T: serde::Serialize>(key: &str, value: &T) -> Result<bool, StorageError> {
-//         let json = serde_json::to_string(value).map_err(StorageError::Serde)?;
-//         Ok(Self::set_raw(key, json.as_bytes()))
-//     }
+#[derive(serde::Serialize)]
+struct MethodCall<'a, M> {
+    method: &'static str,
+    params: &'a M,
+}
 
-//     #[must_use]
-//     pub fn remove(key: &str) -> bool {
-//         let retval = unsafe { stride__storage_remove(key.as_ptr(), key.len()) };
-//         retval == 1
-//     }
-// }
+/// Emit a schema-backed API method call to the host.
+pub fn emit_method<M: api::Method>(method: &M) -> Result<(), serde_json::Error> {
+    let call = MethodCall {
+        method: M::NAME,
+        params: method,
+    };
+    let data = serde_json::to_vec(&call)?;
+
+    unsafe {
+        stride__emit(data.as_ptr(), data.len());
+    }
+    Ok(())
+}
