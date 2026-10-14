@@ -13,9 +13,7 @@ use std::{
 
 use error::ToPluginError;
 use logging::PluginLogger;
-use stride_api::{
-    PluginEvent, PluginHostEvent, PluginManifest, PluginManifestInstance, PluginState,
-};
+use stride_api::{self as api, Notification, PluginManifest, PluginManifestInstance, PluginState};
 use stride_core::constant::StorageErrorCode;
 use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
@@ -67,14 +65,15 @@ struct StorageState {
 
 struct HostState {
     wasi: WasiCtx,
-    events: VecDeque<PluginEvent>,
+    calls: VecDeque<api::Value>,
+    call_error: Option<Box<str>>,
     storage: Option<StorageState>,
 }
 
 #[derive(Debug)]
-pub struct EventQueue {
+pub struct PluginCallQueue {
     plugin_name: Box<str>,
-    events: VecDeque<PluginEvent>,
+    calls: VecDeque<api::Value>,
 }
 
 #[derive(Debug)]
@@ -89,77 +88,19 @@ pub struct Plugin {
 }
 
 impl Plugin {
-    fn can_accept_event(&self, event: &PluginHostEvent) -> bool {
+    fn can_accept_notification(&self, notification_name: &str) -> bool {
         // TOOD: Implement is_* functions for enums in rust (api_codegen).
         if !matches!(self.instance.state, PluginState::Enable {}) {
             return false;
         }
-        match event {
-            PluginHostEvent::TaskCreate { .. }
-                if !self
-                    .instance
-                    .manifest
-                    .event
-                    .task
-                    .as_ref()
-                    .is_some_and(|task| task.create) =>
-            {
-                return false;
-            }
-            PluginHostEvent::TaskModify { .. }
-                if !self
-                    .instance
-                    .manifest
-                    .event
-                    .task
-                    .as_ref()
-                    .is_some_and(|task| task.modify) =>
-            {
-                return false;
-            }
-            PluginHostEvent::TaskSync {}
-                if !self
-                    .instance
-                    .manifest
-                    .event
-                    .task
-                    .as_ref()
-                    .is_some_and(|task| task.sync) =>
-            {
-                return false;
-            }
-            PluginHostEvent::Timer { interval } => {
-                let Some(timer) = &self.instance.manifest.event.timer else {
-                    return false;
-                };
-                return timer.interval == *interval;
-            }
-            PluginHostEvent::TaskQuery { .. }
-                if !self
-                    .instance
-                    .manifest
-                    .permission
-                    .task
-                    .as_ref()
-                    .is_some_and(|task| task.query) =>
-            {
-                return false;
-            }
-            PluginHostEvent::NetworkResponse { host, .. } => {
-                let Some(network) = &self.instance.manifest.permission.network else {
-                    return false;
-                };
-
-                if !network.urls.contains(&host) {
-                    return false;
-                }
-            }
-            PluginHostEvent::TaskCreate { .. }
-            | PluginHostEvent::TaskModify { .. }
-            | PluginHostEvent::TaskSync {}
-            | PluginHostEvent::TaskQuery { .. } => {}
+        let Some(events) = &self.instance.manifest.event.task else {
+            return false;
+        };
+        match notification_name {
+            api::RepositoryTaskAddedNotification::NAME => events.create,
+            api::RepositoryChangedNotification::NAME => events.sync,
+            _ => false,
         }
-        true
     }
 }
 
@@ -356,32 +297,25 @@ impl PluginManager {
         Ok(())
     }
 
-    #[allow(clippy::cast_possible_truncation)]
-    #[allow(clippy::cast_sign_loss)]
-    #[allow(clippy::cast_possible_wrap)]
-    #[allow(clippy::missing_panics_doc)]
-    #[allow(clippy::too_many_lines)]
-    pub fn emit_event(&mut self, plugin_name: Option<&str>, event: &PluginHostEvent) -> Result<()> {
-        if let Some(plugin_name) = plugin_name {
-            let Some(plugin) = self.plugin(plugin_name) else {
-                return Ok(());
-            };
-            if plugin.can_accept_event(event) {
-                self.host_events
-                    .push_back((plugin.instance.manifest.name.clone(), event.clone()));
-            }
-            return Ok(());
-        }
+    pub fn emit_notification(&mut self, name: &str, value: &api::Value) -> Result<()> {
         for plugin in self.plugins.values() {
-            if !plugin.can_accept_event(event) {
+            if !plugin.can_accept_notification(name) {
                 continue;
             }
-
-            self.host_events
-                .push_back((plugin.instance.manifest.name.clone(), event.clone()));
+            self.host_messages
+                .push_back((plugin.instance.manifest.name.clone(), value.clone()));
         }
 
         Ok(())
+    }
+
+    pub fn enqueue_plugin_message(&mut self, plugin_name: &str, message: api::Value) {
+        if let Some(plugin) = self.plugin(plugin_name)
+            && matches!(plugin.instance.state, PluginState::Enable {})
+        {
+            self.host_messages
+                .push_back((plugin.instance.manifest.name.clone(), message));
+        }
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -389,8 +323,8 @@ impl PluginManager {
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn process_host_event(&mut self) -> Result<bool> {
-        let Some((plugin, event)) = self.host_events.pop_front() else {
+    pub fn process_plugin_message(&mut self) -> Result<bool> {
+        let Some((plugin, message)) = self.host_messages.pop_front() else {
             return Ok(false);
         };
 
@@ -408,7 +342,7 @@ impl PluginManager {
         let source_path = plugin_path.join("source");
         let code_path = source_path.join("code.wasm");
         let wasm = std::fs::read(code_path)?;
-        let module = Module::new(&self.engine, &wasm).expect("already validated");
+        let module = Module::new(&self.engine, &wasm).to_error(&plugin.instance.manifest.name)?;
 
         let has_storage_permission = plugin.instance.manifest.permission.storage.is_some();
 
@@ -445,7 +379,8 @@ impl PluginManager {
         let wasi_ctx = wasi_context(&plugin.instance.manifest.name);
         let host_state = HostState {
             wasi: wasi_ctx,
-            events: VecDeque::default(),
+            calls: VecDeque::default(),
+            call_error: None,
             storage: has_storage_permission.then(|| StorageState {
                 data: storage,
                 size: storage_size,
@@ -468,21 +403,29 @@ impl PluginManager {
 
         let stride_emit = Func::wrap(
             &mut store,
-            |mut caller: Caller<'_, HostState>, event_data: i32, event_len: i32| {
+            |mut caller: Caller<'_, HostState>, call_data: i32, call_len: i32| {
                 let Some(memory_export) = caller.get_export("memory").and_then(Extern::into_memory)
                 else {
+                    caller.data_mut().call_error =
+                        Some("plugin call requires exported memory".into());
                     return;
                 };
 
-                let data = memory_export.data(&mut caller);
+                let call_data = usize::try_from(call_data).ok();
+                let call_len = usize::try_from(call_len).ok();
+                let Some(data) = call_data
+                    .zip(call_len)
+                    .and_then(|(start, len)| start.checked_add(len).map(|end| start..end))
+                    .and_then(|range| memory_export.data(&caller).get(range))
+                else {
+                    caller.data_mut().call_error = Some("plugin call points outside memory".into());
+                    return;
+                };
 
-                let event_data = event_data as usize;
-                let event_len = event_len as usize;
-                let data = data.get(event_data..event_data + event_len).unwrap();
-
-                let event: PluginEvent = serde_json::from_slice(data).unwrap();
-
-                caller.data_mut().events.push_back(event);
+                match serde_json::from_slice::<api::Value>(data) {
+                    Ok(call) => caller.data_mut().calls.push_back(call),
+                    Err(error) => caller.data_mut().call_error = Some(error.to_string().into()),
+                }
             },
         );
         linker.define("env", "stride__emit", stride_emit)?;
@@ -638,7 +581,7 @@ impl PluginManager {
             .call(&mut store, ())
             .to_error(&plugin.instance.manifest.name)?;
 
-        let event_data = serde_json::to_string(&event).expect("shouldn't fail");
+        let event_data = serde_json::to_string(&message).expect("shouldn't fail");
         store
             .set_fuel(100_000)
             .to_error(&plugin.instance.manifest.name)?;
@@ -660,6 +603,10 @@ impl PluginManager {
             .call(&mut store, (ret as i32, event_data.len() as i32))
             .to_error(&plugin.instance.manifest.name)?;
 
+        if let Some(error) = store.data_mut().call_error.take() {
+            return Err(Error::InvalidPluginCall(error));
+        }
+
         stride_deallocate
             .call(&mut store, (ret as i32, event_data.len() as i32))
             .to_error(&plugin.instance.manifest.name)?;
@@ -680,9 +627,9 @@ impl PluginManager {
             }
         }
 
-        self.plugin_events.push_back(EventQueue {
+        self.plugin_calls.push_back(PluginCallQueue {
             plugin_name: plugin.instance.manifest.name.clone(),
-            events: std::mem::take(&mut store.data_mut().events),
+            calls: std::mem::take(&mut store.data_mut().calls),
         });
 
         Ok(true)

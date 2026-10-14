@@ -3,12 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use stride_api::{PluginAction, PluginEvent, PluginHostEvent, PluginManifestInstance, PluginState};
+use stride_api::{self as api, Method, PluginManifestInstance, PluginState};
 use wasmi::{Config, Engine};
 
-use crate::{Error, EventQueue, Plugin, Result};
+use crate::{Error, Plugin, PluginCallQueue, Result};
 
-/// flutter_rust_bridge:unignore
 #[derive(Debug, Default)]
 pub struct PluginManager {
     pub(crate) plugins_path: PathBuf,
@@ -16,8 +15,8 @@ pub struct PluginManager {
 
     pub(crate) engine: Engine,
 
-    pub(crate) host_events: VecDeque<(Box<str>, PluginHostEvent)>,
-    pub(crate) plugin_events: VecDeque<EventQueue>,
+    pub(crate) host_messages: VecDeque<(Box<str>, api::Value)>,
+    pub(crate) plugin_calls: VecDeque<PluginCallQueue>,
 }
 
 impl PluginManager {
@@ -35,8 +34,8 @@ impl PluginManager {
             plugins: HashMap::new(),
 
             engine,
-            host_events: VecDeque::new(),
-            plugin_events: VecDeque::new(),
+            host_messages: VecDeque::new(),
+            plugin_calls: VecDeque::new(),
         })
     }
 
@@ -113,73 +112,57 @@ impl PluginManager {
         Ok(true)
     }
 
-    #[allow(clippy::missing_panics_doc)]
-    pub fn process_plugin_event(&mut self) -> Option<PluginAction> {
-        let mut events = self.plugin_events.pop_front()?;
-        let event = events.events.pop_front();
+    pub fn process_plugin_call(&mut self) -> Option<(Box<str>, api::Value)> {
+        loop {
+            let mut calls = self.plugin_calls.pop_front()?;
+            let Some(call) = calls.calls.pop_front() else {
+                continue;
+            };
 
-        let instance = self.plugin(&events.plugin_name).unwrap().instance.clone();
-        let permissions = instance.manifest.permission;
-        if !events.events.is_empty() {
-            self.plugin_events.push_back(events);
+            if !calls.calls.is_empty() {
+                self.plugin_calls.push_back(PluginCallQueue {
+                    plugin_name: calls.plugin_name.clone(),
+                    calls: calls.calls,
+                });
+            }
+
+            return Some((calls.plugin_name, call));
+        }
+    }
+
+    pub fn method_permission_error(&self, plugin_name: &str, method: &str) -> Option<Box<str>> {
+        let plugin = self.plugin(plugin_name)?;
+        if !matches!(plugin.instance.state, PluginState::Enable {}) {
+            return Some("plugin is disabled".into());
         }
 
-        let event = event?;
+        let task_permission = plugin.instance.manifest.permission.task.as_ref();
+        let (allowed, permission) = match method {
+            api::RepositoryTaskAddMethod::NAME => (
+                task_permission.is_some_and(|task| task.create),
+                "task.create",
+            ),
+            api::RepositoryTaskUpdateMethod::NAME => (
+                task_permission.is_some_and(|task| task.modify),
+                "task.modify",
+            ),
+            api::RepositoryTaskRemoveMethod::NAME => (
+                task_permission.is_some_and(|task| task.remove),
+                "task.remove",
+            ),
+            api::RepositoryTaskQueryMethod::NAME => {
+                (task_permission.is_some_and(|task| task.query), "task.query")
+            }
+            api::RepositorySyncMethod::NAME => {
+                (task_permission.is_some_and(|task| task.sync), "task.sync")
+            }
+            _ => return Some(format!("unsupported API method '{method}'").into()),
+        };
 
-        match &event {
-            PluginEvent::TaskCreate { .. }
-                if !permissions.task.as_ref().is_some_and(|task| task.create) =>
-            {
-                return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name.clone(),
-                    reason: "missing 'task.create' permission".into(),
-                });
-            }
-            PluginEvent::TaskModify { .. }
-                if !permissions.task.as_ref().is_some_and(|task| task.modify) =>
-            {
-                return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name.clone(),
-                    reason: "missing 'task.modify' permission".into(),
-                });
-            }
-            PluginEvent::TaskSync {}
-                if !permissions.task.as_ref().is_some_and(|task| task.sync) =>
-            {
-                return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name.clone(),
-                    reason: "missing 'task.sync' permission".into(),
-                });
-            }
-            PluginEvent::TaskQuery { .. }
-                if !permissions.task.as_ref().is_some_and(|task| task.query) =>
-            {
-                return Some(PluginAction::Disable {
-                    plugin_name: instance.manifest.name.clone(),
-                    reason: "missing 'task.query' permission".into(),
-                });
-            }
-            PluginEvent::NetworkRequest { host, .. } => {
-                let Some(network) = permissions.network else {
-                    return Some(PluginAction::Disable {
-                        plugin_name: instance.manifest.name.clone(),
-                        reason: "missing 'network' permission".into(),
-                    });
-                };
-
-                if !network.urls.contains(host) {
-                    return Some(PluginAction::Disable {
-                        plugin_name: instance.manifest.name.clone(),
-                        reason: format!("missing requested url in 'network.url': {host}").into(),
-                    });
-                }
-            }
-            _ => {}
+        if allowed {
+            None
+        } else {
+            Some(format!("missing '{permission}' permission").into())
         }
-
-        Some(PluginAction::Event {
-            plugin_name: instance.manifest.name.clone(),
-            event,
-        })
     }
 }
