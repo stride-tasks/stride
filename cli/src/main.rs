@@ -11,8 +11,8 @@ use std::{
 use stride_api::{self as api, Task, TaskPriority, TaskStatus};
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
-    SshKeyListHandler, SshKeyUpdateHandler, known_hosts::KnownHosts, method::SshHostAddHandler,
-    ssh_key::SshKey,
+    SshKeyListHandler, SshKeyRemoveHandler, SshKeyUpdateHandler, known_hosts::KnownHosts,
+    method::SshHostAddHandler, ssh_key::SshKey,
 };
 use stride_crdt::{
     actor::ActorId,
@@ -347,6 +347,7 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("ssh.key.generate", SshKeyGenerateHandler)
         .command("ssh.key.add", SshKeyAddHandler)
         .command("ssh.key.update", SshKeyUpdateHandler)
+        .command("ssh.key.remove", SshKeyRemoveHandler)
         .build();
 
     match mode {
