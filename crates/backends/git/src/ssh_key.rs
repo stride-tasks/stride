@@ -10,6 +10,8 @@ pub enum SshError {
     Io(#[from] std::io::Error),
     #[error("SSH key was not found with ID: {id}")]
     NotFound { id: Uuid },
+    #[error("Unsupported SSH key format")]
+    UnsupportedFormat { format: Box<str> },
 }
 
 #[derive(Debug, Clone)]
