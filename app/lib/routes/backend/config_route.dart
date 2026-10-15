@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -92,7 +91,7 @@ class _ConfigSectionState extends State<_ConfigSection> {
   void initState() {
     super.initState();
 
-    _sshKeys = sshKeys();
+    _sshKeys = SshKeyListMethod().execute().then((result) => result.keys);
 
     // TODO: Verify that descriptor is not null.
     _schema = widget.record.descriptor!.schema;
@@ -235,15 +234,19 @@ class _ConfigSectionState extends State<_ConfigSection> {
                     'Are you sure you want to generate a new SSH Key?',
                   ),
                   onConfirm: (context) async {
-                    final key = await SshKey.generate();
-                    return key.uuid;
+                    final result = await SshKeyGenerateMethod(
+                      format: .sshEd25519,
+                    ).execute();
+                    return result.key.id;
                   },
                 );
 
                 if (key != null) {
                   setState(() {
                     _setValue(id, ConfigValue.uuid(value: key));
-                    _sshKeys = sshKeys();
+                    _sshKeys = SshKeyListMethod().execute().then(
+                      (result) => result.keys,
+                    );
                   });
 
                   await _save();

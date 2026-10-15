@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/bridge/api/settings.dart' hide SshKey;
+import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/utils/functions.dart';
@@ -36,7 +38,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
   }
 
   void _reset() {
-    _keys = sshKeys();
+    _keys = SshKeyListMethod().execute().then((result) => result.keys);
   }
 
   @override
@@ -69,8 +71,10 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   icon: const Icon(Icons.generating_tokens),
                   label: const Text('Generate Key'),
                   onPressed: () async {
-                    final sshKey = await SshKey.generate();
-                    Log.trace('SSH Key generated with UUID: ${sshKey.uuid}');
+                    final result = await SshKeyGenerateMethod(
+                      format: SshKeyFormat.sshEd25519,
+                    ).execute();
+                    Log.trace('SSH Key generated with UUID: ${result.key.id}');
                     setState(_reset);
                   },
                 ),
@@ -107,7 +111,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
 
   ListTile _listItem(BuildContext context, SshKey key, Settings settings) {
     final publicKey = key.publicKey;
-    final uuid = key.uuid;
+    final uuid = key.id;
 
     final subtitle = Text(uuid.toString());
     // final subtitle = switch (settings.repositories.any(
@@ -130,10 +134,10 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
     return ListTile(
       title: Text(publicKey),
       subtitle: subtitle,
-      selected: key.uuid == widget.selected,
+      selected: key.id == widget.selected,
       leading: widget.selected == null
           ? null
-          : key.uuid != widget.selected
+          : key.id != widget.selected
           ? const Icon(Icons.circle_outlined)
           : const Icon(Icons.check_circle_outline_rounded),
       trailing: !widget.hasDelete
@@ -158,9 +162,9 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   onConfirm: (context) async {
                     await context.read<LogBloc>().catch_(
                       message: 'ssh key',
-                      () async => SshKey.removeKey(uuid: key.uuid),
+                      () async => SshKeyRemoveMethod(id: key.id).execute(),
                     );
-                    Log.trace('SSH Key deleted with UUID: ${key.uuid}');
+                    Log.trace('SSH Key deleted with UUID: ${key.id}');
                     setState(_reset);
                     return true;
                   },

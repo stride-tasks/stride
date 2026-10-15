@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/context.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class SshKeyAddRoute extends StatefulWidget {
@@ -74,7 +75,11 @@ class _SshKeyAddRouteState extends State<SshKeyAddRoute> {
           }
 
           await context.read<LogBloc>().catch_(message: 'ssh key', () async {
-            return SshKey.save(publicKey: publicKey, privateKey: privateKey);
+            return SshKeyAddMethod(
+              format: SshKeyFormat.sshEd25519,
+              publicKey: publicKey,
+              privateKey: privateKey,
+            ).execute();
           });
           if (context.mounted) Navigator.pop(context);
         },

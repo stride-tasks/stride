@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/api.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:uuid/uuid_value.dart';
@@ -251,7 +251,7 @@ class SettingsTileSsh extends SettingsTile {
                  keys
                          ?.cast<SshKey?>()
                          .firstWhere(
-                           (element) => element!.uuid == uuid,
+                           (element) => element!.id == uuid,
                            orElse: () => null,
                          )
                          ?.publicKey ??
@@ -265,7 +265,7 @@ class SettingsTileSsh extends SettingsTile {
                builder: (context) => SshKeysRoute(
                  selected: uuid,
                  onTap: (key) {
-                   onChanged(key.uuid);
+                   onChanged(key.id);
                    Navigator.of(context).pop();
                  },
                  hasDelete: false,
