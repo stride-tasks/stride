@@ -795,18 +795,32 @@ impl TypedCommandHandler for SshKeyListHandler {
             SshKey::load_keys(ssh_dir).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
 
         Ok(api::SshKeyListMethodResult {
-            keys: keys
-                .into_iter()
-                .map(|key| api::SshKey {
-                    id: key.id,
-                    format: api::SshKeyFormat::SshEd25519,
-                    public_key: key.public_key.into_boxed_str(),
-                    public_path: PathBuf::from(key.public_path),
-                    private_path: PathBuf::from(key.private_path),
-                })
-                .collect(),
+            keys: keys.into_iter().map(ssh_key_to_api).collect(),
         })
     }
+}
+
+fn ssh_key_to_api(key: SshKey) -> api::SshKey {
+    api::SshKey {
+        id: key.id,
+        format: api::SshKeyFormat::SshEd25519,
+        public_key: key.public_key.into_boxed_str(),
+        public_path: PathBuf::from(key.public_path),
+        private_path: PathBuf::from(key.private_path),
+    }
+}
+
+fn ensure_supported_ssh_key_format(format: api::SshKeyFormat) -> stride_engine::Result<()> {
+    if format != api::SshKeyFormat::SshEd25519 {
+        return Err(stride_engine::Error::Other(Box::new(
+            // TODO: Add display formatting.
+            SshError::UnsupportedFormat {
+                format: format!("{format:?}").into_boxed_str(),
+            },
+        )));
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -820,27 +834,14 @@ impl TypedCommandHandler for SshKeyGenerateHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> stride_engine::Result<api::SshKeyGenerateMethodResult> {
-        if method.format != api::SshKeyFormat::SshEd25519 {
-            return Err(stride_engine::Error::Other(Box::new(
-                // TODO: Add display formatting.
-                SshError::UnsupportedFormat {
-                    format: format!("{:?}", method.format).into_boxed_str(),
-                },
-            )));
-        }
+        ensure_supported_ssh_key_format(method.format)?;
 
         let ssh_dir = &engine.known_paths().ssh_keys;
         let key =
             SshKey::generate(ssh_dir).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
 
         Ok(api::SshKeyGenerateMethodResult {
-            key: api::SshKey {
-                id: key.id,
-                format: api::SshKeyFormat::SshEd25519,
-                public_key: key.public_key.into_boxed_str(),
-                public_path: PathBuf::from(key.public_path),
-                private_path: PathBuf::from(key.private_path),
-            },
+            key: ssh_key_to_api(key),
         })
     }
 }
