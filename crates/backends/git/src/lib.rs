@@ -892,6 +892,24 @@ impl TypedCommandHandler for SshKeyUpdateHandler {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyRemoveHandler;
+
+impl TypedCommandHandler for SshKeyRemoveHandler {
+    type Method = api::SshKeyRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyRemoveMethodResult> {
+        SshKey::remove_key(&engine.known_paths().ssh_keys, method.id)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyRemoveMethodResult {})
+    }
+}
+
 impl Backend for GitBackend {
     fn handler() -> Box<dyn BackendHandler>
     where
