@@ -756,6 +756,38 @@ impl TypedCommandHandler for SshHostListHandler {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct SshHostRemoveHandler;
+
+impl TypedCommandHandler for SshHostRemoveHandler {
+    type Method = api::SshHostRemoveMethod;
+
+    fn handle(
+        &self,
+        _: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshHostRemoveMethodResult> {
+        let mut known_hosts =
+            KnownHosts::load().map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        let key_type = match method.format {
+            api::SshKeyFormat::SshRsa => HostKeyType::Rsa,
+            api::SshKeyFormat::SshDss => HostKeyType::Dss,
+            api::SshKeyFormat::EcdsaSha2Nistp256 => HostKeyType::Ecdsa256,
+            api::SshKeyFormat::EcdsaSha2Nistp384 => HostKeyType::Ecdsa384,
+            api::SshKeyFormat::EcdsaSha2Nistp521 => HostKeyType::Ecdsa521,
+            api::SshKeyFormat::SshEd25519 => HostKeyType::Ed255219,
+        };
+
+        known_hosts.hosts.retain(|host| {
+            (host.hostname.as_str() != method.hostname.as_ref()) || (host.key_type != key_type)
+        });
+
+        KnownHosts::save(&known_hosts).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+        Ok(api::SshHostRemoveMethodResult {})
+    }
+}
+
 impl Backend for GitBackend {
     fn handler() -> Box<dyn BackendHandler>
     where
