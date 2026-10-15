@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
+import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/utils/functions.dart';
 
 class KnownHostsRoute extends StatefulWidget {
-  final void Function(Host key)? onTap;
+  final void Function(SshHost key)? onTap;
   final bool hasDelete;
 
   const KnownHostsRoute({super.key, this.onTap, this.hasDelete = true});
@@ -16,20 +17,20 @@ class KnownHostsRoute extends StatefulWidget {
 }
 
 class _KnownHostsRouteState extends State<KnownHostsRoute> {
-  Future<KnownHosts>? _knownHosts;
+  Future<SshHostListMethodResult>? _knownHosts;
 
   @override
   void initState() {
     super.initState();
 
-    _knownHosts = KnownHosts.load();
+    _knownHosts = SshHostListMethod().execute();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('SSH Known Hosts')),
-      body: FutureBuilder<KnownHosts>(
+      body: FutureBuilder(
         future: _knownHosts,
         builder: (context, state) {
           if (state.connectionState != ConnectionState.done) {
@@ -47,7 +48,7 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
           return ListView.builder(
             itemCount: hosts.length,
             itemBuilder: (context, index) {
-              return Card(child: _listItem(knownHosts, index, context));
+              return Card(child: _listItem(hosts, index, context));
             },
           );
         },
@@ -55,11 +56,11 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
     );
   }
 
-  ListTile _listItem(KnownHosts knownHosts, int index, BuildContext context) {
-    final host = knownHosts.hosts[index];
+  ListTile _listItem(List<SshHost> hosts, int index, BuildContext context) {
+    final host = hosts[index];
     return ListTile(
-      title: Text('${host.hostname} - ${host.keyType.name}'),
-      subtitle: Text(host.key),
+      title: Text('${host.hostname} - ${host.key.type.name}'),
+      subtitle: Text(host.key.public),
       trailing: !widget.hasDelete
           ? null
           : IconButton(
@@ -77,18 +78,16 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        '${host.hostname} - ${host.keyType.name} - ${host.key}',
+                        '${host.hostname} - ${host.key.type.name} - ${host.key.public}',
                       ),
                     ],
                   ),
                   onConfirm: (context) async {
                     context.read<LogBloc>().catch_(
-                      () async => KnownHosts.save(
-                        this_: KnownHosts(
-                          hosts: knownHosts.hosts.toList()
-                            ..removeWhere((element) => element == host),
-                        ),
-                      ),
+                      () async => SshHostRemoveMethod(
+                        hostname: host.hostname,
+                        format: host.key.type,
+                      ).execute(),
                     );
                     Log.trace('Known host deleted');
                     return true;
