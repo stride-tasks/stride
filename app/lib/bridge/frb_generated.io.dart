@@ -16,10 +16,8 @@ import 'dart:ffi' as ffi;
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:stride/bridge/api/context.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/git.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -99,34 +97,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw);
 
   @protected
-  Host dco_decode_box_autoadd_host(dynamic raw);
-
-  @protected
-  KnownHosts dco_decode_box_autoadd_known_hosts(dynamic raw);
-
-  @protected
   Settings dco_decode_box_autoadd_settings(dynamic raw);
-
-  @protected
-  Host dco_decode_host(dynamic raw);
-
-  @protected
-  HostKeyType dco_decode_host_key_type(dynamic raw);
-
-  @protected
-  int dco_decode_i_32(dynamic raw);
-
-  @protected
-  KnownHosts dco_decode_known_hosts(dynamic raw);
 
   @protected
   List<SshKey>
   dco_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
     dynamic raw,
   );
-
-  @protected
-  List<Host> dco_decode_list_host(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -137,13 +114,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  String? dco_decode_opt_String(dynamic raw);
-
-  @protected
   UuidValue? dco_decode_opt_Uuid(dynamic raw);
-
-  @protected
-  Host? dco_decode_opt_box_autoadd_host(dynamic raw);
 
   @protected
   RepositorySpecification dco_decode_repository_specification(dynamic raw);
@@ -227,34 +198,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  Host sse_decode_box_autoadd_host(SseDeserializer deserializer);
-
-  @protected
-  KnownHosts sse_decode_box_autoadd_known_hosts(SseDeserializer deserializer);
-
-  @protected
   Settings sse_decode_box_autoadd_settings(SseDeserializer deserializer);
-
-  @protected
-  Host sse_decode_host(SseDeserializer deserializer);
-
-  @protected
-  HostKeyType sse_decode_host_key_type(SseDeserializer deserializer);
-
-  @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
-
-  @protected
-  KnownHosts sse_decode_known_hosts(SseDeserializer deserializer);
 
   @protected
   List<SshKey>
   sse_decode_list_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshKey(
     SseDeserializer deserializer,
   );
-
-  @protected
-  List<Host> sse_decode_list_host(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -265,13 +215,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  String? sse_decode_opt_String(SseDeserializer deserializer);
-
-  @protected
   UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer);
-
-  @protected
-  Host? sse_decode_opt_box_autoadd_host(SseDeserializer deserializer);
 
   @protected
   RepositorySpecification sse_decode_repository_specification(
@@ -289,6 +233,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
   void sse_encode_AnyhowException(
@@ -372,28 +319,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_box_autoadd_host(Host self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_box_autoadd_known_hosts(
-    KnownHosts self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_box_autoadd_settings(Settings self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_host(Host self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_host_key_type(HostKeyType self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_known_hosts(KnownHosts self, SseSerializer serializer);
 
   @protected
   void
@@ -401,9 +327,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<SshKey> self,
     SseSerializer serializer,
   );
-
-  @protected
-  void sse_encode_list_host(List<Host> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
@@ -418,13 +341,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_opt_String(String? self, SseSerializer serializer);
-
-  @protected
   void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_opt_box_autoadd_host(Host? self, SseSerializer serializer);
 
   @protected
   void sse_encode_repository_specification(
@@ -443,6 +360,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
 }
 
 // Section: wire_class

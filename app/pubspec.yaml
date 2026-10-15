@@ -75,7 +75,7 @@ flutter_native_splash:
   web: false
 
 flutter_rust_bridge:
-  rust_input: crate::api,stride_backend_git::known_hosts
+  rust_input: crate::api
   rust_root: ../crates/flutter_bridge/
   dart_output: lib/bridge
   web: false

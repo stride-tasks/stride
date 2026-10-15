@@ -2450,16 +2450,13 @@ dependencies = [
 name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
- "base64",
  "flutter_rust_bridge",
  "serde",
  "serde_json",
  "stride_api",
  "stride_backend_git",
- "stride_database",
  "stride_engine",
  "stride_logging",
- "stride_plugin_manager",
  "thiserror 2.0.21",
  "uuid",
 ]
