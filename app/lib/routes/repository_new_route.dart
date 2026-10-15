@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/settings.dart' hide SshKey;
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';

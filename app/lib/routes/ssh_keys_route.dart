@@ -4,7 +4,7 @@ import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/settings.dart' hide SshKey;
+import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';

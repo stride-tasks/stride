@@ -10,8 +10,6 @@ use crate::{RustError, frb_generated::StreamSink};
 
 use super::error::SettingsError;
 
-use stride_backend_git::ssh_key::SshKey as InnerSshKey;
-
 pub(crate) static APPLICATION_STATE_INSTANCE: LazyLock<Mutex<State>> =
     LazyLock::new(Mutex::default);
 
@@ -55,58 +53,6 @@ pub(crate) fn application_cache_path() -> PathBuf {
             .cache_path
             .clone(),
     )
-}
-
-pub(crate) fn ssh_key_path() -> PathBuf {
-    application_support_path().join(".ssh").join("keys")
-}
-
-pub fn ssh_keys() -> Result<Vec<SshKey>, RustError> {
-    Ok(InnerSshKey::load_keys(&ssh_key_path())?
-        .into_iter()
-        .map(|key| SshKey { inner: key })
-        .collect())
-}
-
-#[frb(opaque)]
-#[derive(Debug)]
-pub struct SshKey {
-    pub(crate) inner: InnerSshKey,
-}
-
-impl SshKey {
-    pub fn generate() -> Result<Self, RustError> {
-        Ok(Self {
-            inner: InnerSshKey::generate(&ssh_key_path())?,
-        })
-    }
-
-    pub fn save(public_key: &str, private_key: &str) -> Result<Self, RustError> {
-        Ok(Self {
-            inner: InnerSshKey::save(&ssh_key_path(), public_key, private_key)?,
-        })
-    }
-
-    pub fn update(uuid: Uuid, public_key: &str, private_key: &str) -> Result<Self, RustError> {
-        Ok(Self {
-            inner: InnerSshKey::update(&ssh_key_path(), uuid, public_key, private_key)?,
-        })
-    }
-
-    pub fn remove_key(uuid: Uuid) -> Result<(), RustError> {
-        InnerSshKey::remove_key(&ssh_key_path(), uuid)?;
-        Ok(())
-    }
-
-    #[frb(sync, getter)]
-    pub fn uuid(&self) -> Uuid {
-        self.inner.id
-    }
-
-    #[frb(sync, getter)]
-    pub fn public_key(&self) -> String {
-        self.inner.public_key.to_string()
-    }
 }
 
 const fn default_theme_mode() -> bool {

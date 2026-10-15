@@ -1,5 +1,4 @@
 use flutter_rust_bridge::frb;
-use stride_backend_git::ssh_key::SshError;
 
 #[frb(ignore)]
 #[derive(Debug)]
@@ -23,8 +22,6 @@ pub enum ErrorKind {
     Io(#[from] std::io::Error),
     #[error("settings error: {0}")]
     Settings(#[from] SettingsError),
-    #[error("ssh error: {0}")]
-    Ssh(#[from] SshError),
     #[error("other error: {message}")]
     Other { message: Box<str> },
 }

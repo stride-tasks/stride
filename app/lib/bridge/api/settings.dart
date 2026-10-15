@@ -17,44 +17,10 @@ import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`, `ssh_key_path`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `State`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
-
-Future<List<SshKey>> sshKeys() =>
-    RustLib.instance.api.crateApiSettingsSshKeys();
-
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshKey>>
-abstract class SshKey implements RustOpaqueInterface {
-  static Future<SshKey> generate() =>
-      RustLib.instance.api.crateApiSettingsSshKeyGenerate();
-
-  String get publicKey;
-
-  static Future<void> removeKey({required UuidValue uuid}) =>
-      RustLib.instance.api.crateApiSettingsSshKeyRemoveKey(uuid: uuid);
-
-  static Future<SshKey> save({
-    required String publicKey,
-    required String privateKey,
-  }) => RustLib.instance.api.crateApiSettingsSshKeySave(
-    publicKey: publicKey,
-    privateKey: privateKey,
-  );
-
-  static Future<SshKey> update({
-    required UuidValue uuid,
-    required String publicKey,
-    required String privateKey,
-  }) => RustLib.instance.api.crateApiSettingsSshKeyUpdate(
-    uuid: uuid,
-    publicKey: publicKey,
-    privateKey: privateKey,
-  );
-
-  UuidValue get uuid;
-}
 
 class ApplicationPaths {
   final String supportPath;
