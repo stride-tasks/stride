@@ -66,6 +66,7 @@ pub mod ssh_key;
 use crate::{
     config::Handler,
     serialization::{change_from_data, change_to_data},
+    ssh_key::SshError,
 };
 
 struct ChangeIter<'a> {
@@ -804,6 +805,42 @@ impl TypedCommandHandler for SshKeyListHandler {
                     private_path: PathBuf::from(key.private_path),
                 })
                 .collect(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyGenerateHandler;
+
+impl TypedCommandHandler for SshKeyGenerateHandler {
+    type Method = api::SshKeyGenerateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyGenerateMethodResult> {
+        if method.format != api::SshKeyFormat::SshEd25519 {
+            return Err(stride_engine::Error::Other(Box::new(
+                // TODO: Add display formatting.
+                SshError::UnsupportedFormat {
+                    format: format!("{:?}", method.format).into_boxed_str(),
+                },
+            )));
+        }
+
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let key =
+            SshKey::generate(ssh_dir).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyGenerateMethodResult {
+            key: api::SshKey {
+                id: key.id,
+                format: api::SshKeyFormat::SshEd25519,
+                public_key: key.public_key.into_boxed_str(),
+                public_path: PathBuf::from(key.public_path),
+                private_path: PathBuf::from(key.private_path),
+            },
         })
     }
 }
