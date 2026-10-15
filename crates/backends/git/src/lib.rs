@@ -682,21 +682,11 @@ impl Prompt for AddUnknownHostPrompt {
     }
 
     fn summary(&self) -> Box<str> {
-        format!(
-            "The host {} is unknown. Do you want to add it to the known hosts?",
-            self.host.hostname
-        )
-        .into()
+        format!("Accept Unknown Host: {}", self.host.hostname).into()
     }
 
     fn description(&self) -> Option<Box<str>> {
-        Some(
-            format!(
-                "The host {} with key {} is not in the known hosts.",
-                self.host.hostname, self.host.key
-            )
-            .into(),
-        )
+        Some(format!("Host Key: {} {}", self.host.key_type, self.host.key).into())
     }
 
     fn inputs(&self) -> api::Value {
