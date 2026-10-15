@@ -846,6 +846,29 @@ impl TypedCommandHandler for SshKeyGenerateHandler {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyAddHandler;
+
+impl TypedCommandHandler for SshKeyAddHandler {
+    type Method = api::SshKeyAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyAddMethodResult> {
+        ensure_supported_ssh_key_format(method.format)?;
+
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let key = SshKey::save(ssh_dir, &method.public_key, &method.private_key)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyAddMethodResult {
+            key: ssh_key_to_api(key),
+        })
+    }
+}
+
 impl Backend for GitBackend {
     fn handler() -> Box<dyn BackendHandler>
     where
