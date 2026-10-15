@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/log.get.schema.json",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "log.get"
+        },
+        "params": {
+            "type": "object",
+            "properties": {}
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "content"
+            ]
+        }
+    }
+}
