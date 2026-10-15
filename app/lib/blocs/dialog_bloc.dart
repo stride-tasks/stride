@@ -55,7 +55,7 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
         add(
           DialogAlertEvent(
             title: notification.summary,
-            content: 'Rust has requested a prompt. Do you want to continue?',
+            content: notification.description,
             onConfirm: (context) async {
               try {
                 await RustContext.executeErased(
