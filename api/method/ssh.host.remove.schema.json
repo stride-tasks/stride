@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/ssh.host.remove.schema.json",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "ssh.host.remove"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "hostname": {
+                    "type": "string"
+                },
+                "format": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/ssh.key.format.schema.json"
+                }
+            },
+            "required": [
+                "hostname",
+                "format"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}
