@@ -24,3 +24,26 @@ impl TypedCommandHandler for LogEventHandler {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct LogGetHandler;
+
+impl TypedCommandHandler for LogGetHandler {
+    type Method = crate::api::LogGetMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _method: Self::Method,
+    ) -> Result<crate::api::LogGetMethodResult> {
+        let path = &engine.known_paths().logs;
+        if !path.exists() {
+            return Ok(crate::api::LogGetMethodResult {
+                content: Box::default(),
+            });
+        }
+        let content = std::fs::read_to_string(path).expect("could not read logs");
+        Ok(crate::api::LogGetMethodResult {
+            content: content.into(),
+        })
+    }
+}

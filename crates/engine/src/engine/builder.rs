@@ -4,13 +4,14 @@ use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, KnownPaths, NoopNotifier,
     Notifier, Result,
     method::{
-        BackendGetHandler, BackendListHandler, LogEventHandler, PluginDisableHandler,
-        PluginImportHandler, PluginListHandler, PluginRemoveHandler, PluginToggleHandler,
-        PluginValidateHandler, RepositoryBackendAddHandler, RepositoryBackendGetHandler,
-        RepositoryBackendListHandler, RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
-        RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
-        RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
-        RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
+        BackendGetHandler, BackendListHandler, LogEventHandler, LogGetHandler,
+        PluginDisableHandler, PluginImportHandler, PluginListHandler, PluginRemoveHandler,
+        PluginToggleHandler, PluginValidateHandler, RepositoryBackendAddHandler,
+        RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
+        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
+        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
+        RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
+        RepositoryTaskUpdateHandler,
     },
 };
 
@@ -75,6 +76,7 @@ impl EngineBuilder {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)
             .command("log.event", LogEventHandler)
+            .command("log.get", LogGetHandler)
             .command("plugin.list", PluginListHandler)
             .command("plugin.validate", PluginValidateHandler)
             .command("plugin.import", PluginImportHandler)

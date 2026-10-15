@@ -4,7 +4,7 @@ mod plugin;
 mod repository;
 
 pub use backend::{BackendGetHandler, BackendListHandler};
-pub use log::LogEventHandler;
+pub use log::{LogEventHandler, LogGetHandler};
 pub use plugin::{
     PluginDisableHandler, PluginImportHandler, PluginListHandler, PluginRemoveHandler,
     PluginToggleHandler, PluginValidateHandler,
