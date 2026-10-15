@@ -10,7 +10,8 @@ use std::{
 };
 use stride_api::{self as api, Task, TaskPriority, TaskStatus};
 use stride_backend_git::{
-    GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
+    GitBackend, SshHostListHandler, known_hosts::KnownHosts, method::SshHostAddHandler,
+    ssh_key::SshKey,
 };
 use stride_crdt::{
     actor::ActorId,
@@ -339,6 +340,7 @@ fn main() -> anyhow::Result<ExitCode> {
         .insert_default_methods()
         .backend(GitBackend::handler())
         .command("ssh.host.add", SshHostAddHandler)
+        .command("ssh.host.list", SshHostListHandler)
         .build();
 
     match mode {
