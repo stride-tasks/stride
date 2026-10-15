@@ -5,5 +5,4 @@
 pub mod context;
 pub mod error;
 pub mod git;
-pub mod logging;
 pub mod settings;

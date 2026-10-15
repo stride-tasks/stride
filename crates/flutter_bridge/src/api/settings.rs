@@ -57,17 +57,6 @@ pub(crate) fn application_cache_path() -> PathBuf {
     )
 }
 
-pub(crate) fn application_log_path() -> PathBuf {
-    PathBuf::from(
-        APPLICATION_STATE_INSTANCE
-            .lock()
-            .unwrap()
-            .paths
-            .log_path
-            .clone(),
-    )
-}
-
 pub(crate) fn ssh_key_path() -> PathBuf {
     application_support_path().join(".ssh").join("keys")
 }
