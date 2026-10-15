@@ -372,6 +372,7 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Struct(node) => node.name.clone(),
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "Box<str>".to_owned(),
+        TypeNode::Primitive(PrimitiveType::Path) => "std::path::PathBuf".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "uuid::Uuid".to_owned(),
         TypeNode::Primitive(PrimitiveType::DateTime) => "chrono::DateTime<chrono::Utc>".to_owned(),
         TypeNode::Primitive(PrimitiveType::Bytes) => "Box<[u8]>".to_owned(),

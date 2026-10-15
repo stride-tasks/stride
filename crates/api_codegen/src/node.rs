@@ -22,6 +22,7 @@ pub enum TypeNode {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PrimitiveType {
     String,
+    Path,
     Uuid,
     DateTime,
     Bytes,

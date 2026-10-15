@@ -333,6 +333,8 @@ fn type_for_schema(
                         TypeNode::Primitive(PrimitiveType::Uri)
                     } else if format.as_deref() == Some("date-time") {
                         TypeNode::Primitive(PrimitiveType::DateTime)
+                    } else if format.as_deref() == Some("path") {
+                        TypeNode::Primitive(PrimitiveType::Path)
                     } else {
                         TypeNode::Primitive(PrimitiveType::String)
                     }

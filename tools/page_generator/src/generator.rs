@@ -467,6 +467,7 @@ fn type_node_to_string(
         TypeNode::Enum(node) => schema_title_for_enum(node),
         TypeNode::Primitive(kind) => match kind {
             stride_api_codegen::PrimitiveType::String => "string".to_string(),
+            stride_api_codegen::PrimitiveType::Path => "path".to_string(),
             stride_api_codegen::PrimitiveType::Uuid => "uuid".to_string(),
             stride_api_codegen::PrimitiveType::DateTime => "date-time".to_string(),
             stride_api_codegen::PrimitiveType::Bytes => "bytes (base64)".to_string(),
