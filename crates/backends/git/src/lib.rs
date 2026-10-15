@@ -30,7 +30,10 @@ use stride_crdt::{
 };
 use stride_crypto::crypter::Crypter;
 use stride_database::Database;
-use stride_engine::{Backend, BackendHandler, Engine, Prompt, PromptNotification, api};
+use stride_engine::{
+    Backend, BackendHandler, Engine, Prompt, PromptNotification, TypedCommandHandler,
+    api::{self, Method},
+};
 use uuid::Uuid;
 
 mod serialization;
@@ -715,6 +718,41 @@ impl Prompt for AddUnknownHostPrompt {
         };
 
         api::Value::from_type(method)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshHostListHandler;
+
+impl TypedCommandHandler for SshHostListHandler {
+    type Method = api::SshHostListMethod;
+
+    fn handle(
+        &self,
+        _: Arc<Engine>,
+        _: Self::Method,
+    ) -> stride_engine::Result<api::SshHostListMethodResult> {
+        let hosts = KnownHosts::load()
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?
+            .hosts
+            .into_iter()
+            .map(|host| api::SshHost {
+                hostname: host.hostname.into_boxed_str(),
+                key: api::SshKeyPublic {
+                    r#type: match host.key_type {
+                        HostKeyType::Rsa => api::SshKeyFormat::SshRsa,
+                        HostKeyType::Dss => api::SshKeyFormat::SshDss,
+                        HostKeyType::Ecdsa256 => api::SshKeyFormat::EcdsaSha2Nistp256,
+                        HostKeyType::Ecdsa384 => api::SshKeyFormat::EcdsaSha2Nistp384,
+                        HostKeyType::Ecdsa521 => api::SshKeyFormat::EcdsaSha2Nistp521,
+                        HostKeyType::Ed255219 => api::SshKeyFormat::SshEd25519,
+                    },
+                    public: host.key.into_boxed_str(),
+                },
+            })
+            .collect();
+
+        Ok(api::SshHostListMethodResult { hosts })
     }
 }
 
