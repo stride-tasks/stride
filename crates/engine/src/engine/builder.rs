@@ -4,10 +4,10 @@ use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, KnownPaths, NoopNotifier,
     Notifier, Result,
     method::{
-        BackendGetHandler, BackendListHandler, PluginDisableHandler, PluginImportHandler,
-        PluginListHandler, PluginRemoveHandler, PluginToggleHandler, PluginValidateHandler,
-        RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
-        RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
+        BackendGetHandler, BackendListHandler, LogEventHandler, PluginDisableHandler,
+        PluginImportHandler, PluginListHandler, PluginRemoveHandler, PluginToggleHandler,
+        PluginValidateHandler, RepositoryBackendAddHandler, RepositoryBackendGetHandler,
+        RepositoryBackendListHandler, RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
         RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
         RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
         RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
@@ -74,6 +74,7 @@ impl EngineBuilder {
     pub fn insert_default_methods(self) -> Self {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)
+            .command("log.event", LogEventHandler)
             .command("plugin.list", PluginListHandler)
             .command("plugin.validate", PluginValidateHandler)
             .command("plugin.import", PluginImportHandler)
