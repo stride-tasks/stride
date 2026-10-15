@@ -18,7 +18,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, BufWriter, Lines, Seek, Write},
     iter::{FusedIterator, Skip},
-    path::Path,
+    path::{Path, PathBuf},
     rc::Rc,
     sync::Arc,
 };
@@ -775,6 +775,36 @@ impl TypedCommandHandler for SshHostRemoveHandler {
 
         KnownHosts::save(&known_hosts).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
         Ok(api::SshHostRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyListHandler;
+
+impl TypedCommandHandler for SshKeyListHandler {
+    type Method = api::SshKeyListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyListMethodResult> {
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let keys =
+            SshKey::load_keys(ssh_dir).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyListMethodResult {
+            keys: keys
+                .into_iter()
+                .map(|key| api::SshKey {
+                    id: key.id,
+                    format: api::SshKeyFormat::SshEd25519,
+                    public_key: key.public_key.into_boxed_str(),
+                    public_path: PathBuf::from(key.public_path),
+                    private_path: PathBuf::from(key.private_path),
+                })
+                .collect(),
+        })
     }
 }
 
