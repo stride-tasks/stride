@@ -7,9 +7,9 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -229,7 +229,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
   try {
     await RustLib.init();
 
-    logging.trace(message: 'Background task: $task, inputData: $inputData');
+    Log.trace('Background task: $task, inputData: $inputData');
 
     port?.send(
       Output(name: name, inputData: input, timestamp: DateTime.now()).toMap(),
@@ -250,7 +250,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
       ).toMap(),
     );
   } on RustError catch (e) {
-    logging.trace(message: 'Background task error: ${e.toErrorString()}');
+    Log.trace('Background task error: ${e.toErrorString()}');
     port?.send(
       Output(
         name: name,
@@ -263,7 +263,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
   }
   // ignore: avoid_catches_without_on_clauses
   catch (error) {
-    logging.trace(message: 'Background task error: ${error.toString()}');
+    Log.trace('Background task error: ${error.toString()}');
     port?.send(
       Output(
         name: name,
@@ -346,13 +346,13 @@ Future<void> _entryPoint(SendPort sender) async {
 
   await for (final value in stream) {
     if (value is _CancelByName) {
-      logging.info(message: 'Canceling task by name: ${value.uniqueName}');
+      Log.info('Canceling task by name: ${value.uniqueName}');
       final name = Name.fromString(value.uniqueName);
       tasks.remove(name)?.cancel();
       continue;
     }
     if (value is _CancelByTag) {
-      logging.info(message: 'Canceling tasks by tag: ${value.tag}');
+      Log.info('Canceling tasks by tag: ${value.tag}');
       final names = tagIndex.remove(value.tag) ?? {};
       for (final name in names) {
         tasks.remove(name)?.cancel();
@@ -369,7 +369,7 @@ Future<void> _entryPoint(SendPort sender) async {
     }
 
     final task = value as BTask;
-    logging.trace(message: '${task.name}');
+    Log.trace('${task.name}');
 
     if (task.frequency == null) {
       compute(_compute, ComputeArgs(token: token, task: task));
@@ -383,7 +383,7 @@ Future<void> _entryPoint(SendPort sender) async {
       }
     }
   }
-  logging.info(message: 'DONE');
+  Log.info('DONE');
 }
 
 @immutable

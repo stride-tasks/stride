@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:uuid/uuid.dart';
@@ -49,15 +49,12 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
           builder: (context, snapshot) {
             if (snapshot.error is RustError) {
               final error = snapshot.error! as RustError;
-              logging.error(
-                message:
-                    'could not load the SSH keys: ${error.toErrorString()}',
+              Log.error(
+                'could not load the SSH keys: ${error.toErrorString()}',
               );
               Navigator.of(context).pop();
             } else if (snapshot.hasError) {
-              logging.error(
-                message: 'could not load the SSH keys: ${snapshot.error!}',
-              );
+              Log.error('could not load the SSH keys: ${snapshot.error!}');
               Navigator.of(context).pop();
             }
 
@@ -73,9 +70,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   label: const Text('Generate Key'),
                   onPressed: () async {
                     final sshKey = await SshKey.generate();
-                    logging.trace(
-                      message: 'SSH Key generated with UUID: ${sshKey.uuid}',
-                    );
+                    Log.trace('SSH Key generated with UUID: ${sshKey.uuid}');
                     setState(_reset);
                   },
                 ),
@@ -165,9 +160,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                       message: 'ssh key',
                       () async => SshKey.removeKey(uuid: key.uuid),
                     );
-                    logging.trace(
-                      message: 'SSH Key deleted with UUID: ${key.uuid}',
-                    );
+                    Log.trace('SSH Key deleted with UUID: ${key.uuid}');
                     setState(_reset);
                     return true;
                   },

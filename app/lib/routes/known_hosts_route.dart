@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
 import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/utils/functions.dart';
 
 class KnownHostsRoute extends StatefulWidget {
@@ -90,7 +90,7 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
                         ),
                       ),
                     );
-                    logging.trace(message: 'Known host deleted');
+                    Log.trace('Known host deleted');
                     return true;
                   },
                 );
