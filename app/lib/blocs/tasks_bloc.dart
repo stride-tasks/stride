@@ -7,10 +7,7 @@ import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/git.dart';
 import 'package:stride/bridge/api/settings.dart';
-import 'package:stride/bridge/third_party/stride_backend_git/known_hosts.dart';
 import 'package:stride/context.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
@@ -262,30 +259,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     logBloc.add(
       LogErrorEvent(error: error, stackTrace: stackTrace, message: 'task'),
     );
-    if (error is RustError) {
-      final host = error.asUnknownHost();
-      if (host != null) {
-        dialogBloc.add(
-          DialogAlertEvent(
-            title: 'Accept Unknown Host: ${host.hostname}',
-            content:
-                'Host Key: ${hostKeyTypeName(keyType: host.keyType)} ${host.key}',
-            onConfirm: (context) async {
-              await logBloc.catch_(message: 'known hosts', () async {
-                final knownHosts = await KnownHosts.load();
-                KnownHosts.save(
-                  this_: KnownHosts(
-                    hosts: knownHosts.hosts.toList()..add(host),
-                  ),
-                );
-              });
-              if (context.mounted) Navigator.pop(context);
-              return true;
-            },
-          ),
-        );
-      }
-    }
   }
 
   @override
