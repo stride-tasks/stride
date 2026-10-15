@@ -83,12 +83,16 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
                     ],
                   ),
                   onConfirm: (context) async {
-                    context.read<LogBloc>().catch_(
-                      () async => SshHostRemoveMethod(
+                    context.read<LogBloc>().catch_(() async {
+                      await SshHostRemoveMethod(
                         hostname: host.hostname,
                         format: host.key.type,
-                      ).execute(),
-                    );
+                      ).execute();
+
+                      setState(() {
+                        _knownHosts = SshHostListMethod().execute();
+                      });
+                    });
                     Log.trace('Known host deleted');
                     return true;
                   },
