@@ -1,7 +1,9 @@
 use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 
 use stride_api as api;
-use stride_backend_git::{GitBackend, SshHostListHandler, method::SshHostAddHandler};
+use stride_backend_git::{
+    GitBackend, SshHostListHandler, SshHostRemoveHandler, method::SshHostAddHandler,
+};
 use stride_engine::{Backend, Engine, KnownPaths, Notifier};
 
 use crate::{
@@ -49,6 +51,7 @@ pub fn create_context(stream: StreamSink<String>) {
             .backend(GitBackend::handler())
             .command("ssh.host.add", SshHostAddHandler)
             .command("ssh.host.list", SshHostListHandler)
+            .command("ssh.host.remove", SshHostRemoveHandler)
             .build()
     });
 
