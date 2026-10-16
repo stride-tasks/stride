@@ -47,4 +47,20 @@ impl KnownPaths {
         self.repository_path(repository_id)
             .join(Self::DESCRIPTOR_FILE_NAME)
     }
+
+    /// Write a repository descriptor beside its database file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the descriptor cannot be serialized or written.
+    pub fn write_repository_descriptor(
+        &self,
+        descriptor: &crate::api::RepositoryDescriptor,
+    ) -> crate::Result<()> {
+        std::fs::create_dir_all(self.repository_path(descriptor.id))?;
+        let contents = toml::to_string_pretty(descriptor)
+            .map_err(|error| crate::Error::Other(Box::new(error)))?;
+        std::fs::write(self.descriptor_filepath(descriptor.id), contents)?;
+        Ok(())
+    }
 }
