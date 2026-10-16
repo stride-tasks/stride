@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/blocs/repository_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/backend/list_route.dart';
@@ -21,16 +22,14 @@ class RepositoryRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Repository')),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
+      body: BlocBuilder<RepositoryBloc, RepositoryState>(
         builder: (context, state) {
-          final settings = state.settings;
-          final repositoryIndex = settings.repositories.indexWhere(
-            (element) => element.uuid == repositoryUuid,
-          );
-          if (repositoryIndex == -1) {
+          final repositoryDescriptor = state.repositories
+              .where((element) => element.id == repositoryUuid)
+              .firstOrNull;
+          if (repositoryDescriptor == null) {
             return const Column();
           }
-          final repositorySpec = settings.repositories[repositoryIndex];
 
           return SettingsList(
             sections: [
@@ -40,11 +39,12 @@ class RepositoryRoute extends StatelessWidget {
                   SettingsTileText(
                     title: const Text('Name'),
                     leading: const Icon(Icons.label),
-                    text: repositorySpec.name,
+                    text: repositoryDescriptor.name ?? 'unnamed',
                     onChanged: (text) {
+                      final settings = context.read<SettingsBloc>().settings;
                       final repositories = settings.repositories
                           .map(
-                            (e) => (e.uuid != repositorySpec.uuid)
+                            (e) => (e.uuid != repositoryDescriptor.id)
                                 ? e
                                 : e.copyWith(name: text),
                           )
@@ -72,8 +72,9 @@ class RepositoryRoute extends StatelessWidget {
                   SettingsTileNavigation(
                     leading: const Icon(Icons.backup),
                     title: const Text('Backends'),
-                    builder: (context) =>
-                        BackendListRoute(repositoryUuid: repositorySpec.uuid),
+                    builder: (context) => BackendListRoute(
+                      repositoryUuid: repositoryDescriptor.id,
+                    ),
                   ),
                 ],
               ),
@@ -87,6 +88,18 @@ class RepositoryRoute extends StatelessWidget {
                     ),
                     title: const Text('Remove Repository'),
                     onTap: (context) async {
+                      final settingsBloc = context.read<SettingsBloc>();
+                      final settings = settingsBloc.settings;
+                      final repositories = settings.repositories
+                          .where(
+                            (element) =>
+                                element.uuid != repositoryDescriptor.id,
+                          )
+                          .toList();
+                      final currentRepository =
+                          settings.currentRepository == repositoryDescriptor.id
+                          ? repositories.firstOrNull?.uuid
+                          : settings.currentRepository;
                       await showAlertDialog(
                         context: context,
                         content: const Text(
@@ -97,19 +110,14 @@ class RepositoryRoute extends StatelessWidget {
                         onConfirm: (context) async {
                           context.read<TaskBloc>().add(
                             TaskRemoveRepositoryEvent(
-                              uuid: repositorySpec.uuid,
+                              uuid: repositoryDescriptor.id,
                             ),
                           );
-                          final settingsBloc = context.read<SettingsBloc>();
-                          final settings = settingsBloc.settings;
                           settingsBloc.add(
                             SettingsUpdateEvent(
                               settings: settings.copyWith(
-                                repositories: settings.repositories.toList()
-                                  ..removeWhere(
-                                    (element) =>
-                                        element.uuid == repositorySpec.uuid,
-                                  ),
+                                repositories: repositories,
+                                currentRepository: currentRepository,
                               ),
                             ),
                           );

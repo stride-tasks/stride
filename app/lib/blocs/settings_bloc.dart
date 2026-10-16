@@ -5,12 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/logging.dart';
-import 'package:uuid/uuid.dart';
-
-extension CurrentRepositoryUuidOrFirstExt on Settings {
-  UuidValue? currentRepositoryUuidOrFirst() =>
-      currentRepository ?? repositories.firstOrNull?.uuid;
-}
 
 @immutable
 abstract class SettingsEvent {}
@@ -53,6 +47,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     on<SettingsRefreshEvent>((event, emit) async {
+      settings = event.settings;
       emit(SettingsState(settings: event.settings));
     });
 

@@ -6,6 +6,7 @@ import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
+import 'package:stride/blocs/repository_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
@@ -69,13 +70,15 @@ class TaskState {
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final DialogBloc dialogBloc;
   final SettingsBloc settingsBloc;
+  final RepositoryBloc repositoryBloc;
   final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
+  StreamSubscription<RepositoryState>? repositorySubscription;
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
 
   void _initializeSettingsStream() {
-    repositoryUuid ??= settingsBloc.settings.currentRepositoryUuidOrFirst();
+    repositoryUuid ??= _currentRepositoryUuid();
 
     _registerPeriodicTasks(settingsBloc.settings);
 
@@ -88,21 +91,34 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       if (!next.periodicSync && previous.periodicSync) {
         // Sync was turned off — cancel all repository tasks.
-        await _unregisterPeriodicTasks(previous.repositories);
+        await _unregisterPeriodicTasks(repositoryBloc.state.repositories);
       } else {
         // Sync is on — register/replace tasks for current repositories.
         await _registerPeriodicTasks(next);
-
-        // Cancel tasks for repositories that were removed.
-        final removedRepositories = previous.repositories
-            .where((r) => !next.repositories.any((n) => n.uuid == r.uuid))
-            .toList();
-        if (removedRepositories.isNotEmpty) {
-          await _unregisterPeriodicTasks(removedRepositories);
-        }
       }
 
-      final nextRepositoryUuid = event.settings.currentRepositoryUuidOrFirst();
+      final nextRepositoryUuid = _currentRepositoryUuid();
+      if (repositoryUuid != nextRepositoryUuid) {
+        repositoryUuid = nextRepositoryUuid;
+        add(TaskFetchEvent());
+      }
+    });
+
+    var previousRepositories = repositoryBloc.state.repositories;
+    repositorySubscription = repositoryBloc.stream.listen((event) async {
+      final nextRepositories = event.repositories;
+      final removedRepositories = previousRepositories
+          .where((repository) =>
+              !nextRepositories.any((next) => next.id == repository.id))
+          .toList();
+      if (removedRepositories.isNotEmpty) {
+        await _unregisterPeriodicTasks(removedRepositories);
+      }
+      previousRepositories = nextRepositories;
+
+      await _registerPeriodicTasks(settingsBloc.settings);
+
+      final nextRepositoryUuid = _currentRepositoryUuid();
       if (repositoryUuid != nextRepositoryUuid) {
         repositoryUuid = nextRepositoryUuid;
         add(TaskFetchEvent());
@@ -112,9 +128,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<void> _registerPeriodicTasks(Settings settings) async {
     if (!settings.periodicSync) return;
-    for (final repository in settings.repositories.asMap().entries) {
+    for (final repository in repositoryBloc.state.repositories.asMap().entries) {
       await Background.periodic(
-        TaskSyncBackgroundTask(repositoryId: repository.value.uuid),
+        TaskSyncBackgroundTask(repositoryId: repository.value.id),
         initialDelay: const Duration(seconds: 10),
         frequency: Duration(minutes: 5, seconds: repository.key * 10),
         existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
@@ -123,17 +139,27 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<void> _unregisterPeriodicTasks(
-    List<RepositorySpecification> repositories,
+    List<RepositoryDescriptor> repositories,
   ) async {
     for (final repository in repositories) {
       await Background.cancel(
-        TaskSyncBackgroundTask(repositoryId: repository.uuid),
+        TaskSyncBackgroundTask(repositoryId: repository.id),
       );
     }
   }
 
+  UuidValue? _currentRepositoryUuid() {
+    final repositories = repositoryBloc.state.repositories;
+    final selected = settingsBloc.settings.currentRepository;
+    if (selected != null && repositories.any((repository) => repository.id == selected)) {
+      return selected;
+    }
+    return repositories.firstOrNull?.id;
+  }
+
   TaskBloc({
     required this.settingsBloc,
+    required this.repositoryBloc,
     required this.logBloc,
     required this.dialogBloc,
   }) : super(const TaskState(tasks: [])) {
@@ -169,6 +195,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskRemoveRepositoryEvent>((event, emit) async {
       await RepositoryRemoveMethod(repositoryId: event.uuid).execute();
+      repositoryBloc.add(RepositoryRefreshEvent());
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
@@ -194,7 +221,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       try {
         final uuid =
             repositoryUuid ??
-            settingsBloc.settings.currentRepositoryUuidOrFirst();
+            _currentRepositoryUuid();
         if (uuid != null) {
           await Background.run(
             TaskSyncBackgroundTask(repositoryId: uuid),
@@ -216,7 +243,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<List<Task>> _tasks() async {
     final repositoryId =
-        repositoryUuid ?? settingsBloc.settings.currentRepositoryUuidOrFirst();
+        repositoryUuid ?? _currentRepositoryUuid();
     if (repositoryId == null) {
       return const [];
     }
@@ -232,7 +259,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<List<Task>> query(TaskQuery query) async {
     final repositoryId =
-        repositoryUuid ?? settingsBloc.settings.currentRepositoryUuidOrFirst();
+        repositoryUuid ?? _currentRepositoryUuid();
     if (repositoryId == null) {
       return const [];
     }
@@ -245,7 +272,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   UuidValue _requireRepositoryUuid() =>
       repositoryUuid ??
-      settingsBloc.settings.currentRepositoryUuidOrFirst() ??
+      _currentRepositoryUuid() ??
       (throw StateError('No repository is selected'));
 
   Future<void> undo() async {
@@ -264,6 +291,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   @override
   Future<void> close() {
     settingsSubscription?.cancel();
+    repositorySubscription?.cancel();
     return super.close();
   }
 }

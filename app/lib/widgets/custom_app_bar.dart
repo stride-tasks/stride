@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/background.dart';
+import 'package:stride/blocs/repository_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/routes/settings_route.dart';
@@ -15,9 +16,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SettingsBloc, SettingsState>(
+    return BlocBuilder<RepositoryBloc, RepositoryState>(
       builder: (context, state) {
-        final hasRepositories = state.settings.repositories.isNotEmpty;
+        final hasRepositories = state.repositories.isNotEmpty;
         return AppBar(
           title: Text(title),
           leading: leading,
