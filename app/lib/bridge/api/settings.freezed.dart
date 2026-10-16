@@ -12,263 +12,9 @@ part of 'settings.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$RepositorySpecification {
-
- UuidValue get uuid; String get name;
-/// Create a copy of RepositorySpecification
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$RepositorySpecificationCopyWith<RepositorySpecification> get copyWith => _$RepositorySpecificationCopyWithImpl<RepositorySpecification>(this as RepositorySpecification, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RepositorySpecification&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,uuid,name);
-
-@override
-String toString() {
-  return 'RepositorySpecification(uuid: $uuid, name: $name)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $RepositorySpecificationCopyWith<$Res>  {
-  factory $RepositorySpecificationCopyWith(RepositorySpecification value, $Res Function(RepositorySpecification) _then) = _$RepositorySpecificationCopyWithImpl;
-@useResult
-$Res call({
- UuidValue uuid, String name
-});
-
-
-
-
-}
-/// @nodoc
-class _$RepositorySpecificationCopyWithImpl<$Res>
-    implements $RepositorySpecificationCopyWith<$Res> {
-  _$RepositorySpecificationCopyWithImpl(this._self, this._then);
-
-  final RepositorySpecification _self;
-  final $Res Function(RepositorySpecification) _then;
-
-/// Create a copy of RepositorySpecification
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? name = null,}) {
-  return _then(_self.copyWith(
-uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
-as UuidValue,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [RepositorySpecification].
-extension RepositorySpecificationPatterns on RepositorySpecification {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _RepositorySpecification value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _RepositorySpecification() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _RepositorySpecification value)  $default,){
-final _that = this;
-switch (_that) {
-case _RepositorySpecification():
-return $default(_that);}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _RepositorySpecification value)?  $default,){
-final _that = this;
-switch (_that) {
-case _RepositorySpecification() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( UuidValue uuid,  String name)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _RepositorySpecification() when $default != null:
-return $default(_that.uuid,_that.name);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( UuidValue uuid,  String name)  $default,) {final _that = this;
-switch (_that) {
-case _RepositorySpecification():
-return $default(_that.uuid,_that.name);}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( UuidValue uuid,  String name)?  $default,) {final _that = this;
-switch (_that) {
-case _RepositorySpecification() when $default != null:
-return $default(_that.uuid,_that.name);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _RepositorySpecification extends RepositorySpecification {
-  const _RepositorySpecification({required this.uuid, required this.name}): super._();
-  
-
-@override final  UuidValue uuid;
-@override final  String name;
-
-/// Create a copy of RepositorySpecification
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$RepositorySpecificationCopyWith<_RepositorySpecification> get copyWith => __$RepositorySpecificationCopyWithImpl<_RepositorySpecification>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RepositorySpecification&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.name, name) || other.name == name));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,uuid,name);
-
-@override
-String toString() {
-  return 'RepositorySpecification(uuid: $uuid, name: $name)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$RepositorySpecificationCopyWith<$Res> implements $RepositorySpecificationCopyWith<$Res> {
-  factory _$RepositorySpecificationCopyWith(_RepositorySpecification value, $Res Function(_RepositorySpecification) _then) = __$RepositorySpecificationCopyWithImpl;
-@override @useResult
-$Res call({
- UuidValue uuid, String name
-});
-
-
-
-
-}
-/// @nodoc
-class __$RepositorySpecificationCopyWithImpl<$Res>
-    implements _$RepositorySpecificationCopyWith<$Res> {
-  __$RepositorySpecificationCopyWithImpl(this._self, this._then);
-
-  final _RepositorySpecification _self;
-  final $Res Function(_RepositorySpecification) _then;
-
-/// Create a copy of RepositorySpecification
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? name = null,}) {
-  return _then(_RepositorySpecification(
-uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
-as UuidValue,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
-
-}
-
-/// @nodoc
 mixin _$Settings {
 
- bool get darkMode; bool get periodicSync; UuidValue? get currentRepository; List<RepositorySpecification> get repositories;
+ bool get darkMode; bool get periodicSync; UuidValue? get currentRepository;
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -279,16 +25,16 @@ $SettingsCopyWith<Settings> get copyWith => _$SettingsCopyWithImpl<Settings>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository)&&const DeepCollectionEquality().equals(other.repositories, repositories));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,currentRepository,const DeepCollectionEquality().hash(repositories));
+int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,currentRepository);
 
 @override
 String toString() {
-  return 'Settings(darkMode: $darkMode, periodicSync: $periodicSync, currentRepository: $currentRepository, repositories: $repositories)';
+  return 'Settings(darkMode: $darkMode, periodicSync: $periodicSync, currentRepository: $currentRepository)';
 }
 
 
@@ -299,7 +45,7 @@ abstract mixin class $SettingsCopyWith<$Res>  {
   factory $SettingsCopyWith(Settings value, $Res Function(Settings) _then) = _$SettingsCopyWithImpl;
 @useResult
 $Res call({
- bool darkMode, bool periodicSync, UuidValue? currentRepository, List<RepositorySpecification> repositories
+ bool darkMode, bool periodicSync, UuidValue? currentRepository
 });
 
 
@@ -316,13 +62,12 @@ class _$SettingsCopyWithImpl<$Res>
 
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? darkMode = null,Object? periodicSync = null,Object? currentRepository = freezed,Object? repositories = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? darkMode = null,Object? periodicSync = null,Object? currentRepository = freezed,}) {
   return _then(_self.copyWith(
 darkMode: null == darkMode ? _self.darkMode : darkMode // ignore: cast_nullable_to_non_nullable
 as bool,periodicSync: null == periodicSync ? _self.periodicSync : periodicSync // ignore: cast_nullable_to_non_nullable
 as bool,currentRepository: freezed == currentRepository ? _self.currentRepository : currentRepository // ignore: cast_nullable_to_non_nullable
-as UuidValue?,repositories: null == repositories ? _self.repositories : repositories // ignore: cast_nullable_to_non_nullable
-as List<RepositorySpecification>,
+as UuidValue?,
   ));
 }
 
@@ -404,10 +149,10 @@ return raw(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)?  raw,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository)?  raw,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Settings() when raw != null:
-return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repositories);case _:
+return raw(_that.darkMode,_that.periodicSync,_that.currentRepository);case _:
   return orElse();
 
 }
@@ -425,10 +170,10 @@ return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repos
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)  raw,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository)  raw,}) {final _that = this;
 switch (_that) {
 case _Settings():
-return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repositories);}
+return raw(_that.darkMode,_that.periodicSync,_that.currentRepository);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -442,10 +187,10 @@ return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repos
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository,  List<RepositorySpecification> repositories)?  raw,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bool darkMode,  bool periodicSync,  UuidValue? currentRepository)?  raw,}) {final _that = this;
 switch (_that) {
 case _Settings() when raw != null:
-return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repositories);case _:
+return raw(_that.darkMode,_that.periodicSync,_that.currentRepository);case _:
   return null;
 
 }
@@ -457,19 +202,12 @@ return raw(_that.darkMode,_that.periodicSync,_that.currentRepository,_that.repos
 
 
 class _Settings extends Settings {
-  const _Settings({required this.darkMode, required this.periodicSync, this.currentRepository, required final  List<RepositorySpecification> repositories}): _repositories = repositories,super._();
+  const _Settings({required this.darkMode, required this.periodicSync, this.currentRepository}): super._();
   
 
 @override final  bool darkMode;
 @override final  bool periodicSync;
 @override final  UuidValue? currentRepository;
- final  List<RepositorySpecification> _repositories;
-@override List<RepositorySpecification> get repositories {
-  if (_repositories is EqualUnmodifiableListView) return _repositories;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_repositories);
-}
-
 
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
@@ -481,16 +219,16 @@ _$SettingsCopyWith<_Settings> get copyWith => __$SettingsCopyWithImpl<_Settings>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository)&&const DeepCollectionEquality().equals(other._repositories, _repositories));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Settings&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.periodicSync, periodicSync) || other.periodicSync == periodicSync)&&(identical(other.currentRepository, currentRepository) || other.currentRepository == currentRepository));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,currentRepository,const DeepCollectionEquality().hash(_repositories));
+int get hashCode => Object.hash(runtimeType,darkMode,periodicSync,currentRepository);
 
 @override
 String toString() {
-  return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, currentRepository: $currentRepository, repositories: $repositories)';
+  return 'Settings.raw(darkMode: $darkMode, periodicSync: $periodicSync, currentRepository: $currentRepository)';
 }
 
 
@@ -501,7 +239,7 @@ abstract mixin class _$SettingsCopyWith<$Res> implements $SettingsCopyWith<$Res>
   factory _$SettingsCopyWith(_Settings value, $Res Function(_Settings) _then) = __$SettingsCopyWithImpl;
 @override @useResult
 $Res call({
- bool darkMode, bool periodicSync, UuidValue? currentRepository, List<RepositorySpecification> repositories
+ bool darkMode, bool periodicSync, UuidValue? currentRepository
 });
 
 
@@ -518,13 +256,12 @@ class __$SettingsCopyWithImpl<$Res>
 
 /// Create a copy of Settings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? darkMode = null,Object? periodicSync = null,Object? currentRepository = freezed,Object? repositories = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? darkMode = null,Object? periodicSync = null,Object? currentRepository = freezed,}) {
   return _then(_Settings(
 darkMode: null == darkMode ? _self.darkMode : darkMode // ignore: cast_nullable_to_non_nullable
 as bool,periodicSync: null == periodicSync ? _self.periodicSync : periodicSync // ignore: cast_nullable_to_non_nullable
 as bool,currentRepository: freezed == currentRepository ? _self.currentRepository : currentRepository // ignore: cast_nullable_to_non_nullable
-as UuidValue?,repositories: null == repositories ? _self._repositories : repositories // ignore: cast_nullable_to_non_nullable
-as List<RepositorySpecification>,
+as UuidValue?,
   ));
 }
 

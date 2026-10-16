@@ -81,15 +81,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
-  List<RepositorySpecification> dco_decode_list_repository_specification(
-    dynamic raw,
-  );
-
-  @protected
   UuidValue? dco_decode_opt_Uuid(dynamic raw);
-
-  @protected
-  RepositorySpecification dco_decode_repository_specification(dynamic raw);
 
   @protected
   Settings dco_decode_settings(dynamic raw);
@@ -158,17 +150,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
-  List<RepositorySpecification> sse_decode_list_repository_specification(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer);
-
-  @protected
-  RepositorySpecification sse_decode_repository_specification(
-    SseDeserializer deserializer,
-  );
 
   @protected
   Settings sse_decode_settings(SseDeserializer deserializer);
@@ -255,19 +237,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_list_repository_specification(
-    List<RepositorySpecification> self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_repository_specification(
-    RepositorySpecification self,
-    SseSerializer serializer,
-  );
 
   @protected
   void sse_encode_settings(Settings self, SseSerializer serializer);

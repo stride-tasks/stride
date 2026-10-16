@@ -74,7 +74,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 854680514;
+  int get rustContentHash => -1638534659;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -95,9 +95,6 @@ abstract class RustLibApi extends BaseApi {
     required String method,
     required String args,
   });
-
-  Future<RepositorySpecification>
-  crateApiSettingsRepositorySpecificationDefault();
 
   Stream<Settings> crateApiSettingsSettingsCreateStream();
 
@@ -252,37 +249,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'execute', argNames: ['method', 'args']);
 
   @override
-  Future<RepositorySpecification>
-  crateApiSettingsRepositorySpecificationDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 5,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_repository_specification,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSettingsRepositorySpecificationDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsRepositorySpecificationDefaultConstMeta =>
-      const TaskConstMeta(
-        debugName: 'repository_specification_default',
-        argNames: [],
-      );
-
-  @override
   Stream<Settings> crateApiSettingsSettingsCreateStream() {
     final streamSink = RustStreamSink<Settings>();
     unawaited(
@@ -294,7 +260,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 6,
+              funcId: 5,
               port: port_,
             );
           },
@@ -326,7 +292,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 6,
             port: port_,
           );
         },
@@ -353,7 +319,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 7,
             port: port_,
           );
         },
@@ -383,7 +349,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 8,
             port: port_,
           );
         },
@@ -408,7 +374,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_settings,
@@ -434,7 +400,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 10,
             port: port_,
           );
         },
@@ -556,44 +522,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<RepositorySpecification> dco_decode_list_repository_specification(
-    dynamic raw,
-  ) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>)
-        .map(dco_decode_repository_specification)
-        .toList();
-  }
-
-  @protected
   UuidValue? dco_decode_opt_Uuid(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_Uuid(raw);
   }
 
   @protected
-  RepositorySpecification dco_decode_repository_specification(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return RepositorySpecification(
-      uuid: dco_decode_Uuid(arr[0]),
-      name: dco_decode_String(arr[1]),
-    );
-  }
-
-  @protected
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return Settings.raw(
       darkMode: dco_decode_bool(arr[0]),
       periodicSync: dco_decode_bool(arr[1]),
       currentRepository: dco_decode_opt_Uuid(arr[2]),
-      repositories: dco_decode_list_repository_specification(arr[3]),
     );
   }
 
@@ -729,20 +672,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<RepositorySpecification> sse_decode_list_repository_specification(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <RepositorySpecification>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_repository_specification(deserializer));
-    }
-    return ans_;
-  }
-
-  @protected
   UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -754,29 +683,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  RepositorySpecification sse_decode_repository_specification(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_uuid = sse_decode_Uuid(deserializer);
-    final var_name = sse_decode_String(deserializer);
-    return RepositorySpecification(uuid: var_uuid, name: var_name);
-  }
-
-  @protected
   Settings sse_decode_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_darkMode = sse_decode_bool(deserializer);
     final var_periodicSync = sse_decode_bool(deserializer);
     final var_currentRepository = sse_decode_opt_Uuid(deserializer);
-    final var_repositories = sse_decode_list_repository_specification(
-      deserializer,
-    );
     return Settings.raw(
       darkMode: var_darkMode,
       periodicSync: var_periodicSync,
       currentRepository: var_currentRepository,
-      repositories: var_repositories,
     );
   }
 
@@ -943,18 +858,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_repository_specification(
-    List<RepositorySpecification> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_repository_specification(item, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -965,22 +868,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_repository_specification(
-    RepositorySpecification self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_Uuid(self.uuid, serializer);
-    sse_encode_String(self.name, serializer);
-  }
-
-  @protected
   void sse_encode_settings(Settings self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.darkMode, serializer);
     sse_encode_bool(self.periodicSync, serializer);
     sse_encode_opt_Uuid(self.currentRepository, serializer);
-    sse_encode_list_repository_specification(self.repositories, serializer);
   }
 
   @protected

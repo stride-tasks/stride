@@ -59,29 +59,6 @@ const fn default_theme_mode() -> bool {
     true
 }
 
-fn default_repository_name() -> String {
-    String::from("unnamed")
-}
-
-#[frb(dart_metadata=("freezed"))]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RepositorySpecification {
-    #[serde(default = "Uuid::now_v7")]
-    pub uuid: Uuid,
-
-    #[serde(default = "default_repository_name")]
-    pub name: String,
-}
-
-impl Default for RepositorySpecification {
-    fn default() -> Self {
-        Self {
-            uuid: Uuid::now_v7(),
-            name: default_repository_name(),
-        }
-    }
-}
-
 #[frb(dart_metadata=("freezed"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -94,9 +71,6 @@ pub struct Settings {
     /// The current selected repository.
     #[serde(default)]
     pub current_repository: Option<Uuid>,
-
-    #[serde(default)]
-    pub repositories: Vec<RepositorySpecification>,
 }
 
 impl Default for Settings {
@@ -105,7 +79,6 @@ impl Default for Settings {
             dark_mode: default_theme_mode(),
             periodic_sync: false,
             current_repository: None,
-            repositories: Vec::default(),
         }
     }
 }

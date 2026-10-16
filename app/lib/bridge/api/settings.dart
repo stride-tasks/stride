@@ -17,9 +17,9 @@ import 'package:uuid/uuid.dart';
 
 part 'settings.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_support_path`, `default_repository_name`, `default_theme_mode`
+// These functions are ignored because they are not marked as `pub`: `application_cache_path`, `application_support_path`, `default_theme_mode`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `State`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
 class ApplicationPaths {
@@ -51,17 +51,6 @@ class ApplicationPaths {
 }
 
 @freezed
-sealed class RepositorySpecification with _$RepositorySpecification {
-  const factory RepositorySpecification({
-    required UuidValue uuid,
-    required String name,
-  }) = _RepositorySpecification;
-  const RepositorySpecification._();
-  static Future<RepositorySpecification> default_() =>
-      RustLib.instance.api.crateApiSettingsRepositorySpecificationDefault();
-}
-
-@freezed
 sealed class Settings with _$Settings {
   factory Settings() => RustLib.instance.api.crateApiSettingsSettingsNew();
   const Settings._();
@@ -69,7 +58,6 @@ sealed class Settings with _$Settings {
     required bool darkMode,
     required bool periodicSync,
     UuidValue? currentRepository,
-    required List<RepositorySpecification> repositories,
   }) = _Settings;
   static Stream<Settings> createStream() =>
       RustLib.instance.api.crateApiSettingsSettingsCreateStream();
