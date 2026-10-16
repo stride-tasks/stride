@@ -13,6 +13,7 @@ pub struct KnownPaths {
 
 impl KnownPaths {
     const DATABASE_FILE_NAME: &str = "db.sqlite";
+    const DESCRIPTOR_FILE_NAME: &str = "descriptor.toml";
 
     #[must_use]
     pub fn new(support: PathBuf, cache: PathBuf) -> Self {
@@ -40,5 +41,10 @@ impl KnownPaths {
     pub fn database_filepath(&self, repository_id: Uuid) -> PathBuf {
         self.repository_path(repository_id)
             .join(Self::DATABASE_FILE_NAME)
+    }
+    #[must_use]
+    pub fn descriptor_filepath(&self, repository_id: Uuid) -> PathBuf {
+        self.repository_path(repository_id)
+            .join(Self::DESCRIPTOR_FILE_NAME)
     }
 }
