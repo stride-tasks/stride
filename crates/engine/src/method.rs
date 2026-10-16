@@ -10,9 +10,10 @@ pub use plugin::{
     PluginToggleHandler, PluginValidateHandler,
 };
 pub use repository::{
-    RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
-    RepositoryBackendRemoveHandler, RepositoryBackendSetHandler, RepositoryBackendToggleHandler,
-    RepositoryListHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
-    RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
-    RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
+    RepositoryAddHandler, RepositoryBackendAddHandler, RepositoryBackendGetHandler,
+    RepositoryBackendListHandler, RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
+    RepositoryBackendToggleHandler, RepositoryListHandler, RepositoryProjectListHandler,
+    RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
+    RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
+    RepositoryTaskUpdateHandler,
 };

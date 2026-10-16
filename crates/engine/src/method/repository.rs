@@ -7,6 +7,32 @@ use uuid::Uuid;
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryAddHandler;
+
+impl TypedCommandHandler for RepositoryAddHandler {
+    type Method = crate::api::RepositoryAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryAddMethodResult> {
+        let repository_id = Uuid::now_v7();
+        let descriptor = crate::api::RepositoryDescriptor {
+            id: repository_id,
+            name: method.name,
+        };
+
+        engine.open_repository(repository_id)?;
+        engine
+            .known_paths()
+            .write_repository_descriptor(&descriptor)?;
+
+        Ok(crate::api::RepositoryAddMethodResult { repository_id })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryListHandler;
 
 impl TypedCommandHandler for RepositoryListHandler {
