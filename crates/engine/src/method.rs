@@ -15,5 +15,5 @@ pub use repository::{
     RepositoryBackendToggleHandler, RepositoryListHandler, RepositoryProjectListHandler,
     RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
     RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
-    RepositoryTaskUpdateHandler,
+    RepositoryTaskUpdateHandler, RepositoryUpdateHandler,
 };

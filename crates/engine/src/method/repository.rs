@@ -33,6 +33,25 @@ impl TypedCommandHandler for RepositoryAddHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryUpdateHandler;
+
+impl TypedCommandHandler for RepositoryUpdateHandler {
+    type Method = crate::api::RepositoryUpdateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryUpdateMethodResult> {
+        engine
+            .known_paths()
+            .write_repository_descriptor(&method.descriptor)?;
+
+        Ok(crate::api::RepositoryUpdateMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryListHandler;
 
 impl TypedCommandHandler for RepositoryListHandler {
