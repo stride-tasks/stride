@@ -26,7 +26,11 @@ impl KnownPaths {
 
     #[must_use]
     pub fn repository_path(&self, id: Uuid) -> PathBuf {
-        self.support.join("repository").join(id.to_string())
+        self.repositories_path().join(id.to_string())
+    }
+    #[must_use]
+    pub fn repositories_path(&self) -> PathBuf {
+        self.support.join("repository")
     }
     #[must_use]
     pub fn backend_path(&self, repository_id: Uuid) -> PathBuf {
