@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.update.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "repository.update"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "descriptor": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/repository.descriptor.schema.json",
+                    "description": "The repository descriptor to save."
+                }
+            },
+            "required": [
+                "descriptor"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}
