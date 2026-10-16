@@ -8,10 +8,10 @@ use crate::{
         PluginDisableHandler, PluginImportHandler, PluginListHandler, PluginRemoveHandler,
         PluginToggleHandler, PluginValidateHandler, RepositoryBackendAddHandler,
         RepositoryBackendGetHandler, RepositoryBackendListHandler, RepositoryBackendRemoveHandler,
-        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryProjectListHandler,
-        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
-        RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
-        RepositoryTaskUpdateHandler,
+        RepositoryBackendSetHandler, RepositoryBackendToggleHandler, RepositoryListHandler,
+        RepositoryProjectListHandler, RepositoryRemoveHandler, RepositorySyncHandler,
+        RepositoryTagListHandler, RepositoryTaskAddHandler, RepositoryTaskQueryHandler,
+        RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
     },
 };
 
@@ -83,6 +83,7 @@ impl EngineBuilder {
             .command("plugin.remove", PluginRemoveHandler)
             .command("plugin.disable", PluginDisableHandler)
             .command("plugin.toggle", PluginToggleHandler)
+            .command("repository.list", RepositoryListHandler)
             .command("repository.backend.add", RepositoryBackendAddHandler)
             .command("repository.backend.list", RepositoryBackendListHandler)
             .command("repository.backend.remove", RepositoryBackendRemoveHandler)

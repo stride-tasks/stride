@@ -2443,6 +2443,7 @@ dependencies = [
  "stride_database",
  "stride_plugin_manager",
  "thiserror 2.0.21",
+ "toml",
  "uuid",
 ]
 

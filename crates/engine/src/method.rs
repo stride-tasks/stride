@@ -12,7 +12,7 @@ pub use plugin::{
 pub use repository::{
     RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
     RepositoryBackendRemoveHandler, RepositoryBackendSetHandler, RepositoryBackendToggleHandler,
-    RepositoryProjectListHandler, RepositoryRemoveHandler, RepositorySyncHandler,
-    RepositoryTagListHandler, RepositoryTaskAddHandler, RepositoryTaskQueryHandler,
-    RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
+    RepositoryListHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
+    RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
+    RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
 };
