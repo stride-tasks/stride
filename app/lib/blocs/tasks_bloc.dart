@@ -6,7 +6,6 @@ import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/repository_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
@@ -49,6 +48,8 @@ final class TaskSyncEvent extends TaskEvent {
   TaskSyncEvent();
 }
 
+final class TaskRepositoriesChangedEvent extends TaskEvent {}
+
 final class TaskFilterEvent extends TaskEvent {
   final TaskQuery? query;
   TaskFilterEvent({this.query});
@@ -70,14 +71,15 @@ class TaskState {
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final DialogBloc dialogBloc;
   final SettingsBloc settingsBloc;
-  final RepositoryBloc repositoryBloc;
   final LogBloc logBloc;
   StreamSubscription<SettingsState>? settingsSubscription;
-  StreamSubscription<RepositoryState>? repositorySubscription;
+  late List<RepositoryDescriptor> previousRepositories;
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
 
   void _initializeSettingsStream() {
+    previousRepositories = RustContext.repositories.value;
+    RustContext.repositories.addListener(_onRepositoriesChanged);
     repositoryUuid ??= _currentRepositoryUuid();
 
     _registerPeriodicTasks(settingsBloc.settings);
@@ -91,7 +93,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       if (!next.periodicSync && previous.periodicSync) {
         // Sync was turned off — cancel all repository tasks.
-        await _unregisterPeriodicTasks(repositoryBloc.state.repositories);
+        await _unregisterPeriodicTasks(RustContext.repositories.value);
       } else {
         // Sync is on — register/replace tasks for current repositories.
         await _registerPeriodicTasks(next);
@@ -103,32 +105,37 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         add(TaskFetchEvent());
       }
     });
+  }
 
-    var previousRepositories = repositoryBloc.state.repositories;
-    repositorySubscription = repositoryBloc.stream.listen((event) async {
-      final nextRepositories = event.repositories;
-      final removedRepositories = previousRepositories
-          .where((repository) =>
-              !nextRepositories.any((next) => next.id == repository.id))
-          .toList();
-      if (removedRepositories.isNotEmpty) {
-        await _unregisterPeriodicTasks(removedRepositories);
-      }
-      previousRepositories = nextRepositories;
+  void _onRepositoriesChanged() {
+    add(TaskRepositoriesChangedEvent());
+  }
 
-      await _registerPeriodicTasks(settingsBloc.settings);
+  Future<void> _handleRepositoriesChanged() async {
+    final nextRepositories = RustContext.repositories.value;
+    final removedRepositories = previousRepositories
+        .where(
+          (repository) =>
+              !nextRepositories.any((next) => next.id == repository.id),
+        )
+        .toList();
+    if (removedRepositories.isNotEmpty) {
+      await _unregisterPeriodicTasks(removedRepositories);
+    }
+    previousRepositories = nextRepositories;
 
-      final nextRepositoryUuid = _currentRepositoryUuid();
-      if (repositoryUuid != nextRepositoryUuid) {
-        repositoryUuid = nextRepositoryUuid;
-        add(TaskFetchEvent());
-      }
-    });
+    await _registerPeriodicTasks(settingsBloc.settings);
+
+    final nextRepositoryUuid = _currentRepositoryUuid();
+    if (repositoryUuid != nextRepositoryUuid) {
+      repositoryUuid = nextRepositoryUuid;
+      add(TaskFetchEvent());
+    }
   }
 
   Future<void> _registerPeriodicTasks(Settings settings) async {
     if (!settings.periodicSync) return;
-    for (final repository in repositoryBloc.state.repositories.asMap().entries) {
+    for (final repository in RustContext.repositories.value.asMap().entries) {
       await Background.periodic(
         TaskSyncBackgroundTask(repositoryId: repository.value.id),
         initialDelay: const Duration(seconds: 10),
@@ -149,9 +156,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   UuidValue? _currentRepositoryUuid() {
-    final repositories = repositoryBloc.state.repositories;
+    final repositories = RustContext.repositories.value;
     final selected = settingsBloc.settings.currentRepository;
-    if (selected != null && repositories.any((repository) => repository.id == selected)) {
+    if (selected != null &&
+        repositories.any((repository) => repository.id == selected)) {
       return selected;
     }
     return repositories.firstOrNull?.id;
@@ -159,11 +167,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   TaskBloc({
     required this.settingsBloc,
-    required this.repositoryBloc,
     required this.logBloc,
     required this.dialogBloc,
   }) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
+
+    on<TaskRepositoriesChangedEvent>((event, emit) async {
+      await _handleRepositoriesChanged();
+    });
 
     on<TaskFetchEvent>((event, emit) async {
       emit(TaskState(tasks: await _tasks(), query: activeQuery));
@@ -195,7 +206,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     on<TaskRemoveRepositoryEvent>((event, emit) async {
       await RepositoryRemoveMethod(repositoryId: event.uuid).execute();
-      repositoryBloc.add(RepositoryRefreshEvent());
+      await RustContext.refreshRepositories();
     });
 
     on<TaskChangeStatusEvent>((event, emit) async {
@@ -291,7 +302,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   @override
   Future<void> close() {
     settingsSubscription?.cancel();
-    repositorySubscription?.cancel();
+    RustContext.repositories.removeListener(_onRepositoriesChanged);
     return super.close();
   }
 }

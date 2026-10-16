@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/repository_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/repository_route.dart';
 import 'package:stride/routes/task_route.dart';
@@ -167,8 +167,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
     final taskBloc = context.read<TaskBloc>();
     return Drawer(
       child: SingleChildScrollView(
-        child: BlocBuilder<RepositoryBloc, RepositoryState>(
-          builder: (context, state) {
+        child: ValueListenableBuilder(
+          valueListenable: RustContext.repositories,
+          builder: (context, repositories, child) {
             return Padding(
               padding: const EdgeInsets.all(10.0),
               child: Column(
@@ -197,7 +198,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ],
                   ),
                   const Divider(),
-                  _repositories(state.repositories, taskBloc),
+                  _repositories(repositories, taskBloc),
                 ],
               ),
             );

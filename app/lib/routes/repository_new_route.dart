@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/icon_text_button.dart';
-import 'package:stride/api.dart';
-import 'package:stride/context.dart';
 
 class RepositoryNewRoute extends StatefulWidget {
   final bool cloning;
@@ -123,6 +122,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
     // }
 
     await RepositoryAddMethod(name: _nameController.text).execute();
+    await RustContext.refreshRepositories();
 
     if (!mounted) return;
 

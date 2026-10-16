@@ -1,13 +1,22 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:stride/api.dart';
 import 'package:stride/bridge/api/context.dart' as context;
 import 'package:stride/notifications.dart';
 
 class RustContext {
+  static final ValueNotifier<List<RepositoryDescriptor>> repositories =
+      ValueNotifier([]);
+
   static late Stream<String> _stream;
 
   static Stream<String> stream() => _stream;
+
+  static Future<void> refreshRepositories() async {
+    final result = await RepositoryListMethod().execute();
+    repositories.value = result.repositories;
+  }
 
   static Future<void> init() async {
     _stream = context.createContext().asBroadcastStream();

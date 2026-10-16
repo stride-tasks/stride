@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/blocs/repository_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/backend/list_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -22,9 +23,10 @@ class RepositoryRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Repository')),
-      body: BlocBuilder<RepositoryBloc, RepositoryState>(
-        builder: (context, state) {
-          final repositoryDescriptor = state.repositories
+      body: ValueListenableBuilder(
+        valueListenable: RustContext.repositories,
+        builder: (context, repositories, child) {
+          final repositoryDescriptor = repositories
               .where((element) => element.id == repositoryUuid)
               .firstOrNull;
           if (repositoryDescriptor == null) {
@@ -40,22 +42,11 @@ class RepositoryRoute extends StatelessWidget {
                     title: const Text('Name'),
                     leading: const Icon(Icons.label),
                     text: repositoryDescriptor.name ?? 'unnamed',
-                    onChanged: (text) {
-                      final settings = context.read<SettingsBloc>().settings;
-                      final repositories = settings.repositories
-                          .map(
-                            (e) => (e.uuid != repositoryDescriptor.id)
-                                ? e
-                                : e.copyWith(name: text),
-                          )
-                          .toList();
-                      context.read<SettingsBloc>().add(
-                        SettingsUpdateEvent(
-                          settings: settings.copyWith(
-                            repositories: repositories,
-                          ),
-                        ),
-                      );
+                    onChanged: (text) async {
+                      await RepositoryUpdateMethod(
+                        descriptor: repositoryDescriptor.copyWith(name: text),
+                      ).execute();
+                      await RustContext.refreshRepositories();
                     },
                   ),
                   // TODO: Currently only work for the currently loaded repository.
@@ -90,15 +81,14 @@ class RepositoryRoute extends StatelessWidget {
                     onTap: (context) async {
                       final settingsBloc = context.read<SettingsBloc>();
                       final settings = settingsBloc.settings;
-                      final repositories = settings.repositories
+                      final repositories = RustContext.repositories.value
                           .where(
-                            (element) =>
-                                element.uuid != repositoryDescriptor.id,
+                            (element) => element.id != repositoryDescriptor.id,
                           )
                           .toList();
                       final currentRepository =
                           settings.currentRepository == repositoryDescriptor.id
-                          ? repositories.firstOrNull?.uuid
+                          ? repositories.firstOrNull?.id
                           : settings.currentRepository;
                       await showAlertDialog(
                         context: context,
@@ -116,7 +106,6 @@ class RepositoryRoute extends StatelessWidget {
                           settingsBloc.add(
                             SettingsUpdateEvent(
                               settings: settings.copyWith(
-                                repositories: repositories,
                                 currentRepository: currentRepository,
                               ),
                             ),

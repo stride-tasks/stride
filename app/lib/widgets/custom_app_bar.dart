@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/repository_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/widgets/infinite_rotation_animation.dart';
@@ -16,9 +16,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<RepositoryBloc, RepositoryState>(
-      builder: (context, state) {
-        final hasRepositories = state.repositories.isNotEmpty;
+    return ValueListenableBuilder(
+      valueListenable: RustContext.repositories,
+      builder: (context, repositories, child) {
+        final hasRepositories = repositories.isNotEmpty;
         return AppBar(
           title: Text(title),
           leading: leading,

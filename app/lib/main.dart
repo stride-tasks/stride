@@ -10,7 +10,6 @@ import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
-import 'package:stride/blocs/repository_bloc.dart';
 import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge/api/settings.dart';
@@ -55,27 +54,19 @@ Future<void> main() async {
   await Background.init();
   await NotificationService.init();
 
-  final repositories = (await RepositoryListMethod().execute()).repositories;
+  await RustContext.refreshRepositories();
   final plugins = (await PluginListMethod().execute()).plugins;
   final pluginManagerState = PluginManagerState(plugins: plugins);
 
-  runApp(
-    MyApp(
-      settings: settings,
-      repositories: repositories,
-      pluginManagerState: pluginManagerState,
-    ),
-  );
+  runApp(MyApp(settings: settings, pluginManagerState: pluginManagerState));
 }
 
 class MyApp extends StatelessWidget {
   final Settings settings;
-  final List<RepositoryDescriptor> repositories;
   final PluginManagerState pluginManagerState;
   const MyApp({
     super.key,
     required this.settings,
-    required this.repositories,
     required this.pluginManagerState,
   });
 
@@ -91,17 +82,9 @@ class MyApp extends StatelessWidget {
             logBloc: context.read<LogBloc>(),
           ),
         ),
-        BlocProvider<RepositoryBloc>(
-          create: (context) => RepositoryBloc(
-            repositories: repositories,
-            settingsBloc: context.read<SettingsBloc>(),
-            logBloc: context.read<LogBloc>(),
-          ),
-        ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
             settingsBloc: context.read<SettingsBloc>(),
-            repositoryBloc: context.read<RepositoryBloc>(),
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),
           ),
@@ -174,8 +157,10 @@ class MyApp extends StatelessWidget {
                       onCancel: state.onCancel,
                     );
                   },
-                  child: BlocBuilder<RepositoryBloc, RepositoryState>(
-                    builder: (context, state) => state.repositories.isEmpty
+                  child: ValueListenableBuilder(
+                    valueListenable: RustContext.repositories,
+                    builder: (context, repositories, child) =>
+                        repositories.isEmpty
                         ? const InitialRoute()
                         : const TasksRoute(),
                   ),
