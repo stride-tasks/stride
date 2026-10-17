@@ -14,6 +14,7 @@ pub struct KnownPaths {
 impl KnownPaths {
     const DATABASE_FILE_NAME: &str = "db.sqlite";
     const DESCRIPTOR_FILE_NAME: &str = "descriptor.toml";
+    const SETTING_FILE_NAME: &str = "setting.toml";
 
     #[must_use]
     pub fn new(support: PathBuf, cache: PathBuf) -> Self {
@@ -23,6 +24,11 @@ impl KnownPaths {
             logs: cache.join("logs").join("log.txt"),
             cache,
         }
+    }
+
+    #[must_use]
+    pub fn setting_filepath(&self) -> PathBuf {
+        self.support.join(Self::SETTING_FILE_NAME)
     }
 
     #[must_use]
