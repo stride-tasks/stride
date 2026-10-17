@@ -41,15 +41,7 @@ Future<void> main() async {
   }
 
   await RustLib.init();
-  await Settings.load(
-    paths: ApplicationPaths(
-      supportPath: supportPath,
-      cachePath: cachePath,
-      logPath: path.joinAll([cachePath, 'logs', 'log.txt']),
-    ),
-  );
-
-  await RustContext.init();
+  await RustContext.init(supportPath, cachePath);
   await Background.init();
   await NotificationService.init();
 

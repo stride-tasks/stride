@@ -89,7 +89,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault();
 
-  Stream<String> crateApiContextCreateContext();
+  Stream<String> crateApiContextCreateContext({
+    required String supportPath,
+    required String cachePath,
+  });
 
   Future<String> crateApiContextExecute({
     required String method,
@@ -184,7 +187,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'application_paths_default', argNames: []);
 
   @override
-  Stream<String> crateApiContextCreateContext() {
+  Stream<String> crateApiContextCreateContext({
+    required String supportPath,
+    required String cachePath,
+  }) {
     final stream = RustStreamSink<String>();
     unawaited(
       handler.executeNormal(
@@ -192,6 +198,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           callFfi: (port_) {
             final serializer = SseSerializer(generalizedFrbRustBinding);
             sse_encode_StreamSink_String_Sse(stream, serializer);
+            sse_encode_String(supportPath, serializer);
+            sse_encode_String(cachePath, serializer);
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
@@ -204,7 +212,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             decodeErrorData: null,
           ),
           constMeta: kCrateApiContextCreateContextConstMeta,
-          argValues: [stream],
+          argValues: [stream, supportPath, cachePath],
           apiImpl: this,
         ),
       ),
@@ -213,7 +221,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   TaskConstMeta get kCrateApiContextCreateContextConstMeta =>
-      const TaskConstMeta(debugName: 'create_context', argNames: ['stream']);
+      const TaskConstMeta(
+        debugName: 'create_context',
+        argNames: ['stream', 'supportPath', 'cachePath'],
+      );
 
   @override
   Future<String> crateApiContextExecute({

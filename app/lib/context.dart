@@ -20,8 +20,10 @@ class RustContext {
     repositories.value = result.repositories;
   }
 
-  static Future<void> init() async {
-    _stream = context.createContext().asBroadcastStream();
+  static Future<void> init(String supportPath, String cachePath) async {
+    _stream = context
+        .createContext(supportPath: supportPath, cachePath: cachePath)
+        .asBroadcastStream();
 
     _stream.listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;

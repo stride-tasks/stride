@@ -1,4 +1,7 @@
-use std::sync::{Arc, LazyLock, Mutex, OnceLock};
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, LazyLock, Mutex, OnceLock},
+};
 
 use stride_api as api;
 use stride_backend_git::{
@@ -42,8 +45,26 @@ impl Notifier for FlutterNotifier {
     }
 }
 
-pub fn create_context(stream: StreamSink<String>) {
-    let known_paths = KnownPaths::new(application_support_path(), application_cache_path());
+pub fn create_context(stream: StreamSink<String>, support_path: String, cache_path: String) {
+    let known_paths = KnownPaths::new(PathBuf::from(&support_path), PathBuf::from(cache_path));
+
+    // HACK: We need an ~/.ssh directory for libssh2. On android and iOS
+    // that means redefining the HOME dir, so that we can control
+    // it. <2025-02-25>
+    //
+    // SAFETY: We do this initially when the applicattion is initialized,
+    //         so this should be thread-safe.
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    unsafe {
+        std::env::set_var("HOME", &support_path);
+    }
+
+    // TODO: move this to ssh.key methods
+    let ssh_path = Path::new(&support_path).join(".ssh");
+    std::fs::create_dir_all(&ssh_path).expect("should not fail");
+
+    stride_logging::init(&Path::new(&support_path).join("logs").join("log.txt"));
+
     ENGINE.get_or_init(|| {
         Engine::builder(known_paths)
             .expect("unable to build engine")

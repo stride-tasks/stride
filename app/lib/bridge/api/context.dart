@@ -16,8 +16,13 @@ import 'package:stride/bridge/frb_generated.dart';
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `FlutterNotifier`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `notify`
 
-Stream<String> createContext() =>
-    RustLib.instance.api.crateApiContextCreateContext();
+Stream<String> createContext({
+  required String supportPath,
+  required String cachePath,
+}) => RustLib.instance.api.crateApiContextCreateContext(
+  supportPath: supportPath,
+  cachePath: cachePath,
+);
 
 Future<String> execute({required String method, required String args}) =>
     RustLib.instance.api.crateApiContextExecute(method: method, args: args);
