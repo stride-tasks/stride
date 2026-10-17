@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
@@ -79,18 +77,12 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   },
                 ),
                 const SizedBox(height: 5),
-                BlocBuilder<SettingsBloc, SettingsState>(
-                  builder: (context, state) {
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: keys.length,
-                      itemBuilder: (context, index) {
-                        final key = keys[index];
-                        return Card(
-                          child: _listItem(context, key, state.settings),
-                        );
-                      },
-                    );
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: keys.length,
+                  itemBuilder: (context, index) {
+                    final key = keys[index];
+                    return Card(child: _listItem(context, key));
                   },
                 ),
               ],
@@ -109,28 +101,11 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
     );
   }
 
-  ListTile _listItem(BuildContext context, SshKey key, Settings settings) {
+  ListTile _listItem(BuildContext context, SshKey key) {
     final publicKey = key.publicKey;
     final uuid = key.id;
 
     final subtitle = Text(uuid.toString());
-    // final subtitle = switch (settings.repositories.any(
-    //   (element) => element.sshKeyUuid == uuid,
-    // )) {
-    //   false => Text(uuid.toString()),
-    //   true => RichText(
-    //     text: TextSpan(
-    //       children: [
-    //         TextSpan(text: '$uuid '),
-    //         WidgetSpan(
-    //           child: Icon(Icons.info, size: 16, color: Colors.blue[200]),
-    //         ),
-    //         const TextSpan(text: ' Key In Use'),
-    //       ],
-    //     ),
-    //   ),
-    // };
-
     return ListTile(
       title: Text(publicKey),
       subtitle: subtitle,
