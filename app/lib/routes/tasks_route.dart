@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -253,15 +252,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 selectedColor: Colors.amber[900],
                 onTap: selected
                     ? null
-                    : () {
-                        final settings = context.read<SettingsBloc>().settings;
-                        context.read<SettingsBloc>().add(
-                          SettingsUpdateEvent(
-                            settings: settings.copyWith(
-                              currentRepository: repository.id,
-                            ),
-                          ),
-                        );
+                    : () async {
+                        RustContext.setting.value = RustContext.setting.value
+                            .copyWith(currentRepository: repository.id);
                       },
                 onLongPress: () {
                   Navigator.of(context).push(

@@ -9,6 +9,8 @@ class RustContext {
   static final ValueNotifier<List<RepositoryDescriptor>> repositories =
       ValueNotifier([]);
 
+  static late ValueNotifier<Setting> setting;
+
   static late Stream<String> _stream;
 
   static Stream<String> stream() => _stream;
@@ -46,7 +48,7 @@ class RustContext {
             }
 
             if (type == 'title' && current != null) {
-              title ??= current!;
+              title = current;
 
               if (previous == null) {
                 continue;
@@ -60,11 +62,18 @@ class RustContext {
           }
 
           await NotificationService.show(
-            '${isNewTask ? "New task" : "Task change"}: ${title ?? "Task($taskId)"}',
+            '${isNewTask ? "New task" : "Task change"}: $title',
             body,
           );
         }
       }
+    });
+
+    final result = await SettingGetMethod().execute();
+    setting = ValueNotifier(result.setting);
+
+    setting.addListener(() async {
+      await SettingSetMethod(setting: setting.value).execute();
     });
   }
 

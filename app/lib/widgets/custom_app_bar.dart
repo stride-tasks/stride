@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';

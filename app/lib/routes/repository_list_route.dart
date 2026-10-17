@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:stride/api.dart';
 import 'package:stride/context.dart';
 import 'package:stride/routes/repository_route.dart';
 import 'package:stride/widgets/settings_widget.dart';

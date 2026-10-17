@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:stride/routes/backend/list_route.dart';
@@ -79,17 +78,13 @@ class RepositoryRoute extends StatelessWidget {
                     ),
                     title: const Text('Remove Repository'),
                     onTap: (context) async {
-                      final settingsBloc = context.read<SettingsBloc>();
-                      final settings = settingsBloc.settings;
                       final repositories = RustContext.repositories.value
                           .where(
                             (element) => element.id != repositoryDescriptor.id,
                           )
                           .toList();
                       final currentRepository =
-                          settings.currentRepository == repositoryDescriptor.id
-                          ? repositories.firstOrNull?.id
-                          : settings.currentRepository;
+                          RustContext.setting.value.currentRepository;
                       await showAlertDialog(
                         context: context,
                         content: const Text(
@@ -103,13 +98,15 @@ class RepositoryRoute extends StatelessWidget {
                               uuid: repositoryDescriptor.id,
                             ),
                           );
-                          settingsBloc.add(
-                            SettingsUpdateEvent(
-                              settings: settings.copyWith(
-                                currentRepository: currentRepository,
-                              ),
-                            ),
-                          );
+                          if (currentRepository == repositoryDescriptor.id) {
+                            RustContext.setting.value = RustContext
+                                .setting
+                                .value
+                                .copyWith(
+                                  currentRepository:
+                                      repositories.firstOrNull?.id,
+                                );
+                          }
                           Navigator.of(context).pop();
                           return true;
                         },

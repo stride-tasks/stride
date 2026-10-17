@@ -63,8 +63,7 @@ class _TaskRouteState extends State<TaskRoute> {
   Future<Set<String>> _getAvailableTags() async {
     final taskBloc = context.read<TaskBloc>();
     final repositoryUuid =
-        taskBloc.repositoryUuid ??
-        taskBloc.settingsBloc.settings.currentRepository;
+        taskBloc.repositoryUuid ?? RustContext.setting.value.currentRepository;
     if (repositoryUuid == null) {
       return const {};
     }
@@ -84,8 +83,7 @@ class _TaskRouteState extends State<TaskRoute> {
   Future<Set<String>> _getAvailableProjects() async {
     final taskBloc = context.read<TaskBloc>();
     final repositoryUuid =
-        taskBloc.repositoryUuid ??
-        taskBloc.settingsBloc.settings.currentRepository;
+        taskBloc.repositoryUuid ?? RustContext.setting.value.currentRepository;
     if (repositoryUuid == null) {
       return const {};
     }
