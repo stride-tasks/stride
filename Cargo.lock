@@ -2459,7 +2459,6 @@ dependencies = [
  "stride_engine",
  "stride_logging",
  "thiserror 2.0.21",
- "uuid",
 ]
 
 [[package]]

@@ -23,7 +23,6 @@ stride_engine.workspace = true
 flutter_rust_bridge = { version = "=2.12.0", features = ["chrono", "uuid"] }
 serde.workspace = true
 serde_json.workspace = true
-uuid.workspace = true
 thiserror.workspace = true
 
 [lints]

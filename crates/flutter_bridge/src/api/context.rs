@@ -10,11 +10,7 @@ use stride_backend_git::{
 };
 use stride_engine::{Backend, Engine, KnownPaths, Notifier};
 
-use crate::{
-    ErrorKind, RustError,
-    api::settings::{application_cache_path, application_support_path},
-    frb_generated::StreamSink,
-};
+use crate::{ErrorKind, RustError, frb_generated::StreamSink};
 
 pub(crate) static ENGINE: OnceLock<Arc<Engine>> = OnceLock::new();
 static STREAM: LazyLock<Mutex<Option<StreamSink<String>>>> = LazyLock::new(Mutex::default);

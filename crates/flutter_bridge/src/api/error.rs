@@ -1,27 +1,10 @@
 use flutter_rust_bridge::frb;
 
 #[frb(ignore)]
-#[derive(Debug)]
-pub enum SettingsError {
-    InvalidEncoding(serde_json::Error),
-}
-
-impl std::error::Error for SettingsError {}
-impl std::fmt::Display for SettingsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidEncoding(error) => write!(f, "invalid encoding: {error}"),
-        }
-    }
-}
-
-#[frb(ignore)]
 #[derive(thiserror::Error, Debug)]
 pub enum ErrorKind {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("settings error: {0}")]
-    Settings(#[from] SettingsError),
     #[error("other error: {message}")]
     Other { message: Box<str> },
 }

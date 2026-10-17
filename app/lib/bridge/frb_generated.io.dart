@@ -16,9 +16,7 @@ import 'dart:ffi' as ffi;
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:stride/bridge/api/context.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
-import 'package:uuid/uuid.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustLibApiImplPlatform({
@@ -57,34 +55,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw);
 
   @protected
-  RustStreamSink<Settings> dco_decode_StreamSink_settings_Sse(dynamic raw);
-
-  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
-  UuidValue dco_decode_Uuid(dynamic raw);
-
-  @protected
-  ApplicationPaths dco_decode_application_paths(dynamic raw);
-
-  @protected
-  bool dco_decode_bool(dynamic raw);
-
-  @protected
-  ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw);
-
-  @protected
-  Settings dco_decode_box_autoadd_settings(dynamic raw);
-
-  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
-
-  @protected
-  UuidValue? dco_decode_opt_Uuid(dynamic raw);
-
-  @protected
-  Settings dco_decode_settings(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -122,38 +96,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  RustStreamSink<Settings> sse_decode_StreamSink_settings_Sse(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
-  UuidValue sse_decode_Uuid(SseDeserializer deserializer);
-
-  @protected
-  ApplicationPaths sse_decode_application_paths(SseDeserializer deserializer);
-
-  @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
-
-  @protected
-  ApplicationPaths sse_decode_box_autoadd_application_paths(
-    SseDeserializer deserializer,
-  );
-
-  @protected
-  Settings sse_decode_box_autoadd_settings(SseDeserializer deserializer);
-
-  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
-
-  @protected
-  UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer);
-
-  @protected
-  Settings sse_decode_settings(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -166,6 +112,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
   void sse_encode_AnyhowException(
@@ -201,46 +150,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_StreamSink_settings_Sse(
-    RustStreamSink<Settings> self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_Uuid(UuidValue self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_application_paths(
-    ApplicationPaths self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_box_autoadd_application_paths(
-    ApplicationPaths self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_box_autoadd_settings(Settings self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
   );
-
-  @protected
-  void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_settings(Settings self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
@@ -253,6 +169,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
 }
 
 // Section: wire_class

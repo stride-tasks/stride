@@ -15,11 +15,9 @@ import 'dart:convert';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:stride/bridge/api/context.dart';
 import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/settings.dart';
 import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/bridge/frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
-import 'package:uuid/uuid.dart';
 
 /// Main entrypoint of the Rust API
 class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
@@ -74,7 +72,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -1638534659;
+  int get rustContentHash => -2118109835;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -87,8 +85,6 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 abstract class RustLibApi extends BaseApi {
   String crateApiErrorRustErrorToErrorString({required RustError that});
 
-  Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault();
-
   Stream<String> crateApiContextCreateContext({
     required String supportPath,
     required String cachePath,
@@ -98,20 +94,6 @@ abstract class RustLibApi extends BaseApi {
     required String method,
     required String args,
   });
-
-  Stream<Settings> crateApiSettingsSettingsCreateStream();
-
-  Future<Settings> crateApiSettingsSettingsDefault();
-
-  Future<Settings> crateApiSettingsSettingsGet();
-
-  Future<Settings> crateApiSettingsSettingsLoad({
-    required ApplicationPaths paths,
-  });
-
-  Settings crateApiSettingsSettingsNew();
-
-  Future<void> crateApiSettingsSettingsSave({required Settings settings});
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_RustError;
@@ -160,33 +142,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<ApplicationPaths> crateApiSettingsApplicationPathsDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 2,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_application_paths,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSettingsApplicationPathsDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsApplicationPathsDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'application_paths_default', argNames: []);
-
-  @override
   Stream<String> crateApiContextCreateContext({
     required String supportPath,
     required String cachePath,
@@ -203,7 +158,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 3,
+              funcId: 2,
               port: port_,
             );
           },
@@ -240,7 +195,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 3,
             port: port_,
           );
         },
@@ -258,177 +213,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiContextExecuteConstMeta =>
       const TaskConstMeta(debugName: 'execute', argNames: ['method', 'args']);
-
-  @override
-  Stream<Settings> crateApiSettingsSettingsCreateStream() {
-    final streamSink = RustStreamSink<Settings>();
-    unawaited(
-      handler.executeNormal(
-        NormalTask(
-          callFfi: (port_) {
-            final serializer = SseSerializer(generalizedFrbRustBinding);
-            sse_encode_StreamSink_settings_Sse(streamSink, serializer);
-            pdeCallFfi(
-              generalizedFrbRustBinding,
-              serializer,
-              funcId: 5,
-              port: port_,
-            );
-          },
-          codec: SseCodec(
-            decodeSuccessData: sse_decode_unit,
-            decodeErrorData: null,
-          ),
-          constMeta: kCrateApiSettingsSettingsCreateStreamConstMeta,
-          argValues: [streamSink],
-          apiImpl: this,
-        ),
-      ),
-    );
-    return streamSink.stream;
-  }
-
-  TaskConstMeta get kCrateApiSettingsSettingsCreateStreamConstMeta =>
-      const TaskConstMeta(
-        debugName: 'settings_create_stream',
-        argNames: ['streamSink'],
-      );
-
-  @override
-  Future<Settings> crateApiSettingsSettingsDefault() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 6,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_settings,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSettingsSettingsDefaultConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsSettingsDefaultConstMeta =>
-      const TaskConstMeta(debugName: 'settings_default', argNames: []);
-
-  @override
-  Future<Settings> crateApiSettingsSettingsGet() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 7,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_settings,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSettingsSettingsGetConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsSettingsGetConstMeta =>
-      const TaskConstMeta(debugName: 'settings_get', argNames: []);
-
-  @override
-  Future<Settings> crateApiSettingsSettingsLoad({
-    required ApplicationPaths paths,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_box_autoadd_application_paths(paths, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 8,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_settings,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiSettingsSettingsLoadConstMeta,
-        argValues: [paths],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsSettingsLoadConstMeta =>
-      const TaskConstMeta(debugName: 'settings_load', argNames: ['paths']);
-
-  @override
-  Settings crateApiSettingsSettingsNew() {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_settings,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSettingsSettingsNewConstMeta,
-        argValues: [],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsSettingsNewConstMeta =>
-      const TaskConstMeta(debugName: 'settings_new', argNames: []);
-
-  @override
-  Future<void> crateApiSettingsSettingsSave({required Settings settings}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_box_autoadd_settings(settings, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 10,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRustError,
-        ),
-        constMeta: kCrateApiSettingsSettingsSaveConstMeta,
-        argValues: [settings],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiSettingsSettingsSaveConstMeta =>
-      const TaskConstMeta(debugName: 'settings_save', argNames: ['settings']);
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_RustError => wire
@@ -478,77 +262,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  RustStreamSink<Settings> dco_decode_StreamSink_settings_Sse(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    throw UnimplementedError();
-  }
-
-  @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
   }
 
   @protected
-  UuidValue dco_decode_Uuid(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return UuidValue.fromByteList(dco_decode_list_prim_u_8_strict(raw));
-  }
-
-  @protected
-  ApplicationPaths dco_decode_application_paths(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return ApplicationPaths(
-      supportPath: dco_decode_String(arr[0]),
-      cachePath: dco_decode_String(arr[1]),
-      logPath: dco_decode_String(arr[2]),
-    );
-  }
-
-  @protected
-  bool dco_decode_bool(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw as bool;
-  }
-
-  @protected
-  ApplicationPaths dco_decode_box_autoadd_application_paths(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_application_paths(raw);
-  }
-
-  @protected
-  Settings dco_decode_box_autoadd_settings(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_settings(raw);
-  }
-
-  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
-  }
-
-  @protected
-  UuidValue? dco_decode_opt_Uuid(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_Uuid(raw);
-  }
-
-  @protected
-  Settings dco_decode_settings(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return Settings.raw(
-      darkMode: dco_decode_bool(arr[0]),
-      periodicSync: dco_decode_bool(arr[1]),
-      currentRepository: dco_decode_opt_Uuid(arr[2]),
-    );
   }
 
   @protected
@@ -621,14 +343,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  RustStreamSink<Settings> sse_decode_StreamSink_settings_Sse(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    throw UnimplementedError('Unreachable ()');
-  }
-
-  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -636,74 +350,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  UuidValue sse_decode_Uuid(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_list_prim_u_8_strict(deserializer);
-    return UuidValue.fromByteList(inner);
-  }
-
-  @protected
-  ApplicationPaths sse_decode_application_paths(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_supportPath = sse_decode_String(deserializer);
-    final var_cachePath = sse_decode_String(deserializer);
-    final var_logPath = sse_decode_String(deserializer);
-    return ApplicationPaths(
-      supportPath: var_supportPath,
-      cachePath: var_cachePath,
-      logPath: var_logPath,
-    );
-  }
-
-  @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
-  ApplicationPaths sse_decode_box_autoadd_application_paths(
-    SseDeserializer deserializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_application_paths(deserializer);
-  }
-
-  @protected
-  Settings sse_decode_box_autoadd_settings(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_settings(deserializer);
-  }
-
-  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
-  }
-
-  @protected
-  UuidValue? sse_decode_opt_Uuid(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return sse_decode_Uuid(deserializer);
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  Settings sse_decode_settings(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_darkMode = sse_decode_bool(deserializer);
-    final var_periodicSync = sse_decode_bool(deserializer);
-    final var_currentRepository = sse_decode_opt_Uuid(deserializer);
-    return Settings.raw(
-      darkMode: var_darkMode,
-      periodicSync: var_periodicSync,
-      currentRepository: var_currentRepository,
-    );
   }
 
   @protected
@@ -727,6 +377,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
   }
 
   @protected
@@ -795,67 +451,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_StreamSink_settings_Sse(
-    RustStreamSink<Settings> self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(
-      self.setupAndSerialize(
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_settings,
-          decodeErrorData: sse_decode_AnyhowException,
-        ),
-      ),
-      serializer,
-    );
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
-  }
-
-  @protected
-  void sse_encode_Uuid(UuidValue self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_prim_u_8_strict(self.toBytes(), serializer);
-  }
-
-  @protected
-  void sse_encode_application_paths(
-    ApplicationPaths self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.supportPath, serializer);
-    sse_encode_String(self.cachePath, serializer);
-    sse_encode_String(self.logPath, serializer);
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_application_paths(
-    ApplicationPaths self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_application_paths(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_settings(
-    Settings self,
-    SseSerializer serializer,
-  ) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_settings(self, serializer);
   }
 
   @protected
@@ -866,24 +464,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
-  }
-
-  @protected
-  void sse_encode_opt_Uuid(UuidValue? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_Uuid(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_settings(Settings self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_bool(self.darkMode, serializer);
-    sse_encode_bool(self.periodicSync, serializer);
-    sse_encode_opt_Uuid(self.currentRepository, serializer);
   }
 
   @protected
@@ -907,6 +487,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
   }
 }
 
