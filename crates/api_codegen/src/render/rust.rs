@@ -384,7 +384,7 @@ fn render_type_node(type_node: &TypeNode) -> String {
         TypeNode::Array(inner) => format!("Vec<{}>", render_type_node(inner)),
         TypeNode::Map(value) => {
             format!(
-                "std::collections::HashMap<String, {}>",
+                "std::collections::HashMap<Box<str>, {}>",
                 render_type_node(value)
             )
         }
