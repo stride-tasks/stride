@@ -27,3 +27,24 @@ impl TypedCommandHandler for SettingGetHandler {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct SettingSetHandler;
+
+impl TypedCommandHandler for SettingSetHandler {
+    type Method = crate::api::SettingSetMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::SettingSetMethodResult> {
+        let support_path = &engine.known_paths().support;
+        std::fs::create_dir_all(support_path)?;
+
+        let contents = toml::to_string_pretty(&method.setting)
+            .map_err(|error| Error::Other(Box::new(error)))?;
+        std::fs::write(engine.known_paths().setting_filepath(), contents)?;
+
+        Ok(crate::api::SettingSetMethodResult {})
+    }
+}

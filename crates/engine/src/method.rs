@@ -18,4 +18,4 @@ pub use repository::{
     RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
     RepositoryTaskUpdateHandler, RepositoryUpdateHandler,
 };
-pub use setting::SettingGetHandler;
+pub use setting::{SettingGetHandler, SettingSetHandler};
