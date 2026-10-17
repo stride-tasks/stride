@@ -2,6 +2,7 @@ mod backend;
 mod log;
 mod plugin;
 mod repository;
+mod setting;
 
 pub use backend::{BackendGetHandler, BackendListHandler};
 pub use log::{LogEventHandler, LogGetHandler};
@@ -17,3 +18,4 @@ pub use repository::{
     RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
     RepositoryTaskUpdateHandler, RepositoryUpdateHandler,
 };
+pub use setting::SettingGetHandler;
