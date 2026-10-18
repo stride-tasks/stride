@@ -3,60 +3,73 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:ffi/ffi.dart';
 
-/// Owns a persistent isolate in which all Rust calls are executed.
+/// Client of the single process-wide isolate that executes all Rust calls.
+///
+/// [init] (from any isolate, app or background) starts the isolate and
+/// registers it by name; [connect] attaches to it.
 class RustWorker {
-  RustWorker._();
+  RustWorker._(this._requests);
+
+  static const _portName = 'stride-rust-worker';
 
   var _nextId = 1;
   final _responses = ReceivePort();
   final _notifications = StreamController<String>.broadcast();
-  final _pending = <int, Completer<Object?>>{};
-
-  late final SendPort _requests;
+  final _pending = <int, Completer<String>>{};
+  final SendPort _requests;
 
   /// Broadcast stream of Rust notifications.
   Stream<String> get notifications => _notifications.stream;
 
-  static Future<RustWorker> spawn({
+  static RustWorker? _instance;
+
+  /// Starts the process-wide worker isolate unless one is already running.
+  static Future<void> init({
     required String supportPath,
     required String cachePath,
   }) async {
-    final worker = RustWorker._();
-    worker._responses.listen(worker._onMessage);
+    if (IsolateNameServer.lookupPortByName(_portName) != null) return;
 
-    // Id 0 is the startup handshake.
-    final ready = worker._pending[0] = Completer<Object?>();
+    final ready = ReceivePort();
     try {
-      await Isolate.spawn(_main, [
-        worker._responses.sendPort,
-        supportPath,
-        cachePath,
-      ]);
-      worker._requests = (await ready.future)! as SendPort;
-      return worker;
-    } on Object {
-      worker._dispose();
-      rethrow;
+      await Isolate.spawn(_main, [ready.sendPort, supportPath, cachePath]);
+      final [ok, error] = await ready.first as List<Object?>;
+      if (ok != true) throw StateError(error! as String);
+    } finally {
+      ready.close();
     }
+  }
+
+  /// Returns this isolate's client of the running worker (see [init]).
+  // ignore: prefer_constructors_over_static_methods
+  static RustWorker connect() {
+    final existing = _instance;
+    if (existing != null) return existing;
+    final requests = IsolateNameServer.lookupPortByName(_portName);
+    if (requests == null) {
+      throw StateError('Rust worker is not running');
+    }
+    final worker = RustWorker._(requests);
+    worker._responses.listen(worker._onMessage);
+    requests.send(['subscribe', worker._responses.sendPort]);
+    return _instance = worker;
   }
 
   Future<String> execute({required String method, required String args}) async {
     final id = _nextId++;
-    final completer = _pending[id] = Completer<Object?>();
-    _requests.send([id, method, args]);
-    return (await completer.future)! as String;
+    final completer = _pending[id] = Completer<String>();
+    _requests.send(['execute', _responses.sendPort, id, method, args]);
+    return completer.future;
   }
 
-  /// Stops the isolate. The worker must not be used afterwards.
+  /// Detaches this client. The shared worker keeps running.
   void close() {
-    _requests.send(null);
-    _dispose();
-  }
-
-  void _dispose() {
+    _instance = null;
+    _requests.send(['unsubscribe', _responses.sendPort]);
     _responses.close();
     unawaited(_notifications.close());
   }
@@ -70,51 +83,72 @@ class RustWorker {
     }
     final completer = _pending.remove(id);
     if (ok == true) {
-      completer?.complete(payload);
+      completer?.complete(payload! as String);
     } else {
       completer?.completeError(StateError(payload! as String));
     }
   }
 
   static Future<void> _main(List<Object?> init) async {
-    final responses = init[0]! as SendPort;
+    final ready = init[0]! as SendPort;
+    final supportPath = init[1]! as String;
+    final cachePath = init[2]! as String;
+
     final requests = ReceivePort();
+
+    // Another isolate won the race to start the worker.
+    if (!IsolateNameServer.registerPortWithName(requests.sendPort, _portName)) {
+      requests.close();
+      ready.send([true, null]);
+      return;
+    }
+
+    final subscribers = <SendPort>{};
     NativeCallable<_Callback>? callback;
     try {
       final native = _Native();
 
       callback = NativeCallable<_Callback>.listener((Pointer<Utf8> pointer) {
         try {
-          responses.send([null, true, pointer.toDartString()]);
+          final notification = [null, true, pointer.toDartString()];
+          for (final subscriber in subscribers) {
+            subscriber.send(notification);
+          }
         } finally {
           native.freeString(pointer);
         }
       });
 
-      final supportPath = init[1]! as String;
-      final cachePath = init[2]! as String;
       native.createStream(supportPath, cachePath, callback.nativeFunction);
 
-      await for (final message in requests) {
-        if (message == null) {
-          requests.close();
-          callback.close();
-          return;
-        }
+      // Signal that the worker is ready.
+      ready.send([true, null]);
 
-        final [id, method, args] = message as List<Object?>;
-        try {
-          final result = native.execute(method! as String, args! as String);
-          responses.send([id, true, result]);
-        } on Object catch (error) {
-          responses.send([id, false, _errorMessage(error)]);
+      await for (final message in requests) {
+        switch (message) {
+          case ['subscribe', final SendPort port]:
+            subscribers.add(port);
+          case ['unsubscribe', final SendPort port]:
+            subscribers.remove(port);
+          case [
+            'execute',
+            final SendPort port,
+            final int id,
+            final String method,
+            final String args,
+          ]:
+            try {
+              port.send([id, true, native.execute(method, args)]);
+            } on Object catch (error) {
+              port.send([id, false, _errorMessage(error)]);
+            }
         }
       }
-      responses.send([0, true, requests.sendPort]);
     } on Object catch (error) {
+      IsolateNameServer.removePortNameMapping(_portName);
       requests.close();
       callback?.close();
-      responses.send([0, false, _errorMessage(error)]);
+      ready.send([false, _errorMessage(error)]);
     }
   }
 
@@ -137,17 +171,20 @@ class _Native {
   _Native() : _library = _openLibrary();
 
   static const _libraryName = 'stride_flutter_bridge';
+  static const _createStreamFunctionName = 'stride__create_stream';
+  static const _executeFunctionName = 'stride__execute';
+  static const _freeStringFunctionName = 'stride__free_string';
 
   final DynamicLibrary _library;
 
   late final _createStream = _library
-      .lookupFunction<_CreateStream, _CreateStream>('stride__create_stream');
+      .lookupFunction<_CreateStream, _CreateStream>(_createStreamFunctionName);
   late final _execute = _library.lookupFunction<_Execute, _Execute>(
-    'stride__execute',
+    _executeFunctionName,
   );
   late final freeString = _library
       .lookupFunction<_FreeNative, void Function(Pointer<Utf8>)>(
-        'stride__free_string',
+        _freeStringFunctionName,
       );
 
   static DynamicLibrary _openLibrary() {

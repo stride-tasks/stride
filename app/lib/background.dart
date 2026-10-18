@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:stride/bridge.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
@@ -227,9 +228,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
   final port = IsolateNameServer.lookupPortByName(_GLOBAL_PORT_NAME);
 
   try {
-    final supportPath = await getApplicationSupportDirectory();
-    final cachePath = await getApplicationCacheDirectory();
-    await RustContext.initNative(supportPath.path, cachePath.path);
+    RustWorker.connect();
 
     Log.trace('Background task: $task, inputData: $inputData');
 
@@ -337,6 +336,10 @@ Future<void> _compute(ComputeArgs args) async {
 
 @pragma('vm:entry-point')
 Future<void> _entryPoint(SendPort sender) async {
+  DartPluginRegistrant.ensureInitialized();
+
+  RustWorker.connect();
+
   final receiver = ReceivePort('worker');
   sender.send(receiver.sendPort);
 
