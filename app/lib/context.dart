@@ -77,10 +77,6 @@ class RustContext {
     });
   }
 
-  static void close() {
-    RustWorker.disconnect();
-  }
-
   static Future<String> executeErased(String method, String args) async {
     return _worker.execute(method: method, args: args);
   }

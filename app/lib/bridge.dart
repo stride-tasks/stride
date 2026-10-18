@@ -21,7 +21,11 @@ class RustWorker {
   var _nextId = 1;
   var _closed = false;
   final _responses = ReceivePort();
-  final _notifications = StreamController<String>.broadcast();
+  // Subscribe to the worker's notifications only while someone listens.
+  late final _notifications = StreamController<String>.broadcast(
+    onListen: () => _requests.send(['subscribe', _responses.sendPort]),
+    onCancel: () => _requests.send(['unsubscribe', _responses.sendPort]),
+  );
   final _pending = <int, Completer<String>>{};
   final SendPort _requests;
 
@@ -69,7 +73,6 @@ class RustWorker {
     }
     final worker = RustWorker._(requests);
     worker._responses.listen(worker._onMessage);
-    requests.send(['subscribe', worker._responses.sendPort]);
     return _instance = worker;
   }
 
