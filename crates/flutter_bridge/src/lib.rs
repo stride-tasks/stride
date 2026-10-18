@@ -6,7 +6,7 @@ use std::{
     panic::{AssertUnwindSafe, catch_unwind},
     path::{Path, PathBuf},
     ptr,
-    sync::{Arc, Mutex, OnceLock},
+    sync::{Arc, Mutex, PoisonError, RwLock},
 };
 
 use stride_api as api;
@@ -48,7 +48,7 @@ impl<T: Into<ErrorKind>> From<T> for RustError {
 type StreamCallback = extern "C" fn(*mut c_char);
 type OptionalStreamCallback = Option<StreamCallback>;
 
-static ENGINE: OnceLock<Arc<Engine>> = OnceLock::new();
+static ENGINE: RwLock<Option<Arc<Engine>>> = RwLock::new(None);
 static STREAM_CALLBACK: Mutex<OptionalStreamCallback> = Mutex::new(None);
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ impl Notifier for FlutterNotifier {
         // returns only after no call to the callback is in flight.
         let guard = STREAM_CALLBACK
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+            .unwrap_or_else(PoisonError::into_inner);
         if let Some(callback) = *guard {
             let message = serde_json::to_string(&map)
                 .map_err(|error| stride_engine::Error::from(Box::new(error)))?;
@@ -109,25 +109,29 @@ fn create_context(
     if let Some(callback) = callback {
         *STREAM_CALLBACK
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(callback);
+            .unwrap_or_else(PoisonError::into_inner) = Some(callback);
     }
 
-    ENGINE.get_or_init(|| {
-        Engine::builder(known_paths)
-            .expect("unable to build engine")
-            .notifier(Box::new(FlutterNotifier))
-            .insert_default_methods()
-            .backend(GitBackend::handler())
-            .command("ssh.host.add", SshHostAddHandler)
-            .command("ssh.host.list", SshHostListHandler)
-            .command("ssh.host.remove", SshHostRemoveHandler)
-            .command("ssh.key.list", SshKeyListHandler)
-            .command("ssh.key.generate", SshKeyGenerateHandler)
-            .command("ssh.key.add", SshKeyAddHandler)
-            .command("ssh.key.update", SshKeyUpdateHandler)
-            .command("ssh.key.remove", SshKeyRemoveHandler)
-            .build()
-    });
+    // Acquire a write lock on the ENGINE to replace the previous engine.
+    let mut lock = ENGINE.write().unwrap_or_else(PoisonError::into_inner);
+
+    let engine = Engine::builder(known_paths)
+        .expect("unable to build engine")
+        .notifier(Box::new(FlutterNotifier))
+        .insert_default_methods()
+        .backend(GitBackend::handler())
+        .command("ssh.host.add", SshHostAddHandler)
+        .command("ssh.host.list", SshHostListHandler)
+        .command("ssh.host.remove", SshHostRemoveHandler)
+        .command("ssh.key.list", SshKeyListHandler)
+        .command("ssh.key.generate", SshKeyGenerateHandler)
+        .command("ssh.key.add", SshKeyAddHandler)
+        .command("ssh.key.update", SshKeyUpdateHandler)
+        .command("ssh.key.remove", SshKeyRemoveHandler)
+        .build();
+
+    // Replaces the previous engine; calls already running keep using theirs.
+    *lock = Some(engine);
 
     Ok(())
 }
@@ -142,12 +146,15 @@ fn execute_inner(method: &str, args: &str) -> Result<String, RustError> {
         message: format!("Failed to parse args: {e}").into(),
     })?;
 
-    let engine = ENGINE.get().ok_or_else(|| ErrorKind::Other {
-        message: "Rust context has not been initialized".into(),
-    })?;
+    let engine = ENGINE
+        .read()
+        .unwrap_or_else(PoisonError::into_inner)
+        .clone()
+        .ok_or_else(|| ErrorKind::Other {
+            message: "Rust context has not been initialized".into(),
+        })?;
 
     let result = engine
-        .clone()
         .execute_erased(method, params.params)
         .map_err(|err| ErrorKind::Other {
             message: format!("Failed to execute method: {method} with args: {args}. Error: {err}")
@@ -268,7 +275,7 @@ pub unsafe extern "C" fn stride__execute(
 pub extern "C" fn stride__clear_stream_callback() {
     *STREAM_CALLBACK
         .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+        .unwrap_or_else(PoisonError::into_inner) = None;
 }
 
 /// Frees a string allocated by this library.
