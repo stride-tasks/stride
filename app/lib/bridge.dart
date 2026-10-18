@@ -7,6 +7,41 @@ import 'dart:ui';
 
 import 'package:ffi/ffi.dart';
 
+/// Why a Rust call failed.
+enum RustErrorKind {
+  // Reported by Rust; [code] is the wire name.
+  io('io'),
+  invalidArgument('invalid_argument'),
+  notInitialized('not_initialized'),
+  methodNotFound('method_not_found'),
+  methodFailed('method_failed'),
+  other('other'),
+  panic('panic'),
+
+  // Raised on the Dart side.
+  internal('internal'),
+  initFailed('init_failed'),
+  workerClosed('worker_closed');
+
+  const RustErrorKind(this.code);
+
+  final String code;
+
+  static RustErrorKind fromCode(String? code) => RustErrorKind.values
+      .firstWhere((kind) => kind.code == code, orElse: () => other);
+}
+
+/// A failed Rust call (or a failure to reach the Rust worker).
+class RustException implements Exception {
+  const RustException(this.kind, this.message);
+
+  final RustErrorKind kind;
+  final String message;
+
+  @override
+  String toString() => 'RustException(${kind.name}): $message';
+}
+
 /// Client of the single process-wide isolate that executes all Rust calls.
 ///
 /// [init] (from any isolate, app or background) starts the isolate and
@@ -50,7 +85,7 @@ class RustWorker {
     try {
       await Isolate.spawn(_main, [ready.sendPort, supportPath, cachePath]);
       final [ok, error] = await ready.first as List<Object?>;
-      if (ok != true) throw StateError(error! as String);
+      if (ok != true) throw RustException(RustErrorKind.initFailed, error! as String);
     } finally {
       ready.close();
       // The new worker has replaced the native callback (or cleared it on
@@ -78,7 +113,9 @@ class RustWorker {
 
   Future<String> execute({required String method, required String args}) {
     if (_closed) {
-      return Future.error(StateError('Rust worker client is closed'));
+      return Future.error(
+        const RustException(RustErrorKind.workerClosed, 'Rust worker client is closed'),
+      );
     }
     final id = _nextId++;
     final completer = _pending[id] = Completer<String>();
@@ -98,7 +135,7 @@ class RustWorker {
     _closed = true;
     if (identical(_instance, this)) _instance = null;
     for (final completer in _pending.values) {
-      completer.completeError(StateError(reason));
+      completer.completeError(RustException(RustErrorKind.workerClosed, reason));
     }
     _pending.clear();
     _responses.close();
@@ -121,7 +158,10 @@ class RustWorker {
     if (ok == true) {
       completer?.complete(payload! as String);
     } else {
-      completer?.completeError(StateError(payload! as String));
+      final [kind, message] = payload! as List<Object?>;
+      completer?.completeError(
+        RustException(kind! as RustErrorKind, message! as String),
+      );
     }
   }
 
@@ -169,7 +209,7 @@ class RustWorker {
       requests.close();
       loaded?.clearCallback();
       callback?.close();
-      ready.send([false, _errorMessage(error)]);
+      ready.send([false, _errorPayload(error)[1]]);
     }
   }
 
@@ -202,13 +242,13 @@ class RustWorker {
             try {
               port.send([id, true, native.execute(method, args)]);
             } on Object catch (error) {
-              port.send([id, false, _errorMessage(error)]);
+              port.send([id, false, _errorPayload(error)]);
             }
         }
       }
     } on Object catch (error) {
       crashed = true;
-      reason = 'Rust worker stopped: ${_errorMessage(error)}';
+      reason = 'Rust worker stopped: ${_errorPayload(error)[1]}';
     }
 
     // On replacement the name already belongs to the new worker.
@@ -226,8 +266,12 @@ class RustWorker {
     callback.close();
   }
 
-  static String _errorMessage(Object error) =>
-      error is StateError ? error.message : error.toString();
+  // Errors cross the isolate boundary as `[kind, message]`.
+  static List<Object> _errorPayload(Object error) => switch (error) {
+    RustException(:final kind, :final message) => [kind, message],
+    StateError(:final message) => [RustErrorKind.internal, message],
+    _ => [RustErrorKind.internal, error.toString()],
+  };
 }
 
 typedef _Callback = Void Function(Pointer<Utf8>);
@@ -311,13 +355,17 @@ class _Native {
     try {
       final responsePointer = _execute(methodPointer, argsPointer);
       if (responsePointer.address == 0) {
-        throw StateError('Rust execute returned a null response');
+        throw const RustException(
+          RustErrorKind.internal,
+          'Rust execute returned a null response',
+        );
       }
       try {
         final response =
             jsonDecode(responsePointer.toDartString()) as Map<String, dynamic>;
         if (response['ok'] != true) {
-          throw StateError(
+          throw RustException(
+            RustErrorKind.fromCode(response['kind'] as String?),
             response['error'] as String? ?? 'Rust execute failed',
           );
         }

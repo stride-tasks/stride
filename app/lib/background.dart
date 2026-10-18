@@ -250,7 +250,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
         done: true,
       ).toMap(),
     );
-  } on StateError catch (e) {
+  } on RustException catch (e) {
     Log.trace('Background task error: ${e.toString()}');
     port?.send(
       Output(

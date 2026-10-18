@@ -20,14 +20,52 @@ use stride_engine::{Backend, Engine, KnownPaths, Notifier};
 pub enum ErrorKind {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("invalid argument: {message}")]
+    InvalidArgument { message: Box<str> },
+    #[error("Rust context has not been initialized")]
+    NotInitialized,
+    #[error("{0}")]
+    Engine(#[from] stride_engine::Error),
     #[error("other error: {message}")]
     Other { message: Box<str> },
+}
+
+/// Stable machine-readable error code that the Dart side maps to `RustErrorKind`.
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+enum ErrorCode {
+    Io,
+    InvalidArgument,
+    NotInitialized,
+    MethodNotFound,
+    MethodFailed,
+    Other,
+    Panic,
+}
+
+impl ErrorKind {
+    fn code(&self) -> ErrorCode {
+        match self {
+            Self::Io(_) => ErrorCode::Io,
+            Self::InvalidArgument { .. } => ErrorCode::InvalidArgument,
+            Self::NotInitialized => ErrorCode::NotInitialized,
+            Self::Engine(stride_engine::Error::HandlerNotFound { .. }) => ErrorCode::MethodNotFound,
+            Self::Engine(_) => ErrorCode::MethodFailed,
+            Self::Other { .. } => ErrorCode::Other,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct RustError {
     /// Reduce the size of Error because it's passed around in a lot of functions.
     repr: Box<ErrorKind>,
+}
+
+impl RustError {
+    fn code(&self) -> ErrorCode {
+        self.repr.code()
+    }
 }
 
 impl std::error::Error for RustError {}
@@ -142,7 +180,7 @@ fn execute_inner(method: &str, args: &str) -> Result<String, RustError> {
         params: api::Value,
     }
 
-    let params: Params = serde_json::from_str(args).map_err(|e| ErrorKind::Other {
+    let params: Params = serde_json::from_str(args).map_err(|e| ErrorKind::InvalidArgument {
         message: format!("Failed to parse args: {e}").into(),
     })?;
 
@@ -150,16 +188,10 @@ fn execute_inner(method: &str, args: &str) -> Result<String, RustError> {
         .read()
         .unwrap_or_else(PoisonError::into_inner)
         .clone()
-        .ok_or_else(|| ErrorKind::Other {
-            message: "Rust context has not been initialized".into(),
-        })?;
+        .ok_or(ErrorKind::NotInitialized)?;
 
-    let result = engine
-        .execute_erased(method, params.params)
-        .map_err(|err| ErrorKind::Other {
-            message: format!("Failed to execute method: {method} with args: {args}. Error: {err}")
-                .into(),
-        })?;
+    // The error deliberately does not repeat `args`: they can contain secrets.
+    let result = engine.execute_erased(method, params.params)?;
 
     let result = serde_json::to_string(&result).map_err(|e| ErrorKind::Other {
         message: format!("Failed to serialize result: {e}").into(),
@@ -173,7 +205,7 @@ fn execute_inner(method: &str, args: &str) -> Result<String, RustError> {
 /// `value` must be a valid null-terminated UTF-8 string.
 unsafe fn read_string(value: *const c_char, name: &str) -> Result<String, RustError> {
     if value.is_null() {
-        return Err(ErrorKind::Other {
+        return Err(ErrorKind::InvalidArgument {
             message: format!("{name} must not be null").into(),
         }
         .into());
@@ -182,7 +214,7 @@ unsafe fn read_string(value: *const c_char, name: &str) -> Result<String, RustEr
     // SAFETY: The caller passes a valid NUL-terminated UTF-8 string.
     let value = unsafe { CStr::from_ptr(value) };
     value.to_str().map(str::to_owned).map_err(|error| {
-        ErrorKind::Other {
+        ErrorKind::InvalidArgument {
             message: format!("{name} is not valid UTF-8: {error}").into(),
         }
         .into()
@@ -263,8 +295,12 @@ pub unsafe extern "C" fn stride__execute(
 
     let response = match result {
         Ok(Ok(result)) => serde_json::json!({"ok": true, "result": result}),
-        Ok(Err(error)) => serde_json::json!({"ok": false, "error": error.to_string()}),
-        Err(payload) => serde_json::json!({"ok": false, "error": panic_message(&*payload)}),
+        Ok(Err(error)) => {
+            serde_json::json!({"ok": false, "kind": error.code(), "error": error.to_string()})
+        }
+        Err(payload) => {
+            serde_json::json!({"ok": false, "kind": ErrorCode::Panic, "error": panic_message(&*payload)})
+        }
     };
     into_raw_string(&response.to_string())
 }
