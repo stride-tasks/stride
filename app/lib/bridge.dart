@@ -27,18 +27,22 @@ typedef _FreeStringDart = void Function(Pointer<Utf8>);
 class _RustBindings {
   static const kLibraryName = 'stride_flutter_bridge';
 
+  static const kCreateStream = 'stride__create_stream';
+  static const kExecute = 'stride__execute';
+  static const kFreeString = 'stride__free_string';
+
   _RustBindings({String libraryName = kLibraryName})
     : _library = _openLibrary(libraryName);
 
   final DynamicLibrary _library;
 
   late final createStream = _library
-      .lookupFunction<_CreateStreamNative, _CreateStreamDart>('create_stream');
+      .lookupFunction<_CreateStreamNative, _CreateStreamDart>(kCreateStream);
   late final execute = _library.lookupFunction<_ExecuteNative, _ExecuteDart>(
-    'execute',
+    kExecute,
   );
   late final freeString = _library
-      .lookupFunction<_FreeStringNative, _FreeStringDart>('free_string');
+      .lookupFunction<_FreeStringNative, _FreeStringDart>(kFreeString);
 
   static DynamicLibrary _openLibrary(String libraryName) {
     if (Platform.isIOS || Platform.isMacOS) {

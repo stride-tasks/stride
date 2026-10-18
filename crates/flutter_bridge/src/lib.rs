@@ -216,7 +216,7 @@ fn report_create_stream_error(
 /// `support_path` and `cache_path` must be valid null-terminated UTF-8 strings.
 /// `callback` must be a valid function pointer or null.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn create_stream(
+pub unsafe extern "C" fn stride__create_stream(
     support_path: *const c_char,
     cache_path: *const c_char,
     callback: OptionalStreamCallback,
@@ -240,7 +240,10 @@ pub unsafe extern "C" fn create_stream(
 ///
 /// `method` and `args` must be valid null-terminated UTF-8 strings.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn execute(method: *const c_char, args: *const c_char) -> *mut c_char {
+pub unsafe extern "C" fn stride__execute(
+    method: *const c_char,
+    args: *const c_char,
+) -> *mut c_char {
     let result = catch_unwind(AssertUnwindSafe(|| {
         // SAFETY: The caller must ensure that `method` and `args` are valid null-terminated UTF-8 strings.
         let method = unsafe { read_string(method, "method") }?;
@@ -264,7 +267,7 @@ pub unsafe extern "C" fn execute(method: *const c_char, args: *const c_char) -> 
 /// # Safety
 /// `value` must be null or a string returned by this library.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn free_string(value: *mut c_char) {
+pub unsafe extern "C" fn stride__free_string(value: *mut c_char) {
     if !value.is_null() {
         // SAFETY: This pointer must come from `CString::into_raw` in this library.
         drop(unsafe { CString::from_raw(value) });
