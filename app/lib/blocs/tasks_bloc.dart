@@ -4,7 +4,6 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:uuid/uuid.dart';
@@ -67,7 +66,6 @@ class TaskState {
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
-  final DialogBloc dialogBloc;
   final LogBloc logBloc;
   late List<RepositoryDescriptor> previousRepositories;
   UuidValue? repositoryUuid;
@@ -162,8 +160,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     return repositories.firstOrNull?.id;
   }
 
-  TaskBloc({required this.logBloc, required this.dialogBloc})
-    : super(const TaskState(tasks: [])) {
+  TaskBloc({required this.logBloc}) : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
     on<TaskRepositoriesChangedEvent>((event, emit) async {
