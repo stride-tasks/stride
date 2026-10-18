@@ -84,8 +84,17 @@ class RustWorker {
     final ready = ReceivePort();
     try {
       await Isolate.spawn(_main, [ready.sendPort, supportPath, cachePath]);
-      final [ok, error] = await ready.first as List<Object?>;
-      if (ok != true) throw RustException(RustErrorKind.initFailed, error! as String);
+      final [ok, payload] = await ready.first as List<Object?>;
+      if (ok != true) {
+        throw RustException(RustErrorKind.initFailed, payload! as String);
+      }
+      // Register only once Rust is initialized, so no client can attach to a
+      // worker that fails to start.
+      final registered = IsolateNameServer.registerPortWithName(
+        payload! as SendPort,
+        _portName,
+      );
+      assert(registered, 'init() must not be called concurrently');
     } finally {
       ready.close();
       // The new worker has replaced the native callback (or cleared it on
@@ -191,16 +200,8 @@ class RustWorker {
 
       native.createStream(supportPath, cachePath, callback.nativeFunction);
 
-      // Register only once Rust is initialized, so no client can attach to a
-      // worker that fails to start.
-      final registered = IsolateNameServer.registerPortWithName(
-        requests.sendPort,
-        _portName,
-      );
-      assert(registered, 'init() must not be called concurrently');
-
-      // Notify the main isolate that the worker is ready.
-      ready.send([true, null]);
+      // Tell `init` that the worker is ready and how to reach it.
+      ready.send([true, requests.sendPort]);
 
       await _serve(native, requests, subscribers, callback);
     } on Object catch (error) {
