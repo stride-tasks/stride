@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
+import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class PluginRoute extends StatelessWidget {
@@ -74,11 +73,9 @@ class PluginRoute extends StatelessWidget {
           : FloatingActionButton(
               shape: const CircleBorder(),
               onPressed: () async {
-                final logBloc = context.read<LogBloc>();
-                final pluginManagerBloc = context.read<PluginManagerBloc>();
                 Navigator.of(context).pop();
-                await logBloc.catch_(message: 'import plugin', () async {
-                  await pluginManagerBloc.import(importPath!);
+                await Log.catch_(message: 'import plugin', () async {
+                  await PluginImportMethod(filePath: importPath!).execute();
                 });
               },
               child: const Icon(Icons.check_circle),
@@ -125,9 +122,7 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestStorageField(
-    PluginManifestPermissionStorage storage,
-  ) {
+  SettingsTile _manifestStorageField(PluginManifestPermissionStorage storage) {
     var size = storage.maxSize.toString();
     var unit = 'KB';
     if (storage.maxSize > 1024) {
@@ -159,9 +154,7 @@ class PluginRoute extends StatelessWidget {
     );
   }
 
-  SettingsTile _manifestNetworkField(
-    PluginManifestPermissionNetwork network,
-  ) {
+  SettingsTile _manifestNetworkField(PluginManifestPermissionNetwork network) {
     final urls = network.urls
         .map(
           (url) => ListTile(

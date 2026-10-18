@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/utils/functions.dart';
@@ -38,7 +36,7 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
           }
 
           if (state.hasError) {
-            context.read<LogBloc>().add(LogErrorEvent(error: state.error!));
+            Log.reportError(state.error!);
             Navigator.of(context).pop();
             return const Placeholder();
           }
@@ -83,7 +81,7 @@ class _KnownHostsRouteState extends State<KnownHostsRoute> {
                     ],
                   ),
                   onConfirm: (context) async {
-                    context.read<LogBloc>().catch_(() async {
+                    Log.catch_(() async {
                       await SshHostRemoveMethod(
                         hostname: host.hostname,
                         format: host.key.type,

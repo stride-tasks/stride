@@ -4,11 +4,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:uuid/uuid.dart';
@@ -53,7 +52,7 @@ class _BackendConfigRouteState extends State<BackendConfigRoute> {
       future: _backendRecord,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          context.read<LogBloc>().add(LogErrorEvent(error: snapshot.error!));
+          Log.reportError(snapshot.error!);
         }
         if (snapshot.connectionState != ConnectionState.done) {
           return Center(child: CircularProgressIndicator.adaptive());

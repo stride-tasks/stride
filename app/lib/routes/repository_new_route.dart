@@ -1,10 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
@@ -130,7 +129,7 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
       MaterialPageRoute<void>(builder: (context) => const TasksRoute()),
     );
     if (widget.cloning) {
-      context.read<TaskBloc>().add(TaskSyncEvent());
+      await context.taskController.sync();
     }
   }
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/routes/settings_route.dart';
 import 'package:stride/routes/task_filter_route.dart';
 import 'package:stride/widgets/infinite_rotation_animation.dart';
@@ -25,8 +24,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           titleSpacing: NavigationToolbar.kMiddleSpacing / 2.0,
           actions: [
             if (hasRepositories)
-              BlocBuilder<TaskBloc, TaskState>(
-                builder: (context, taskState) {
+              ValueListenableBuilder(
+                valueListenable: context.taskController.state,
+                builder: (context, taskState, _) {
                   final hasFilter = taskState.query != null;
                   return InkWell(
                     child: Ink(
@@ -42,22 +42,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       );
                     },
                     onLongPress: hasFilter
-                        ? () => context.read<TaskBloc>().add(TaskFilterEvent())
+                        ? () => context.taskController.filter(null)
                         : null,
                   );
                 },
               ),
-            // TODO: Implemnt undo
-            // if (hasRepositories)
-            //   IconButton(
-            //     icon: const Icon(Icons.undo),
-            //     onPressed: () async {
-            //       context.read<LogBloc>().catch_(
-            //             message: 'undo',
-            //             () async => context.read<TaskBloc>().undo(),
-            //           );
-            //     },
-            //   ),
             if (hasRepositories)
               IconButton(
                 icon: StreamBuilder<Set<Output>>(
@@ -67,7 +56,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       Output(
                         name: Name(
                           method: 'repository.sync',
-                          unique: context.read<TaskBloc>().repositoryUuid?.uuid,
+                          unique: context.taskController.repositoryUuid?.uuid,
                         ),
                         inputData: {},
                         timestamp: DateTime.now(),
@@ -79,7 +68,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     } else if (output.error != null) {
                       return Icon(Icons.sync_problem);
                     } else if (output.done) {
-                      context.read<TaskBloc>().add(TaskFetchEvent());
+                      context.taskController.fetch();
                       return Icon(Icons.sync);
                     } else {
                       return const InfiniteRotationAnimation(
@@ -88,7 +77,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     }
                   },
                 ),
-                onPressed: () => context.read<TaskBloc>().add(TaskSyncEvent()),
+                onPressed: () => context.taskController.sync(),
               ),
             IconButton(
               icon: const Icon(Icons.settings),

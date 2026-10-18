@@ -21,8 +21,6 @@ dependencies:
   uuid: ^4.6.0
   path: ^1.9.1
   path_provider: ^2.1.6
-  bloc: ^9.2.1
-  flutter_bloc: ^9.1.1
   freezed_annotation: ^3.1.0
   font_awesome_flutter: ^11.0.0
   file_picker: ^11.0.3

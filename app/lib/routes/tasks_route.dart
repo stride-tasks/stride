@@ -1,11 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/repository_route.dart';
 import 'package:stride/routes/task_route.dart';
@@ -24,14 +24,17 @@ class TasksRoute extends StatefulWidget {
 class _TasksRouteState extends State<TasksRoute> {
   @override
   void initState() {
-    context.read<TaskBloc>().add(TaskFetchEvent());
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.taskController.fetch();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TaskBloc, TaskState>(
-      builder: (context, state) => Scaffold(
+    return ValueListenableBuilder(
+      valueListenable: context.taskController.state,
+      builder: (context, state, _) => Scaffold(
         drawer: _drawer(),
         appBar: CustomAppBar(title: 'Tasks ( ${state.tasks.length} )'),
         body: Padding(
@@ -80,13 +83,7 @@ class _TasksRouteState extends State<TasksRoute> {
   }
 
   Future<void> _onRefresh() async {
-    final stream = context.read<TaskBloc>().stream.asBroadcastStream();
-    context.read<TaskBloc>().add(TaskSyncEvent());
-    await for (final state in stream) {
-      if (!state.syncing) {
-        break;
-      }
-    }
+    await context.taskController.sync();
   }
 
   TaskItem _taskItem(Task task, BuildContext context) {
@@ -95,9 +92,7 @@ class _TasksRouteState extends State<TasksRoute> {
       if (task.status == TaskStatus.done || task.status == TaskStatus.deleted) {
         status = TaskStatus.pending;
       }
-      context.read<TaskBloc>().add(
-        TaskChangeStatusEvent(task: task, status: status),
-      );
+      await context.taskController.changeStatus(task, status);
       return true;
     }
 
@@ -114,7 +109,7 @@ class _TasksRouteState extends State<TasksRoute> {
               textAlign: TextAlign.center,
             ),
             onConfirm: (context) async {
-              context.read<TaskBloc>().add(TaskRemoveEvent(task: task));
+              await context.taskController.removeTask(task);
               return true;
             },
           ) ??
@@ -163,7 +158,7 @@ class CustomDrawer extends StatefulWidget {
 class _CustomDrawerState extends State<CustomDrawer> {
   @override
   Widget build(BuildContext context) {
-    final taskBloc = context.read<TaskBloc>();
+    final taskController = context.taskController;
     return Drawer(
       child: SingleChildScrollView(
         child: ValueListenableBuilder(
@@ -197,7 +192,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ],
                   ),
                   const Divider(),
-                  _repositories(repositories, taskBloc),
+                  _repositories(repositories, taskController),
                 ],
               ),
             );
@@ -209,7 +204,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
   Widget _repositories(
     List<RepositoryDescriptor> repositories,
-    TaskBloc taskBloc,
+    TaskController taskController,
   ) {
     return StreamBuilder<Set<Output>>(
       stream: Background.stream(),
@@ -219,7 +214,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
           itemCount: repositories.length,
           itemBuilder: (context, index) {
             final repository = repositories[index];
-            final selected = repository.id == taskBloc.repositoryUuid;
+            final selected = repository.id == taskController.repositoryUuid;
             return Card(
               child: ListTile(
                 title: Wrap(

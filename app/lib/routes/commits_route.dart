@@ -1,6 +1,5 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:stride/blocs/log_bloc.dart';
 // import 'package:stride/utils/functions.dart';
 
 // class CommitsRoute extends StatefulWidget {
@@ -125,7 +124,7 @@
 //         ],
 //       ),
 //       onConfirm: (context) async {
-//         context.read<LogBloc>().catch_(
+//         Log.catch_(
 //               message: 'force hard reset',
 //               () async => widget.repository.forceHardReset(commit: commit),
 //             );
