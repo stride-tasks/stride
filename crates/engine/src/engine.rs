@@ -155,14 +155,12 @@ impl Engine {
             .ok_or_else(|| Error::HandlerNotFound {
                 method: method.into(),
             })?;
-        let result =
-            handler
-                .handle(self.clone(), args.clone())
-                .map_err(|err| Error::HandlerFailed {
-                    method: method.into(),
-                    params: args,
-                    cause: Box::new(err),
-                })?;
+        let result = handler
+            .handle(self.clone(), args)
+            .map_err(|err| Error::HandlerFailed {
+                method: method.into(),
+                cause: Box::new(err),
+            })?;
         Ok(result)
     }
 
@@ -279,13 +277,12 @@ impl<T: Prompt> Notification for PromptNotification<T> {
         api::Value::from_type(&prompt)
     }
 
-    fn from_value(value: api::Value) -> Result<Self>
+    fn from_value(_: api::Value) -> Result<Self>
     where
         Self: Sized,
     {
         Err(Error::HandlerFailed {
             method: <api::UserPromptNotification as api::Notification>::NAME.into(),
-            params: value,
             cause: Box::new(Error::HandlerNotFound {
                 method: <api::UserPromptNotification as api::Notification>::NAME.into(),
             }),
