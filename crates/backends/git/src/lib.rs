@@ -290,7 +290,11 @@ impl GitBackend {
 
     fn clone_repository(&mut self) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        let callback_error = with_authentication(
+            self.config.ssh_key.clone(),
+            &self.config.known_hosts_path,
+            &mut callbacks,
+        );
 
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(callbacks);
@@ -385,7 +389,11 @@ impl GitBackend {
 
     fn pull(&mut self, repository: &Repository) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        let callback_error = with_authentication(
+            self.config.ssh_key.clone(),
+            &self.config.known_hosts_path,
+            &mut callbacks,
+        );
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
@@ -469,7 +477,11 @@ impl GitBackend {
 
     fn push(&self, repository: &Repository, force: bool) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        let callback_error = with_authentication(
+            self.config.ssh_key.clone(),
+            &self.config.known_hosts_path,
+            &mut callbacks,
+        );
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
@@ -719,28 +731,34 @@ impl TypedCommandHandler for SshHostListHandler {
 
     fn handle(
         &self,
-        _: Arc<Engine>,
+        engine: Arc<Engine>,
         _: Self::Method,
     ) -> stride_engine::Result<api::SshHostListMethodResult> {
-        let hosts = KnownHosts::load()
-            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?
-            .hosts
-            .into_iter()
-            .map(|host| api::SshHost {
-                hostname: host.hostname.into_boxed_str(),
-                key: api::SshKeyPublic {
-                    r#type: match host.key_type {
-                        HostKeyType::Rsa => api::SshKeyFormat::SshRsa,
-                        HostKeyType::Dss => api::SshKeyFormat::SshDss,
-                        HostKeyType::Ecdsa256 => api::SshKeyFormat::EcdsaSha2Nistp256,
-                        HostKeyType::Ecdsa384 => api::SshKeyFormat::EcdsaSha2Nistp384,
-                        HostKeyType::Ecdsa521 => api::SshKeyFormat::EcdsaSha2Nistp521,
-                        HostKeyType::Ed255219 => api::SshKeyFormat::SshEd25519,
-                    },
-                    public: host.key.into_boxed_str(),
+        let hosts = KnownHosts::read_file(
+            &engine
+                .known_paths()
+                .support
+                .join(".ssh")
+                .join("known_hosts"),
+        )
+        .map_err(|err| stride_engine::Error::Other(Box::new(err)))?
+        .hosts
+        .into_iter()
+        .map(|host| api::SshHost {
+            hostname: host.hostname.into_boxed_str(),
+            key: api::SshKeyPublic {
+                r#type: match host.key_type {
+                    HostKeyType::Rsa => api::SshKeyFormat::SshRsa,
+                    HostKeyType::Dss => api::SshKeyFormat::SshDss,
+                    HostKeyType::Ecdsa256 => api::SshKeyFormat::EcdsaSha2Nistp256,
+                    HostKeyType::Ecdsa384 => api::SshKeyFormat::EcdsaSha2Nistp384,
+                    HostKeyType::Ecdsa521 => api::SshKeyFormat::EcdsaSha2Nistp521,
+                    HostKeyType::Ed255219 => api::SshKeyFormat::SshEd25519,
                 },
-            })
-            .collect();
+                public: host.key.into_boxed_str(),
+            },
+        })
+        .collect();
 
         Ok(api::SshHostListMethodResult { hosts })
     }
@@ -754,11 +772,16 @@ impl TypedCommandHandler for SshHostRemoveHandler {
 
     fn handle(
         &self,
-        _: Arc<Engine>,
+        engine: Arc<Engine>,
         method: Self::Method,
     ) -> stride_engine::Result<api::SshHostRemoveMethodResult> {
-        let mut known_hosts =
-            KnownHosts::load().map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+        let known_hosts_path = engine
+            .known_paths()
+            .support
+            .join(".ssh")
+            .join("known_hosts");
+        let mut known_hosts = KnownHosts::read_file(&known_hosts_path)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
 
         let key_type = match method.format {
             api::SshKeyFormat::SshRsa => HostKeyType::Rsa,
@@ -773,7 +796,9 @@ impl TypedCommandHandler for SshHostRemoveHandler {
             (host.hostname.as_str() != method.hostname.as_ref()) || (host.key_type != key_type)
         });
 
-        KnownHosts::save(&known_hosts).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+        known_hosts
+            .write_file(&known_hosts_path)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
         Ok(api::SshHostRemoveMethodResult {})
     }
 }
@@ -943,6 +968,7 @@ impl GitBackend {
 
 fn with_authentication(
     ssh_key: SshKey,
+    known_hosts_path: &Path,
     callbacks: &mut RemoteCallbacks<'_>,
 ) -> Rc<RefCell<Option<Error>>> {
     let mut tried_ssh = false;
@@ -976,7 +1002,7 @@ fn with_authentication(
         )
     });
 
-    let known_hosts = KnownHosts::load().unwrap();
+    let known_hosts = KnownHosts::read_file(known_hosts_path).unwrap();
 
     let certificate_error = error.clone();
     callbacks.certificate_check(move |cert, hostname| {

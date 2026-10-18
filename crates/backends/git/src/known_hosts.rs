@@ -183,16 +183,6 @@ pub struct KnownHosts {
 }
 
 impl KnownHosts {
-    const SSH_KNOWN_HOSTS_STANDARD_LOCATION: &'static str = ".ssh/known_hosts";
-
-    pub fn load() -> Result<Self> {
-        KnownHosts::read_standard_file()
-    }
-
-    pub fn save(this: &Self) -> Result<()> {
-        KnownHosts::write_standard_file(this)
-    }
-
     #[must_use]
     pub fn new() -> Self {
         Self { hosts: Vec::new() }
@@ -222,20 +212,9 @@ impl KnownHosts {
         Self::parse_str(&contents)
     }
 
-    pub fn read_standard_file() -> Result<Self> {
-        let home = std::env::var("HOME")?;
-        Self::read_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))
-    }
-
     pub fn write_file(&self, filepath: &Path) -> Result<(), std::io::Error> {
         let contents = self.to_string();
         std::fs::write(filepath, contents)?;
-        Ok(())
-    }
-
-    pub fn write_standard_file(&self) -> Result<()> {
-        let home = std::env::var("HOME")?;
-        self.write_file(&Path::new(&home).join(Self::SSH_KNOWN_HOSTS_STANDARD_LOCATION))?;
         Ok(())
     }
 

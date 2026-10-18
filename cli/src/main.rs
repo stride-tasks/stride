@@ -617,7 +617,8 @@ fn main() -> anyhow::Result<ExitCode> {
                 SshKey::remove_key(&engine.known_paths().ssh_keys, id)?;
             }
             SshCommand::KnownHosts { command: None } => {
-                let hosts = KnownHosts::load()?;
+                let known_hosts_filepath = &engine.known_paths().ssh_known_hosts_filepath();
+                let hosts = KnownHosts::read_file(known_hosts_filepath)?;
                 for host in hosts.hosts() {
                     println!("{} {}", host.hostname, host.key_type.name());
                 }
@@ -625,9 +626,10 @@ fn main() -> anyhow::Result<ExitCode> {
             SshCommand::KnownHosts {
                 command: Some(SshKnownHostsCommand::Remove { hostname }),
             } => {
-                let mut hosts = KnownHosts::load()?;
+                let known_hosts_filepath = &engine.known_paths().ssh_known_hosts_filepath();
+                let mut hosts = KnownHosts::read_file(known_hosts_filepath)?;
                 hosts.remove_by_hostname(&hostname);
-                KnownHosts::save(&hosts)?;
+                hosts.write_file(known_hosts_filepath)?;
             }
         },
         Mode::Api { method, params } => {
