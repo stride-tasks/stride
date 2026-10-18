@@ -57,7 +57,6 @@ pub(crate) fn base64_decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, DecodeE
     inner(input.as_ref())
 }
 
-/// flutter_rust_bridge:ignore
 pub mod config;
 
 pub mod known_hosts;
@@ -1103,7 +1102,6 @@ fn do_merge<'a>(
     Ok(true)
 }
 
-// https://github.com/fzyzcjy/flutter_rust_bridge/issues/1937
 #[allow(missing_debug_implementations)]
 pub struct CommitItem {
     pub oid: Oid,

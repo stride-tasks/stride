@@ -68,7 +68,6 @@ impl PluginManager {
         Ok(())
     }
 
-    /// flutter_rust_bridge:ignore
     pub fn list(&self) -> impl Iterator<Item = &Plugin> {
         self.plugins.values()
     }
