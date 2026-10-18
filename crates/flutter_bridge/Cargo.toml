@@ -20,7 +20,6 @@ stride_logging.workspace = true
 stride_backend_git.workspace = true
 stride_engine.workspace = true
 
-flutter_rust_bridge = { version = "=2.12.0", features = ["chrono", "uuid"] }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

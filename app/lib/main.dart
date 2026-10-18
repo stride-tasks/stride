@@ -11,7 +11,6 @@ import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/context.dart';
 import 'package:stride/notifications.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -39,7 +38,6 @@ Future<void> main() async {
     cachePath = (await getApplicationCacheDirectory()).path;
   }
 
-  await RustLib.init();
   await RustContext.init(supportPath, cachePath);
   await Background.init();
   await NotificationService.init();

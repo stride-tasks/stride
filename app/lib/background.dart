@@ -6,8 +6,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/frb_generated.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
@@ -222,12 +221,19 @@ void _callbackDispatcher() {
 const String _GLOBAL_PORT_NAME = 'worker-port';
 
 Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
+  DartPluginRegistrant.ensureInitialized();
   final input = inputData ?? {};
   final name = Name.fromString(task);
   final port = IsolateNameServer.lookupPortByName(_GLOBAL_PORT_NAME);
 
   try {
-    await RustLib.init();
+    final supportPath = await getApplicationSupportDirectory();
+    final cachePath = await getApplicationCacheDirectory();
+    RustContext.initNative(
+      supportPath.path,
+      cachePath.path,
+      listenToNotifications: false,
+    );
 
     Log.trace('Background task: $task, inputData: $inputData');
 
@@ -249,14 +255,14 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
         done: true,
       ).toMap(),
     );
-  } on RustError catch (e) {
-    Log.trace('Background task error: ${e.toErrorString()}');
+  } on StateError catch (e) {
+    Log.trace('Background task error: ${e.toString()}');
     port?.send(
       Output(
         name: name,
         inputData: input,
         timestamp: DateTime.now(),
-        error: e.toErrorString(),
+        error: e.toString(),
         done: true,
       ).toMap(),
     );
@@ -338,8 +344,6 @@ Future<void> _entryPoint(SendPort sender) async {
 
   final stream = receiver.asBroadcastStream();
   final token = (await stream.first) as RootIsolateToken;
-
-  await RustLib.init();
 
   final tasks = <Name, Timer>{};
   final tagIndex = <String, Set<Name>>{};

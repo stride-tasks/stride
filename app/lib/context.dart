@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:stride/api.dart';
-import 'package:stride/bridge/api/context.dart' as context;
+import 'package:stride/bridge.dart';
 import 'package:stride/notifications.dart';
 
 class RustContext {
@@ -15,15 +15,25 @@ class RustContext {
 
   static Stream<String> stream() => _stream;
 
+  static void initNative(
+    String supportPath,
+    String cachePath, {
+    bool listenToNotifications = true,
+  }) {
+    _stream = RustBridge.createStream(
+      supportPath: supportPath,
+      cachePath: cachePath,
+      listenToNotifications: listenToNotifications,
+    );
+  }
+
   static Future<void> refreshRepositories() async {
     final result = await RepositoryListMethod().execute();
     repositories.value = result.repositories;
   }
 
   static Future<void> init(String supportPath, String cachePath) async {
-    _stream = context
-        .createContext(supportPath: supportPath, cachePath: cachePath)
-        .asBroadcastStream();
+    initNative(supportPath, cachePath);
 
     _stream.listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
@@ -32,7 +42,6 @@ class RustContext {
       if (method == 'repository.changed') {
         final notification = RepositoryChangedNotification.fromJson(params);
         for (final change in notification.changes) {
-          final taskId = change.taskId;
           var title = change.title;
 
           String? body;
@@ -80,7 +89,7 @@ class RustContext {
   }
 
   static Future<String> executeErased(String method, String args) async {
-    return context.execute(method: method, args: args);
+    return RustBridge.execute(method: method, args: args);
   }
 
   static Future<Result> execute<Result>(Method<Result> method) async {
@@ -88,7 +97,7 @@ class RustContext {
         SerdeRegistry.getByType(method.runtimeType)
             as SerdeFactory<Method<Result>>;
 
-    final result = await context.execute(
+    final result = await RustBridge.execute(
       method: method.getName(),
       args: jsonEncode({'params': factory.serialize(method)}),
     );

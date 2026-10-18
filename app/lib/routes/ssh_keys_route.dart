@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/bridge/api/error.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
@@ -47,13 +46,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
         child: FutureBuilder(
           future: _keys,
           builder: (context, snapshot) {
-            if (snapshot.error is RustError) {
-              final error = snapshot.error! as RustError;
-              Log.error(
-                'could not load the SSH keys: ${error.toErrorString()}',
-              );
-              Navigator.of(context).pop();
-            } else if (snapshot.hasError) {
+            if (snapshot.hasError) {
               Log.error('could not load the SSH keys: ${snapshot.error!}');
               Navigator.of(context).pop();
             }
