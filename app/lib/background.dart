@@ -229,11 +229,7 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
   try {
     final supportPath = await getApplicationSupportDirectory();
     final cachePath = await getApplicationCacheDirectory();
-    RustContext.initNative(
-      supportPath.path,
-      cachePath.path,
-      listenToNotifications: false,
-    );
+    await RustContext.initNative(supportPath.path, cachePath.path);
 
     Log.trace('Background task: $task, inputData: $inputData');
 
@@ -279,6 +275,8 @@ Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
         done: true,
       ).toMap(),
     );
+  } finally {
+    RustContext.close();
   }
 
   return Future.value(true);

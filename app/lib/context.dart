@@ -11,19 +11,16 @@ class RustContext {
 
   static late ValueNotifier<Setting> setting;
 
-  static late Stream<String> _stream;
+  static RustWorker? _rustWorker;
 
-  static Stream<String> stream() => _stream;
+  static RustWorker get _worker => _rustWorker!;
 
-  static void initNative(
-    String supportPath,
-    String cachePath, {
-    bool listenToNotifications = true,
-  }) {
-    _stream = RustBridge.createStream(
+  static Stream<String> stream() => _worker.notifications;
+
+  static Future<void> initNative(String supportPath, String cachePath) async {
+    _rustWorker = await RustWorker.spawn(
       supportPath: supportPath,
       cachePath: cachePath,
-      listenToNotifications: listenToNotifications,
     );
   }
 
@@ -33,9 +30,9 @@ class RustContext {
   }
 
   static Future<void> init(String supportPath, String cachePath) async {
-    initNative(supportPath, cachePath);
+    await initNative(supportPath, cachePath);
 
-    _stream.listen((event) async {
+    stream().listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
       final method = json['method'] as String;
       final params = json['params'] as Map<String, dynamic>;
@@ -88,8 +85,10 @@ class RustContext {
     });
   }
 
+  static void close() => _rustWorker?.close();
+
   static Future<String> executeErased(String method, String args) async {
-    return RustBridge.execute(method: method, args: args);
+    return _worker.execute(method: method, args: args);
   }
 
   static Future<Result> execute<Result>(Method<Result> method) async {
@@ -97,7 +96,7 @@ class RustContext {
         SerdeRegistry.getByType(method.runtimeType)
             as SerdeFactory<Method<Result>>;
 
-    final result = await RustBridge.execute(
+    final result = await _worker.execute(
       method: method.getName(),
       args: jsonEncode({'params': factory.serialize(method)}),
     );
