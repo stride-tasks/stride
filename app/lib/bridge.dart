@@ -104,13 +104,6 @@ class RustWorker {
 
     final requests = ReceivePort();
 
-    // Another isolate won the race to start the worker.
-    if (!IsolateNameServer.registerPortWithName(requests.sendPort, _portName)) {
-      requests.close();
-      ready.send([true, null]);
-      return;
-    }
-
     final subscribers = <SendPort>{};
     NativeCallable<_Callback>? callback;
     _Native? loaded;
@@ -130,7 +123,15 @@ class RustWorker {
 
       native.createStream(supportPath, cachePath, callback.nativeFunction);
 
-      // Signal that the worker is ready.
+      // Register only once Rust is initialized, so no client can attach to a
+      // worker that fails to start.
+      final registered = IsolateNameServer.registerPortWithName(
+        requests.sendPort,
+        _portName,
+      );
+      assert(registered, 'init() must not be called concurrently');
+
+      // Notify the main isolate that the worker is ready.
       ready.send([true, null]);
 
       await for (final message in requests) {
