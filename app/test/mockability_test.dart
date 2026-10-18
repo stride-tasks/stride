@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:stride/api.dart';
+import 'package:stride/background.dart';
 
 Future<void> main() async {
   test('Output can round-trip through isolate-safe map data', () {
