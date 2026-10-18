@@ -16,7 +16,10 @@ class RustWorker {
 
   static const _portName = 'stride-rust-worker';
 
+  static const _workerClosedId = -1;
+
   var _nextId = 1;
+  var _closed = false;
   final _responses = ReceivePort();
   final _notifications = StreamController<String>.broadcast();
   final _pending = <int, Completer<String>>{};
@@ -35,7 +38,7 @@ class RustWorker {
     required String supportPath,
     required String cachePath,
   }) async {
-    _instance?.close();
+    disconnect();
     final previous = IsolateNameServer.lookupPortByName(_portName);
     if (previous != null) IsolateNameServer.removePortNameMapping(_portName);
 
@@ -52,6 +55,9 @@ class RustWorker {
     }
   }
 
+  /// Closes this isolate's client, if any.
+  static void disconnect() => _instance?.close();
+
   /// Returns this isolate's client of the running worker (see [init]).
   // ignore: prefer_constructors_over_static_methods
   static RustWorker connect() {
@@ -67,7 +73,10 @@ class RustWorker {
     return _instance = worker;
   }
 
-  Future<String> execute({required String method, required String args}) async {
+  Future<String> execute({required String method, required String args}) {
+    if (_closed) {
+      return Future.error(StateError('Rust worker client is closed'));
+    }
     final id = _nextId++;
     final completer = _pending[id] = Completer<String>();
     _requests.send(['execute', _responses.sendPort, id, method, args]);
@@ -76,17 +85,33 @@ class RustWorker {
 
   /// Detaches this client. The shared worker keeps running.
   void close() {
-    _instance = null;
+    if (_closed) return;
     _requests.send(['unsubscribe', _responses.sendPort]);
+    _closeClient('Rust worker client was closed');
+  }
+
+  // Fails outstanding calls so that no caller waits forever.
+  void _closeClient(String reason) {
+    _closed = true;
+    if (identical(_instance, this)) _instance = null;
+    for (final completer in _pending.values) {
+      completer.completeError(StateError(reason));
+    }
+    _pending.clear();
     _responses.close();
     unawaited(_notifications.close());
   }
 
-  // Messages are `[id, ok, payload]`; a null id is a notification.
+  // Messages are `[id, ok, payload]`; a null id is a notification and
+  // `_workerClosedId` means the worker stopped.
   void _onMessage(Object? message) {
     final [id, ok, payload] = message! as List<Object?>;
     if (id == null) {
       _notifications.add(payload! as String);
+      return;
+    }
+    if (id == _workerClosedId) {
+      _closeClient(payload! as String);
       return;
     }
     final completer = _pending.remove(id);
@@ -155,6 +180,9 @@ class RustWorker {
               port.send([id, false, _errorMessage(error)]);
             }
         }
+      }
+      for (final subscriber in subscribers) {
+        subscriber.send([_workerClosedId, false, 'Rust worker was replaced']);
       }
       callback.close();
     } on Object catch (error) {

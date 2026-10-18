@@ -11,11 +11,8 @@ class RustContext {
 
   static late ValueNotifier<Setting> setting;
 
-  static RustWorker? _rustWorker;
-
-  // Isolates that never called initNative (e.g. compute) attach to the
-  // already running worker on first use.
-  static RustWorker get _worker => _rustWorker ??= RustWorker.connect();
+  // Every isolate attaches to the already running worker on first use.
+  static RustWorker get _worker => RustWorker.connect();
 
   static Stream<String> stream() => _worker.notifications;
 
@@ -26,7 +23,6 @@ class RustContext {
 
   static Future<void> init(String supportPath, String cachePath) async {
     await RustWorker.init(supportPath: supportPath, cachePath: cachePath);
-    _rustWorker = RustWorker.connect();
 
     stream().listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
@@ -82,8 +78,7 @@ class RustContext {
   }
 
   static void close() {
-    _rustWorker?.close();
-    _rustWorker = null;
+    RustWorker.disconnect();
   }
 
   static Future<String> executeErased(String method, String args) async {
