@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
 
@@ -9,6 +9,7 @@ pub struct KnownPaths {
 
     pub logs: PathBuf,
     pub ssh_keys: PathBuf,
+    pub ssh_known_hosts: PathBuf,
 }
 
 impl KnownPaths {
@@ -16,14 +17,26 @@ impl KnownPaths {
     const DESCRIPTOR_FILE_NAME: &str = "descriptor.toml";
     const SETTING_FILE_NAME: &str = "setting.toml";
 
+    const SSH_DIR: &str = ".ssh";
+    const SSH_KEYS_DIR: &str = "keys";
+    const SSH_KNOWN_HOSTS_FILENAME: &str = "known_hosts";
+
     #[must_use]
     pub fn new(support: PathBuf, cache: PathBuf) -> Self {
         Self {
-            ssh_keys: support.join(".ssh").join("keys"),
+            ssh_keys: support.join(Self::SSH_DIR).join(Self::SSH_KEYS_DIR),
+            ssh_known_hosts: support
+                .join(Self::SSH_DIR)
+                .join(Self::SSH_KNOWN_HOSTS_FILENAME),
             support,
             logs: cache.join("logs").join("log.txt"),
             cache,
         }
+    }
+
+    #[must_use]
+    pub fn ssh_known_hosts_filepath(&self) -> &Path {
+        &self.ssh_known_hosts
     }
 
     #[must_use]
