@@ -44,16 +44,11 @@ class RustWorker {
       await Isolate.spawn(_main, [ready.sendPort, supportPath, cachePath]);
       final [ok, error] = await ready.first as List<Object?>;
       if (ok != true) throw StateError(error! as String);
-      // Only stop the old worker once the new one owns the native callback.
-      previous?.send(['shutdown']);
-    } on Object {
-      if (previous != null &&
-          IsolateNameServer.lookupPortByName(_portName) == null) {
-        IsolateNameServer.registerPortWithName(previous, _portName);
-      }
-      rethrow;
     } finally {
       ready.close();
+      // The new worker has replaced the native callback (or cleared it on
+      // failure), so the old callback can be released safely now.
+      previous?.send(['shutdown']);
     }
   }
 
@@ -118,8 +113,9 @@ class RustWorker {
 
     final subscribers = <SendPort>{};
     NativeCallable<_Callback>? callback;
+    _Native? loaded;
     try {
-      final native = _Native();
+      final native = loaded = _Native();
 
       callback = NativeCallable<_Callback>.listener((Pointer<Utf8> pointer) {
         try {
@@ -161,12 +157,16 @@ class RustWorker {
       }
       callback.close();
     } on Object catch (error) {
-      if (IsolateNameServer.lookupPortByName(_portName) ==
-          requests.sendPort) {
+      if (IsolateNameServer.lookupPortByName(_portName) == requests.sendPort) {
         IsolateNameServer.removePortNameMapping(_portName);
       }
+
       requests.close();
+
+      // Rust may hold this callback or the previous worker's; drop it.
+      loaded?.clearCallback();
       callback?.close();
+
       ready.send([false, _errorMessage(error)]);
     }
   }
@@ -182,6 +182,7 @@ typedef _CreateStream =
       Pointer<Utf8>,
       Pointer<NativeFunction<_Callback>>,
     );
+typedef _ClearCallback = Void Function();
 typedef _FreeNative = Void Function(Pointer<Utf8>);
 typedef _Execute = Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>);
 
@@ -193,6 +194,7 @@ class _Native {
   static const _createStreamFunctionName = 'stride__create_stream';
   static const _executeFunctionName = 'stride__execute';
   static const _freeStringFunctionName = 'stride__free_string';
+  static const _clearCallbackFunctionName = 'stride__clear_stream_callback';
 
   final DynamicLibrary _library;
 
@@ -201,6 +203,10 @@ class _Native {
   late final _execute = _library.lookupFunction<_Execute, _Execute>(
     _executeFunctionName,
   );
+  late final clearCallback = _library
+      .lookupFunction<_ClearCallback, void Function()>(
+        _clearCallbackFunctionName,
+      );
   late final freeString = _library
       .lookupFunction<_FreeNative, void Function(Pointer<Utf8>)>(
         _freeStringFunctionName,

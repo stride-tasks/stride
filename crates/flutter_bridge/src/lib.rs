@@ -67,12 +67,12 @@ impl Notifier for FlutterNotifier {
             "params": value,
         });
 
-        let callback = STREAM_CALLBACK
+        // The lock is held during the call so that `stride__clear_stream_callback`
+        // returns only after no call to the callback is in flight.
+        let guard = STREAM_CALLBACK
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .as_ref()
-            .copied();
-        if let Some(callback) = callback {
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if let Some(callback) = *guard {
             let message = serde_json::to_string(&map)
                 .map_err(|error| stride_engine::Error::from(Box::new(error)))?;
             let message = CString::new(message)
@@ -260,6 +260,15 @@ pub unsafe extern "C" fn stride__execute(
         Err(payload) => serde_json::json!({"ok": false, "error": panic_message(&*payload)}),
     };
     into_raw_string(&response.to_string())
+}
+
+/// Unregisters the notification callback. When this returns, the callback is
+/// no longer being called and can be released.
+#[unsafe(no_mangle)]
+pub extern "C" fn stride__clear_stream_callback() {
+    *STREAM_CALLBACK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
 }
 
 /// Frees a string allocated by this library.
