@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/utils/extensions.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/tags_widget.dart';
@@ -61,9 +62,10 @@ class _TaskRouteState extends State<TaskRoute> {
   }
 
   Future<Set<String>> _getAvailableTags() async {
-    final taskBloc = context.read<TaskBloc>();
+    final taskController = context.taskController;
     final repositoryUuid =
-        taskBloc.repositoryUuid ?? RustContext.setting.value.currentRepository;
+        taskController.repositoryUuid ??
+        RustContext.setting.value.currentRepository;
     if (repositoryUuid == null) {
       return const {};
     }
@@ -81,9 +83,10 @@ class _TaskRouteState extends State<TaskRoute> {
   }
 
   Future<Set<String>> _getAvailableProjects() async {
-    final taskBloc = context.read<TaskBloc>();
+    final taskController = context.taskController;
     final repositoryUuid =
-        taskBloc.repositoryUuid ?? RustContext.setting.value.currentRepository;
+        taskController.repositoryUuid ??
+        RustContext.setting.value.currentRepository;
     if (repositoryUuid == null) {
       return const {};
     }
@@ -422,11 +425,9 @@ class _TaskRouteState extends State<TaskRoute> {
     );
 
     if (widget.task == null) {
-      context.read<TaskBloc>().add(TaskAddEvent(task: task));
+      unawaited(context.taskController.addTask(task));
     } else {
-      context.read<TaskBloc>().add(
-        TaskUpdateEvent(current: task, previous: widget.task),
-      );
+      unawaited(context.taskController.updateTask(task));
     }
 
     if (context.mounted) {

@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
+import 'package:stride/controllers/task_controller.dart';
 
 class TaskFilterRoute extends StatefulWidget {
   const TaskFilterRoute({super.key});
@@ -20,7 +19,7 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
   void initState() {
     super.initState();
 
-    final query = context.read<TaskBloc>().activeQuery;
+    final query = context.taskController.activeQuery;
     if (query case TaskQuery_Filter(:final search, :final statuses)) {
       searchController.text = search;
       status = statuses.toSet();
@@ -115,12 +114,10 @@ class _TaskFilterRouteState extends State<TaskFilterRoute> {
         icon: const Icon(Icons.check),
         label: const Text('Apply'),
         onPressed: () {
-          context.read<TaskBloc>().add(
-            TaskFilterEvent(
-              query: TaskQuery.filter(
-                search: searchController.text,
-                statuses: status.toList(),
-              ),
+          context.taskController.filter(
+            TaskQuery.filter(
+              search: searchController.text,
+              statuses: status.toList(),
             ),
           );
           Navigator.popUntil(context, (route) => route.isFirst);

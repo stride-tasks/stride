@@ -3,14 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge.dart' show RustException;
 import 'package:stride/context.dart';
+import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/notifications.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -51,36 +50,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [BlocProvider<TaskBloc>(create: (context) => TaskBloc())],
-      child: BlocListener<TaskBloc, TaskState>(
-        listener: (context, state) {
-          for (var i = 0; i < state.tasks.length; i++) {
-            // _scheduleNotification(state.tasks[i]);
-          }
-        },
-        child: ValueListenableBuilder(
-          valueListenable: RustContext.setting,
-          builder: (context, setting, _) {
-            return MaterialApp(
-              title: 'Stride',
-              theme: generateTheme(darkMode: false),
-              darkTheme: generateTheme(darkMode: true),
-              themeMode: setting.darkMode ? ThemeMode.dark : ThemeMode.light,
-              home: LogNotificationListener(
-                child: _UserPromptListener(
-                  child: ValueListenableBuilder(
-                    valueListenable: RustContext.repositories,
-                    builder: (context, repositories, child) =>
-                        repositories.isEmpty
-                        ? const InitialRoute()
-                        : const TasksRoute(),
-                  ),
+    return TaskControllerProvider(
+      child: ValueListenableBuilder(
+        valueListenable: RustContext.setting,
+        builder: (context, setting, _) {
+          return MaterialApp(
+            title: 'Stride',
+            theme: generateTheme(darkMode: false),
+            darkTheme: generateTheme(darkMode: true),
+            themeMode: setting.darkMode ? ThemeMode.dark : ThemeMode.light,
+            home: LogNotificationListener(
+              child: _UserPromptListener(
+                child: ValueListenableBuilder(
+                  valueListenable: RustContext.repositories,
+                  builder: (context, repositories, child) =>
+                      repositories.isEmpty
+                      ? const InitialRoute()
+                      : const TasksRoute(),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

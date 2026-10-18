@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/routes/backend/list_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -93,10 +92,8 @@ class RepositoryRoute extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                         onConfirm: (context) async {
-                          context.read<TaskBloc>().add(
-                            TaskRemoveRepositoryEvent(
-                              uuid: repositoryDescriptor.id,
-                            ),
+                          context.taskController.removeRepository(
+                            repositoryDescriptor.id,
                           );
                           if (currentRepository == repositoryDescriptor.id) {
                             RustContext.setting.value = RustContext
