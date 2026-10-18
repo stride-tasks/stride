@@ -20,8 +20,6 @@ updates:
       rust-dependencies:
         applies-to: version-updates
         patterns: ["*"]
-        # This requires manual intevention!
-        exclude-patterns: ["flutter_rust_bridge"]
         update-types:
           - "minor"
           - "patch"
@@ -33,8 +31,6 @@ updates:
       flutter-dependencies:
         applies-to: version-updates
         patterns: ["*"]
-        # This requires manual intevention!
-        exclude-patterns: ["flutter_rust_bridge"]
         update-types:
           - "minor"
           - "patch"
