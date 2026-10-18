@@ -27,18 +27,31 @@ class RustWorker {
 
   static RustWorker? _instance;
 
-  /// Starts the process-wide worker isolate unless one is already running.
+  /// Starts the process-wide worker isolate, replacing a previous one.
+  ///
+  /// Clients of the previous worker (including this isolate's) are detached;
+  /// call [connect] again afterwards.
   static Future<void> init({
     required String supportPath,
     required String cachePath,
   }) async {
-    if (IsolateNameServer.lookupPortByName(_portName) != null) return;
+    _instance?.close();
+    final previous = IsolateNameServer.lookupPortByName(_portName);
+    if (previous != null) IsolateNameServer.removePortNameMapping(_portName);
 
     final ready = ReceivePort();
     try {
       await Isolate.spawn(_main, [ready.sendPort, supportPath, cachePath]);
       final [ok, error] = await ready.first as List<Object?>;
       if (ok != true) throw StateError(error! as String);
+      // Only stop the old worker once the new one owns the native callback.
+      previous?.send(['shutdown']);
+    } on Object {
+      if (previous != null &&
+          IsolateNameServer.lookupPortByName(_portName) == null) {
+        IsolateNameServer.registerPortWithName(previous, _portName);
+      }
+      rethrow;
     } finally {
       ready.close();
     }
@@ -126,6 +139,8 @@ class RustWorker {
 
       await for (final message in requests) {
         switch (message) {
+          case ['shutdown']:
+            requests.close();
           case ['subscribe', final SendPort port]:
             subscribers.add(port);
           case ['unsubscribe', final SendPort port]:
@@ -144,8 +159,12 @@ class RustWorker {
             }
         }
       }
+      callback.close();
     } on Object catch (error) {
-      IsolateNameServer.removePortNameMapping(_portName);
+      if (IsolateNameServer.lookupPortByName(_portName) ==
+          requests.sendPort) {
+        IsolateNameServer.removePortNameMapping(_portName);
+      }
       requests.close();
       callback?.close();
       ready.send([false, _errorMessage(error)]);
