@@ -639,10 +639,13 @@ class _{name}Serde implements SerdeFactory<{name}> {{
 }
 
 fn render_type_node(type_node: &TypeNode) -> String {
+    #[allow(clippy::match_same_arms)]
     match type_node {
         TypeNode::Struct(node) => node.name.clone(),
         TypeNode::Enum(node) => node.name.clone(),
         TypeNode::Primitive(PrimitiveType::String) => "String".to_owned(),
+        // @note Dart does not have a native Path type, so we use String instead.
+        TypeNode::Primitive(PrimitiveType::Path) => "String".to_owned(),
         TypeNode::Primitive(PrimitiveType::Uuid) => "UuidValue".to_owned(),
         TypeNode::Primitive(PrimitiveType::DateTime) => "DateTime".to_owned(),
         TypeNode::Primitive(PrimitiveType::Bytes) => "Uint8List".to_owned(),

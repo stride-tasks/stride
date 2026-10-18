@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:stride/bridge/api/logging.dart';
+import 'package:stride/api.dart';
+import 'package:stride/context.dart';
 
 class LoggingRoute extends StatefulWidget {
   const LoggingRoute({super.key});
@@ -16,7 +17,7 @@ class _LoggingRouteState extends State<LoggingRoute> {
   void initState() {
     super.initState();
 
-    future = getLogs();
+    future = LogGetMethod().execute().then((result) => result.content);
   }
 
   @override

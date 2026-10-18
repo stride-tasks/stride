@@ -10,10 +10,7 @@ import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/plugin_manager_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/settings.dart';
-import 'package:stride/bridge/frb_generated.dart';
 import 'package:stride/context.dart';
 import 'package:stride/notifications.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -41,34 +38,20 @@ Future<void> main() async {
     cachePath = (await getApplicationCacheDirectory()).path;
   }
 
-  await RustLib.init();
-  final settings = await Settings.load(
-    paths: ApplicationPaths(
-      supportPath: supportPath,
-      cachePath: cachePath,
-      logPath: path.joinAll([cachePath, 'logs', 'log.txt']),
-    ),
-  );
-
-  await RustContext.init();
-
+  await RustContext.init(supportPath, cachePath);
   await Background.init();
   await NotificationService.init();
 
+  await RustContext.refreshRepositories();
   final plugins = (await PluginListMethod().execute()).plugins;
   final pluginManagerState = PluginManagerState(plugins: plugins);
 
-  runApp(MyApp(settings: settings, pluginManagerState: pluginManagerState));
+  runApp(MyApp(pluginManagerState: pluginManagerState));
 }
 
 class MyApp extends StatelessWidget {
-  final Settings settings;
   final PluginManagerState pluginManagerState;
-  const MyApp({
-    super.key,
-    required this.settings,
-    required this.pluginManagerState,
-  });
+  const MyApp({super.key, required this.pluginManagerState});
 
   @override
   Widget build(BuildContext context) {
@@ -76,15 +59,8 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<DialogBloc>(create: (context) => DialogBloc()),
         BlocProvider<LogBloc>(create: (context) => LogBloc()),
-        BlocProvider<SettingsBloc>(
-          create: (context) => SettingsBloc(
-            settings: settings,
-            logBloc: context.read<LogBloc>(),
-          ),
-        ),
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
-            settingsBloc: context.read<SettingsBloc>(),
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),
           ),
@@ -103,15 +79,14 @@ class MyApp extends StatelessWidget {
             // _scheduleNotification(state.tasks[i]);
           }
         },
-        child: BlocBuilder<SettingsBloc, SettingsState>(
-          builder: (context, state) {
+        child: ValueListenableBuilder(
+          valueListenable: RustContext.setting,
+          builder: (context, setting, _) {
             return MaterialApp(
               title: 'Stride',
               theme: generateTheme(darkMode: false),
               darkTheme: generateTheme(darkMode: true),
-              themeMode: state.settings.darkMode
-                  ? ThemeMode.dark
-                  : ThemeMode.light,
+              themeMode: setting.darkMode ? ThemeMode.dark : ThemeMode.light,
               home: BlocListener<LogBloc, LogState>(
                 listener: (context, state) {
                   if (!state.show) {
@@ -157,9 +132,13 @@ class MyApp extends StatelessWidget {
                       onCancel: state.onCancel,
                     );
                   },
-                  child: settings.repositories.isEmpty
-                      ? const InitialRoute()
-                      : const TasksRoute(),
+                  child: ValueListenableBuilder(
+                    valueListenable: RustContext.repositories,
+                    builder: (context, repositories, child) =>
+                        repositories.isEmpty
+                        ? const InitialRoute()
+                        : const TasksRoute(),
+                  ),
                 ),
               ),
             );

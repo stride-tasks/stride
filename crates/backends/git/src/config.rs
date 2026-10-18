@@ -78,6 +78,7 @@ impl BackendHandler for Handler {
 
         let config = GitConfig {
             root_path: path.to_path_buf(),
+            known_hosts_path: known_paths.support.join(".ssh/known_hosts"),
             author: config.string_value("author")?.into(),
             email: config.string_value("email")?.into(),
             branch: config.string_value("branch")?.into(),
@@ -96,6 +97,7 @@ impl BackendHandler for Handler {
 #[derive(Debug, Clone)]
 pub struct GitConfig {
     pub root_path: PathBuf,
+    pub known_hosts_path: PathBuf,
 
     pub author: Box<str>,
     pub email: Box<str>,

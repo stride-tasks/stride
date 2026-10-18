@@ -1,8 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
+import 'package:stride/logging.dart';
 import 'package:stride/utils/classes.dart';
 
 @immutable
@@ -61,7 +59,7 @@ class LogBloc extends Bloc<LogEvent, LogState> {
         event.stackTrace,
         message: event.message,
       );
-      logging.error(message: message);
+      Log.error(message);
       emit(LogState(message: message, show: event.show, isError: true));
     });
   }
@@ -71,21 +69,11 @@ class LogBloc extends Bloc<LogEvent, LogState> {
     StackTrace? stackTrace, {
     String message = '',
   }) {
-    var errorString = '';
-    switch (error) {
-      case final RustError error:
-        errorString = error.toErrorString();
-      case final AnyhowException error:
-        errorString = error.message;
-      default:
-        errorString = error.toString();
-    }
-
     if (message.isNotEmpty) {
       message += ' ';
     }
 
-    return '${message}error: $errorString\n\nDart Backtrace:\n$stackTrace';
+    return '${message}error: $error\n\nDart Backtrace:\n$stackTrace';
   }
 
   Future<Result<T, Object>> catch_<T>(

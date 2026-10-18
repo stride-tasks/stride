@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
-import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/routes/ssh_key_add_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:uuid/uuid.dart';
@@ -36,7 +35,7 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
   }
 
   void _reset() {
-    _keys = sshKeys();
+    _keys = SshKeyListMethod().execute().then((result) => result.keys);
   }
 
   @override
@@ -47,17 +46,8 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
         child: FutureBuilder(
           future: _keys,
           builder: (context, snapshot) {
-            if (snapshot.error is RustError) {
-              final error = snapshot.error! as RustError;
-              logging.error(
-                message:
-                    'could not load the SSH keys: ${error.toErrorString()}',
-              );
-              Navigator.of(context).pop();
-            } else if (snapshot.hasError) {
-              logging.error(
-                message: 'could not load the SSH keys: ${snapshot.error!}',
-              );
+            if (snapshot.hasError) {
+              Log.error('could not load the SSH keys: ${snapshot.error!}');
               Navigator.of(context).pop();
             }
 
@@ -72,26 +62,20 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   icon: const Icon(Icons.generating_tokens),
                   label: const Text('Generate Key'),
                   onPressed: () async {
-                    final sshKey = await SshKey.generate();
-                    logging.trace(
-                      message: 'SSH Key generated with UUID: ${sshKey.uuid}',
-                    );
+                    final result = await SshKeyGenerateMethod(
+                      format: SshKeyFormat.sshEd25519,
+                    ).execute();
+                    Log.trace('SSH Key generated with UUID: ${result.key.id}');
                     setState(_reset);
                   },
                 ),
                 const SizedBox(height: 5),
-                BlocBuilder<SettingsBloc, SettingsState>(
-                  builder: (context, state) {
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: keys.length,
-                      itemBuilder: (context, index) {
-                        final key = keys[index];
-                        return Card(
-                          child: _listItem(context, key, state.settings),
-                        );
-                      },
-                    );
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: keys.length,
+                  itemBuilder: (context, index) {
+                    final key = keys[index];
+                    return Card(child: _listItem(context, key));
                   },
                 ),
               ],
@@ -110,35 +94,18 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
     );
   }
 
-  ListTile _listItem(BuildContext context, SshKey key, Settings settings) {
+  ListTile _listItem(BuildContext context, SshKey key) {
     final publicKey = key.publicKey;
-    final uuid = key.uuid;
+    final uuid = key.id;
 
     final subtitle = Text(uuid.toString());
-    // final subtitle = switch (settings.repositories.any(
-    //   (element) => element.sshKeyUuid == uuid,
-    // )) {
-    //   false => Text(uuid.toString()),
-    //   true => RichText(
-    //     text: TextSpan(
-    //       children: [
-    //         TextSpan(text: '$uuid '),
-    //         WidgetSpan(
-    //           child: Icon(Icons.info, size: 16, color: Colors.blue[200]),
-    //         ),
-    //         const TextSpan(text: ' Key In Use'),
-    //       ],
-    //     ),
-    //   ),
-    // };
-
     return ListTile(
       title: Text(publicKey),
       subtitle: subtitle,
-      selected: key.uuid == widget.selected,
+      selected: key.id == widget.selected,
       leading: widget.selected == null
           ? null
-          : key.uuid != widget.selected
+          : key.id != widget.selected
           ? const Icon(Icons.circle_outlined)
           : const Icon(Icons.check_circle_outline_rounded),
       trailing: !widget.hasDelete
@@ -163,11 +130,9 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
                   onConfirm: (context) async {
                     await context.read<LogBloc>().catch_(
                       message: 'ssh key',
-                      () async => SshKey.removeKey(uuid: key.uuid),
+                      () async => SshKeyRemoveMethod(id: key.id).execute(),
                     );
-                    logging.trace(
-                      message: 'SSH Key deleted with UUID: ${key.uuid}',
-                    );
+                    Log.trace('SSH Key deleted with UUID: ${key.id}');
                     setState(_reset);
                     return true;
                   },

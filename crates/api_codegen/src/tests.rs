@@ -262,7 +262,7 @@ fn generates_schema_additional_properties_as_a_typed_map() {
 
     let rust = generate_rust(&dir).unwrap();
     assert!(
-        rust.contains("pub fields: std::collections::HashMap<String, ConfigSchemaField>,"),
+        rust.contains("pub fields: std::collections::HashMap<Box<str>, ConfigSchemaField>,"),
         "output was:\n{rust}"
     );
 

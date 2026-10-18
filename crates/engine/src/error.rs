@@ -1,15 +1,13 @@
-use stride_api as api;
-
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("api handle not found: {method}")]
     HandlerNotFound { method: Box<str> },
-    #[error("api handle failed: {method}:{params} :: {cause}")]
+    // `params` is deliberately not part of the message: it can contain secrets.
+    #[error("api handle failed: {method} :: {cause}")]
     HandlerFailed {
         method: Box<str>,
-        params: api::Value,
         #[source]
         cause: Box<Error>,
     },

@@ -30,7 +30,10 @@ use stride_crdt::{
 };
 use stride_crypto::crypter::Crypter;
 use stride_database::Database;
-use stride_engine::{Backend, BackendHandler, Engine, Prompt, PromptNotification, api};
+use stride_engine::{
+    Backend, BackendHandler, Engine, Prompt, PromptNotification, TypedCommandHandler,
+    api::{self, Method},
+};
 use uuid::Uuid;
 
 mod serialization;
@@ -54,7 +57,6 @@ pub(crate) fn base64_decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, DecodeE
     inner(input.as_ref())
 }
 
-/// flutter_rust_bridge:ignore
 pub mod config;
 
 pub mod known_hosts;
@@ -63,6 +65,7 @@ pub mod ssh_key;
 use crate::{
     config::Handler,
     serialization::{change_from_data, change_to_data},
+    ssh_key::SshError,
 };
 
 struct ChangeIter<'a> {
@@ -287,7 +290,11 @@ impl GitBackend {
 
     fn clone_repository(&mut self) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        let callback_error = with_authentication(
+            self.config.ssh_key.clone(),
+            &self.config.known_hosts_path,
+            &mut callbacks,
+        );
 
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(callbacks);
@@ -382,7 +389,11 @@ impl GitBackend {
 
     fn pull(&mut self, repository: &Repository) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        let callback_error = with_authentication(
+            self.config.ssh_key.clone(),
+            &self.config.known_hosts_path,
+            &mut callbacks,
+        );
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
@@ -466,7 +477,11 @@ impl GitBackend {
 
     fn push(&self, repository: &Repository, force: bool) -> Result<()> {
         let mut callbacks = RemoteCallbacks::new();
-        let callback_error = with_authentication(self.config.ssh_key.clone(), &mut callbacks);
+        let callback_error = with_authentication(
+            self.config.ssh_key.clone(),
+            &self.config.known_hosts_path,
+            &mut callbacks,
+        );
         callbacks.push_update_reference(|name, status| {
             println!("{name}: {status:?}");
             Ok(())
@@ -675,25 +690,15 @@ struct AddUnknownHostPrompt {
 
 impl Prompt for AddUnknownHostPrompt {
     fn target(&self) -> Box<str> {
-        "ssh.host.add".into()
+        api::SshHostAddMethod::NAME.into()
     }
 
     fn summary(&self) -> Box<str> {
-        format!(
-            "The host {} is unknown. Do you want to add it to the known hosts?",
-            self.host.hostname
-        )
-        .into()
+        format!("Accept Unknown Host: {}", self.host.hostname).into()
     }
 
     fn description(&self) -> Option<Box<str>> {
-        Some(
-            format!(
-                "The host {} with key {} is not in the known hosts.",
-                self.host.hostname, self.host.key
-            )
-            .into(),
-        )
+        Some(format!("Host Key: {} {}", self.host.key_type, self.host.key).into())
     }
 
     fn inputs(&self) -> api::Value {
@@ -715,6 +720,217 @@ impl Prompt for AddUnknownHostPrompt {
         };
 
         api::Value::from_type(method)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshHostListHandler;
+
+impl TypedCommandHandler for SshHostListHandler {
+    type Method = api::SshHostListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _: Self::Method,
+    ) -> stride_engine::Result<api::SshHostListMethodResult> {
+        let hosts = KnownHosts::read_file(
+            &engine
+                .known_paths()
+                .support
+                .join(".ssh")
+                .join("known_hosts"),
+        )
+        .map_err(|err| stride_engine::Error::Other(Box::new(err)))?
+        .hosts
+        .into_iter()
+        .map(|host| api::SshHost {
+            hostname: host.hostname.into_boxed_str(),
+            key: api::SshKeyPublic {
+                r#type: match host.key_type {
+                    HostKeyType::Rsa => api::SshKeyFormat::SshRsa,
+                    HostKeyType::Dss => api::SshKeyFormat::SshDss,
+                    HostKeyType::Ecdsa256 => api::SshKeyFormat::EcdsaSha2Nistp256,
+                    HostKeyType::Ecdsa384 => api::SshKeyFormat::EcdsaSha2Nistp384,
+                    HostKeyType::Ecdsa521 => api::SshKeyFormat::EcdsaSha2Nistp521,
+                    HostKeyType::Ed255219 => api::SshKeyFormat::SshEd25519,
+                },
+                public: host.key.into_boxed_str(),
+            },
+        })
+        .collect();
+
+        Ok(api::SshHostListMethodResult { hosts })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshHostRemoveHandler;
+
+impl TypedCommandHandler for SshHostRemoveHandler {
+    type Method = api::SshHostRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshHostRemoveMethodResult> {
+        let known_hosts_path = engine
+            .known_paths()
+            .support
+            .join(".ssh")
+            .join("known_hosts");
+        let mut known_hosts = KnownHosts::read_file(&known_hosts_path)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        let key_type = match method.format {
+            api::SshKeyFormat::SshRsa => HostKeyType::Rsa,
+            api::SshKeyFormat::SshDss => HostKeyType::Dss,
+            api::SshKeyFormat::EcdsaSha2Nistp256 => HostKeyType::Ecdsa256,
+            api::SshKeyFormat::EcdsaSha2Nistp384 => HostKeyType::Ecdsa384,
+            api::SshKeyFormat::EcdsaSha2Nistp521 => HostKeyType::Ecdsa521,
+            api::SshKeyFormat::SshEd25519 => HostKeyType::Ed255219,
+        };
+
+        known_hosts.hosts.retain(|host| {
+            (host.hostname.as_str() != method.hostname.as_ref()) || (host.key_type != key_type)
+        });
+
+        known_hosts
+            .write_file(&known_hosts_path)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+        Ok(api::SshHostRemoveMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyListHandler;
+
+impl TypedCommandHandler for SshKeyListHandler {
+    type Method = api::SshKeyListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyListMethodResult> {
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let keys =
+            SshKey::load_keys(ssh_dir).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyListMethodResult {
+            keys: keys.into_iter().map(ssh_key_to_api).collect(),
+        })
+    }
+}
+
+fn ssh_key_to_api(key: SshKey) -> api::SshKey {
+    api::SshKey {
+        id: key.id,
+        format: api::SshKeyFormat::SshEd25519,
+        public_key: key.public_key.into_boxed_str(),
+        public_path: key.public_path,
+        private_path: key.private_path,
+    }
+}
+
+fn ensure_supported_ssh_key_format(format: api::SshKeyFormat) -> stride_engine::Result<()> {
+    if format != api::SshKeyFormat::SshEd25519 {
+        return Err(stride_engine::Error::Other(Box::new(
+            // TODO: Add display formatting.
+            SshError::UnsupportedFormat {
+                format: format!("{format:?}").into_boxed_str(),
+            },
+        )));
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyGenerateHandler;
+
+impl TypedCommandHandler for SshKeyGenerateHandler {
+    type Method = api::SshKeyGenerateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyGenerateMethodResult> {
+        ensure_supported_ssh_key_format(method.format)?;
+
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let key =
+            SshKey::generate(ssh_dir).map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyGenerateMethodResult {
+            key: ssh_key_to_api(key),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyAddHandler;
+
+impl TypedCommandHandler for SshKeyAddHandler {
+    type Method = api::SshKeyAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyAddMethodResult> {
+        ensure_supported_ssh_key_format(method.format)?;
+
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let key = SshKey::save(ssh_dir, &method.public_key, &method.private_key)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyAddMethodResult {
+            key: ssh_key_to_api(key),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyUpdateHandler;
+
+impl TypedCommandHandler for SshKeyUpdateHandler {
+    type Method = api::SshKeyUpdateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyUpdateMethodResult> {
+        ensure_supported_ssh_key_format(method.format)?;
+
+        let ssh_dir = &engine.known_paths().ssh_keys;
+        let key = SshKey::update(ssh_dir, method.id, &method.public_key, &method.private_key)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyUpdateMethodResult {
+            key: ssh_key_to_api(key),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SshKeyRemoveHandler;
+
+impl TypedCommandHandler for SshKeyRemoveHandler {
+    type Method = api::SshKeyRemoveMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> stride_engine::Result<api::SshKeyRemoveMethodResult> {
+        SshKey::remove_key(&engine.known_paths().ssh_keys, method.id)
+            .map_err(|err| stride_engine::Error::Other(Box::new(err)))?;
+
+        Ok(api::SshKeyRemoveMethodResult {})
     }
 }
 
@@ -752,6 +968,7 @@ impl GitBackend {
 
 fn with_authentication(
     ssh_key: SshKey,
+    known_hosts_path: &Path,
     callbacks: &mut RemoteCallbacks<'_>,
 ) -> Rc<RefCell<Option<Error>>> {
     let mut tried_ssh = false;
@@ -785,7 +1002,7 @@ fn with_authentication(
         )
     });
 
-    let known_hosts = KnownHosts::load().unwrap();
+    let known_hosts = KnownHosts::read_file(known_hosts_path).unwrap();
 
     let certificate_error = error.clone();
     callbacks.certificate_check(move |cert, hostname| {
@@ -911,7 +1128,6 @@ fn do_merge<'a>(
     Ok(true)
 }
 
-// https://github.com/fzyzcjy/flutter_rust_bridge/issues/1937
 #[allow(missing_debug_implementations)]
 pub struct CommitItem {
     pub oid: Oid,

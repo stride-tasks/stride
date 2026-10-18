@@ -4,13 +4,15 @@ use crate::{
     BackendHandler, BackendRegistry, CommandHandler, CommandRegistry, KnownPaths, NoopNotifier,
     Notifier, Result,
     method::{
-        BackendGetHandler, BackendListHandler, PluginDisableHandler, PluginImportHandler,
-        PluginListHandler, PluginRemoveHandler, PluginToggleHandler, PluginValidateHandler,
+        BackendGetHandler, BackendListHandler, LogEventHandler, LogGetHandler,
+        PluginDisableHandler, PluginImportHandler, PluginListHandler, PluginRemoveHandler,
+        PluginToggleHandler, PluginValidateHandler, RepositoryAddHandler,
         RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
         RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
-        RepositoryBackendToggleHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
-        RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
-        RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
+        RepositoryBackendToggleHandler, RepositoryListHandler, RepositoryProjectListHandler,
+        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
+        RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
+        RepositoryTaskUpdateHandler, RepositoryUpdateHandler, SettingGetHandler, SettingSetHandler,
     },
 };
 
@@ -74,12 +76,17 @@ impl EngineBuilder {
     pub fn insert_default_methods(self) -> Self {
         self.command("backend.list", BackendListHandler)
             .command("backend.get", BackendGetHandler)
+            .command("log.event", LogEventHandler)
+            .command("log.get", LogGetHandler)
             .command("plugin.list", PluginListHandler)
             .command("plugin.validate", PluginValidateHandler)
             .command("plugin.import", PluginImportHandler)
             .command("plugin.remove", PluginRemoveHandler)
             .command("plugin.disable", PluginDisableHandler)
             .command("plugin.toggle", PluginToggleHandler)
+            .command("repository.add", RepositoryAddHandler)
+            .command("repository.list", RepositoryListHandler)
+            .command("repository.update", RepositoryUpdateHandler)
             .command("repository.backend.add", RepositoryBackendAddHandler)
             .command("repository.backend.list", RepositoryBackendListHandler)
             .command("repository.backend.remove", RepositoryBackendRemoveHandler)
@@ -94,6 +101,8 @@ impl EngineBuilder {
             .command("repository.task.update", RepositoryTaskUpdateHandler)
             .command("repository.task.remove", RepositoryTaskRemoveHandler)
             .command("repository.task.query", RepositoryTaskQueryHandler)
+            .command("setting.get", SettingGetHandler)
+            .command("setting.set", SettingSetHandler)
     }
 
     #[must_use]

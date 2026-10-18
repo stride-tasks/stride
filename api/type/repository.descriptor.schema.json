@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/repository.descriptor.schema.json",
+    "title": "repository.descriptor",
+    "type": "object",
+    "required": [
+        "id"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of the repository."
+        },
+        "name": {
+            "type": "string",
+            "description": "The repository name."
+        }
+    }
+}

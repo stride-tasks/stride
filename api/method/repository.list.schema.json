@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.list.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "repository.list"
+        },
+        "params": {
+            "type": "object",
+            "properties": {}
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "repositories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/repository.descriptor.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "repositories"
+            ]
+        }
+    }
+}

@@ -7,6 +7,115 @@ use uuid::Uuid;
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryAddHandler;
+
+impl TypedCommandHandler for RepositoryAddHandler {
+    type Method = crate::api::RepositoryAddMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryAddMethodResult> {
+        let repository_id = Uuid::now_v7();
+        let descriptor = crate::api::RepositoryDescriptor {
+            id: repository_id,
+            name: method.name,
+        };
+
+        engine.open_repository(repository_id)?;
+        engine
+            .known_paths()
+            .write_repository_descriptor(&descriptor)?;
+
+        Ok(crate::api::RepositoryAddMethodResult { repository_id })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryUpdateHandler;
+
+impl TypedCommandHandler for RepositoryUpdateHandler {
+    type Method = crate::api::RepositoryUpdateMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryUpdateMethodResult> {
+        engine
+            .known_paths()
+            .write_repository_descriptor(&method.descriptor)?;
+
+        Ok(crate::api::RepositoryUpdateMethodResult {})
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryListHandler;
+
+impl TypedCommandHandler for RepositoryListHandler {
+    type Method = crate::api::RepositoryListMethod;
+
+    fn handle(
+        &self,
+        engine: Arc<Engine>,
+        _: Self::Method,
+    ) -> Result<crate::api::RepositoryListMethodResult> {
+        let repositories_path = engine.known_paths().repositories_path();
+        let entries = match std::fs::read_dir(repositories_path) {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(crate::api::RepositoryListMethodResult {
+                    repositories: Vec::new(),
+                });
+            }
+            Err(error) => return Err(error.into()),
+        };
+
+        let mut repositories = Vec::new();
+        for entry in entries {
+            let entry = entry?;
+            if !entry.file_type()?.is_dir() {
+                continue;
+            }
+
+            let file_name = entry.file_name();
+            let Some(name) = file_name.to_str() else {
+                continue;
+            };
+
+            let Some(uuid) = Uuid::parse_str(name).ok() else {
+                continue;
+            };
+
+            let descriptor_path = entry.path().join("descriptor.toml");
+            let contents = match std::fs::read_to_string(descriptor_path) {
+                Ok(contents) => contents,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    let descriptor = crate::api::RepositoryDescriptor {
+                        id: uuid,
+                        name: None,
+                    };
+                    repositories.push(descriptor);
+                    continue;
+                }
+                Err(error) => {
+                    log::error!("Failed to read descriptor file: {error}");
+                    continue;
+                }
+            };
+            let descriptor =
+                toml::from_str(&contents).map_err(|error| crate::Error::Other(Box::new(error)))?;
+            repositories.push(descriptor);
+        }
+
+        repositories.sort_by_key(|repository: &crate::api::RepositoryDescriptor| repository.id);
+        Ok(crate::api::RepositoryListMethodResult { repositories })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendAddHandler;
 
 impl TypedCommandHandler for RepositoryBackendAddHandler {

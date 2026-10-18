@@ -1,0 +1,26 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/setting.schema.json",
+	"type": "object",
+	"required": [
+		"periodic-sync",
+		"dark-mode"
+	],
+	"properties": {
+		"current-repository": {
+			"type": "string",
+			"format": "uuid",
+			"description": "The current repository."
+		},
+		"periodic-sync": {
+			"type": "boolean",
+			"default": false,
+			"description": "The periodic repository sync."
+		},
+		"dark-mode": {
+			"type": "boolean",
+			"default": true,
+			"description": "The flutter dark mode theme."
+		}
+	}
+}

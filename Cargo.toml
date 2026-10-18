@@ -8,7 +8,6 @@ members = [
   "crates/serialization",
   "crates/logging",
   "crates/database",
-  "crates/background",
   "crates/backends/git",
   "crates/crypto",
   "crates/plugin",
@@ -39,7 +38,6 @@ stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
 stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
 stride_logging = { version = "~0.1.0", path = "crates/logging" }
 stride_database = { version = "~0.1.0", path = "crates/database" }
-stride_background = { version = "~0.1.0", path = "crates/background" }
 stride_backend_git = { version = "~0.1.0", path = "crates/backends/git" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }
 stride_plugin = { version = "~0.1.0", path = "crates/plugin" }
@@ -52,17 +50,7 @@ stride_page_generator = { version = "~0.1.0", path = "tools/page_generator" }
 
 
 # Shared Dependencies
-flutter_rust_bridge = { version = "=2.12.0", default-features = false, features = [
-  "thread-pool",
-  "rust-async",
-  "user-utils",
-  "dart-opaque",
-  "chrono",
-  "uuid",
-  "anyhow",
-] }
 rusqlite = { version = "0.40.2", features = ["bundled", "uuid", "array", "fallible_uint"] }
-tokio = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "3.24"
 serde_json = "1.0"
@@ -91,7 +79,6 @@ url = { version = "2.5.8", features = ["serde"] }
 thiserror = "2.0.21"
 indoc = "2.0.7"
 vint64 = "=1.0.1"
-async-trait = "0.1.92"
 inquire = "0.9.4"
 comfy-table = "8.0.1"
 indexmap = "2.14.2"
@@ -137,8 +124,6 @@ unused_import_braces = "warn"
 unused_lifetimes = "warn"
 unused_qualifications = "warn"
 variant_size_differences = "warn"
-
-unexpected_cfgs = { level = "allow", check-cfg = ['cfg(frb_expand)'] }
 
 [workspace.lints.rustdoc]
 # rustdoc lints https://doc.rust-lang.org/rustdoc/lints.html

@@ -15,9 +15,9 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  ffi: ^2.2.0
   stride_flutter_bridge:
     path: rust_builder
-  flutter_rust_bridge: 2.12.0
   uuid: ^4.6.0
   path: ^1.9.1
   path_provider: ^2.1.6
@@ -38,11 +38,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # integration_test:
-  #   sdk: flutter
+  integration_test:
+    sdk: flutter
 
   flutter_lints: ^6.0.0
-  mocktail: ^1.0.5
 
   freezed: ^3.2.4
   json_serializable: ^6.14.1
@@ -73,15 +72,3 @@ flutter_native_splash:
   color: "#282828"
   image: assets/icon/logo.png
   web: false
-
-flutter_rust_bridge:
-  rust_input: crate::api,stride_backend_git::known_hosts
-  rust_root: ../crates/flutter_bridge/
-  dart_output: lib/bridge
-  web: false
-  dart_preamble: |
-    // ignore_for_file: avoid_unused_constructor_parameters
-    // ignore_for_file: avoid_dynamic_calls
-    // ignore_for_file: avoid_equals_and_hash_code_on_mutable_classes
-    // ignore_for_file: argument_type_not_assignable
-    // ignore_for_file: inference_failure_on_instance_creation

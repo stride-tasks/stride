@@ -2,14 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
+import 'package:stride/api.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/widgets/custom_app_bar.dart';
 import 'package:stride/widgets/icon_text_button.dart';
-import 'package:uuid/uuid.dart';
 
 class RepositoryNewRoute extends StatefulWidget {
   final bool cloning;
@@ -122,32 +121,11 @@ class _RepositoryNewRouteState extends State<RepositoryNewRoute> {
     //   encrpytionKey = await EncryptionKey.generate();
     // }
 
+    await RepositoryAddMethod(name: _nameController.text).execute();
+    await RustContext.refreshRepositories();
+
     if (!mounted) return;
 
-    final repositoryUuid = const Uuid().v7obj();
-    final settings = context.read<SettingsBloc>().settings;
-    context.read<SettingsBloc>().add(
-      SettingsUpdateEvent(
-        settings: settings.copyWith(
-          repositories: settings.repositories.toList()
-            ..add(
-              RepositorySpecification(
-                uuid: repositoryUuid,
-                name: _nameController.text,
-                // origin: _originController.text,
-                // author: _authorController.text,
-                // email: _emailController.text,
-                // branch: _branchController.text,
-                // encryption: encrpytionKey,
-                // sshKeyUuid: _sshKeyController.text.isEmpty
-                //     ? null
-                //     : UuidValue.fromString(_sshKeyController.text),
-              ),
-            ),
-          currentRepository: repositoryUuid,
-        ),
-      ),
-    );
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (context) => const TasksRoute()),
     );
@@ -328,7 +306,7 @@ class _GitIntegrationRepositoryFormState
                           MaterialPageRoute<SshKey>(
                             builder: (context) => SshKeysRoute(
                               onTap: (key) {
-                                widget.sshKey.text = key.uuid.toString();
+                                widget.sshKey.text = key.id.toString();
                                 Navigator.of(context).pop();
                               },
                               hasDelete: false,

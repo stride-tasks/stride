@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
-import 'package:stride/bridge/api/settings.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/initial_route.dart';
 import 'package:stride/routes/repository_route.dart';
 import 'package:stride/routes/task_route.dart';
@@ -167,10 +166,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
     final taskBloc = context.read<TaskBloc>();
     return Drawer(
       child: SingleChildScrollView(
-        child: BlocBuilder<SettingsBloc, SettingsState>(
-          builder: (context, state) {
-            final settings = state.settings;
-            final repositories = settings.repositories;
+        child: ValueListenableBuilder(
+          valueListenable: RustContext.repositories,
+          builder: (context, repositories, child) {
             return Padding(
               padding: const EdgeInsets.all(10.0),
               child: Column(
@@ -199,7 +197,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ],
                   ),
                   const Divider(),
-                  _repositories(repositories, taskBloc, settings),
+                  _repositories(repositories, taskBloc),
                 ],
               ),
             );
@@ -210,9 +208,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
   }
 
   Widget _repositories(
-    List<RepositorySpecification> repositories,
+    List<RepositoryDescriptor> repositories,
     TaskBloc taskBloc,
-    Settings settings,
   ) {
     return StreamBuilder<Set<Output>>(
       stream: Background.stream(),
@@ -222,18 +219,18 @@ class _CustomDrawerState extends State<CustomDrawer> {
           itemCount: repositories.length,
           itemBuilder: (context, index) {
             final repository = repositories[index];
-            final selected = repository.uuid == taskBloc.repositoryUuid;
+            final selected = repository.id == taskBloc.repositoryUuid;
             return Card(
               child: ListTile(
                 title: Wrap(
                   children: [
-                    Text(repository.name),
+                    Text(repository.name ?? 'unnamed'),
                     if (!(asyncSnapshot.data
                             ?.lookup(
                               Output(
                                 name: Name(
                                   method: 'task.sync',
-                                  unique: repository.uuid.toString(),
+                                  unique: repository.id.toString(),
                                 ),
                                 inputData: {},
                                 timestamp: DateTime.now(),
@@ -249,24 +246,21 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       ),
                   ],
                 ),
-                subtitle: Text(repository.uuid.toString()),
+                subtitle: Text(repository.id.toString()),
                 subtitleTextStyle: const TextStyle(fontSize: 8),
                 selected: selected,
                 selectedColor: Colors.amber[900],
                 onTap: selected
                     ? null
-                    : () => context.read<SettingsBloc>().add(
-                        SettingsUpdateEvent(
-                          settings: settings.copyWith(
-                            currentRepository: repository.uuid,
-                          ),
-                        ),
-                      ),
+                    : () async {
+                        RustContext.setting.value = RustContext.setting.value
+                            .copyWith(currentRepository: repository.id);
+                      },
                 onLongPress: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (context) =>
-                          RepositoryRoute(repositoryUuid: repository.uuid),
+                          RepositoryRoute(repositoryUuid: repository.id),
                     ),
                   );
                 },
@@ -277,5 +271,4 @@ class _CustomDrawerState extends State<CustomDrawer> {
       },
     );
   }
-
 }

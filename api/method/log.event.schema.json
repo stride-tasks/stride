@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/log.event.schema.json",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "log.event"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/log.level.schema.json"
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "level",
+                "message"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}

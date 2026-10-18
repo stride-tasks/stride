@@ -1,25 +1,36 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:stride/api.dart';
-import 'package:stride/bridge/api/context.dart' as context;
+import 'package:stride/bridge.dart';
 import 'package:stride/notifications.dart';
 
 class RustContext {
-  static late Stream<String> _stream;
+  static final ValueNotifier<List<RepositoryDescriptor>> repositories =
+      ValueNotifier([]);
 
-  static Stream<String> stream() => _stream;
+  static late ValueNotifier<Setting> setting;
 
-  static Future<void> init() async {
-    _stream = context.createContext().asBroadcastStream();
+  // Every isolate attaches to the already running worker on first use.
+  static RustWorker get _worker => RustWorker.connect();
 
-    _stream.listen((event) async {
+  static Stream<String> stream() => _worker.notifications;
+
+  static Future<void> refreshRepositories() async {
+    final result = await RepositoryListMethod().execute();
+    repositories.value = result.repositories;
+  }
+
+  static Future<void> init(String supportPath, String cachePath) async {
+    await RustWorker.init(supportPath: supportPath, cachePath: cachePath);
+
+    stream().listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
       final method = json['method'] as String;
       final params = json['params'] as Map<String, dynamic>;
       if (method == 'repository.changed') {
         final notification = RepositoryChangedNotification.fromJson(params);
         for (final change in notification.changes) {
-          final taskId = change.taskId;
           var title = change.title;
 
           String? body;
@@ -37,7 +48,7 @@ class RustContext {
             }
 
             if (type == 'title' && current != null) {
-              title ??= current!;
+              title = current;
 
               if (previous == null) {
                 continue;
@@ -51,16 +62,23 @@ class RustContext {
           }
 
           await NotificationService.show(
-            '${isNewTask ? "New task" : "Task change"}: ${title ?? "Task($taskId)"}',
+            '${isNewTask ? "New task" : "Task change"}: $title',
             body,
           );
         }
       }
     });
+
+    final result = await SettingGetMethod().execute();
+    setting = ValueNotifier(result.setting);
+
+    setting.addListener(() async {
+      await SettingSetMethod(setting: setting.value).execute();
+    });
   }
 
   static Future<String> executeErased(String method, String args) async {
-    return context.execute(method: method, args: args);
+    return _worker.execute(method: method, args: args);
   }
 
   static Future<Result> execute<Result>(Method<Result> method) async {
@@ -68,7 +86,7 @@ class RustContext {
         SerdeRegistry.getByType(method.runtimeType)
             as SerdeFactory<Method<Result>>;
 
-    final result = await context.execute(
+    final result = await _worker.execute(
       method: method.getName(),
       args: jsonEncode({'params': factory.serialize(method)}),
     );

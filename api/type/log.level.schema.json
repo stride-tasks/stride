@@ -1,0 +1,28 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stride-tasks.github.io/stride/api/type/log.level.schema.json",
+	"description": "The level of a log message.",
+	"type": "string",
+	"oneOf": [
+		{
+			"const": "debug",
+			"description": "Debug level log message."
+		},
+		{
+			"const": "trace",
+			"description": "Trace level log message."
+		},
+		{
+			"const": "info",
+			"description": "Info level log message."
+		},
+		{
+			"const": "warn",
+			"description": "Warn level log message."
+		},
+		{
+			"const": "error",
+			"description": "Error level log message."
+		}
+	]
+}

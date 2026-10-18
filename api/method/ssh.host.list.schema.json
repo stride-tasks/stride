@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/ssh.host.list.schema.json",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "ssh.host.list"
+        },
+        "params": {
+            "type": "object",
+            "properties": {}
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "hosts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/ssh.host.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "hosts"
+            ]
+        }
+    }
+}

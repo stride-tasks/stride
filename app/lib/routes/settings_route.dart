@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stride/context.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/plugin_list_route.dart';
@@ -24,9 +24,9 @@ class SettingsRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          final settings = state.settings;
+      body: ValueListenableBuilder(
+        valueListenable: RustContext.setting,
+        builder: (context, setting, _) {
           return SettingsList(
             sections: [
               SettingsSection(
@@ -36,9 +36,12 @@ class SettingsRoute extends StatelessWidget {
                     title: const Text('Dark Theme'),
                     leading: const Icon(Icons.color_lens),
                     description: const Text('Enable dark theme mode'),
-                    value: settings.darkMode,
-                    onChanged: (val) =>
-                        context.read<SettingsBloc>().add(SettingsToggleTheme()),
+                    value: setting.darkMode,
+                    onChanged: (val) {
+                      RustContext.setting.value = setting.copyWith(
+                        darkMode: val,
+                      );
+                    },
                   ),
                   SettingsTileSwitch(
                     title: const Text('Periodic Sync'),
@@ -46,12 +49,12 @@ class SettingsRoute extends StatelessWidget {
                     description: const Text(
                       'Periodically sync every 5 minutes',
                     ),
-                    value: settings.periodicSync,
-                    onChanged: (val) => context.read<SettingsBloc>().add(
-                      SettingsUpdateEvent(
-                        settings: settings.copyWith(periodicSync: val),
-                      ),
-                    ),
+                    value: setting.periodicSync,
+                    onChanged: (val) {
+                      RustContext.setting.value = setting.copyWith(
+                        periodicSync: val,
+                      );
+                    },
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.file_open),

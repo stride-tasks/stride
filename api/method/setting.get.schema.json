@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/setting.get.schema.json",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "setting.get"
+        },
+        "params": {
+            "type": "object",
+            "properties": {}
+        },
+        "result": {
+            "type": "object",
+            "required": [
+                "setting"
+            ],
+            "properties": {
+                "setting": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/setting.schema.json"
+                }
+            }
+        }
+    }
+}

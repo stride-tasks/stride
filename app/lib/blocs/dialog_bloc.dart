@@ -4,9 +4,9 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/api.dart';
-import 'package:stride/bridge/api/error.dart';
-import 'package:stride/bridge/api/logging.dart' as logging;
+import 'package:stride/bridge.dart' show RustException;
 import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 
 @immutable
 abstract class DialogEvent {}
@@ -55,17 +55,15 @@ class DialogBloc extends Bloc<DialogEvent, DialogState> {
         add(
           DialogAlertEvent(
             title: notification.summary,
-            content: 'Rust has requested a prompt. Do you want to continue?',
+            content: notification.description,
             onConfirm: (context) async {
               try {
                 await RustContext.executeErased(
                   notification.target.method,
                   jsonEncode({'params': notification.target.params}),
                 );
-              } on RustError catch (e) {
-                logging.error(
-                  message: 'Error executing Rust method: ${e.toErrorString()}',
-                );
+              } on RustException catch (error) {
+                Log.error('Error executing Rust method: $error');
               }
               if (context.mounted) {
                 Navigator.of(context).pop();

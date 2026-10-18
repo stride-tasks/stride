@@ -10,7 +10,9 @@ use std::{
 };
 use stride_api::{self as api, Task, TaskPriority, TaskStatus};
 use stride_backend_git::{
-    GitBackend, known_hosts::KnownHosts, method::SshHostAddHandler, ssh_key::SshKey,
+    GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
+    SshKeyListHandler, SshKeyRemoveHandler, SshKeyUpdateHandler, known_hosts::KnownHosts,
+    method::SshHostAddHandler, ssh_key::SshKey,
 };
 use stride_crdt::{
     actor::ActorId,
@@ -339,6 +341,13 @@ fn main() -> anyhow::Result<ExitCode> {
         .insert_default_methods()
         .backend(GitBackend::handler())
         .command("ssh.host.add", SshHostAddHandler)
+        .command("ssh.host.list", SshHostListHandler)
+        .command("ssh.host.remove", SshHostRemoveHandler)
+        .command("ssh.key.list", SshKeyListHandler)
+        .command("ssh.key.generate", SshKeyGenerateHandler)
+        .command("ssh.key.add", SshKeyAddHandler)
+        .command("ssh.key.update", SshKeyUpdateHandler)
+        .command("ssh.key.remove", SshKeyRemoveHandler)
         .build();
 
     match mode {
@@ -608,7 +617,8 @@ fn main() -> anyhow::Result<ExitCode> {
                 SshKey::remove_key(&engine.known_paths().ssh_keys, id)?;
             }
             SshCommand::KnownHosts { command: None } => {
-                let hosts = KnownHosts::load()?;
+                let known_hosts_filepath = &engine.known_paths().ssh_known_hosts_filepath();
+                let hosts = KnownHosts::read_file(known_hosts_filepath)?;
                 for host in hosts.hosts() {
                     println!("{} {}", host.hostname, host.key_type.name());
                 }
@@ -616,9 +626,10 @@ fn main() -> anyhow::Result<ExitCode> {
             SshCommand::KnownHosts {
                 command: Some(SshKnownHostsCommand::Remove { hostname }),
             } => {
-                let mut hosts = KnownHosts::load()?;
+                let known_hosts_filepath = &engine.known_paths().ssh_known_hosts_filepath();
+                let mut hosts = KnownHosts::read_file(known_hosts_filepath)?;
                 hosts.remove_by_hostname(&hostname);
-                KnownHosts::save(&hosts)?;
+                hosts.write_file(known_hosts_filepath)?;
             }
         },
         Mode::Api { method, params } => {

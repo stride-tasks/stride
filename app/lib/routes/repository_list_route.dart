@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stride/blocs/settings_bloc.dart';
+import 'package:stride/context.dart';
 import 'package:stride/routes/repository_route.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
@@ -17,23 +16,22 @@ class RepositoryListRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Repository List')),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          final settings = state.settings;
-
-          final repositories = settings.repositories.map((repository) {
+      body: ValueListenableBuilder(
+        valueListenable: RustContext.repositories,
+        builder: (context, repositories, child) {
+          final tiles = repositories.map((repository) {
             return SettingsTileNavigation(
-              title: Text(repository.name),
+              title: Text(repository.name ?? 'unnamed'),
               leading: const Icon(Icons.task),
               builder: (context) =>
-                  RepositoryRoute(repositoryUuid: repository.uuid),
+                  RepositoryRoute(repositoryUuid: repository.id),
             );
           }).toList();
           return SettingsList(
             sections: [
               SettingsSection(
                 title: Text('Repositories', style: headingStyle),
-                tiles: repositories,
+                tiles: tiles,
               ),
             ],
           );
