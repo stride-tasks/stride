@@ -6,7 +6,6 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:stride/bridge.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';

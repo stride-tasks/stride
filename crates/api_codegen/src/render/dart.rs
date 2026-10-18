@@ -639,6 +639,7 @@ class _{name}Serde implements SerdeFactory<{name}> {{
 }
 
 fn render_type_node(type_node: &TypeNode) -> String {
+    #[allow(clippy::match_same_arms)]
     match type_node {
         TypeNode::Struct(node) => node.name.clone(),
         TypeNode::Enum(node) => node.name.clone(),

@@ -18,7 +18,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, BufWriter, Lines, Seek, Write},
     iter::{FusedIterator, Skip},
-    path::{Path, PathBuf},
+    path::Path,
     rc::Rc,
     sync::Arc,
 };
@@ -829,8 +829,8 @@ fn ssh_key_to_api(key: SshKey) -> api::SshKey {
         id: key.id,
         format: api::SshKeyFormat::SshEd25519,
         public_key: key.public_key.into_boxed_str(),
-        public_path: PathBuf::from(key.public_path),
-        private_path: PathBuf::from(key.private_path),
+        public_path: key.public_path,
+        private_path: key.private_path,
     }
 }
 

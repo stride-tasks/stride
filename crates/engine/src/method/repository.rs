@@ -101,7 +101,7 @@ impl TypedCommandHandler for RepositoryListHandler {
                     continue;
                 }
                 Err(error) => {
-                    log::error!("Failed to read descriptor file: {}", error);
+                    log::error!("Failed to read descriptor file: {error}");
                     continue;
                 }
             };
