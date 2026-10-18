@@ -162,6 +162,28 @@ class RustWorker {
       // Notify the main isolate that the worker is ready.
       ready.send([true, null]);
 
+      await _serve(native, requests, subscribers, callback);
+    } on Object catch (error) {
+      // Startup failed. Rust may hold this callback or the previous worker's;
+      // drop it.
+      requests.close();
+      loaded?.clearCallback();
+      callback?.close();
+      ready.send([false, _errorMessage(error)]);
+    }
+  }
+
+  // Handles requests until shut down. Per-request errors are reported to the
+  // caller, anything else stops the worker and tells its clients.
+  static Future<void> _serve(
+    _Native native,
+    ReceivePort requests,
+    Set<SendPort> subscribers,
+    NativeCallable<_Callback> callback,
+  ) async {
+    var reason = 'Rust worker was replaced';
+    var crashed = false;
+    try {
       await for (final message in requests) {
         switch (message) {
           case ['shutdown']:
@@ -184,23 +206,24 @@ class RustWorker {
             }
         }
       }
-      for (final subscriber in subscribers) {
-        subscriber.send([_workerClosedId, false, 'Rust worker was replaced']);
-      }
-      callback.close();
     } on Object catch (error) {
-      if (IsolateNameServer.lookupPortByName(_portName) == requests.sendPort) {
-        IsolateNameServer.removePortNameMapping(_portName);
-      }
-
-      requests.close();
-
-      // Rust may hold this callback or the previous worker's; drop it.
-      loaded?.clearCallback();
-      callback?.close();
-
-      ready.send([false, _errorMessage(error)]);
+      crashed = true;
+      reason = 'Rust worker stopped: ${_errorMessage(error)}';
     }
+
+    // On replacement the name already belongs to the new worker.
+    if (IsolateNameServer.lookupPortByName(_portName) == requests.sendPort) {
+      IsolateNameServer.removePortNameMapping(_portName);
+    }
+
+    requests.close();
+    for (final subscriber in subscribers) {
+      subscriber.send([_workerClosedId, false, reason]);
+    }
+
+    // After a replacement Rust already holds the new worker's callback.
+    if (crashed) native.clearCallback();
+    callback.close();
   }
 
   static String _errorMessage(Object error) =>
