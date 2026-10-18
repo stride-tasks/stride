@@ -5,11 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/blocs/dialog_bloc.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:stride/notifications.dart';
@@ -43,15 +41,12 @@ Future<void> main() async {
   await NotificationService.init();
 
   await RustContext.refreshRepositories();
-  final plugins = (await PluginListMethod().execute()).plugins;
-  final pluginManagerState = PluginManagerState(plugins: plugins);
 
-  runApp(MyApp(pluginManagerState: pluginManagerState));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final PluginManagerState pluginManagerState;
-  const MyApp({super.key, required this.pluginManagerState});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,13 +59,6 @@ class MyApp extends StatelessWidget {
             logBloc: context.read<LogBloc>(),
             dialogBloc: context.read<DialogBloc>(),
           ),
-        ),
-        BlocProvider<PluginManagerBloc>(
-          create: (context) => PluginManagerBloc(
-            logBloc: context.read<LogBloc>(),
-            state: pluginManagerState,
-          ),
-          lazy: false,
         ),
       ],
       child: BlocListener<TaskBloc, TaskState>(

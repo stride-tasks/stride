@@ -3,15 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
 import 'package:stride/blocs/log_bloc.dart';
-import 'package:stride/blocs/plugin_manager_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/plugin_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
-class PluginListRoute extends StatelessWidget {
+class PluginListRoute extends StatefulWidget {
   const PluginListRoute({super.key});
+
+  @override
+  State<PluginListRoute> createState() => _PluginListRouteState();
+}
+
+class _PluginListRouteState extends State<PluginListRoute> {
+  Future<List<PluginManifestInstance>>? _plugins;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _reloadPlugins();
+  }
+
+  void _reloadPlugins() {
+    setState(() {
+      _plugins = PluginListMethod().execute().then((result) => result.plugins);
+    });
+  }
 
   TextStyle get headingStyle => const TextStyle(
     fontSize: 16,
@@ -23,9 +42,18 @@ class PluginListRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Plugin List')),
-      body: BlocBuilder<PluginManagerBloc, PluginManagerState>(
+      body: FutureBuilder(
+        future: _plugins,
         builder: (context, state) {
-          final plugins = state.plugins
+          if (state.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state.hasError) {
+            return Center(child: Text('Error: ${state.error}'));
+          } else if (!state.hasData || state.data!.isEmpty) {
+            return const Center(child: Text('No plugins found.'));
+          }
+
+          final plugins = state.data!
               .map((plugin) => _plugin(context, plugin))
               .toList();
           return SettingsList(
@@ -108,7 +136,8 @@ class PluginListRoute extends StatelessWidget {
         value: enabled,
         activeColor: Colors.redAccent,
         onChanged: (value) async {
-          await context.read<PluginManagerBloc>().toggle(name);
+          await PluginToggleMethod(pluginName: name).execute();
+          _reloadPlugins();
         },
       ),
       onTap: (context) {
@@ -136,9 +165,10 @@ class PluginListRoute extends StatelessWidget {
           ),
           onConfirm: (context) async {
             context.read<LogBloc>().catch_(
-              () async => context.read<PluginManagerBloc>().remove(name),
+              () async => PluginRemoveMethod(pluginName: name).execute(),
             );
             Log.trace('Plugin $name deleted');
+            _reloadPlugins();
             return true;
           },
         );
