@@ -52,10 +52,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             //   IconButton(
             //     icon: const Icon(Icons.undo),
             //     onPressed: () async {
-            //       context.read<LogBloc>().catch_(
-            //             message: 'undo',
-            //             () async => context.read<TaskBloc>().undo(),
-            //           );
+            //       await Log.catch_(
+            //         message: 'undo',
+            //         () async => context.read<TaskBloc>().undo(),
+            //       );
             //     },
             //   ),
             if (hasRepositories)

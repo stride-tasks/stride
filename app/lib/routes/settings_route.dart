@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/context.dart';
-import 'package:stride/blocs/log_bloc.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/routes/known_hosts_route.dart';
 import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/plugin_list_route.dart';
@@ -164,7 +163,7 @@ class SettingsRoute extends StatelessWidget {
                     onTap: (context) async {
                       const url =
                           'https://github.com/stride-tasks/stride/issues';
-                      await context.read<LogBloc>().catch_(
+                      await Log.catch_(
                         () async => launchUrlString(url),
                       );
                     },
@@ -179,7 +178,7 @@ class SettingsRoute extends StatelessWidget {
                     ),
                     onTap: (context) async {
                       const url = 'https://github.com/stride-tasks/stride';
-                      await context.read<LogBloc>().catch_(
+                      await Log.catch_(
                         () async => launchUrlString(url),
                       );
                     },
@@ -195,7 +194,7 @@ class SettingsRoute extends StatelessWidget {
                     onTap: (context) async {
                       const url =
                           'https://www.gnu.org/licenses/agpl-3.0.en.html';
-                      await context.read<LogBloc>().catch_(
+                      await Log.catch_(
                         () async => launchUrlString(url),
                       );
                     },

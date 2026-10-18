@@ -4,8 +4,8 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
 import 'package:workmanager/workmanager.dart' hide TaskStatus;
 
@@ -66,7 +66,6 @@ class TaskState {
 }
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
-  final LogBloc logBloc;
   late List<RepositoryDescriptor> previousRepositories;
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
@@ -160,7 +159,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     return repositories.firstOrNull?.id;
   }
 
-  TaskBloc({required this.logBloc}) : super(const TaskState(tasks: [])) {
+  TaskBloc() : super(const TaskState(tasks: [])) {
     _initializeSettingsStream();
 
     on<TaskRepositoriesChangedEvent>((event, emit) async {
@@ -281,9 +280,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   @override
   void onError(Object error, StackTrace stackTrace) {
     super.onError(error, stackTrace);
-    logBloc.add(
-      LogErrorEvent(error: error, stackTrace: stackTrace, message: 'task'),
-    );
+    Log.reportError(error, stackTrace: stackTrace, message: 'task');
   }
 
   @override

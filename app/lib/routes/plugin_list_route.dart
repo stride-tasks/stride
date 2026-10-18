@@ -1,8 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/plugin_route.dart';
@@ -69,8 +67,7 @@ class _PluginListRouteState extends State<PluginListRoute> {
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         onPressed: () async {
-          final logBloc = context.read<LogBloc>();
-          await logBloc.catch_(message: 'import plugin', () async {
+          await Log.catch_(message: 'import plugin', () async {
             final result = await FilePicker.pickFiles(
               dialogTitle: 'Import Plugin',
             );
@@ -164,7 +161,7 @@ class _PluginListRouteState extends State<PluginListRoute> {
             ],
           ),
           onConfirm: (context) async {
-            context.read<LogBloc>().catch_(
+            Log.catch_(
               () async => PluginRemoveMethod(pluginName: name).execute(),
             );
             Log.trace('Plugin $name deleted');

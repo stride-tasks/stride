@@ -124,9 +124,8 @@ class RepositoryRoute extends StatelessWidget {
 
   // Future<void> _exportTasks(BuildContext context) async {
   //   final taskBloc = context.read<TaskBloc>();
-  //   final logBloc = context.read<LogBloc>();
 
-  //   await logBloc.catch_(message: 'export tasks', () async {
+  //   await Log.catch_(message: 'export tasks', () async {
   //     final contents = await taskBloc.repository()?.export_() ?? '';
   //     final filepath = await FilePicker.platform.saveFile(
   //       dialogTitle: 'Export Tasks',
@@ -153,9 +152,8 @@ class RepositoryRoute extends StatelessWidget {
 
   // Future<void> _importTasks(BuildContext context) async {
   //   final taskBloc = context.read<TaskBloc>();
-  //   final logBloc = context.read<LogBloc>();
 
-  //   await logBloc.catch_(message: 'import tasks', () async {
+  //   await Log.catch_(message: 'import tasks', () async {
   //     // TODO: Maybe allow importing multiple files.
   //     final result = await FilePicker.platform.pickFiles(
   //       dialogTitle: 'Import tasks',

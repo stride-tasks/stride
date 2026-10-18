@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:stride/api.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/widgets/settings_widget.dart';
 
 class PluginRoute extends StatelessWidget {
@@ -74,9 +73,8 @@ class PluginRoute extends StatelessWidget {
           : FloatingActionButton(
               shape: const CircleBorder(),
               onPressed: () async {
-                final logBloc = context.read<LogBloc>();
                 Navigator.of(context).pop();
-                await logBloc.catch_(message: 'import plugin', () async {
+                await Log.catch_(message: 'import plugin', () async {
                   await PluginImportMethod(filePath: importPath!).execute();
                 });
               },

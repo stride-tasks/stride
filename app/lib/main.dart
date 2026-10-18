@@ -8,14 +8,12 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/blocs/log_bloc.dart';
 import 'package:stride/blocs/tasks_bloc.dart';
 import 'package:stride/bridge.dart' show RustException;
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/notifications.dart';
 import 'package:stride/routes/initial_route.dart';
-import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/tasks_route.dart';
 import 'package:stride/theme.dart';
 import 'package:stride/utils/functions.dart';
@@ -54,14 +52,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider<LogBloc>(create: (context) => LogBloc()),
-        BlocProvider<TaskBloc>(
-          create: (context) => TaskBloc(
-            logBloc: context.read<LogBloc>(),
-          ),
-        ),
-      ],
+      providers: [BlocProvider<TaskBloc>(create: (context) => TaskBloc())],
       child: BlocListener<TaskBloc, TaskState>(
         listener: (context, state) {
           for (var i = 0; i < state.tasks.length; i++) {
@@ -76,32 +67,7 @@ class MyApp extends StatelessWidget {
               theme: generateTheme(darkMode: false),
               darkTheme: generateTheme(darkMode: true),
               themeMode: setting.darkMode ? ThemeMode.dark : ThemeMode.light,
-              home: BlocListener<LogBloc, LogState>(
-                listener: (context, state) {
-                  if (!state.show) {
-                    return;
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message.split('\n')[0]),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 10),
-                      backgroundColor: state.isError ? Colors.red[300] : null,
-                      action: SnackBarAction(
-                        label: 'Go to Logs',
-                        onPressed: () async {
-                          // TODO: Maybe don't push if already there on top.
-                          await Navigator.of(context).push<void>(
-                            MaterialPageRoute(
-                              builder: (context) => const LoggingRoute(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                },
+              home: LogNotificationListener(
                 child: _UserPromptListener(
                   child: ValueListenableBuilder(
                     valueListenable: RustContext.repositories,
