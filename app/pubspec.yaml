@@ -7,7 +7,7 @@ repository: https://github.com/stride-tasks/stride
 version: 0.0.1+2
 
 environment:
-  sdk: ">=3.10.0 <4.0.0"
+  sdk: ">=3.12.0 <4.0.0"
   flutter: ">=3.44.0"
 
 dependencies:
