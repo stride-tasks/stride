@@ -34,7 +34,7 @@ class RepositorySyncStatus {
 }
 
 class Background {
-  static const _syncInterval = Duration(minutes: 5);
+  static const minimumSyncIntervalSeconds = 5;
   static final _statuses = <String, RepositorySyncStatus>{};
   static final _statusController =
       StreamController<Map<String, RepositorySyncStatus>>.broadcast();
@@ -44,11 +44,15 @@ class Background {
   static Stream<Map<String, RepositorySyncStatus>> stream() =>
       _statusController.stream;
 
-  static void init() {
+  static Future<void> init() async {
     if (!_isSupported) return;
 
     FlutterForegroundTask.initCommunicationPort();
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+    _configureForegroundTask(RustContext.setting.value.periodicSyncInterval);
+  }
+
+  static void _configureForegroundTask(int intervalSeconds) {
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'stride.repository.sync',
@@ -60,19 +64,28 @@ class Background {
         showNotification: false,
         playSound: false,
       ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(
-          _syncInterval.inMilliseconds,
-        ),
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
+      foregroundTaskOptions: _foregroundTaskOptions(intervalSeconds),
+    );
+  }
+
+  static void setSyncIntervalSeconds(int seconds) {
+    if (seconds < minimumSyncIntervalSeconds) {
+      throw ArgumentError.value(
+        seconds,
+        'seconds',
+        'Sync interval must be at least $minimumSyncIntervalSeconds seconds.',
+      );
+    }
+
+    RustContext.setting.value = RustContext.setting.value.copyWith(
+      periodicSyncInterval: seconds,
     );
   }
 
   static Future<void> configurePeriodicSync({
     required bool enabled,
     required List<UuidValue> repositoryIds,
+    required int intervalSeconds,
   }) async {
     if (!_isSupported) {
       if (enabled) {
@@ -83,14 +96,26 @@ class Background {
       return;
     }
 
+    final serviceIsRunning = await FlutterForegroundTask.isRunningService;
     if (!enabled || repositoryIds.isEmpty) {
-      await stop();
+      if (serviceIsRunning) {
+        await stop();
+      } else {
+        _configureForegroundTask(intervalSeconds);
+      }
       return;
     }
 
     final ids = repositoryIds.map((id) => id.uuid).toList(growable: false);
 
-    if (await FlutterForegroundTask.isRunningService) {
+    if (serviceIsRunning) {
+      final result = await FlutterForegroundTask.updateService(
+        foregroundTaskOptions: _foregroundTaskOptions(intervalSeconds),
+      );
+      if (result is ServiceRequestFailure) {
+        // ignore: only_throw_errors
+        throw result.error;
+      }
       FlutterForegroundTask.sendDataToTask({'repositoryIds': ids});
       return;
     }
@@ -110,6 +135,7 @@ class Background {
       }
     }
 
+    _configureForegroundTask(intervalSeconds);
     final result = await FlutterForegroundTask.startService(
       serviceTypes: Platform.isAndroid
           ? const [ForegroundServiceTypes.dataSync]
@@ -119,7 +145,6 @@ class Background {
       callback: _entryPoint,
     );
     if (result is ServiceRequestFailure) {
-      // ignore: only_throw_errors
       throw result.error;
     }
 
@@ -176,6 +201,15 @@ class Background {
     _statuses[status.repositoryId] = status;
     _statusController.add(Map.unmodifiable(_statuses));
   }
+
+  static ForegroundTaskOptions _foregroundTaskOptions(int seconds) =>
+      ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(
+          Duration(seconds: seconds).inMilliseconds,
+        ),
+        allowWakeLock: true,
+        allowWifiLock: true,
+      );
 }
 
 @pragma('vm:entry-point')

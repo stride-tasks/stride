@@ -62,13 +62,13 @@ class TaskController {
     }
   }
 
-  Future<void> _updatePeriodicSyncService() =>
-      Background.configurePeriodicSync(
-        enabled: RustContext.setting.value.periodicSync,
-        repositoryIds: RustContext.repositories.value
-            .map((repository) => repository.id)
-            .toList(growable: false),
-      );
+  Future<void> _updatePeriodicSyncService() => Background.configurePeriodicSync(
+    enabled: RustContext.setting.value.periodicSync,
+    repositoryIds: RustContext.repositories.value
+        .map((repository) => repository.id)
+        .toList(growable: false),
+    intervalSeconds: RustContext.setting.value.periodicSyncInterval,
+  );
 
   UuidValue? _currentRepositoryUuid() {
     final repositories = RustContext.repositories.value;

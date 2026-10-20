@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:stride/background.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:stride/routes/known_hosts_route.dart';
@@ -7,6 +8,7 @@ import 'package:stride/routes/logging_routes.dart';
 import 'package:stride/routes/plugin_list_route.dart';
 import 'package:stride/routes/repository_list_route.dart';
 import 'package:stride/routes/ssh_keys_route.dart';
+import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -45,8 +47,9 @@ class SettingsRoute extends StatelessWidget {
                   SettingsTileSwitch(
                     title: const Text('Periodic Sync'),
                     leading: const Icon(Icons.timer),
-                    description: const Text(
-                      'Periodically sync every 5 minutes',
+                    description: Text(
+                      'Sync every ${setting.periodicSyncInterval} seconds. '
+                      'Hold to change (minimum 5 seconds).',
                     ),
                     value: setting.periodicSync,
                     onChanged: (val) {
@@ -54,6 +57,10 @@ class SettingsRoute extends StatelessWidget {
                         periodicSync: val,
                       );
                     },
+                    onLongPress: (context) => _editSyncInterval(
+                      context,
+                      setting.periodicSyncInterval,
+                    ),
                   ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.file_open),
@@ -206,5 +213,56 @@ class SettingsRoute extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _editSyncInterval(
+    BuildContext context,
+    int currentIntervalSeconds,
+  ) async {
+    final controller = TextEditingController(
+      text: currentIntervalSeconds.toString(),
+    );
+
+    try {
+      await showAlertDialog<bool>(
+        context: context,
+        popRoute: false,
+        content: StatefulBuilder(
+          builder: (context, setState) => TextFormField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: 'Sync interval in seconds',
+              errorText: _syncIntervalError(controller.text),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        onConfirm: (dialogContext) async {
+          final seconds = int.tryParse(controller.text);
+          if (seconds == null ||
+              seconds < Background.minimumSyncIntervalSeconds) {
+            return false;
+          }
+
+          Background.setSyncIntervalSeconds(seconds);
+          Navigator.of(dialogContext).pop(true);
+          return true;
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  String? _syncIntervalError(String value) {
+    final seconds = int.tryParse(value);
+    if (seconds == null) return 'Enter a valid number of seconds.';
+    if (seconds < Background.minimumSyncIntervalSeconds) {
+      return 'Minimum interval is 5 seconds.';
+    }
+    return null;
   }
 }
