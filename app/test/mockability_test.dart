@@ -4,20 +4,18 @@ import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 
 Future<void> main() async {
-  test('Output can round-trip through isolate-safe map data', () {
-    final original = Output(
-      name: const Name(method: 'task.sync', unique: 'repo-123'),
-      inputData: {'repository': 'repo-123'},
-      timestamp: DateTime.utc(2026, 8, 13, 12, 0, 0),
-      done: true,
+  test('Repository sync status round-trips through service data', () {
+    const original = RepositorySyncStatus(
+      repositoryId: 'repo-123',
+      syncing: false,
+      error: 'sync failed',
     );
 
-    final roundTrip = Output.fromMap(original.toMap());
+    final roundTrip = RepositorySyncStatus.fromMap(original.toMap());
 
-    expect(roundTrip, equals(original));
-    expect(roundTrip.name, equals(original.name));
-    expect(roundTrip.inputData, equals(original.inputData));
-    expect(roundTrip.done, isTrue);
+    expect(roundTrip.repositoryId, original.repositoryId);
+    expect(roundTrip.syncing, original.syncing);
+    expect(roundTrip.error, original.error);
   });
 
   test('Task deserializes dependency UUIDs from JSON lists', () {

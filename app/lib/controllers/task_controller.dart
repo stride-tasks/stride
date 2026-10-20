@@ -6,7 +6,6 @@ import 'package:stride/background.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
-import 'package:workmanager/workmanager.dart' hide TaskStatus;
 
 class TaskState {
   final List<Task> tasks;
@@ -27,30 +26,19 @@ class TaskController {
     const TaskState(tasks: []),
   );
 
-  late List<RepositoryDescriptor> previousRepositories;
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
-  bool previousSettings = RustContext.setting.value.periodicSync;
 
   TaskController() {
-    previousRepositories = RustContext.repositories.value;
     RustContext.repositories.addListener(_onRepositoriesChanged);
     repositoryUuid = _currentRepositoryUuid();
-    unawaited(_dispatch(_registerPeriodicTasks));
+    unawaited(_dispatch(_updatePeriodicSyncService));
     RustContext.setting.addListener(_onPeriodicSyncChanged);
   }
 
   Future<void> _onPeriodicSyncChanged() async {
     await _dispatch(() async {
-      final previous = previousSettings;
-      final next = RustContext.setting.value.periodicSync;
-      previousSettings = next;
-
-      if (!next && previous) {
-        await _unregisterPeriodicTasks(RustContext.repositories.value);
-      } else {
-        await _registerPeriodicTasks();
-      }
+      await _updatePeriodicSyncService();
 
       final nextRepositoryUuid = _currentRepositoryUuid();
       if (repositoryUuid != nextRepositoryUuid) {
@@ -65,19 +53,7 @@ class TaskController {
   }
 
   Future<void> _handleRepositoriesChanged() async {
-    final nextRepositories = RustContext.repositories.value;
-    final removedRepositories = previousRepositories
-        .where(
-          (repository) =>
-              !nextRepositories.any((next) => next.id == repository.id),
-        )
-        .toList();
-    if (removedRepositories.isNotEmpty) {
-      await _unregisterPeriodicTasks(removedRepositories);
-    }
-    previousRepositories = nextRepositories;
-
-    await _registerPeriodicTasks();
+    await _updatePeriodicSyncService();
 
     final nextRepositoryUuid = _currentRepositoryUuid();
     if (repositoryUuid != nextRepositoryUuid) {
@@ -86,27 +62,13 @@ class TaskController {
     }
   }
 
-  Future<void> _registerPeriodicTasks() async {
-    if (!RustContext.setting.value.periodicSync) return;
-    for (final repository in RustContext.repositories.value.asMap().entries) {
-      await Background.periodic(
-        TaskSyncBackgroundTask(repositoryId: repository.value.id),
-        initialDelay: const Duration(seconds: 10),
-        frequency: Duration(minutes: 5, seconds: repository.key * 10),
-        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+  Future<void> _updatePeriodicSyncService() =>
+      Background.configurePeriodicSync(
+        enabled: RustContext.setting.value.periodicSync,
+        repositoryIds: RustContext.repositories.value
+            .map((repository) => repository.id)
+            .toList(growable: false),
       );
-    }
-  }
-
-  Future<void> _unregisterPeriodicTasks(
-    List<RepositoryDescriptor> repositories,
-  ) async {
-    for (final repository in repositories) {
-      await Background.cancel(
-        TaskSyncBackgroundTask(repositoryId: repository.id),
-      );
-    }
-  }
 
   UuidValue? _currentRepositoryUuid() {
     final repositories = RustContext.repositories.value;
@@ -202,10 +164,7 @@ class TaskController {
     try {
       final id = repositoryUuid ?? _currentRepositoryUuid();
       if (id != null) {
-        await Background.run(
-          TaskSyncBackgroundTask(repositoryId: id),
-          existingWorkPolicy: ExistingWorkPolicy.replace,
-        );
+        await Background.syncRepository(id);
       }
     } catch (error) {
       _updateState(tasks: tasks, syncingError: error);

@@ -37,7 +37,7 @@ Future<void> main() async {
   }
 
   await RustContext.init(supportPath, cachePath);
-  await Background.init();
+  Background.init();
   await NotificationService.init();
 
   await RustContext.refreshRepositories();

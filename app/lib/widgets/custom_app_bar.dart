@@ -49,25 +49,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             if (hasRepositories)
               IconButton(
-                icon: StreamBuilder<Set<Output>>(
+                icon: StreamBuilder<Map<String, RepositorySyncStatus>>(
                   stream: Background.stream(),
                   builder: (context, snapshot) {
-                    final output = snapshot.data?.lookup(
-                      Output(
-                        name: Name(
-                          method: 'repository.sync',
-                          unique: context.taskController.repositoryUuid?.uuid,
-                        ),
-                        inputData: {},
-                        timestamp: DateTime.now(),
-                      ),
-                    );
+                    final status = snapshot
+                        .data?[context.taskController.repositoryUuid?.uuid];
 
-                    if (output == null) {
+                    if (status == null) {
                       return Icon(Icons.sync);
-                    } else if (output.error != null) {
+                    } else if (status.error != null) {
                       return Icon(Icons.sync_problem);
-                    } else if (output.done) {
+                    } else if (!status.syncing) {
                       context.taskController.fetch();
                       return Icon(Icons.sync);
                     } else {

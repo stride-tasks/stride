@@ -206,7 +206,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     List<RepositoryDescriptor> repositories,
     TaskController taskController,
   ) {
-    return StreamBuilder<Set<Output>>(
+    return StreamBuilder<Map<String, RepositorySyncStatus>>(
       stream: Background.stream(),
       builder: (context, asyncSnapshot) {
         return ListView.builder(
@@ -220,19 +220,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 title: Wrap(
                   children: [
                     Text(repository.name ?? 'unnamed'),
-                    if (!(asyncSnapshot.data
-                            ?.lookup(
-                              Output(
-                                name: Name(
-                                  method: 'task.sync',
-                                  unique: repository.id.toString(),
-                                ),
-                                inputData: {},
-                                timestamp: DateTime.now(),
-                              ),
-                            )
-                            ?.done ??
-                        true))
+                    if (asyncSnapshot.data?[repository.id.uuid]?.syncing ??
+                        false)
                       IconButton(
                         onPressed: () {},
                         icon: const InfiniteRotationAnimation(
