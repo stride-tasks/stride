@@ -238,7 +238,7 @@ class Background {
 
   static void _onReceiveTaskData(Object data) {
     if (data is! Map) {
-      debugPrint('Ignoring invalid repository sync update: $data');
+      Log.error('Ignoring invalid repository sync update: $data');
       return;
     }
     _publish(RepositorySyncStatus.fromMap(Map<String, dynamic>.from(data)));
@@ -286,7 +286,7 @@ class _RepositorySyncTaskHandler extends TaskHandler {
     final repositoryIds = data is Map ? data['repositoryIds'] : null;
     if (repositoryIds is! List ||
         repositoryIds.any((repositoryId) => repositoryId is! String)) {
-      debugPrint('Ignoring invalid repository list sent to sync service.');
+      Log.error('Ignoring invalid repository list sent to sync service.');
       return;
     }
 
@@ -308,7 +308,7 @@ class _RepositorySyncTaskHandler extends TaskHandler {
           );
           // ignore: avoid_catches_without_on_clauses
         } catch (error) {
-          debugPrint('Repository sync failed for $repositoryId: $error');
+          Log.error('Repository sync failed for $repositoryId: $error');
         }
       }
     } finally {
