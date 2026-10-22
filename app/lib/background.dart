@@ -135,7 +135,7 @@ class Background {
         permission = await FlutterForegroundTask.checkNotificationPermission();
       }
       if (permission != NotificationPermission.granted) {
-        debugPrint(
+        Log.notify(
           'Cannot start periodic repository sync without notification permission.',
         );
         return;
