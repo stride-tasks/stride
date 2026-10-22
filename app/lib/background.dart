@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:stride/api/generated.dart';
@@ -42,6 +43,7 @@ class Background {
   static var _syncEnabled = false;
   static var _syncLoopRunning = false;
   static var _syncIntervalSeconds = minimumSyncIntervalSeconds;
+  static var _hasNetworkConnectivity = false;
   static List<UuidValue> _repositoryIds = const [];
 
   static bool get _isSupported => Platform.isAndroid || Platform.isIOS;
@@ -50,11 +52,60 @@ class Background {
       _statusController.stream;
 
   static Future<void> init() async {
-    if (!_isSupported) return;
+    Connectivity().onConnectivityChanged.listen(
+      _onConnectivityChanged,
+      onError: (Object error, StackTrace stackTrace) {
+        Log.error(
+          'Error occurred while listening to connectivity changes: $error\n$stackTrace',
+        );
+      },
+    );
+    try {
+      _hasNetworkConnectivity = _isConnected(
+        await Connectivity().checkConnectivity(),
+      );
+      Log.debug(
+        'Initial network connectivity: ${_hasNetworkConnectivity ? 'available' : 'unavailable'}',
+      );
+    } catch (error, stackTrace) {
+      Log.reportError(error, stackTrace: stackTrace);
+      rethrow;
+    }
 
-    FlutterForegroundTask.initCommunicationPort();
-    FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
-    _configureForegroundTask(RustContext.setting.value.periodicSyncInterval);
+    if (_isSupported) {
+      FlutterForegroundTask.initCommunicationPort();
+      FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+      _configureForegroundTask(RustContext.setting.value.periodicSyncInterval);
+    } else {
+      configurePeriodicSync(
+        enabled: _syncEnabled,
+        repositoryIds: _repositoryIds,
+        intervalSeconds: _syncIntervalSeconds,
+      );
+    }
+  }
+
+  static bool _isConnected(List<ConnectivityResult> results) =>
+      results.any((result) => result != ConnectivityResult.none);
+
+  static void _onConnectivityChanged(List<ConnectivityResult> results) {
+    final hasConnectivity = _isConnected(results);
+    if (_hasNetworkConnectivity == hasConnectivity) return;
+
+    _hasNetworkConnectivity = hasConnectivity;
+    Log.debug(
+      'Network connectivity changed: ${hasConnectivity ? 'available' : 'unavailable'}',
+    );
+
+    try {
+      configurePeriodicSync(
+        enabled: _hasNetworkConnectivity && _syncEnabled,
+        repositoryIds: _repositoryIds,
+        intervalSeconds: _syncIntervalSeconds,
+      );
+    } catch (error, stackTrace) {
+      Log.reportError(error, stackTrace: stackTrace);
+    }
   }
 
   static void _configureForegroundTask(int intervalSeconds) {
@@ -92,7 +143,7 @@ class Background {
     required List<UuidValue> repositoryIds,
     required int intervalSeconds,
   }) async {
-    _syncEnabled = enabled;
+    _syncEnabled = _hasNetworkConnectivity && enabled;
     _syncIntervalSeconds = intervalSeconds;
     _repositoryIds = List.of(repositoryIds, growable: false);
 
