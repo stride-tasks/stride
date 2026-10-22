@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:stride/api/generated.dart';
 import 'package:stride/context.dart';
+import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
 
 @immutable
@@ -38,6 +39,10 @@ class Background {
   static final _statuses = <String, RepositorySyncStatus>{};
   static final _statusController =
       StreamController<Map<String, RepositorySyncStatus>>.broadcast();
+  static var _syncEnabled = false;
+  static var _syncLoopRunning = false;
+  static var _syncIntervalSeconds = minimumSyncIntervalSeconds;
+  static List<UuidValue> _repositoryIds = const [];
 
   static bool get _isSupported => Platform.isAndroid || Platform.isIOS;
 
@@ -87,36 +92,38 @@ class Background {
     required List<UuidValue> repositoryIds,
     required int intervalSeconds,
   }) async {
+    _syncEnabled = enabled;
+    _syncIntervalSeconds = intervalSeconds;
+    _repositoryIds = List.of(repositoryIds, growable: false);
+
     if (!_isSupported) {
-      if (enabled) {
-        debugPrint(
-          'Periodic repository sync is unavailable outside Android and iOS.',
-        );
+      if (_syncEnabled && _repositoryIds.isNotEmpty) {
+        unawaited(_runDesktopSyncLoop());
       }
       return;
     }
 
     final serviceIsRunning = await FlutterForegroundTask.isRunningService;
-    if (!enabled || repositoryIds.isEmpty) {
+    if (!_syncEnabled || _repositoryIds.isEmpty) {
       if (serviceIsRunning) {
         await stop();
       } else {
-        _configureForegroundTask(intervalSeconds);
+        _configureForegroundTask(_syncIntervalSeconds);
       }
       return;
     }
 
-    final ids = repositoryIds.map((id) => id.uuid).toList(growable: false);
-
     if (serviceIsRunning) {
       final result = await FlutterForegroundTask.updateService(
-        foregroundTaskOptions: _foregroundTaskOptions(intervalSeconds),
+        foregroundTaskOptions: _foregroundTaskOptions(_syncIntervalSeconds),
       );
       if (result is ServiceRequestFailure) {
         // ignore: only_throw_errors
         throw result.error;
       }
-      FlutterForegroundTask.sendDataToTask({'repositoryIds': ids});
+      FlutterForegroundTask.sendDataToTask({
+        'repositoryIds': _repositoryIds.map((id) => id.uuid).toList(),
+      });
       return;
     }
 
@@ -135,7 +142,7 @@ class Background {
       }
     }
 
-    _configureForegroundTask(intervalSeconds);
+    _configureForegroundTask(_syncIntervalSeconds);
     final result = await FlutterForegroundTask.startService(
       serviceTypes: Platform.isAndroid
           ? const [ForegroundServiceTypes.dataSync]
@@ -145,10 +152,50 @@ class Background {
       callback: _entryPoint,
     );
     if (result is ServiceRequestFailure) {
+      // ignore: only_throw_errors
       throw result.error;
     }
 
-    FlutterForegroundTask.sendDataToTask({'repositoryIds': ids});
+    FlutterForegroundTask.sendDataToTask({
+      'repositoryIds': _repositoryIds.map((id) => id.uuid).toList(),
+    });
+  }
+
+  static Future<void> _runDesktopSyncLoop() async {
+    if (_syncLoopRunning) return;
+
+    _syncLoopRunning = true;
+
+    try {
+      outerLoop:
+      while (_syncLoopRunning && _repositoryIds.isNotEmpty) {
+        Log.debug('Starting repository sync loop');
+        for (final repositoryId in _repositoryIds) {
+          Log.debug('Syncing repository $repositoryId');
+          try {
+            if (!_syncEnabled) {
+              Log.debug(
+                'Syncing is disabled, skipping repository $repositoryId',
+              );
+              break outerLoop;
+            }
+            await syncRepository(repositoryId);
+            // ignore: avoid_catches_without_on_clauses
+          } catch (error, stackTrace) {
+            Log.error(
+              'Repository sync failed for $repositoryId: $error\n$stackTrace',
+            );
+          }
+        }
+
+        Log.trace(
+          'Repository sync loop completed, waiting for next interval ($_syncIntervalSeconds)...',
+        );
+        await Future<void>.delayed(Duration(seconds: _syncIntervalSeconds));
+      }
+    } finally {
+      _syncLoopRunning = false;
+    }
   }
 
   static Future<void> stop() async {
