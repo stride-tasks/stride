@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:stride/api/generated.dart';
+import 'package:stride/bridge.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
@@ -334,6 +335,8 @@ class _RepositorySyncTaskHandler extends TaskHandler {
 
   @override
   void onReceiveData(Object data) {
+    RustWorker.connect();
+
     final repositoryIds = data is Map ? data['repositoryIds'] : null;
     if (repositoryIds is! List ||
         repositoryIds.any((repositoryId) => repositoryId is! String)) {
@@ -346,6 +349,8 @@ class _RepositorySyncTaskHandler extends TaskHandler {
   }
 
   Future<void> _syncRepositories() async {
+    RustWorker.connect();
+
     if (_isSyncing || _repositoryIds.isEmpty) return;
 
     _isSyncing = true;
