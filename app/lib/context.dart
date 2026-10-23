@@ -4,10 +4,20 @@ import 'package:flutter/foundation.dart';
 import 'package:stride/api.dart';
 import 'package:stride/bridge.dart';
 import 'package:stride/notifications.dart';
+import 'package:uuid/uuid.dart';
+
+@immutable
+class RepositoryStatus {
+  final bool syncing;
+  final String? error;
+  const RepositoryStatus({required this.syncing, this.error});
+}
 
 class RustContext {
   static final ValueNotifier<List<RepositoryDescriptor>> repositories =
       ValueNotifier([]);
+  static final ValueNotifier<Map<UuidValue, RepositoryStatus>>
+  syncingRepositories = ValueNotifier({});
 
   static late ValueNotifier<Setting> setting;
 
@@ -29,6 +39,7 @@ class RustContext {
       final json = jsonDecode(event) as Map<String, dynamic>;
       final method = json['method'] as String;
       final params = json['params'] as Map<String, dynamic>;
+      print('$method; $params');
       if (method == 'repository.changed') {
         final notification = RepositoryChangedNotification.fromJson(params);
         for (final change in notification.changes) {
@@ -67,6 +78,21 @@ class RustContext {
             body,
           );
         }
+      } else if (method == 'repository.sync.started') {
+        final notification = RepositorySyncStartedNotification.fromJson(params);
+        syncingRepositories.value = {
+          ...syncingRepositories.value,
+          notification.repositoryId: const RepositoryStatus(syncing: true),
+        };
+      } else if (method == 'repository.sync.stopped') {
+        final notification = RepositorySyncStoppedNotification.fromJson(params);
+        syncingRepositories.value = {
+          ...syncingRepositories.value,
+          notification.repositoryId: RepositoryStatus(
+            syncing: false,
+            error: notification.error,
+          ),
+        };
       }
     });
 

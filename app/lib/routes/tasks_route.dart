@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:stride/api.dart';
-import 'package:stride/background.dart';
 import 'package:stride/context.dart';
 import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/routes/initial_route.dart';
@@ -206,9 +205,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
     List<RepositoryDescriptor> repositories,
     TaskController taskController,
   ) {
-    return StreamBuilder<Map<String, RepositorySyncStatus>>(
-      stream: Background.stream(),
-      builder: (context, asyncSnapshot) {
+    return ValueListenableBuilder(
+      valueListenable: RustContext.syncingRepositories,
+      builder: (context, state, _) {
         return ListView.builder(
           shrinkWrap: true,
           itemCount: repositories.length,
@@ -220,8 +219,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 title: Wrap(
                   children: [
                     Text(repository.name ?? 'unnamed'),
-                    if (asyncSnapshot.data?[repository.id.uuid]?.syncing ??
-                        false)
+                    if (state[repository.id]?.syncing ?? false)
                       IconButton(
                         onPressed: () {},
                         icon: const InfiniteRotationAnimation(
