@@ -287,12 +287,33 @@ impl TypedCommandHandler for RepositorySyncHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositorySyncMethodResult> {
         let repository = context.open_repository(method.id)?;
-        let changes = repository.sync(&context).map_err(Box::new)?;
 
-        context.notify(Box::new(crate::api::RepositoryChangedNotification {
-            repository_id: method.id,
-            changes,
-        }));
+        let task = context.clone().runtime().spawn(async move {
+            context.notify(Box::new(crate::api::RepositorySyncStartedNotification {
+                repository_id: method.id,
+            }));
+
+            let changes_result = repository.sync(&context);
+
+            context.notify(Box::new(crate::api::RepositorySyncStoppedNotification {
+                repository_id: method.id,
+                error: changes_result
+                    .as_deref()
+                    .err()
+                    .map(|err| err.to_string().into_boxed_str()),
+            }));
+
+            if let Ok(changes) = changes_result {
+                context.notify(Box::new(crate::api::RepositoryChangedNotification {
+                    repository_id: method.id,
+                    changes,
+                }));
+            }
+        });
+
+        // Detach the task so it runs independently and does not block the current thread.
+        task.detach();
+
         Ok(crate::api::RepositorySyncMethodResult {})
     }
 }
