@@ -23,6 +23,7 @@ class RustContext {
 
   static Future<void> init(String supportPath, String cachePath) async {
     await RustWorker.init(supportPath: supportPath, cachePath: cachePath);
+    RustWorker.connect();
 
     stream().listen((event) async {
       final json = jsonDecode(event) as Map<String, dynamic>;
