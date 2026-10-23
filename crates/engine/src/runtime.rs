@@ -25,15 +25,18 @@ impl Runtime {
         let (shutdown_tx, shutdown_rx) = async_channel::unbounded::<()>();
 
         let workers = (0..num_threads)
-            .map(|_| {
+            .map(|i| {
                 let ex = Arc::clone(&executor);
                 let rx = shutdown_rx.clone(); // Keep the receiver for each worker
 
-                thread::spawn(move || {
-                    smol::block_on(ex.run(async move {
-                        let _ = rx.recv().await;
-                    }));
-                })
+                thread::Builder::new()
+                    .name(format!("stride-runtime-worker-{i}"))
+                    .spawn(move || {
+                        smol::block_on(ex.run(async move {
+                            let _ = rx.recv().await;
+                        }));
+                    })
+                    .expect("unable to create thread pool")
             })
             .collect();
 
