@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, KnownPaths,
-    Notifier, Repository, Result, cache::Cache,
+    Notifier, Repository, Result, cache::Cache, runtime::Runtime,
 };
 
 pub(super) mod builder;
@@ -23,6 +23,7 @@ pub struct Engine {
     backends: BackendRegistry,
     repositories: Mutex<Cache<Repository>>,
     plugins: plugin::PluginRuntime,
+    runtime: Runtime,
 }
 
 impl Engine {
@@ -52,15 +53,14 @@ impl Engine {
             backends,
             repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
             plugins,
+            runtime: Runtime::new(None),
         });
 
         plugin::PluginRuntime::start_worker(&engine, worker);
 
         engine
     }
-}
 
-impl Engine {
     /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
     /// # Errors
     ///
@@ -98,6 +98,10 @@ impl Engine {
 
     pub fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
         self.plugins.lock_manager()
+    }
+
+    pub(crate) fn runtime(self: &Arc<Self>) -> &Runtime {
+        &self.runtime
     }
 
     /// Open a repository instance and cache it for one minute of inactivity.
