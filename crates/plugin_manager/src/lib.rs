@@ -299,7 +299,7 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn emit_notification(&mut self, name: &str, value: &api::Value) -> Result<()> {
+    pub fn emit_notification(&mut self, name: &str, value: &api::Value) {
         for plugin in self.plugins.values() {
             if !plugin.can_accept_notification(name) {
                 continue;
@@ -307,8 +307,6 @@ impl PluginManager {
             self.host_messages
                 .push_back((plugin.instance.manifest.name.clone(), value.clone()));
         }
-
-        Ok(())
     }
 
     pub fn enqueue_plugin_message(&mut self, plugin_name: &str, message: api::Value) {

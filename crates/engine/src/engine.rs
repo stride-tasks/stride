@@ -9,7 +9,8 @@ use uuid::Uuid;
 
 use crate::{
     BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, KnownPaths,
-    Notifier, Repository, Result, cache::Cache, runtime::Runtime,
+    Notifier, Repository, Result, cache::Cache, engine::plugin::process_plugin_work,
+    runtime::Runtime,
 };
 
 pub(super) mod builder;
@@ -22,7 +23,7 @@ pub struct Engine {
     commands: CommandRegistry,
     backends: BackendRegistry,
     repositories: Mutex<Cache<Repository>>,
-    plugins: plugin::PluginRuntime,
+    plugin_manager: Mutex<PluginManager>,
     runtime: Runtime,
 }
 
@@ -45,20 +46,15 @@ impl Engine {
         backends: BackendRegistry,
         plugin_manager: PluginManager,
     ) -> Arc<Self> {
-        let (plugins, worker) = plugin::PluginRuntime::new(plugin_manager);
-        let engine = Arc::new(Self {
+        Arc::new(Self {
             known_paths,
             notifier,
             commands,
             backends,
             repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
-            plugins,
+            plugin_manager: Mutex::new(plugin_manager),
             runtime: Runtime::new(None),
-        });
-
-        plugin::PluginRuntime::start_worker(&engine, worker);
-
-        engine
+        })
     }
 
     /// Creates a new [`EngineBuilder`] for constructing an [`Engine`].
@@ -75,19 +71,16 @@ impl Engine {
     ///
     /// Returns an error if the notification could not be sent for any reason.
     pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
-        self.plugins
-            .notify(notification.name(), notification.to_value())?;
+        let engine = self.clone();
+        let name = notification.name();
+        let value = notification.to_value();
+        let task = self.clone().runtime().spawn(async move {
+            process_plugin_work(&engine, name, &value);
+        });
+
+        task.detach();
 
         self.clone().notifier.notify(self, notification)
-    }
-
-    /// Wait until all queued plugin notifications and resulting method calls finish.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the plugin worker has stopped before draining its queue.
-    pub fn wait_for_plugin_messages(self: &Arc<Self>) -> Result<()> {
-        self.plugins.wait_for_messages()
     }
 
     pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
@@ -97,7 +90,9 @@ impl Engine {
     }
 
     pub fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
-        self.plugins.lock_manager()
+        self.plugin_manager
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     pub(crate) fn runtime(self: &Arc<Self>) -> &Runtime {

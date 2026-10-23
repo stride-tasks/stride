@@ -650,7 +650,5 @@ fn main() -> anyhow::Result<ExitCode> {
         }
     }
 
-    engine.wait_for_plugin_messages()?;
-
     Ok(ExitCode::SUCCESS)
 }

@@ -1,103 +1,11 @@
-use std::sync::{
-    Arc, Mutex, MutexGuard, Weak,
-    mpsc::{self, Receiver, Sender},
-};
+use std::sync::Arc;
 
 use stride_api as api;
-use stride_plugin_manager::PluginManager;
 
-use crate::{Engine, Error, Result};
+use crate::Engine;
 
-#[derive(Debug)]
-pub(super) struct PluginRuntime {
-    manager: Mutex<PluginManager>,
-    sender: Sender<PluginMessage>,
-}
-
-#[derive(Debug)]
-struct PluginWork {
-    name: Box<str>,
-    value: api::Value,
-}
-
-#[derive(Debug)]
-enum PluginMessage {
-    Notification(PluginWork),
-    Barrier(Sender<()>),
-}
-
-pub(super) struct PluginWorker {
-    receiver: Receiver<PluginMessage>,
-}
-
-impl PluginRuntime {
-    pub(super) fn new(manager: PluginManager) -> (Self, PluginWorker) {
-        let (sender, receiver) = mpsc::channel();
-        (
-            Self {
-                manager: Mutex::new(manager),
-                sender,
-            },
-            PluginWorker { receiver },
-        )
-    }
-
-    pub(super) fn start_worker(engine: &Arc<Engine>, worker: PluginWorker) {
-        let weak_engine = Arc::downgrade(engine);
-        std::thread::Builder::new()
-            .name("stride-plugin-messages".into())
-            .spawn(move || worker.run(&weak_engine))
-            .expect("failed to start plugin message worker");
-    }
-
-    pub(super) fn lock_manager(&self) -> MutexGuard<'_, PluginManager> {
-        self.manager
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-    }
-
-    pub(super) fn notify(&self, name: &str, value: api::Value) -> Result<()> {
-        self.sender
-            .send(PluginMessage::Notification(PluginWork {
-                name: name.into(),
-                value,
-            }))
-            .map_err(|_| Error::PluginWorkerStopped)
-    }
-
-    pub(super) fn wait_for_messages(&self) -> Result<()> {
-        let (sender, receiver) = mpsc::channel();
-        self.sender
-            .send(PluginMessage::Barrier(sender))
-            .map_err(|_| Error::PluginWorkerStopped)?;
-        receiver.recv().map_err(|_| Error::PluginWorkerStopped)
-    }
-}
-
-impl PluginWorker {
-    fn run(self, engine: &Weak<Engine>) {
-        while let Ok(message) = self.receiver.recv() {
-            match message {
-                PluginMessage::Notification(work) => {
-                    let Some(engine) = engine.upgrade() else {
-                        break;
-                    };
-                    if let Err(error) = process_plugin_work(&engine, &work) {
-                        log::error!("failed to process plugin message: {error}");
-                    }
-                }
-                PluginMessage::Barrier(sender) => {
-                    let _ = sender.send(());
-                }
-            }
-        }
-    }
-}
-
-fn process_plugin_work(engine: &Arc<Engine>, work: &PluginWork) -> Result<()> {
-    engine
-        .lock_plugin_manager()
-        .emit_notification(&work.name, &work.value)?;
+pub(crate) fn process_plugin_work(engine: &Arc<Engine>, name: &str, value: &api::Value) {
+    engine.lock_plugin_manager().emit_notification(name, value);
 
     loop {
         let calls = {
@@ -120,7 +28,15 @@ fn process_plugin_work(engine: &Arc<Engine>, work: &PluginWork) -> Result<()> {
             let (method, params) = match parse_plugin_method(call) {
                 Ok(call) => call,
                 Err(reason) => {
-                    disable_plugin(engine, &plugin_name, reason)?;
+                    log::info!("disabling plugin {plugin_name} due to parse error: {reason}");
+                    if let Err(error) = engine
+                        .lock_plugin_manager()
+                        .disable(&plugin_name, Some(reason.clone()))
+                    {
+                        log::error!(
+                            "failed to disable plugin {plugin_name} with reason {reason}: {error}"
+                        );
+                    }
                     continue;
                 }
             };
@@ -133,7 +49,15 @@ fn process_plugin_work(engine: &Arc<Engine>, work: &PluginWork) -> Result<()> {
                 manager.method_permission_error(&plugin_name, &method)
             };
             if let Some(reason) = permission_error {
-                disable_plugin(engine, &plugin_name, reason)?;
+                log::info!("disabling plugin {plugin_name} due to permission error: {reason}");
+                if let Err(error) = engine
+                    .lock_plugin_manager()
+                    .disable(&plugin_name, Some(reason.clone()))
+                {
+                    log::error!(
+                        "failed to disable plugin {plugin_name} with reason {reason}: {error}"
+                    );
+                }
                 continue;
             }
 
@@ -153,11 +77,9 @@ fn process_plugin_work(engine: &Arc<Engine>, work: &PluginWork) -> Result<()> {
                 .enqueue_plugin_message(&plugin_name, api::Value::Map(response));
         }
     }
-
-    Ok(())
 }
 
-fn parse_plugin_method(call: api::Value) -> std::result::Result<(Box<str>, api::Value), Box<str>> {
+fn parse_plugin_method(call: api::Value) -> Result<(Box<str>, api::Value), Box<str>> {
     let api::Value::Map(mut call) = call else {
         return Err("plugin call must be an API method object".into());
     };
@@ -168,12 +90,4 @@ fn parse_plugin_method(call: api::Value) -> std::result::Result<(Box<str>, api::
         return Err("plugin call is missing params".into());
     };
     Ok((method, params))
-}
-
-fn disable_plugin(engine: &Arc<Engine>, plugin_name: &str, reason: Box<str>) -> Result<()> {
-    log::error!("disabling plugin {plugin_name}: {reason}");
-    engine
-        .lock_plugin_manager()
-        .disable(plugin_name, Some(reason))?;
-    Ok(())
 }
