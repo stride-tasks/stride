@@ -118,11 +118,7 @@ fn save_settings(path: &Path, settings: &Value) -> anyhow::Result<()> {
 struct CliNotifier;
 
 impl stride_engine::Notifier for CliNotifier {
-    fn notify(
-        &self,
-        context: &Arc<Engine>,
-        notification: Box<dyn stride_engine::Notification>,
-    ) -> stride_engine::Result<()> {
+    fn notify(&self, context: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
         let notification_any: &dyn std::any::Any = &*notification;
         if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
             let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
@@ -132,10 +128,23 @@ impl stride_engine::Notifier for CliNotifier {
 
             let input = {
                 let _guard = LogLevelGuard::error();
-                confirm.prompt_skippable().map_err(Box::new)?
+                confirm.prompt_skippable()
             };
-            if input == Some(true) {
-                context.execute_erased(&prompt.target.method, prompt.target.params.clone())?;
+            match input {
+                Err(err) => {
+                    log::error!("Failed to prompt user: {err}");
+                }
+                Ok(Some(true)) => {
+                    let result =
+                        context.execute_erased(&prompt.target.method, prompt.target.params.clone());
+                    if let Err(err) = result {
+                        log::error!("Failed to execute prompt target: {err}");
+                    }
+                }
+                Ok(None | Some(false)) => {
+                    // User declined the prompt, do nothing.
+                    // User skipped the prompt, do nothing.
+                }
             }
         } else if let Some(notification) =
             notification_any.downcast_ref::<api::RepositoryChangedNotification>()
@@ -174,7 +183,6 @@ impl stride_engine::Notifier for CliNotifier {
                 notification.to_value()
             );
         }
-        Ok(())
     }
 }
 

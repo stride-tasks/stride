@@ -93,11 +93,7 @@ static STREAM_CALLBACK: Mutex<OptionalStreamCallback> = Mutex::new(None);
 struct FlutterNotifier;
 
 impl Notifier for FlutterNotifier {
-    fn notify(
-        &self,
-        _: &Arc<Engine>,
-        notification: Box<dyn stride_engine::Notification>,
-    ) -> stride_engine::Result<()> {
+    fn notify(&self, _: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
         let name = notification.name();
         let value = notification.to_value();
         let map = serde_json::json!({
@@ -112,12 +108,13 @@ impl Notifier for FlutterNotifier {
             .unwrap_or_else(PoisonError::into_inner);
         if let Some(callback) = *guard {
             let message = serde_json::to_string(&map)
-                .map_err(|error| stride_engine::Error::from(Box::new(error)))?;
+                .map_err(|error| stride_engine::Error::from(Box::new(error)))
+                .expect("method serialization should not fail");
             let message = CString::new(message)
-                .map_err(|error| stride_engine::Error::from(Box::new(error)))?;
+                .map_err(|error| stride_engine::Error::from(Box::new(error)))
+                .expect("serialized JSON should not contain any null character");
             callback(message.into_raw());
         }
-        Ok(())
     }
 }
 

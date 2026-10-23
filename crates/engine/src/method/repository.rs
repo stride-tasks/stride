@@ -292,7 +292,7 @@ impl TypedCommandHandler for RepositorySyncHandler {
         context.notify(Box::new(crate::api::RepositoryChangedNotification {
             repository_id: method.id,
             changes,
-        }))?;
+        }));
         Ok(crate::api::RepositorySyncMethodResult {})
     }
 }
@@ -353,7 +353,7 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
         engine.notify(Box::new(crate::api::RepositoryTaskAddedNotification {
             repository_id: method.repository_id,
             task: method.task,
-        }))?;
+        }));
 
         Ok(crate::api::RepositoryTaskAddMethodResult {})
     }

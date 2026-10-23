@@ -70,7 +70,7 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the notification could not be sent for any reason.
-    pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) -> Result<()> {
+    pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) {
         let engine = self.clone();
         let name = notification.name();
         let value = notification.to_value();
@@ -80,7 +80,7 @@ impl Engine {
 
         task.detach();
 
-        self.clone().notifier.notify(self, notification)
+        self.clone().notifier.notify(self, notification);
     }
 
     pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
