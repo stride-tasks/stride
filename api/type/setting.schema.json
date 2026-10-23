@@ -4,6 +4,7 @@
 	"type": "object",
 	"required": [
 		"periodic-sync",
+		"periodic-sync-interval",
 		"dark-mode"
 	],
 	"properties": {
@@ -16,6 +17,13 @@
 			"type": "boolean",
 			"default": false,
 			"description": "The periodic repository sync."
+		},
+		"periodic-sync-interval": {
+			"type": "integer",
+			"format": "uint",
+			"minimum": 5,
+			"default": 300,
+			"description": "The interval for periodic repository sync in seconds."
 		},
 		"dark-mode": {
 			"type": "boolean",

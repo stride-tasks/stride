@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:stride/api.dart';
@@ -65,6 +66,9 @@ final class Log {
     required LogLevel level,
     required String message,
   }) async {
+    if (kDebugMode) {
+      debugPrint('[${level.name.toUpperCase()}]: $message');
+    }
     await LogEventMethod(level: level, message: message).execute();
   }
 

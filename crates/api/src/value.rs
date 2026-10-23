@@ -2,10 +2,20 @@ use indexmap::IndexMap;
 
 pub type Map = IndexMap<Box<str>, Value>;
 
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(untagged)]
+// @note the order is important for deserialization
+// as it's used to determine the type of number.
+pub enum Number {
+    Unsigned(u64),
+    Integer(i64),
+    Float(f64),
+}
+
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum Value {
-    Number(f64),
+    Number(Number),
     String(Box<str>),
     Bool(bool),
     Array(Vec<Value>),
@@ -16,7 +26,11 @@ pub enum Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Number(value) => value.fmt(f),
+            Self::Number(value) => match value {
+                Number::Integer(value) => value.fmt(f),
+                Number::Unsigned(value) => value.fmt(f),
+                Number::Float(value) => value.fmt(f),
+            },
             Self::String(value) => std::fmt::Debug::fmt(value, f),
             Self::Bool(value) => value.fmt(f),
             Self::Array(array) => {

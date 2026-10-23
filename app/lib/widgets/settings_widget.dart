@@ -62,12 +62,14 @@ class SettingsTile extends StatelessWidget {
   final Widget? title;
   final Widget? description;
   final void Function(BuildContext context)? onTap;
+  final void Function(BuildContext context)? onLongPress;
 
   const SettingsTile({
     required this.title,
     this.leading,
     this.description,
     this.onTap,
+    this.onLongPress,
     this.trailing = const Icon(Icons.arrow_forward),
     super.key,
   });
@@ -80,6 +82,7 @@ class SettingsTile extends StatelessWidget {
       subtitle: description,
       trailing: trailing,
       onTap: () => onTap?.call(context),
+      onLongPress: onLongPress == null ? null : () => onLongPress!(context),
     );
   }
 }
@@ -109,6 +112,7 @@ class SettingsTileSwitch extends SettingsTile {
     required super.title,
     super.description,
     super.leading,
+    super.onLongPress,
     required this.value,
     required this.onChanged,
   }) : super(

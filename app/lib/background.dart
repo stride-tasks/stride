@@ -1,564 +1,318 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:stride/bridge.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:stride/api/generated.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
-import 'package:workmanager/workmanager.dart';
 
 @immutable
-abstract class BackgroundTask {
-  String uniqueName();
-  String taskName() {
-    return uniqueName();
-  }
+class RepositorySyncStatus {
+  final String repositoryId;
+  final bool syncing;
+  final String? error;
 
-  Map<String, dynamic> toInputData();
-}
-
-@immutable
-class TaskSyncBackgroundTask implements BackgroundTask {
-  final UuidValue repositoryId;
-  const TaskSyncBackgroundTask({required this.repositoryId});
-
-  @override
-  Map<String, dynamic> toInputData() {
-    // WorkManager Android doesn't support nested maps; encode params as JSON string
-    return {
-      'params': jsonEncode({'id': repositoryId.toString()}),
-    };
-  }
-
-  @override
-  String uniqueName() {
-    return 'repository.sync:$repositoryId';
-  }
-
-  @override
-  String taskName() {
-    return this.uniqueName();
-  }
-}
-
-@immutable
-class Output {
-  final Name name;
-  final Map<String, dynamic> inputData;
-  final Object? error;
-  final bool done;
-  final DateTime timestamp;
-  const Output({
-    required this.name,
-    required this.inputData,
-    required this.timestamp,
+  const RepositorySyncStatus({
+    required this.repositoryId,
+    required this.syncing,
     this.error,
-    this.done = false,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name.toString(),
-      'inputData': inputData,
-      'error': error?.toString(),
-      'done': done,
-      'timestamp': timestamp.toUtc().toIso8601String(),
-    };
-  }
+  Map<String, dynamic> toMap() => {
+    'repositoryId': repositoryId,
+    'syncing': syncing,
+    'error': error,
+  };
 
-  factory Output.fromMap(Map<String, dynamic> map) {
-    return Output(
-      name: Name.fromString(map['name'] as String),
-      inputData: Map<String, dynamic>.from(
-        map['inputData'] as Map? ?? const {},
-      ),
-      timestamp: DateTime.parse(map['timestamp'] as String),
-      error: map['error'] as String?,
-      done: map['done'] as bool? ?? false,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (other is Name) {
-      return name == other;
-    } else if (other is! Output) {
-      return false;
-    } else {
-      return name == other.name;
-    }
-  }
-
-  @override
-  int get hashCode => name.hashCode;
-
-  @override
-  String toString() => '$name :: done:$done, error:$error';
+  factory RepositorySyncStatus.fromMap(Map<String, dynamic> map) =>
+      RepositorySyncStatus(
+        repositoryId: map['repositoryId'] as String,
+        syncing: map['syncing'] as bool,
+        error: map['error'] as String?,
+      );
 }
 
-@immutable
 class Background {
-  static late Set<Output>? _outputs;
-  static late StreamController<Set<Output>>? _streamController;
-  static late Stream<Set<Output>>? _stream;
-  static late ReceivePort? _receivePort;
+  static const minimumSyncIntervalSeconds = 5;
+  static final _statuses = <String, RepositorySyncStatus>{};
+  static final _statusController =
+      StreamController<Map<String, RepositorySyncStatus>>.broadcast();
+  static var _syncEnabled = false;
+  static var _syncLoopRunning = false;
+  static var _syncIntervalSeconds = minimumSyncIntervalSeconds;
+  static List<UuidValue> _repositoryIds = const [];
 
-  static Stream<Set<Output>> stream() => _stream!;
+  static bool get _isSupported => Platform.isAndroid || Platform.isIOS;
 
-  static WorkmanagerPlatform? instance;
+  static Stream<Map<String, RepositorySyncStatus>> stream() =>
+      _statusController.stream;
 
   static Future<void> init() async {
-    _outputs = {};
-    _streamController = StreamController();
+    if (!_isSupported) return;
 
-    _receivePort = ReceivePort('worker');
-    _receivePort?.listen((message) {
-      final output = Output.fromMap(Map<String, dynamic>.from(message as Map));
-
-      _outputs?.remove(output);
-      _outputs!.add(output);
-      _streamController!.sink.add({...?_outputs});
-    });
-    _stream = _streamController?.stream.asBroadcastStream();
-
-    IsolateNameServer.removePortNameMapping(_GLOBAL_PORT_NAME);
-    IsolateNameServer.registerPortWithName(
-      _receivePort!.sendPort,
-      _GLOBAL_PORT_NAME,
-    );
-
-    if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
-      instance = await _DesktopWorkmanager.create();
-      WorkmanagerPlatform.instance = instance!;
-    }
-    await Workmanager().initialize(_callbackDispatcher);
+    FlutterForegroundTask.initCommunicationPort();
+    FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+    _configureForegroundTask(RustContext.setting.value.periodicSyncInterval);
   }
 
-  static Future<void> run(
-    BackgroundTask task, {
-    Duration? initialDelay,
-    ExistingWorkPolicy? existingWorkPolicy,
-  }) async {
-    final uniqueName = task.uniqueName();
-    final taskName = task.taskName();
+  static void _configureForegroundTask(int intervalSeconds) {
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'stride.repository.sync',
+        channelName: 'Stride repository sync',
+        channelDescription: 'Keeps repositories synchronized.',
+        onlyAlertOnce: true,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: false,
+        playSound: false,
+      ),
+      foregroundTaskOptions: _foregroundTaskOptions(intervalSeconds),
+    );
+  }
 
-    if (instance != null) {
-      return instance!.registerOneOffTask(
-        uniqueName,
-        taskName,
-        inputData: task.toInputData(),
-        initialDelay: initialDelay,
-        existingWorkPolicy: existingWorkPolicy,
+  static void setSyncIntervalSeconds(int seconds) {
+    if (seconds < minimumSyncIntervalSeconds) {
+      throw ArgumentError.value(
+        seconds,
+        'seconds',
+        'Sync interval must be at least $minimumSyncIntervalSeconds seconds.',
       );
     }
 
-    return Workmanager().registerOneOffTask(
-      uniqueName,
-      taskName,
-      inputData: task.toInputData(),
-      initialDelay: initialDelay,
-      existingWorkPolicy: existingWorkPolicy,
+    RustContext.setting.value = RustContext.setting.value.copyWith(
+      periodicSyncInterval: seconds,
     );
   }
 
-  static Future<void> periodic(
-    BackgroundTask task, {
-    required Duration frequency,
-    Duration? initialDelay,
-    ExistingPeriodicWorkPolicy? existingWorkPolicy,
+  static Future<void> configurePeriodicSync({
+    required bool enabled,
+    required List<UuidValue> repositoryIds,
+    required int intervalSeconds,
   }) async {
-    final uniqueName = task.uniqueName();
-    final taskName = task.taskName();
+    _syncEnabled = enabled;
+    _syncIntervalSeconds = intervalSeconds;
+    _repositoryIds = List.of(repositoryIds, growable: false);
 
-    if (instance != null) {
-      await instance!.registerPeriodicTask(
-        uniqueName,
-        taskName,
-        inputData: task.toInputData(),
-        initialDelay: initialDelay,
-        frequency: frequency,
-        existingWorkPolicy: existingWorkPolicy,
+    if (!_isSupported) {
+      if (_syncEnabled && _repositoryIds.isNotEmpty) {
+        unawaited(_runDesktopSyncLoop());
+      }
+      return;
+    }
+
+    final serviceIsRunning = await FlutterForegroundTask.isRunningService;
+    if (!_syncEnabled || _repositoryIds.isEmpty) {
+      if (serviceIsRunning) {
+        await stop();
+      } else {
+        _configureForegroundTask(_syncIntervalSeconds);
+      }
+      return;
+    }
+
+    if (serviceIsRunning) {
+      final result = await FlutterForegroundTask.updateService(
+        foregroundTaskOptions: _foregroundTaskOptions(_syncIntervalSeconds),
       );
-    }
-
-    return Workmanager().registerPeriodicTask(
-      uniqueName,
-      taskName,
-      inputData: task.toInputData(),
-      initialDelay: initialDelay,
-      frequency: frequency,
-      existingWorkPolicy: existingWorkPolicy,
-    );
-  }
-
-  static Future<void> cancel(BackgroundTask task) async {
-    if (instance != null) {
-      return instance!.cancelByUniqueName(task.uniqueName());
-    }
-
-    return Workmanager().cancelByUniqueName(task.uniqueName());
-  }
-
-  static Future<void> cancelAll() async {
-    if (instance != null) {
-      return instance!.cancelAll();
-    }
-
-    return Workmanager().cancelAll();
-  }
-}
-
-@pragma('vm:entry-point')
-void _callbackDispatcher() {
-  Workmanager().executeTask(_executeTask);
-}
-
-const String _GLOBAL_PORT_NAME = 'worker-port';
-
-Future<bool> _executeTask(String task, Map<String, dynamic>? inputData) async {
-  DartPluginRegistrant.ensureInitialized();
-  final input = inputData ?? {};
-  final name = Name.fromString(task);
-  final port = IsolateNameServer.lookupPortByName(_GLOBAL_PORT_NAME);
-
-  try {
-    RustWorker.connect();
-
-    Log.trace('Background task: $task, inputData: $inputData');
-
-    port?.send(
-      Output(name: name, inputData: input, timestamp: DateTime.now()).toMap(),
-    );
-
-    await RustContext.executeErased(
-      name.method,
-      jsonEncode({
-        'params': jsonDecode(input['params'] as String) as Map<String, dynamic>,
-      }),
-    );
-    port?.send(
-      Output(
-        name: name,
-        inputData: input,
-        timestamp: DateTime.now(),
-        done: true,
-      ).toMap(),
-    );
-  } on RustException catch (e) {
-    Log.trace('Background task error: ${e.toString()}');
-    port?.send(
-      Output(
-        name: name,
-        inputData: input,
-        timestamp: DateTime.now(),
-        error: e.toString(),
-        done: true,
-      ).toMap(),
-    );
-  }
-  // ignore: avoid_catches_without_on_clauses
-  catch (error) {
-    Log.trace('Background task error: ${error.toString()}');
-    port?.send(
-      Output(
-        name: name,
-        inputData: input,
-        timestamp: DateTime.now(),
-        error: error,
-        done: true,
-      ).toMap(),
-    );
-  }
-
-  return Future.value(true);
-}
-
-@immutable
-class Name {
-  final String method;
-  final String? unique;
-
-  const Name({required this.method, this.unique});
-
-  factory Name.fromString(String value) {
-    final separatorIndex = value.indexOf(':');
-    if (separatorIndex == -1) {
-      return Name(method: value);
-    }
-
-    return Name(
-      method: value.substring(0, separatorIndex),
-      unique: value.substring(separatorIndex + 1),
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (other is! Name) {
-      return false;
-    }
-    return method == other.method && unique == other.unique;
-  }
-
-  @override
-  int get hashCode => Object.hash(method, unique);
-
-  @override
-  String toString() {
-    if (unique == null) {
-      return method;
-    } else {
-      return '$method:$unique';
-    }
-  }
-}
-
-@immutable
-class ComputeArgs {
-  final RootIsolateToken token;
-  final BTask task;
-  const ComputeArgs({required this.token, required this.task});
-}
-
-@pragma('vm:entry-point')
-Future<void> _compute(ComputeArgs args) async {
-  BackgroundIsolateBinaryMessenger.ensureInitialized(args.token);
-  await _executeTask(args.task.name.toString(), args.task.inputData);
-}
-
-@pragma('vm:entry-point')
-Future<void> _entryPoint(SendPort sender) async {
-  DartPluginRegistrant.ensureInitialized();
-
-  RustWorker.connect();
-
-  final receiver = ReceivePort('worker');
-  sender.send(receiver.sendPort);
-
-  final stream = receiver.asBroadcastStream();
-  final token = (await stream.first) as RootIsolateToken;
-
-  final tasks = <Name, Timer>{};
-  final tagIndex = <String, Set<Name>>{};
-
-  await for (final value in stream) {
-    if (value is _CancelByName) {
-      Log.info('Canceling task by name: ${value.uniqueName}');
-      final name = Name.fromString(value.uniqueName);
-      tasks.remove(name)?.cancel();
-      continue;
-    }
-    if (value is _CancelByTag) {
-      Log.info('Canceling tasks by tag: ${value.tag}');
-      final names = tagIndex.remove(value.tag) ?? {};
-      for (final name in names) {
-        tasks.remove(name)?.cancel();
+      if (result is ServiceRequestFailure) {
+        // ignore: only_throw_errors
+        throw result.error;
       }
-      continue;
-    }
-    if (value is _CancelAll) {
-      for (final timer in tasks.values) {
-        timer.cancel();
-      }
-      tasks.clear();
-      tagIndex.clear();
-      continue;
-    }
-
-    final task = value as BTask;
-    Log.trace('${task.name}');
-
-    if (task.frequency == null) {
-      compute(_compute, ComputeArgs(token: token, task: task));
-    } else {
-      tasks[task.name]?.cancel();
-      tasks[task.name] = Timer.periodic(task.frequency!, (timer) async {
-        await compute(_compute, ComputeArgs(token: token, task: task));
+      FlutterForegroundTask.sendDataToTask({
+        'repositoryIds': _repositoryIds.map((id) => id.uuid).toList(),
       });
-      if (task.tag != null) {
-        tagIndex.putIfAbsent(task.tag!, () => {}).add(task.name);
+      return;
+    }
+
+    if (Platform.isAndroid) {
+      var permission =
+          await FlutterForegroundTask.checkNotificationPermission();
+      if (permission != NotificationPermission.granted) {
+        await FlutterForegroundTask.requestNotificationPermission();
+        permission = await FlutterForegroundTask.checkNotificationPermission();
+      }
+      if (permission != NotificationPermission.granted) {
+        debugPrint(
+          'Cannot start periodic repository sync without notification permission.',
+        );
+        return;
       }
     }
-  }
-  Log.info('DONE');
-}
 
-@immutable
-class BTask {
-  final Name name;
-  final Duration? frequency;
-  final Map<String, dynamic> inputData;
-  final String? tag;
-
-  const BTask({
-    required this.name,
-    required this.inputData,
-    this.frequency,
-    this.tag,
-  });
-}
-
-@immutable
-class _CancelByName {
-  final String uniqueName;
-  const _CancelByName(this.uniqueName);
-}
-
-@immutable
-class _CancelByTag {
-  final String tag;
-  const _CancelByTag(this.tag);
-}
-
-@immutable
-class _CancelAll {
-  const _CancelAll();
-}
-
-@immutable
-class _DesktopWorkmanager extends WorkmanagerPlatform {
-  final Isolate _isolate;
-  final ReceivePort _receiver;
-  final SendPort _sender;
-
-  _DesktopWorkmanager._internal({
-    required Isolate isolate,
-    required ReceivePort receiver,
-    required SendPort sender,
-  }) : _sender = sender,
-       _receiver = receiver,
-       _isolate = isolate;
-
-  static Future<_DesktopWorkmanager> create() async {
-    final receiver = ReceivePort('main');
-    final isolate = await Isolate.spawn(
-      _entryPoint,
-      receiver.sendPort,
-      debugName: 'background-worker',
+    _configureForegroundTask(_syncIntervalSeconds);
+    final result = await FlutterForegroundTask.startService(
+      serviceTypes: Platform.isAndroid
+          ? const [ForegroundServiceTypes.dataSync]
+          : null,
+      notificationTitle: 'Stride repository sync',
+      notificationText: 'Periodically syncing repositories',
+      callback: _entryPoint,
     );
+    if (result is ServiceRequestFailure) {
+      // ignore: only_throw_errors
+      throw result.error;
+    }
 
-    final stream = receiver.asBroadcastStream();
-    final sender = (await stream.first) as SendPort;
-
-    // ignore: cascade_invocations
-    sender.send(RootIsolateToken.instance!);
-
-    return _DesktopWorkmanager._internal(
-      isolate: isolate,
-      receiver: receiver,
-      sender: sender,
-    );
+    FlutterForegroundTask.sendDataToTask({
+      'repositoryIds': _repositoryIds.map((id) => id.uuid).toList(),
+    });
   }
 
-  @override
-  Future<void> initialize(
-    Function callbackDispatcher, {
-    @Deprecated(
-      'Use WorkmanagerDebug handlers instead. This parameter has no effect.',
-    )
-    bool isInDebugMode = false,
-  }) async {}
+  static Future<void> _runDesktopSyncLoop() async {
+    if (_syncLoopRunning) return;
 
-  @override
-  Future<void> registerOneOffTask(
-    String uniqueName,
-    String taskName, {
-    Map<String, dynamic>? inputData,
-    Duration? initialDelay,
-    Constraints? constraints,
-    ExistingWorkPolicy? existingWorkPolicy,
-    BackoffPolicy? backoffPolicy,
-    Duration? backoffPolicyDelay,
-    String? tag,
-    OutOfQuotaPolicy? outOfQuotaPolicy,
-    ForegroundServiceConfig? foregroundServiceConfig,
-    bool expedited = false,
+    _syncLoopRunning = true;
+
+    try {
+      outerLoop:
+      while (_syncLoopRunning && _repositoryIds.isNotEmpty) {
+        Log.debug('Starting repository sync loop');
+        for (final repositoryId in _repositoryIds) {
+          Log.debug('Syncing repository $repositoryId');
+          try {
+            if (!_syncEnabled) {
+              Log.debug(
+                'Syncing is disabled, skipping repository $repositoryId',
+              );
+              break outerLoop;
+            }
+            await syncRepository(repositoryId);
+            // ignore: avoid_catches_without_on_clauses
+          } catch (error, stackTrace) {
+            Log.error(
+              'Repository sync failed for $repositoryId: $error\n$stackTrace',
+            );
+          }
+        }
+
+        Log.trace(
+          'Repository sync loop completed, waiting for next interval ($_syncIntervalSeconds)...',
+        );
+        await Future<void>.delayed(Duration(seconds: _syncIntervalSeconds));
+      }
+    } finally {
+      _syncLoopRunning = false;
+    }
+  }
+
+  static Future<void> stop() async {
+    if (!_isSupported || !await FlutterForegroundTask.isRunningService) return;
+
+    final result = await FlutterForegroundTask.stopService();
+    if (result is ServiceRequestFailure) {
+      // ignore: only_throw_errors
+      throw result.error;
+    }
+  }
+
+  static Future<void> syncRepository(
+    UuidValue repositoryId, {
+    void Function(RepositorySyncStatus status)? onStatus,
   }) async {
-    _sender.send(
-      BTask(
-        name: Name.fromString(uniqueName),
-        inputData: inputData ?? {},
-        tag: tag,
-      ),
-    );
+    void publish({required bool syncing, String? error}) {
+      final status = RepositorySyncStatus(
+        repositoryId: repositoryId.uuid,
+        syncing: syncing,
+        error: error,
+      );
+      if (onStatus == null) {
+        _publish(status);
+      } else {
+        onStatus(status);
+      }
+    }
+
+    publish(syncing: true);
+
+    try {
+      await RustContext.execute(RepositorySyncMethod(id: repositoryId));
+      publish(syncing: false);
+    } catch (error) {
+      publish(syncing: false, error: error.toString());
+      rethrow;
+    }
+  }
+
+  static void _onReceiveTaskData(Object data) {
+    if (data is! Map) {
+      debugPrint('Ignoring invalid repository sync update: $data');
+      return;
+    }
+    _publish(RepositorySyncStatus.fromMap(Map<String, dynamic>.from(data)));
+  }
+
+  static void _publish(RepositorySyncStatus status) {
+    _statuses[status.repositoryId] = status;
+    _statusController.add(Map.unmodifiable(_statuses));
+  }
+
+  static ForegroundTaskOptions _foregroundTaskOptions(int seconds) =>
+      ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(
+          Duration(seconds: seconds).inMilliseconds,
+        ),
+        allowWakeLock: true,
+        allowWifiLock: true,
+      );
+}
+
+@pragma('vm:entry-point')
+void _entryPoint() {
+  FlutterForegroundTask.setTaskHandler(_RepositorySyncTaskHandler());
+}
+
+class _RepositorySyncTaskHandler extends TaskHandler {
+  List<String> _repositoryIds = [];
+  var _isSyncing = false;
+
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    // The app sends repository IDs immediately after starting the service.
   }
 
   @override
-  Future<void> registerPeriodicTask(
-    String uniqueName,
-    String taskName, {
-    Duration? frequency,
-    Duration? flexInterval,
-    Map<String, dynamic>? inputData,
-    Duration? initialDelay,
-    Constraints? constraints,
-    ExistingPeriodicWorkPolicy? existingWorkPolicy,
-    BackoffPolicy? backoffPolicy,
-    Duration? backoffPolicyDelay,
-    String? tag,
-    ForegroundServiceConfig? foregroundServiceConfig,
-  }) async {
-    _sender.send(
-      BTask(
-        name: Name.fromString(uniqueName),
-        inputData: inputData ?? {},
-        frequency: frequency,
-        tag: tag,
-      ),
-    );
+  void onRepeatEvent(DateTime timestamp) {
+    unawaited(_syncRepositories());
   }
 
   @override
-  Future<void> registerProcessingTask(
-    String uniqueName,
-    String taskName, {
-    Duration? initialDelay,
-    Map<String, dynamic>? inputData,
-    Constraints? constraints,
-  }) async {
-    throw UnimplementedError(
-      'No implementation found for workmanager on this platform.',
-    );
-  }
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {}
 
   @override
-  Future<void> cancelByUniqueName(String uniqueName) async {
-    _sender.send(_CancelByName(uniqueName));
+  void onReceiveData(Object data) {
+    final repositoryIds = data is Map ? data['repositoryIds'] : null;
+    if (repositoryIds is! List ||
+        repositoryIds.any((repositoryId) => repositoryId is! String)) {
+      debugPrint('Ignoring invalid repository list sent to sync service.');
+      return;
+    }
+
+    _repositoryIds = List<String>.from(repositoryIds);
+    unawaited(_syncRepositories());
   }
 
-  @override
-  Future<void> cancelByTag(String tag) async {
-    _sender.send(_CancelByTag(tag));
-  }
+  Future<void> _syncRepositories() async {
+    if (_isSyncing || _repositoryIds.isEmpty) return;
 
-  @override
-  Future<void> cancelAll() async {
-    _sender.send(const _CancelAll());
-  }
-
-  @override
-  Future<bool> isScheduledByUniqueName(String uniqueName) async {
-    throw UnimplementedError(
-      'No implementation found for workmanager on this platform.',
-    );
-  }
-
-  @override
-  Future<String> printScheduledTasks() async {
-    throw UnimplementedError(
-      'No implementation found for workmanager on this platform.',
-    );
-  }
-
-  Future<void> dispose() async {
-    // await _taskStreamController.close();
-    // await _streamSubscription.cancel();
-    _isolate.kill();
-    _receiver.close();
+    _isSyncing = true;
+    try {
+      for (final repositoryId in _repositoryIds) {
+        try {
+          await Background.syncRepository(
+            UuidValue.fromString(repositoryId),
+            onStatus: (status) =>
+                FlutterForegroundTask.sendDataToMain(status.toMap()),
+          );
+          // ignore: avoid_catches_without_on_clauses
+        } catch (error) {
+          debugPrint('Repository sync failed for $repositoryId: $error');
+        }
+      }
+    } finally {
+      _isSyncing = false;
+    }
   }
 }
