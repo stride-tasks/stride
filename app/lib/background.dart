@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:stride/api/generated.dart';
 import 'package:stride/bridge.dart';
@@ -10,37 +9,8 @@ import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
 
-@immutable
-class RepositorySyncStatus {
-  final String repositoryId;
-  final bool syncing;
-  final String? error;
-
-  const RepositorySyncStatus({
-    required this.repositoryId,
-    required this.syncing,
-    this.error,
-  });
-
-  Map<String, dynamic> toMap() => {
-    'repositoryId': repositoryId,
-    'syncing': syncing,
-    'error': error,
-  };
-
-  factory RepositorySyncStatus.fromMap(Map<String, dynamic> map) =>
-      RepositorySyncStatus(
-        repositoryId: map['repositoryId'] as String,
-        syncing: map['syncing'] as bool,
-        error: map['error'] as String?,
-      );
-}
-
 class Background {
   static const minimumSyncIntervalSeconds = 5;
-  static final _statuses = <String, RepositorySyncStatus>{};
-  static final _statusController =
-      StreamController<Map<String, RepositorySyncStatus>>.broadcast();
   static var _syncEnabled = false;
   static var _syncLoopRunning = false;
   static var _syncIntervalSeconds = minimumSyncIntervalSeconds;
@@ -48,9 +18,6 @@ class Background {
   static List<UuidValue> _repositoryIds = const [];
 
   static bool get _isSupported => Platform.isAndroid || Platform.isIOS;
-
-  static Stream<Map<String, RepositorySyncStatus>> stream() =>
-      _statusController.stream;
 
   static Future<void> init() async {
     Connectivity().onConnectivityChanged.listen(
@@ -75,7 +42,6 @@ class Background {
 
     if (_isSupported) {
       FlutterForegroundTask.initCommunicationPort();
-      FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
       _configureForegroundTask(RustContext.setting.value.periodicSyncInterval);
     } else {
       configurePeriodicSync(
@@ -224,14 +190,12 @@ class Background {
         Log.debug('Starting repository sync loop');
         for (final repositoryId in _repositoryIds) {
           Log.debug('Syncing repository $repositoryId');
+          if (!_syncEnabled) {
+            Log.debug('Syncing is disabled, skipping repository $repositoryId');
+            break outerLoop;
+          }
           try {
-            if (!_syncEnabled) {
-              Log.debug(
-                'Syncing is disabled, skipping repository $repositoryId',
-              );
-              break outerLoop;
-            }
-            await syncRepository(repositoryId);
+            await RepositorySyncMethod(id: repositoryId).execute();
             // ignore: avoid_catches_without_on_clauses
           } catch (error, stackTrace) {
             Log.error(
@@ -258,47 +222,6 @@ class Background {
       // ignore: only_throw_errors
       throw result.error;
     }
-  }
-
-  static Future<void> syncRepository(
-    UuidValue repositoryId, {
-    void Function(RepositorySyncStatus status)? onStatus,
-  }) async {
-    void publish({required bool syncing, String? error}) {
-      final status = RepositorySyncStatus(
-        repositoryId: repositoryId.uuid,
-        syncing: syncing,
-        error: error,
-      );
-      if (onStatus == null) {
-        _publish(status);
-      } else {
-        onStatus(status);
-      }
-    }
-
-    publish(syncing: true);
-
-    try {
-      await RustContext.execute(RepositorySyncMethod(id: repositoryId));
-      publish(syncing: false);
-    } catch (error) {
-      publish(syncing: false, error: error.toString());
-      rethrow;
-    }
-  }
-
-  static void _onReceiveTaskData(Object data) {
-    if (data is! Map) {
-      Log.error('Ignoring invalid repository sync update: $data');
-      return;
-    }
-    _publish(RepositorySyncStatus.fromMap(Map<String, dynamic>.from(data)));
-  }
-
-  static void _publish(RepositorySyncStatus status) {
-    _statuses[status.repositoryId] = status;
-    _statusController.add(Map.unmodifiable(_statuses));
   }
 
   static ForegroundTaskOptions _foregroundTaskOptions(int seconds) =>
@@ -357,11 +280,9 @@ class _RepositorySyncTaskHandler extends TaskHandler {
     try {
       for (final repositoryId in _repositoryIds) {
         try {
-          await Background.syncRepository(
-            UuidValue.fromString(repositoryId),
-            onStatus: (status) =>
-                FlutterForegroundTask.sendDataToMain(status.toMap()),
-          );
+          await RepositorySyncMethod(
+            id: UuidValue.fromString(repositoryId),
+          ).execute();
           // ignore: avoid_catches_without_on_clauses
         } catch (error) {
           Log.error('Repository sync failed for $repositoryId: $error');
