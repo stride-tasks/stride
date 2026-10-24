@@ -2,13 +2,15 @@ use anyhow::{Context as AnyhowContext, bail};
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
-use serde_json::{Value, json};
 use std::{
     path::{Path, PathBuf},
     process::ExitCode,
     sync::Arc,
 };
-use stride_api::{self as api, Task, TaskPriority, TaskStatus};
+use stride_api::{
+    self as api, RepositoryAddMethod, RepositoryListMethod, SettingGetMethod, SettingSetMethod,
+    Task, TaskPriority, TaskStatus,
+};
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
     SshKeyListHandler, SshKeyRemoveHandler, SshKeyUpdateHandler, known_hosts::KnownHosts,
@@ -50,68 +52,6 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
     }
 
     path.join(APPLICATION_ID)
-}
-
-fn load_settings(path: &Path) -> anyhow::Result<Value> {
-    let mut settings = if path.exists() {
-        serde_json::from_str(&std::fs::read_to_string(path)?)?
-    } else {
-        json!({})
-    };
-
-    if !settings.is_object() {
-        bail!("settings must be a JSON object");
-    }
-    if settings.get("repositories").is_none() {
-        settings["repositories"] = json!([]);
-    }
-    if settings
-        .get("repositories")
-        .is_some_and(|repositories| !repositories.is_array())
-    {
-        bail!("settings repositories must be a JSON array");
-    }
-
-    Ok(settings)
-}
-
-fn setting_uuid(settings: &Value, field: &str) -> anyhow::Result<Option<Uuid>> {
-    let Some(value) = settings.get(field) else {
-        return Ok(None);
-    };
-    if value.is_null() {
-        return Ok(None);
-    }
-
-    let value = value
-        .as_str()
-        .with_context(|| format!("settings field {field} must be a UUID string"))?;
-    Ok(Some(Uuid::parse_str(value).with_context(|| {
-        format!("settings field {field} contains an invalid UUID")
-    })?))
-}
-
-fn repository_uuid(repository: &Value) -> anyhow::Result<Uuid> {
-    let value = repository
-        .get("uuid")
-        .and_then(Value::as_str)
-        .context("repository is missing a valid UUID")?;
-    Uuid::parse_str(value).context("repository contains an invalid UUID")
-}
-
-fn first_repository_uuid(settings: &Value) -> anyhow::Result<Option<Uuid>> {
-    let Some(repositories) = settings.get("repositories") else {
-        return Ok(None);
-    };
-    let repositories = repositories
-        .as_array()
-        .context("settings repositories must be a JSON array")?;
-    repositories.first().map(repository_uuid).transpose()
-}
-
-fn save_settings(path: &Path, settings: &Value) -> anyhow::Result<()> {
-    std::fs::write(path, serde_json::to_vec_pretty(settings)?)?;
-    Ok(())
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -310,38 +250,6 @@ fn main() -> anyhow::Result<ExitCode> {
     std::fs::create_dir_all(support_dir.join(".ssh"))?;
     let known_paths = KnownPaths::new(support_dir.clone(), cache_dir.clone());
     stride_logging::init(&known_paths.logs);
-    let settings_path = support_dir.join("settings.json");
-    let mut settings = load_settings(&settings_path)?;
-
-    let current_repository = match setting_uuid(&settings, "current_repository")? {
-        Some(uuid) => Some(uuid),
-        None => first_repository_uuid(&settings)?,
-    };
-
-    let current_repository = if let Some(uuid) = current_repository {
-        uuid
-    } else {
-        let uuid = Uuid::now_v7();
-        std::fs::create_dir_all(support_dir.join("repository").join(uuid.to_string()))?;
-
-        settings["repositories"]
-            .as_array_mut()
-            .context("settings repositories must be a JSON array")?
-            .push(json!({ "uuid": uuid, "name": "unnamed" }));
-        settings["current_repository"] = json!(uuid);
-        save_settings(&settings_path, &settings)?;
-        uuid
-    };
-
-    let time_provider = Arc::new(SystemTimeProvider::default());
-    let clock = Clock::new(time_provider);
-
-    // let repository_path = known_paths.repository_path(current_repository);
-    let database_filepath = known_paths.database_filepath(current_repository);
-
-    let actor_id = ActorId::new(current_repository);
-    let mut database = Database::open(&database_filepath, actor_id, clock)?;
-    database.apply_migrations()?;
 
     let notifier = Box::new(CliNotifier);
     let engine = Engine::builder(known_paths)?
@@ -357,6 +265,39 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("ssh.key.update", SshKeyUpdateHandler)
         .command("ssh.key.remove", SshKeyRemoveHandler)
         .build();
+
+    let mut settings = engine.execute(SettingGetMethod {})?.setting;
+
+    let current_repository = match settings.current_repository {
+        Some(uuid) => Some(uuid),
+        None => engine
+            .execute(RepositoryListMethod {})?
+            .repositories
+            .first()
+            .map(|repository| repository.id),
+    };
+
+    let current_repository = if let Some(uuid) = current_repository {
+        uuid
+    } else {
+        let result = engine.execute(RepositoryAddMethod { name: None })?;
+        settings.current_repository = Some(result.repository_id);
+
+        engine.execute(SettingSetMethod {
+            setting: settings.clone(),
+        })?;
+
+        result.repository_id
+    };
+
+    let time_provider = Arc::new(SystemTimeProvider::default());
+    let clock = Clock::new(time_provider);
+
+    let database_filepath = engine.known_paths().database_filepath(current_repository);
+
+    let actor_id = ActorId::new(current_repository);
+    let mut database = Database::open(&database_filepath, actor_id, clock)?;
+    database.apply_migrations()?;
 
     match mode {
         Mode::Search { filter } => {
@@ -569,25 +510,25 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!()
         }
         Mode::Repository { uuid } => {
-            let repositories = settings
-                .get("repositories")
-                .and_then(Value::as_array)
-                .context("settings repositories must be a JSON array")?;
+            let repositories = engine.execute(RepositoryListMethod {})?.repositories;
+
             let mut repository = None;
             for candidate in repositories {
-                if repository_uuid(candidate)? == uuid {
+                if candidate.id == uuid {
                     repository = Some(candidate);
                     break;
                 }
             }
             let repository = repository.context("Repository with specified uuid was not found")?;
             let name = repository
-                .get("name")
-                .and_then(Value::as_str)
-                .unwrap_or("unnamed");
+                .name
+                .unwrap_or_else(|| "unnamed".to_string().into_boxed_str());
             println!("Switching to repository: {name}");
-            settings["current_repository"] = json!(uuid);
-            save_settings(&settings_path, &settings)?;
+
+            settings.current_repository = Some(uuid);
+            engine.execute(SettingSetMethod {
+                setting: settings.clone(),
+            })?;
         }
         Mode::Backend { command } => {
             backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;
