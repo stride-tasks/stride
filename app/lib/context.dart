@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -100,6 +101,31 @@ class RustContext {
     setting.addListener(() async {
       await SettingSetMethod(setting: setting.value).execute();
     });
+  }
+
+  static StreamSubscription<T> listenTo<T extends Notification>(
+    void Function(T event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return RustContext.stream()
+        .map((event) {
+          final methodName = NotificationRegistry.get<T>();
+          if (event.name == methodName) {
+            final params = jsonDecode(event.params);
+            return SerdeRegistry.get<T>().deserialize(params);
+          }
+          return null;
+        })
+        .where((event) => event != null)
+        .cast<T>()
+        .listen(
+          onData,
+          onError: onError,
+          onDone: onDone,
+          cancelOnError: cancelOnError,
+        );
   }
 
   static Future<String> executeErased(String method, String args) async {
