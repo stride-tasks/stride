@@ -40,6 +40,13 @@ class TaskController {
         }
       }),
     );
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryTaskRemovedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
   }
 
   void _onRepositoriesChanged() {
@@ -114,8 +121,8 @@ class TaskController {
         repositoryId: _requireRepositoryUuid(),
         task: task.copyWith(status: TaskStatus.deleted),
       ).execute();
+      _updateState(tasks: await _tasks());
     }
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> removeRepository(UuidValue id) => _dispatch(() async {
