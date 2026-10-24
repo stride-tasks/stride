@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Notification;
 import 'package:stride/api.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
@@ -20,27 +20,26 @@ class TaskController {
 
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
-  StreamSubscription<RepositoryChangedNotification>?
-  _repositoryChangedSubscription;
-  StreamSubscription<RepositoryTaskAddedNotification>? _taskAddedSubscription;
+  final List<StreamSubscription<Notification>> _subscriptions = [];
 
   TaskController() {
     RustContext.repositories.addListener(_onRepositoriesChanged);
     repositoryUuid = _currentRepositoryUuid();
 
-    _repositoryChangedSubscription =
-        RustContext.listenTo<RepositoryChangedNotification>((event) async {
-          if (event.repositoryId == repositoryUuid &&
-              event.changes.isNotEmpty) {
-            await fetch();
-          }
-        });
-    _taskAddedSubscription =
-        RustContext.listenTo<RepositoryTaskAddedNotification>((event) async {
-          if (event.repositoryId == repositoryUuid) {
-            await fetch();
-          }
-        });
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryChangedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid && event.changes.isNotEmpty) {
+          await fetch();
+        }
+      }),
+    );
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryTaskAddedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
   }
 
   void _onRepositoriesChanged() {
@@ -172,8 +171,10 @@ class TaskController {
   void dispose() {
     RustContext.repositories.removeListener(_onRepositoriesChanged);
     state.dispose();
-    _repositoryChangedSubscription?.cancel();
-    _taskAddedSubscription?.cancel();
+
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
   }
 }
 
