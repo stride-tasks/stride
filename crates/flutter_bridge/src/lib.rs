@@ -83,7 +83,7 @@ impl<T: Into<ErrorKind>> From<T> for RustError {
     }
 }
 
-type StreamCallback = extern "C" fn(*mut c_char);
+type StreamCallback = extern "C" fn(name: *mut c_char, params: *mut c_char);
 type OptionalStreamCallback = Option<StreamCallback>;
 
 static ENGINE: RwLock<Option<Arc<Engine>>> = RwLock::new(None);
@@ -96,24 +96,21 @@ impl Notifier for FlutterNotifier {
     fn notify(&self, _: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
         let name = notification.name();
         let value = notification.to_value();
-        let map = serde_json::json!({
-            "method": name,
-            "params": value,
-        });
 
         // The lock is held during the call so that `stride__clear_stream_callback`
         // returns only after no call to the callback is in flight.
         let guard = STREAM_CALLBACK
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
+
         if let Some(callback) = *guard {
-            let message = serde_json::to_string(&map)
-                .map_err(|error| stride_engine::Error::from(Box::new(error)))
-                .expect("method serialization should not fail");
-            let message = CString::new(message)
-                .map_err(|error| stride_engine::Error::from(Box::new(error)))
-                .expect("serialized JSON should not contain any null character");
-            callback(message.into_raw());
+            let method = CString::new(name)
+                .expect("method serialization should not contain any null character");
+            let params = CString::new(
+                serde_json::to_string(&value).expect("params serialization should not fail"),
+            )
+            .expect("params serialization should not contain any null character");
+            callback(method.into_raw(), params.into_raw());
         }
     }
 }

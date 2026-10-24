@@ -7,7 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/bridge.dart' show RustException;
+import 'package:stride/bridge.dart' show NativeNotification, RustException;
 import 'package:stride/context.dart';
 import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/logging.dart';
@@ -87,7 +87,7 @@ class _UserPromptListener extends StatefulWidget {
 }
 
 class _UserPromptListenerState extends State<_UserPromptListener> {
-  late final StreamSubscription<String> _subscription;
+  late final StreamSubscription<NativeNotification> _subscription;
 
   @override
   void initState() {
@@ -95,11 +95,10 @@ class _UserPromptListenerState extends State<_UserPromptListener> {
     _subscription = RustContext.stream().listen(_onNotification);
   }
 
-  void _onNotification(String event) {
-    final map = jsonDecode(event) as Map<String, dynamic>;
-    if (map['method'] != 'user.prompt') return;
+  void _onNotification(NativeNotification event) {
+    if (event.name != 'user.prompt') return;
 
-    final params = map['params'] as Map<String, dynamic>;
+    final params = jsonDecode(event.params) as Map<String, dynamic>;
     final notification = UserPromptNotification.fromJson(params);
     if (!mounted) return;
 

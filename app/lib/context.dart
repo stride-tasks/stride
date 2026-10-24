@@ -24,7 +24,7 @@ class RustContext {
   // Every isolate attaches to the already running worker on first use.
   static RustWorker get _worker => RustWorker.connect();
 
-  static Stream<String> stream() => _worker.notifications;
+  static Stream<NativeNotification> stream() => _worker.notifications;
 
   static Future<void> refreshRepositories() async {
     final result = await RepositoryListMethod().execute();
@@ -36,11 +36,9 @@ class RustContext {
     RustWorker.connect();
 
     stream().listen((event) async {
-      final json = jsonDecode(event) as Map<String, dynamic>;
-      final method = json['method'] as String;
-      final params = json['params'] as Map<String, dynamic>;
-      print('$method; $params');
-      if (method == 'repository.changed') {
+      final params = jsonDecode(event.params) as Map<String, dynamic>;
+      print('${event.name}; $params');
+      if (event.name == 'repository.changed') {
         final notification = RepositoryChangedNotification.fromJson(params);
         for (final change in notification.changes) {
           var title = change.title;
@@ -78,13 +76,13 @@ class RustContext {
             body,
           );
         }
-      } else if (method == 'repository.sync.started') {
+      } else if (event.name == 'repository.sync.started') {
         final notification = RepositorySyncStartedNotification.fromJson(params);
         syncingRepositories.value = {
           ...syncingRepositories.value,
           notification.repositoryId: const RepositoryStatus(syncing: true),
         };
-      } else if (method == 'repository.sync.stopped') {
+      } else if (event.name == 'repository.sync.stopped') {
         final notification = RepositorySyncStoppedNotification.fromJson(params);
         syncingRepositories.value = {
           ...syncingRepositories.value,

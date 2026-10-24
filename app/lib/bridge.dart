@@ -6,6 +6,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart';
 
 /// Why a Rust call failed.
 enum RustErrorKind {
@@ -42,6 +43,13 @@ class RustException implements Exception {
   String toString() => 'RustException(${kind.name}): $message';
 }
 
+@immutable
+class NativeNotification {
+  final String name;
+  final String params;
+  const NativeNotification(this.name, this.params);
+}
+
 /// Client of the single process-wide isolate that executes all Rust calls.
 ///
 /// [init] (from any isolate, app or background) starts the isolate and
@@ -57,7 +65,7 @@ class RustWorker {
   var _closed = false;
   final _responses = ReceivePort();
   // Subscribe to the worker's notifications only while someone listens.
-  late final _notifications = StreamController<String>.broadcast(
+  late final _notifications = StreamController<NativeNotification>.broadcast(
     onListen: () => _requests.send(['subscribe', _responses.sendPort]),
     onCancel: () => _requests.send(['unsubscribe', _responses.sendPort]),
   );
@@ -65,7 +73,7 @@ class RustWorker {
   final SendPort _requests;
 
   /// Broadcast stream of Rust notifications.
-  Stream<String> get notifications => _notifications.stream;
+  Stream<NativeNotification> get notifications => _notifications.stream;
 
   static RustWorker? _instance;
 
@@ -123,7 +131,10 @@ class RustWorker {
   Future<String> execute({required String method, required String args}) {
     if (_closed) {
       return Future.error(
-        const RustException(RustErrorKind.workerClosed, 'Rust worker client is closed'),
+        const RustException(
+          RustErrorKind.workerClosed,
+          'Rust worker client is closed',
+        ),
       );
     }
     final id = _nextId++;
@@ -144,7 +155,9 @@ class RustWorker {
     _closed = true;
     if (identical(_instance, this)) _instance = null;
     for (final completer in _pending.values) {
-      completer.completeError(RustException(RustErrorKind.workerClosed, reason));
+      completer.completeError(
+        RustException(RustErrorKind.workerClosed, reason),
+      );
     }
     _pending.clear();
     _responses.close();
@@ -156,7 +169,7 @@ class RustWorker {
   void _onMessage(Object? message) {
     final [id, ok, payload] = message! as List<Object?>;
     if (id == null) {
-      _notifications.add(payload! as String);
+      _notifications.add(payload! as NativeNotification);
       return;
     }
     if (id == _workerClosedId) {
@@ -187,14 +200,20 @@ class RustWorker {
     try {
       final native = loaded = _Native();
 
-      callback = NativeCallable<_Callback>.listener((Pointer<Utf8> pointer) {
+      callback = NativeCallable<_Callback>.listener((
+        Pointer<Utf8> namePointer,
+        Pointer<Utf8> paramsPointer,
+      ) {
         try {
-          final notification = [null, true, pointer.toDartString()];
+          final name = namePointer.toDartString();
+          final params = paramsPointer.toDartString();
+          final notification = [null, true, NativeNotification(name, params)];
           for (final subscriber in subscribers) {
             subscriber.send(notification);
           }
         } finally {
-          native.freeString(pointer);
+          native.freeString(namePointer);
+          native.freeString(paramsPointer);
         }
       });
 
@@ -275,7 +294,7 @@ class RustWorker {
   };
 }
 
-typedef _Callback = Void Function(Pointer<Utf8>);
+typedef _Callback = Void Function(Pointer<Utf8> name, Pointer<Utf8> params);
 typedef _CreateStream =
     Pointer<Utf8> Function(
       Pointer<Utf8>,
