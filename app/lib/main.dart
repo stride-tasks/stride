@@ -87,19 +87,17 @@ class _UserPromptListener extends StatefulWidget {
 }
 
 class _UserPromptListenerState extends State<_UserPromptListener> {
-  late final StreamSubscription<NativeNotification> _subscription;
+  late final StreamSubscription<UserPromptNotification> _subscription;
 
   @override
   void initState() {
     super.initState();
-    _subscription = RustContext.stream().listen(_onNotification);
+    _subscription = RustContext.listenTo<UserPromptNotification>(
+      _onNotification,
+    );
   }
 
-  void _onNotification(NativeNotification event) {
-    if (event.name != 'user.prompt') return;
-
-    final params = jsonDecode(event.params) as Map<String, dynamic>;
-    final notification = UserPromptNotification.fromJson(params);
+  void _onNotification(UserPromptNotification notification) {
     if (!mounted) return;
 
     final title = Text(
