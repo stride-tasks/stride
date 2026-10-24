@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:stride/api.dart';
+import 'package:stride/background.dart';
 import 'package:stride/bridge.dart';
 import 'package:stride/notifications.dart';
 import 'package:uuid/uuid.dart';
@@ -100,6 +101,14 @@ class RustContext {
 
     setting.addListener(() async {
       await SettingSetMethod(setting: setting.value).execute();
+
+      Background.configurePeriodicSync(
+        enabled: RustContext.setting.value.periodicSync,
+        repositoryIds: RustContext.repositories.value
+            .map((repository) => repository.id)
+            .toList(growable: false),
+        intervalSeconds: RustContext.setting.value.periodicSyncInterval,
+      );
     });
   }
 

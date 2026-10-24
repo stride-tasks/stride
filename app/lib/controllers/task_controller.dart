@@ -53,22 +53,12 @@ class TaskController {
   }
 
   Future<void> _handleRepositoriesChanged() async {
-    await _updatePeriodicSyncService();
-
     final nextRepositoryUuid = _currentRepositoryUuid();
     if (repositoryUuid != nextRepositoryUuid) {
       repositoryUuid = nextRepositoryUuid;
       await fetch();
     }
   }
-
-  Future<void> _updatePeriodicSyncService() => Background.configurePeriodicSync(
-    enabled: RustContext.setting.value.periodicSync,
-    repositoryIds: RustContext.repositories.value
-        .map((repository) => repository.id)
-        .toList(growable: false),
-    intervalSeconds: RustContext.setting.value.periodicSyncInterval,
-  );
 
   UuidValue? _currentRepositoryUuid() {
     final repositories = RustContext.repositories.value;
