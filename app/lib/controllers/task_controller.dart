@@ -8,16 +8,9 @@ import 'package:uuid/uuid.dart';
 
 class TaskState {
   final List<Task> tasks;
-  final bool syncing;
-  final Object? syncingError;
   final TaskQuery? query;
 
-  const TaskState({
-    required this.tasks,
-    this.syncing = false,
-    this.syncingError,
-    this.query,
-  });
+  const TaskState({required this.tasks, this.query});
 }
 
 class TaskController {
@@ -149,19 +142,14 @@ class TaskController {
   });
 
   Future<void> sync() => _dispatch(() async {
-    final tasks = await _tasks();
-    _updateState(tasks: tasks, syncing: true);
-
     try {
       final id = repositoryUuid ?? _currentRepositoryUuid();
       if (id != null) {
         await RepositorySyncMethod(id: id).execute();
       }
-    } catch (error) {
-      _updateState(tasks: tasks, syncingError: error);
-      rethrow;
+    } finally {
+      _updateState(tasks: await _tasks());
     }
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> filter(TaskQuery? query) => _dispatch(() async {
@@ -169,17 +157,8 @@ class TaskController {
     _updateState(tasks: await _tasks());
   });
 
-  void _updateState({
-    required List<Task> tasks,
-    bool syncing = false,
-    Object? syncingError,
-  }) {
-    state.value = TaskState(
-      tasks: tasks,
-      syncing: syncing,
-      syncingError: syncingError,
-      query: activeQuery,
-    );
+  void _updateState({required List<Task> tasks}) {
+    state.value = TaskState(tasks: tasks, query: activeQuery);
   }
 
   Future<void> _dispatch(Future<void> Function() action) async {
