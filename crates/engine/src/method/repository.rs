@@ -421,6 +421,11 @@ impl TypedCommandHandler for RepositoryTaskRemoveHandler {
         transaction.delete_task(method.task_id)?;
         transaction.commit()?;
 
+        engine.notify(Box::new(crate::api::RepositoryTaskRemovedNotification {
+            repository_id: method.repository_id,
+            task_id: method.task_id,
+        }));
+
         Ok(crate::api::RepositoryTaskRemoveMethodResult {})
     }
 }
