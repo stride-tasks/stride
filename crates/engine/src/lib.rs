@@ -8,6 +8,7 @@ mod error;
 mod known_paths;
 mod notifier;
 mod repository;
+mod runtime;
 
 pub mod method;
 

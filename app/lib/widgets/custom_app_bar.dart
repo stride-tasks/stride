@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:stride/background.dart';
 import 'package:stride/context.dart';
 import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/routes/settings_route.dart';
@@ -49,11 +48,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             if (hasRepositories)
               IconButton(
-                icon: StreamBuilder<Map<String, RepositorySyncStatus>>(
-                  stream: Background.stream(),
-                  builder: (context, snapshot) {
-                    final status = snapshot
-                        .data?[context.taskController.repositoryUuid?.uuid];
+                icon: ValueListenableBuilder(
+                  valueListenable: RustContext.syncingRepositories,
+                  builder: (context, state, child) {
+                    final status = state[context.taskController.repositoryUuid];
 
                     if (status == null) {
                       return Icon(Icons.sync);

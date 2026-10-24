@@ -1,5 +1,5 @@
+use crate::Engine;
 use crate::engine::Notification;
-use crate::{Engine, Result};
 
 use std::fmt::Debug;
 use std::sync::Arc;
@@ -9,7 +9,7 @@ pub trait Notifier: Debug + Send + Sync + 'static {
     ///
     /// # Errors
     /// Returns an error if the notification could not be sent for any reason.
-    fn notify(&self, engine: &Arc<Engine>, notification: Box<dyn Notification>) -> Result<()>;
+    fn notify(&self, engine: &Arc<Engine>, notification: Box<dyn Notification>);
 }
 
 /// A no-op notifier that does nothing when notified.
@@ -17,7 +17,5 @@ pub trait Notifier: Debug + Send + Sync + 'static {
 pub struct NoopNotifier;
 
 impl Notifier for NoopNotifier {
-    fn notify(&self, _: &Arc<Engine>, _: Box<dyn Notification>) -> Result<()> {
-        Ok(())
-    }
+    fn notify(&self, _: &Arc<Engine>, _: Box<dyn Notification>) {}
 }

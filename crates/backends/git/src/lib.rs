@@ -950,9 +950,11 @@ impl Backend for GitBackend {
         match self.sync_impl(db) {
             Ok(diff) => Ok(diff),
             Err(Error::UnknownHost { host }) => {
-                context.clone().notify(Box::new(PromptNotification::new(
-                    AddUnknownHostPrompt { host: host.clone() },
-                )))?;
+                context
+                    .clone()
+                    .notify(Box::new(PromptNotification::new(AddUnknownHostPrompt {
+                        host: host.clone(),
+                    })));
                 Err(Box::new(Error::UnknownHost { host }).into())
             }
             Err(err) => Err(Box::new(err).into()),

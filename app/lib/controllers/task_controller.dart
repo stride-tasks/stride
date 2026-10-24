@@ -164,7 +164,7 @@ class TaskController {
     try {
       final id = repositoryUuid ?? _currentRepositoryUuid();
       if (id != null) {
-        await Background.syncRepository(id);
+        await RepositorySyncMethod(id: id).execute();
       }
     } catch (error) {
       _updateState(tasks: tasks, syncingError: error);
