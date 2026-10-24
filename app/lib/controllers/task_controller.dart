@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:stride/api.dart';
-import 'package:stride/background.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
@@ -28,24 +27,20 @@ class TaskController {
 
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
+  StreamSubscription<RepositoryChangedNotification>?
+  _repositoryChangedSubscription;
 
   TaskController() {
     RustContext.repositories.addListener(_onRepositoriesChanged);
     repositoryUuid = _currentRepositoryUuid();
-    unawaited(_dispatch(_updatePeriodicSyncService));
-    RustContext.setting.addListener(_onPeriodicSyncChanged);
-  }
 
-  Future<void> _onPeriodicSyncChanged() async {
-    await _dispatch(() async {
-      await _updatePeriodicSyncService();
-
-      final nextRepositoryUuid = _currentRepositoryUuid();
-      if (repositoryUuid != nextRepositoryUuid) {
-        repositoryUuid = nextRepositoryUuid;
-        await fetch();
-      }
-    });
+    _repositoryChangedSubscription =
+        RustContext.listenTo<RepositoryChangedNotification>((event) async {
+          if (event.repositoryId == repositoryUuid &&
+              event.changes.isNotEmpty) {
+            await fetch();
+          }
+        });
   }
 
   void _onRepositoriesChanged() {
@@ -191,8 +186,8 @@ class TaskController {
 
   void dispose() {
     RustContext.repositories.removeListener(_onRepositoriesChanged);
-    RustContext.setting.removeListener(_onPeriodicSyncChanged);
     state.dispose();
+    _repositoryChangedSubscription?.cancel();
   }
 }
 
