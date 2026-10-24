@@ -1,7 +1,7 @@
+use futures_lite::future;
 use smol::{Executor, Task};
-
 use std::num::NonZeroUsize;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 
 #[derive(Debug)]
@@ -11,7 +11,7 @@ pub(crate) struct Runtime {
     #[allow(unused)]
     shutdown_tx: async_channel::Sender<()>,
     #[allow(unused)]
-    workers: Vec<JoinHandle<()>>,
+    workers: Mutex<Vec<JoinHandle<()>>>,
 }
 
 impl Runtime {
@@ -43,7 +43,7 @@ impl Runtime {
         Self {
             executor,
             shutdown_tx,
-            workers,
+            workers: Mutex::new(workers),
         }
     }
 
@@ -52,5 +52,24 @@ impl Runtime {
         future: impl Future<Output = T> + Send + 'static,
     ) -> Task<T> {
         self.executor.spawn(future)
+    }
+
+    pub(crate) fn wait_for_tasks(&self) {
+        // Close the shutdown channel to signal all workers to stop.
+        self.shutdown_tx.close();
+
+        future::block_on(async {
+            if !self.executor.is_empty() {
+                self.executor.tick().await;
+            }
+        });
+
+        let mut lock = self
+            .workers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        for worker in lock.drain(..) {
+            let _result = worker.join();
+        }
     }
 }

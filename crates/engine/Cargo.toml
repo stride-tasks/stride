@@ -24,6 +24,7 @@ thiserror.workspace = true
 log.workspace = true
 smol.workspace = true
 async-channel.workspace = true
+futures-lite.workspace = true
 
 [lints]
 workspace = true

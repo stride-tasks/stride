@@ -84,6 +84,7 @@ comfy-table = "8.0.1"
 indexmap = "2.14.2"
 smol = "2.0.2"
 async-channel = "2.5.0"
+futures-lite = "2.6.1"
 
 [profile.release]
 # strip = "debug"
