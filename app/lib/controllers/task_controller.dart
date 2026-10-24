@@ -29,6 +29,7 @@ class TaskController {
   TaskQuery? activeQuery;
   StreamSubscription<RepositoryChangedNotification>?
   _repositoryChangedSubscription;
+  StreamSubscription<RepositoryTaskAddedNotification>? _taskAddedSubscription;
 
   TaskController() {
     RustContext.repositories.addListener(_onRepositoriesChanged);
@@ -38,6 +39,12 @@ class TaskController {
         RustContext.listenTo<RepositoryChangedNotification>((event) async {
           if (event.repositoryId == repositoryUuid &&
               event.changes.isNotEmpty) {
+            await fetch();
+          }
+        });
+    _taskAddedSubscription =
+        RustContext.listenTo<RepositoryTaskAddedNotification>((event) async {
+          if (event.repositoryId == repositoryUuid) {
             await fetch();
           }
         });
@@ -102,7 +109,6 @@ class TaskController {
       repositoryId: _requireRepositoryUuid(),
       task: task,
     ).execute();
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> removeTask(Task task) => _dispatch(() async {
@@ -188,6 +194,7 @@ class TaskController {
     RustContext.repositories.removeListener(_onRepositoriesChanged);
     state.dispose();
     _repositoryChangedSubscription?.cancel();
+    _taskAddedSubscription?.cancel();
   }
 }
 
