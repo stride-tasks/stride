@@ -102,6 +102,7 @@ abstract class Notification {
 ";
 
 #[must_use]
+#[allow(clippy::too_many_lines)]
 pub fn render_dart(nodes: &[Node]) -> String {
     let mut output = Vec::new();
     output.push(PRELUDE.trim().to_owned());
@@ -113,9 +114,15 @@ pub fn render_dart(nodes: &[Node]) -> String {
   static final Map<Type, SerdeFactory<dynamic>> _registry = {"
             .into(),
     );
-    for (is_struct, type_name, serde_name) in type_names {
+    for TypeName {
+        is_struct,
+        type_name,
+        serde_name,
+        ..
+    } in &type_names
+    {
         output.push(format!("    {type_name}: const _{serde_name}Serde(),"));
-        if is_struct {
+        if *is_struct {
             output.push(format!("    _{type_name}: const _{serde_name}Serde(),"));
         }
     }
@@ -140,6 +147,55 @@ pub fn render_dart(nodes: &[Node]) -> String {
       throw Exception('No SerdeFactory registered for type $type');
     }
     return factory;
+  }
+}
+"
+        .into(),
+    );
+
+    output.push(
+        r"class NotificationRegistry {
+  static final Map<Type, String> _registry = {"
+            .into(),
+    );
+    for TypeName {
+        is_struct,
+        method_name,
+        type_name,
+        ..
+    } in type_names
+        .iter()
+        .filter(|type_name| type_name.is_notification)
+        .filter(|type_name| type_name.method_name.is_some())
+    {
+        if let Some(method_name) = method_name {
+            output.push(format!("    {type_name}: '{method_name}',"));
+            if *is_struct {
+                output.push(format!("    _{type_name}: '{method_name}',"));
+            }
+        }
+    }
+    output.push(
+        r"  };
+
+  static void register<T>(String name) {
+    _registry[T] = name;
+  }
+
+  static String get<T>() {
+    final name = _registry[T];
+    if (name == null) {
+      throw Exception('No notification registered for type $T');
+    }
+    return name;
+  }
+
+  static String getByType(Type type) {
+    final name = _registry[type];
+    if (name == null) {
+      throw Exception('No notification registered for type $type');
+    }
+    return name;
   }
 }
 "
@@ -192,15 +248,33 @@ pub fn render_dart(nodes: &[Node]) -> String {
     output.join("\n")
 }
 
-fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String, String)> {
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+struct TypeName {
+    is_struct: bool,
+    is_notification: bool,
+    method_name: Option<String>,
+    #[allow(clippy::struct_field_names)]
+    type_name: String,
+    serde_name: String,
+}
+
+fn collect_type_names(nodes: &[Node]) -> Vec<TypeName> {
     fn add_name(
         is_struct: bool,
+        is_notification: bool,
+        method_name: Option<&str>,
         name: &str,
         serde_name: &str,
-        names: &mut Vec<(bool, String, String)>,
-        seen: &mut std::collections::HashSet<(bool, String, String)>,
+        names: &mut Vec<TypeName>,
+        seen: &mut std::collections::HashSet<TypeName>,
     ) {
-        let entry = (is_struct, name.to_owned(), serde_name.to_owned());
+        let entry = TypeName {
+            is_struct,
+            is_notification,
+            method_name: method_name.map(ToOwned::to_owned),
+            type_name: name.to_owned(),
+            serde_name: serde_name.to_owned(),
+        };
         if seen.insert(entry.clone()) {
             names.push(entry);
         }
@@ -209,11 +283,25 @@ fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String, String)> {
     fn collect_struct(
         strukt: &StructNode,
         name_override: Option<&str>,
-        names: &mut Vec<(bool, String, String)>,
-        seen: &mut std::collections::HashSet<(bool, String, String)>,
+        names: &mut Vec<TypeName>,
+        seen: &mut std::collections::HashSet<TypeName>,
     ) {
         let name = name_override.unwrap_or(&strukt.name);
-        add_name(true, name, name, names, seen);
+        add_name(true, false, None, name, name, names, seen);
+        for field in &strukt.fields {
+            collect_type(&field.typ, names, seen);
+        }
+    }
+
+    fn collect_notification(
+        strukt: &StructNode,
+        method_name: Option<&str>,
+        name_override: Option<&str>,
+        names: &mut Vec<TypeName>,
+        seen: &mut std::collections::HashSet<TypeName>,
+    ) {
+        let name = name_override.unwrap_or(&strukt.name);
+        add_name(true, true, method_name, name, name, names, seen);
         for field in &strukt.fields {
             collect_type(&field.typ, names, seen);
         }
@@ -221,17 +309,17 @@ fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String, String)> {
 
     fn collect_type(
         type_node: &TypeNode,
-        names: &mut Vec<(bool, String, String)>,
-        seen: &mut std::collections::HashSet<(bool, String, String)>,
+        names: &mut Vec<TypeName>,
+        seen: &mut std::collections::HashSet<TypeName>,
     ) {
         match type_node {
             TypeNode::Struct(strukt) => collect_struct(strukt, None, names, seen),
             TypeNode::Enum(enum_) => {
-                add_name(false, &enum_.name, &enum_.name, names, seen);
+                add_name(false, false, None, &enum_.name, &enum_.name, names, seen);
                 if enum_.tag.is_some() {
                     for variant in &enum_.variants {
                         let variant_name = format!("{}_{}", enum_.name, variant.name);
-                        add_name(false, &variant_name, &enum_.name, names, seen);
+                        add_name(false, false, None, &variant_name, &enum_.name, names, seen);
                     }
                 }
             }
@@ -255,7 +343,13 @@ fn collect_type_names(nodes: &[Node]) -> Vec<(bool, String, String)> {
             }
             Node::Notification(notification) => {
                 if let TypeNode::Struct(params) = &notification.params {
-                    collect_struct(params, Some(&notification.name), &mut names, &mut seen);
+                    collect_notification(
+                        params,
+                        Some(&notification.method_name),
+                        Some(&notification.name),
+                        &mut names,
+                        &mut seen,
+                    );
                 } else {
                     collect_type(&notification.params, &mut names, &mut seen);
                 }
