@@ -599,5 +599,7 @@ fn main() -> anyhow::Result<ExitCode> {
         }
     }
 
+    engine.wait_for_tasks();
+
     Ok(ExitCode::SUCCESS)
 }
