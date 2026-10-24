@@ -59,6 +59,7 @@ struct CliNotifier;
 
 impl stride_engine::Notifier for CliNotifier {
     fn notify(&self, context: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
+        log::trace!("Received: {}", notification.name());
         let notification_any: &dyn std::any::Any = &*notification;
         if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
             let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
@@ -430,7 +431,7 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!("undo")
         }
         Mode::Sync { backend: _name } => {
-            let _result = engine.clone().execute(api::RepositorySyncMethod {
+            engine.clone().execute(api::RepositorySyncMethod {
                 id: current_repository,
                 backends: None,
             })?;
