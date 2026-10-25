@@ -102,105 +102,13 @@ abstract class Notification {
 ";
 
 #[must_use]
-#[allow(clippy::too_many_lines)]
 pub fn render_dart(nodes: &[Node]) -> String {
     let mut output = Vec::new();
     output.push(PRELUDE.trim().to_owned());
 
     let type_names = collect_type_names(nodes);
-
-    output.push(
-        r"class SerdeRegistry {
-  static final Map<Type, SerdeFactory<dynamic>> _registry = {"
-            .into(),
-    );
-    for TypeName {
-        is_struct,
-        type_name,
-        serde_name,
-        ..
-    } in &type_names
-    {
-        output.push(format!("    {type_name}: const _{serde_name}Serde(),"));
-        if *is_struct {
-            output.push(format!("    _{type_name}: const _{serde_name}Serde(),"));
-        }
-    }
-    output.push(
-        r"  };
-
-  static void register<T>(SerdeFactory<T> factory) {
-    _registry[T] = factory;
-  }
-
-  static SerdeFactory<T> get<T>() {
-    final factory = _registry[T];
-    if (factory == null) {
-      throw Exception('No SerdeFactory registered for type $T');
-    }
-    return factory as SerdeFactory<T>;
-  }
-
-  static SerdeFactory<dynamic> getByType(Type type) {
-    final factory = _registry[type];
-    if (factory == null) {
-      throw Exception('No SerdeFactory registered for type $type');
-    }
-    return factory;
-  }
-}
-"
-        .into(),
-    );
-
-    output.push(
-        r"class NotificationRegistry {
-  static final Map<Type, String> _registry = {"
-            .into(),
-    );
-    for TypeName {
-        is_struct,
-        method_name,
-        type_name,
-        ..
-    } in type_names
-        .iter()
-        .filter(|type_name| type_name.is_notification)
-        .filter(|type_name| type_name.method_name.is_some())
-    {
-        if let Some(method_name) = method_name {
-            output.push(format!("    {type_name}: '{method_name}',"));
-            if *is_struct {
-                output.push(format!("    _{type_name}: '{method_name}',"));
-            }
-        }
-    }
-    output.push(
-        r"  };
-
-  static void register<T>(String name) {
-    _registry[T] = name;
-  }
-
-  static String get<T>() {
-    final name = _registry[T];
-    if (name == null) {
-      throw Exception('No notification registered for type $T');
-    }
-    return name;
-  }
-
-  static String getByType(Type type) {
-    final name = _registry[type];
-    if (name == null) {
-      throw Exception('No notification registered for type $type');
-    }
-    return name;
-  }
-}
-"
-        .into(),
-    );
+    render_serde_registry(&type_names, &mut output);
+    render_notification_registry(&type_names, &mut output);
 
     for node in nodes {
         match node {
@@ -246,6 +154,103 @@ pub fn render_dart(nodes: &[Node]) -> String {
     output.push("// dart format on".to_owned());
 
     output.join("\n")
+}
+
+fn render_serde_registry(types: &[TypeName], output: &mut Vec<String>) {
+    output.push(
+        r"class SerdeRegistry {
+  static final Map<Type, SerdeFactory<dynamic>> _registry = {"
+            .into(),
+    );
+    for TypeName {
+        is_struct,
+        type_name,
+        serde_name,
+        ..
+    } in types
+    {
+        output.push(format!("    {type_name}: const _{serde_name}Serde(),"));
+        if *is_struct {
+            output.push(format!("    _{type_name}: const _{serde_name}Serde(),"));
+        }
+    }
+    output.push(
+        r"  };
+
+  static void register<T>(SerdeFactory<T> factory) {
+    _registry[T] = factory;
+  }
+
+  static SerdeFactory<T> get<T>() {
+    final factory = _registry[T];
+    if (factory == null) {
+      throw Exception('No SerdeFactory registered for type $T');
+    }
+    return factory as SerdeFactory<T>;
+  }
+
+  static SerdeFactory<dynamic> getByType(Type type) {
+    final factory = _registry[type];
+    if (factory == null) {
+      throw Exception('No SerdeFactory registered for type $type');
+    }
+    return factory;
+  }
+}
+"
+        .into(),
+    );
+}
+
+fn render_notification_registry(types: &[TypeName], output: &mut Vec<String>) {
+    output.push(
+        r"class NotificationRegistry {
+  static final Map<Type, String> _registry = {"
+            .into(),
+    );
+    for TypeName {
+        is_struct,
+        method_name,
+        type_name,
+        ..
+    } in types
+        .iter()
+        .filter(|type_name| type_name.is_notification)
+        .filter(|type_name| type_name.method_name.is_some())
+    {
+        if let Some(method_name) = method_name {
+            output.push(format!("    {type_name}: '{method_name}',"));
+            if *is_struct {
+                output.push(format!("    _{type_name}: '{method_name}',"));
+            }
+        }
+    }
+    output.push(
+        r"  };
+
+  static void register<T>(String name) {
+    _registry[T] = name;
+  }
+
+  static String get<T>() {
+    final name = _registry[T];
+    if (name == null) {
+      throw Exception('No notification registered for type $T');
+    }
+    return name;
+  }
+
+  static String getByType(Type type) {
+    final name = _registry[type];
+    if (name == null) {
+      throw Exception('No notification registered for type $type');
+    }
+    return name;
+  }
+}
+"
+        .into(),
+    );
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
