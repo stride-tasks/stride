@@ -7,6 +7,7 @@ import 'dart:ui';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
+import 'package:stride/api.dart';
 
 /// Why a Rust call failed.
 enum RustErrorKind {
@@ -70,7 +71,7 @@ class RustWorker {
   var _closed = false;
   final _responses = ReceivePort();
   // Subscribe to the worker's notifications only while someone listens.
-  late final _notifications = StreamController<NativeNotification>.broadcast(
+  late final _notifications = StreamController<Notification>.broadcast(
     onListen: () => _requests.send(['subscribe', _responses.sendPort]),
     onCancel: () => _requests.send(['unsubscribe', _responses.sendPort]),
   );
@@ -78,7 +79,7 @@ class RustWorker {
   final SendPort _requests;
 
   /// Broadcast stream of Rust notifications.
-  Stream<NativeNotification> get notifications => _notifications.stream;
+  Stream<Notification> get notifications => _notifications.stream;
 
   static RustWorker? _instance;
 
@@ -174,7 +175,16 @@ class RustWorker {
   void _onMessage(Object? message) {
     final [id, ok, payload] = message! as List<Object?>;
     if (id == null) {
-      _notifications.add(payload! as NativeNotification);
+      final notification = payload! as NativeNotification;
+      try {
+        final type = NotificationRegistry.getTypeByName(notification.getName());
+        final json = jsonDecode(notification.params);
+        final deserialized = SerdeRegistry.getByType(type).deserialize(json);
+
+        _notifications.add(deserialized as Notification);
+      } catch (_) {
+        _notifications.add(notification);
+      }
       return;
     }
     if (id == _workerClosedId) {

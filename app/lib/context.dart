@@ -26,7 +26,7 @@ class RustContext {
   // Every isolate attaches to the already running worker on first use.
   static RustWorker get _worker => RustWorker.connect();
 
-  static Stream<NativeNotification> stream() => _worker.notifications;
+  static Stream<Notification> stream() => _worker.notifications;
 
   static Future<void> refreshRepositories() async {
     final result = await RepositoryListMethod().execute();
@@ -37,11 +37,9 @@ class RustContext {
     await RustWorker.init(supportPath: supportPath, cachePath: cachePath);
     RustWorker.connect();
 
-    stream().listen((event) async {
-      final params = jsonDecode(event.params) as Map<String, dynamic>;
-      print('${event.name}; $params');
-      if (event.name == 'repository.changed') {
-        final notification = RepositoryChangedNotification.fromJson(params);
+    stream().listen((notification) async {
+      print('${notification.getName()}; $notification');
+      if (notification is RepositoryChangedNotification) {
         for (final change in notification.changes) {
           var title = change.title;
 
@@ -78,14 +76,12 @@ class RustContext {
             body,
           );
         }
-      } else if (event.name == 'repository.sync.started') {
-        final notification = RepositorySyncStartedNotification.fromJson(params);
+      } else if (notification is RepositorySyncStartedNotification) {
         syncingRepositories.value = {
           ...syncingRepositories.value,
           notification.repositoryId: const RepositoryStatus(syncing: true),
         };
-      } else if (event.name == 'repository.sync.stopped') {
-        final notification = RepositorySyncStoppedNotification.fromJson(params);
+      } else if (notification is RepositorySyncStoppedNotification) {
         syncingRepositories.value = {
           ...syncingRepositories.value,
           notification.repositoryId: RepositoryStatus(
@@ -119,14 +115,7 @@ class RustContext {
     bool? cancelOnError,
   }) {
     return RustContext.stream()
-        .map((event) {
-          final methodName = NotificationRegistry.get<T>();
-          if (event.name == methodName) {
-            final params = jsonDecode(event.params);
-            return SerdeRegistry.get<T>().deserialize(params);
-          }
-          return null;
-        })
+        .map((notification) => notification is T ? notification : null)
         .where((event) => event != null)
         .cast<T>()
         .listen(
