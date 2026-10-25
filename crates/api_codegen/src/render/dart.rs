@@ -92,6 +92,7 @@ abstract class SerdeFactory<T> {
 }
 
 abstract class Method<Result> {
+  const Method();
   String getName();
 }
 
