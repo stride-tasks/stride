@@ -47,6 +47,13 @@ class TaskController {
         }
       }),
     );
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryTaskUpdatedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
   }
 
   void _onRepositoriesChanged() {
@@ -121,7 +128,6 @@ class TaskController {
         repositoryId: _requireRepositoryUuid(),
         task: task.copyWith(status: TaskStatus.deleted),
       ).execute();
-      _updateState(tasks: await _tasks());
     }
   });
 
@@ -136,7 +142,6 @@ class TaskController {
           repositoryId: _requireRepositoryUuid(),
           task: task.copyWith(status: status),
         ).execute();
-        _updateState(tasks: await _tasks());
       });
 
   Future<void> updateTask(Task task) => _dispatch(() async {
@@ -144,7 +149,6 @@ class TaskController {
       repositoryId: _requireRepositoryUuid(),
       task: task,
     ).execute();
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> sync() => _dispatch(() async {
