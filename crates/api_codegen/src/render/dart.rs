@@ -249,6 +249,14 @@ fn render_notification_registry(types: &[TypeName], output: &mut Vec<String>) {
     }
     return name;
   }
+
+  static Type getTypeByName(String name) {
+    final entry = _registry.entries.firstWhere(
+      (e) => e.value == name,
+      orElse: () => throw Exception('No notification registered with name $name'),
+    );
+    return entry.key;
+  }
 }
 "
         .into(),
