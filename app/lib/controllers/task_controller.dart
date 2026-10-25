@@ -1,24 +1,16 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Notification;
 import 'package:stride/api.dart';
-import 'package:stride/background.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskState {
   final List<Task> tasks;
-  final bool syncing;
-  final Object? syncingError;
   final TaskQuery? query;
 
-  const TaskState({
-    required this.tasks,
-    this.syncing = false,
-    this.syncingError,
-    this.query,
-  });
+  const TaskState({required this.tasks, this.query});
 }
 
 class TaskController {
@@ -28,24 +20,40 @@ class TaskController {
 
   UuidValue? repositoryUuid;
   TaskQuery? activeQuery;
+  final List<StreamSubscription<Notification>> _subscriptions = [];
 
   TaskController() {
     RustContext.repositories.addListener(_onRepositoriesChanged);
     repositoryUuid = _currentRepositoryUuid();
-    unawaited(_dispatch(_updatePeriodicSyncService));
-    RustContext.setting.addListener(_onPeriodicSyncChanged);
-  }
 
-  Future<void> _onPeriodicSyncChanged() async {
-    await _dispatch(() async {
-      await _updatePeriodicSyncService();
-
-      final nextRepositoryUuid = _currentRepositoryUuid();
-      if (repositoryUuid != nextRepositoryUuid) {
-        repositoryUuid = nextRepositoryUuid;
-        await fetch();
-      }
-    });
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryChangedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid && event.changes.isNotEmpty) {
+          await fetch();
+        }
+      }),
+    );
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryTaskAddedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryTaskRemovedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
+    _subscriptions.add(
+      RustContext.listenTo<RepositoryTaskUpdatedNotification>((event) async {
+        if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
   }
 
   void _onRepositoriesChanged() {
@@ -53,22 +61,12 @@ class TaskController {
   }
 
   Future<void> _handleRepositoriesChanged() async {
-    await _updatePeriodicSyncService();
-
     final nextRepositoryUuid = _currentRepositoryUuid();
     if (repositoryUuid != nextRepositoryUuid) {
       repositoryUuid = nextRepositoryUuid;
       await fetch();
     }
   }
-
-  Future<void> _updatePeriodicSyncService() => Background.configurePeriodicSync(
-    enabled: RustContext.setting.value.periodicSync,
-    repositoryIds: RustContext.repositories.value
-        .map((repository) => repository.id)
-        .toList(growable: false),
-    intervalSeconds: RustContext.setting.value.periodicSyncInterval,
-  );
 
   UuidValue? _currentRepositoryUuid() {
     final repositories = RustContext.repositories.value;
@@ -117,7 +115,6 @@ class TaskController {
       repositoryId: _requireRepositoryUuid(),
       task: task,
     ).execute();
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> removeTask(Task task) => _dispatch(() async {
@@ -132,7 +129,6 @@ class TaskController {
         task: task.copyWith(status: TaskStatus.deleted),
       ).execute();
     }
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> removeRepository(UuidValue id) => _dispatch(() async {
@@ -146,7 +142,6 @@ class TaskController {
           repositoryId: _requireRepositoryUuid(),
           task: task.copyWith(status: status),
         ).execute();
-        _updateState(tasks: await _tasks());
       });
 
   Future<void> updateTask(Task task) => _dispatch(() async {
@@ -154,23 +149,17 @@ class TaskController {
       repositoryId: _requireRepositoryUuid(),
       task: task,
     ).execute();
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> sync() => _dispatch(() async {
-    final tasks = await _tasks();
-    _updateState(tasks: tasks, syncing: true);
-
     try {
       final id = repositoryUuid ?? _currentRepositoryUuid();
       if (id != null) {
         await RepositorySyncMethod(id: id).execute();
       }
-    } catch (error) {
-      _updateState(tasks: tasks, syncingError: error);
-      rethrow;
+    } finally {
+      _updateState(tasks: await _tasks());
     }
-    _updateState(tasks: await _tasks());
   });
 
   Future<void> filter(TaskQuery? query) => _dispatch(() async {
@@ -178,17 +167,8 @@ class TaskController {
     _updateState(tasks: await _tasks());
   });
 
-  void _updateState({
-    required List<Task> tasks,
-    bool syncing = false,
-    Object? syncingError,
-  }) {
-    state.value = TaskState(
-      tasks: tasks,
-      syncing: syncing,
-      syncingError: syncingError,
-      query: activeQuery,
-    );
+  void _updateState({required List<Task> tasks}) {
+    state.value = TaskState(tasks: tasks, query: activeQuery);
   }
 
   Future<void> _dispatch(Future<void> Function() action) async {
@@ -201,8 +181,11 @@ class TaskController {
 
   void dispose() {
     RustContext.repositories.removeListener(_onRepositoriesChanged);
-    RustContext.setting.removeListener(_onPeriodicSyncChanged);
     state.dispose();
+
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
   }
 }
 

@@ -2296,6 +2296,7 @@ version = "0.1.0"
 dependencies = [
  "async-channel",
  "chrono",
+ "futures-lite",
  "log",
  "smol",
  "stride_api",

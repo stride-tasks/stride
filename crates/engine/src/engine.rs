@@ -196,6 +196,10 @@ impl Engine {
     pub fn backends(self: &Arc<Self>) -> &BackendRegistry {
         &self.backends
     }
+
+    pub fn wait_for_tasks(self: &Arc<Self>) {
+        self.runtime.wait_for_tasks();
+    }
 }
 
 pub trait Notification: std::fmt::Debug + std::any::Any + 'static {
