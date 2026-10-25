@@ -44,10 +44,15 @@ class RustException implements Exception {
 }
 
 @immutable
-class NativeNotification {
+class NativeNotification extends Notification {
   final String name;
   final String params;
   const NativeNotification(this.name, this.params);
+
+  @override
+  String getName() {
+    return name;
+  }
 }
 
 /// Client of the single process-wide isolate that executes all Rust calls.
