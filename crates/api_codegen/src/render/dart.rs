@@ -97,7 +97,8 @@ abstract class Method<Result> {
 }
 
 abstract class Notification {
-    String getName();
+  const Notification();
+  String getName();
 }
 
 ";
