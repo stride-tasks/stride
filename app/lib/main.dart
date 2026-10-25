@@ -7,7 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:stride/api.dart';
 import 'package:stride/background.dart';
-import 'package:stride/bridge.dart' show NativeNotification, RustException;
+import 'package:stride/bridge.dart' show RustException;
 import 'package:stride/context.dart';
 import 'package:stride/controllers/task_controller.dart';
 import 'package:stride/logging.dart';
