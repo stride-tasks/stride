@@ -397,8 +397,18 @@ impl TypedCommandHandler for RepositoryTaskUpdateHandler {
 
         let mut database = repository.lock_database();
         let mut transaction = database.transaction()?;
-        transaction.update_task_with(task.id, |_| Ok(task))?;
+        let mut previous = None;
+        let current = transaction.update_task_with(task.id, |existing| {
+            previous = Some(existing);
+            Ok(task)
+        })?;
         transaction.commit()?;
+
+        engine.notify(Box::new(crate::api::RepositoryTaskUpdatedNotification {
+            repository_id: method.repository_id,
+            previous: previous.unwrap(),
+            current,
+        }));
 
         Ok(crate::api::RepositoryTaskUpdateMethodResult {})
     }
