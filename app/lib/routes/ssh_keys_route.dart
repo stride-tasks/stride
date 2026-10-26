@@ -83,10 +83,11 @@ class _SshKeysRouteState extends State<SshKeysRoute> {
       ),
       floatingActionButton: IconButton(
         icon: const Icon(Icons.add_circle_outline, size: 50),
-        onPressed: () {
-          Navigator.of(context).push<void>(
+        onPressed: () async {
+          await Navigator.of(context).push<void>(
             MaterialPageRoute(builder: (context) => const SshKeyAddRoute()),
           );
+          setState(_reset);
         },
       ),
     );
