@@ -38,7 +38,9 @@ class RustContext {
     RustWorker.connect();
 
     stream().listen((notification) async {
-      print('${notification.getName()}; $notification');
+      if (kDebugMode) {
+        debugPrint('${notification.getName()}; $notification');
+      }
       if (notification is RepositoryChangedNotification) {
         for (final change in notification.changes) {
           var title = change.title;
