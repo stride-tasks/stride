@@ -87,7 +87,7 @@ class _PluginListRouteState extends State<PluginListRoute> {
               filePath: filepath,
             ).execute()).plugin;
             if (context.mounted) {
-              Navigator.of(context).push<void>(
+              await Navigator.of(context).push<void>(
                 MaterialPageRoute(
                   builder: (context) => PluginRoute(
                     plugin: manifest,
@@ -95,6 +95,8 @@ class _PluginListRouteState extends State<PluginListRoute> {
                   ),
                 ),
               );
+
+              _reloadPlugins();
             }
           });
         },
@@ -161,10 +163,10 @@ class _PluginListRouteState extends State<PluginListRoute> {
             ],
           ),
           onConfirm: (context) async {
-            Log.catch_(
+            await Log.catch_(
               () async => PluginRemoveMethod(pluginName: name).execute(),
             );
-            Log.trace('Plugin $name deleted');
+            await Log.trace('Plugin $name deleted');
             _reloadPlugins();
             return true;
           },
