@@ -11,12 +11,11 @@ use crate::{Error, Plugin, PluginCallQueue, Result};
 #[derive(Debug, Default)]
 pub struct PluginManager {
     pub(crate) plugins_path: PathBuf,
-    pub(crate) plugins: HashMap<Box<str>, Plugin>,
+    pub plugins: HashMap<Box<str>, Plugin>,
 
     pub(crate) engine: Engine,
 
-    pub(crate) host_messages: VecDeque<(Box<str>, api::Value)>,
-    pub(crate) plugin_calls: VecDeque<PluginCallQueue>,
+    pub plugin_calls: VecDeque<PluginCallQueue>,
 }
 
 impl PluginManager {
@@ -34,7 +33,6 @@ impl PluginManager {
             plugins: HashMap::new(),
 
             engine,
-            host_messages: VecDeque::new(),
             plugin_calls: VecDeque::new(),
         })
     }
@@ -109,24 +107,6 @@ impl PluginManager {
         std::fs::remove_dir_all(plugin_path)?;
 
         Ok(true)
-    }
-
-    pub fn process_plugin_call(&mut self) -> Option<(Box<str>, api::Value)> {
-        loop {
-            let mut calls = self.plugin_calls.pop_front()?;
-            let Some(call) = calls.calls.pop_front() else {
-                continue;
-            };
-
-            if !calls.calls.is_empty() {
-                self.plugin_calls.push_back(PluginCallQueue {
-                    plugin_name: calls.plugin_name.clone(),
-                    calls: calls.calls,
-                });
-            }
-
-            return Some((calls.plugin_name, call));
-        }
     }
 
     #[must_use]

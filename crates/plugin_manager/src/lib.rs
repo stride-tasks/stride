@@ -54,8 +54,8 @@ struct HostState {
 
 #[derive(Debug)]
 pub struct PluginCallQueue {
-    plugin_name: Box<str>,
-    calls: VecDeque<api::Value>,
+    pub plugin_name: Box<str>,
+    pub calls: VecDeque<api::Value>,
 }
 
 #[derive(Debug)]
@@ -70,7 +70,8 @@ pub struct Plugin {
 }
 
 impl Plugin {
-    fn can_accept_notification(&self, notification_name: &str) -> bool {
+    #[must_use]
+    pub fn can_accept_notification(&self, notification_name: &str) -> bool {
         // TOOD: Implement is_* functions for enums in rust (api_codegen).
         if !matches!(self.instance.state, PluginState::Enable {}) {
             return false;
@@ -260,36 +261,13 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn emit_notification(&mut self, name: &str, value: &api::Value) {
-        for plugin in self.plugins.values() {
-            if !plugin.can_accept_notification(name) {
-                continue;
-            }
-            self.host_messages
-                .push_back((plugin.instance.manifest.name.clone(), value.clone()));
-        }
-    }
-
-    pub fn enqueue_plugin_message(&mut self, plugin_name: &str, message: api::Value) {
-        if let Some(plugin) = self.plugin(plugin_name)
-            && matches!(plugin.instance.state, PluginState::Enable {})
-        {
-            self.host_messages
-                .push_back((plugin.instance.manifest.name.clone(), message));
-        }
-    }
-
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn process_plugin_message(&mut self) -> Result<bool> {
-        let Some((plugin, message)) = self.host_messages.pop_front() else {
-            return Ok(false);
-        };
-
-        let Some(plugin) = self.plugins.get(&plugin) else {
+    pub fn process_plugin_message(&mut self, plugin: &str, message: &api::Value) -> Result<bool> {
+        let Some(plugin) = self.plugins.get(plugin) else {
             return Ok(false);
         };
 
