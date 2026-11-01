@@ -78,7 +78,7 @@ impl stride_engine::Notifier for CliNotifier {
                 Ok(Some(true)) => {
                     let result =
                         context.execute_erased(&prompt.target.method, prompt.target.params.clone());
-                    if let Err(err) = result {
+                    if let Err(err) = futures_lite::future::block_on(result) {
                         log::error!("Failed to execute prompt target: {err}");
                     }
                 }
@@ -230,8 +230,12 @@ fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bo
     modified
 }
 
-#[allow(clippy::too_many_lines)]
 fn main() -> anyhow::Result<ExitCode> {
+    futures_lite::future::block_on(async_main())
+}
+
+#[allow(clippy::too_many_lines)]
+async fn async_main() -> anyhow::Result<ExitCode> {
     let args = CliArgs::parse();
     let mode = args.mode.unwrap_or_else(|| Mode::Search {
         filter: Vec::default(),
@@ -267,12 +271,13 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("ssh.key.remove", SshKeyRemoveHandler)
         .build();
 
-    let mut settings = engine.execute(SettingGetMethod {})?.setting;
+    let mut settings = engine.execute(SettingGetMethod {}).await?.setting;
 
     let current_repository = match settings.current_repository {
         Some(uuid) => Some(uuid),
         None => engine
-            .execute(RepositoryListMethod {})?
+            .execute(RepositoryListMethod {})
+            .await?
             .repositories
             .first()
             .map(|repository| repository.id),
@@ -281,12 +286,14 @@ fn main() -> anyhow::Result<ExitCode> {
     let current_repository = if let Some(uuid) = current_repository {
         uuid
     } else {
-        let result = engine.execute(RepositoryAddMethod { name: None })?;
+        let result = engine.execute(RepositoryAddMethod { name: None }).await?;
         settings.current_repository = Some(result.repository_id);
 
-        engine.execute(SettingSetMethod {
-            setting: settings.clone(),
-        })?;
+        engine
+            .execute(SettingSetMethod {
+                setting: settings.clone(),
+            })
+            .await?;
 
         result.repository_id
     };
@@ -356,10 +363,12 @@ fn main() -> anyhow::Result<ExitCode> {
             let mut task = Task::new(title.into());
             apply_modifications(&mut task, &modifications);
 
-            engine.execute(api::RepositoryTaskAddMethod {
-                repository_id: current_repository,
-                task,
-            })?;
+            engine
+                .execute(api::RepositoryTaskAddMethod {
+                    repository_id: current_repository,
+                    task,
+                })
+                .await?;
         }
         Mode::Done { id } => {
             let id = if let Ok(id) = id.parse::<Uuid>() {
@@ -431,10 +440,13 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!("undo")
         }
         Mode::Sync { backend: _name } => {
-            engine.clone().execute(api::RepositorySyncMethod {
-                id: current_repository,
-                backends: None,
-            })?;
+            engine
+                .clone()
+                .execute(api::RepositorySyncMethod {
+                    id: current_repository,
+                    backends: None,
+                })
+                .await?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
@@ -511,7 +523,7 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!()
         }
         Mode::Repository { uuid } => {
-            let repositories = engine.execute(RepositoryListMethod {})?.repositories;
+            let repositories = engine.execute(RepositoryListMethod {}).await?.repositories;
 
             let mut repository = None;
             for candidate in repositories {
@@ -527,9 +539,11 @@ fn main() -> anyhow::Result<ExitCode> {
             println!("Switching to repository: {name}");
 
             settings.current_repository = Some(uuid);
-            engine.execute(SettingSetMethod {
-                setting: settings.clone(),
-            })?;
+            engine
+                .execute(SettingSetMethod {
+                    setting: settings.clone(),
+                })
+                .await?;
         }
         Mode::Backend { command } => {
             backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;
@@ -595,7 +609,7 @@ fn main() -> anyhow::Result<ExitCode> {
             } else {
                 api::Value::Map(api::Map::new())
             };
-            let result = engine.clone().execute_erased(&method, params)?;
+            let result = engine.clone().execute_erased(&method, params).await?;
             println!("{result}");
         }
     }

@@ -1,14 +1,17 @@
 use std::{path::Path, sync::Arc};
 
+use async_trait::async_trait;
+
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PluginListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginListHandler {
     type Method = crate::api::PluginListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _method: Self::Method,
@@ -26,10 +29,11 @@ impl TypedCommandHandler for PluginListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginValidateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginValidateHandler {
     type Method = crate::api::PluginValidateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -47,10 +51,11 @@ impl TypedCommandHandler for PluginValidateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginImportHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginImportHandler {
     type Method = crate::api::PluginImportMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -66,10 +71,11 @@ impl TypedCommandHandler for PluginImportHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginRemoveHandler {
     type Method = crate::api::PluginRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -83,10 +89,11 @@ impl TypedCommandHandler for PluginRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginDisableHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginDisableHandler {
     type Method = crate::api::PluginDisableMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -102,10 +109,11 @@ impl TypedCommandHandler for PluginDisableHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginToggleHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginToggleHandler {
     type Method = crate::api::PluginToggleMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,

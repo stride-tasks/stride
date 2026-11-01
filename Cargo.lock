@@ -2219,6 +2219,7 @@ name = "stride_backend_git"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "base64",
  "git2",
  "log",
@@ -2241,6 +2242,7 @@ dependencies = [
  "clap",
  "comfy-table",
  "dirs",
+ "futures-lite",
  "inquire",
  "log",
  "serde_json",
@@ -2295,6 +2297,7 @@ name = "stride_engine"
 version = "0.1.0"
 dependencies = [
  "async-channel",
+ "async-trait",
  "chrono",
  "futures-lite",
  "log",
@@ -2312,6 +2315,7 @@ dependencies = [
 name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
+ "futures-lite",
  "serde",
  "serde_json",
  "stride_api",

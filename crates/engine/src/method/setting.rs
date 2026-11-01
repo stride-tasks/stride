@@ -1,14 +1,17 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
+
 use crate::{Engine, Error, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct SettingGetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SettingGetHandler {
     type Method = crate::api::SettingGetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _method: Self::Method,
@@ -30,10 +33,11 @@ impl TypedCommandHandler for SettingGetHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct SettingSetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SettingSetHandler {
     type Method = crate::api::SettingSetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,

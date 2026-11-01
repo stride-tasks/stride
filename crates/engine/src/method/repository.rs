@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
 use chrono::Utc;
 use stride_api::Config;
 use uuid::Uuid;
@@ -9,10 +10,11 @@ use crate::{Engine, Result, TypedCommandHandler};
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryAddHandler {
     type Method = crate::api::RepositoryAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -35,10 +37,11 @@ impl TypedCommandHandler for RepositoryAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryUpdateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryUpdateHandler {
     type Method = crate::api::RepositoryUpdateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -54,10 +57,11 @@ impl TypedCommandHandler for RepositoryUpdateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryListHandler {
     type Method = crate::api::RepositoryListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _: Self::Method,
@@ -118,10 +122,11 @@ impl TypedCommandHandler for RepositoryListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendAddHandler {
     type Method = crate::api::RepositoryBackendAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -147,10 +152,11 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendRemoveHandler {
     type Method = crate::api::RepositoryBackendRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -167,10 +173,11 @@ impl TypedCommandHandler for RepositoryBackendRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendToggleHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendToggleHandler {
     type Method = crate::api::RepositoryBackendToggleMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -187,10 +194,11 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendGetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendGetHandler {
     type Method = crate::api::RepositoryBackendGetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -222,10 +230,11 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendSetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendSetHandler {
     type Method = crate::api::RepositoryBackendSetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -242,10 +251,11 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendListHandler {
     type Method = crate::api::RepositoryBackendListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -262,10 +272,11 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryRemoveHandler {
     type Method = crate::api::RepositoryRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         context: Arc<Engine>,
         method: Self::Method,
@@ -278,10 +289,11 @@ impl TypedCommandHandler for RepositoryRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositorySyncHandler {
     type Method = crate::api::RepositorySyncMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         context: Arc<Engine>,
         method: Self::Method,
@@ -321,10 +333,11 @@ impl TypedCommandHandler for RepositorySyncHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTagListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTagListHandler {
     type Method = crate::api::RepositoryTagListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -338,10 +351,11 @@ impl TypedCommandHandler for RepositoryTagListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryProjectListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryProjectListHandler {
     type Method = crate::api::RepositoryProjectListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -356,10 +370,11 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskAddHandler {
     type Method = crate::api::RepositoryTaskAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -383,10 +398,11 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskUpdateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskUpdateHandler {
     type Method = crate::api::RepositoryTaskUpdateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -417,10 +433,11 @@ impl TypedCommandHandler for RepositoryTaskUpdateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskRemoveHandler {
     type Method = crate::api::RepositoryTaskRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -443,10 +460,11 @@ impl TypedCommandHandler for RepositoryTaskRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskQueryHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskQueryHandler {
     type Method = crate::api::RepositoryTaskQueryMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,

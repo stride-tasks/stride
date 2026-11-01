@@ -185,7 +185,8 @@ fn execute_inner(method: &str, args: &str) -> Result<String, RustError> {
         .ok_or(ErrorKind::NotInitialized)?;
 
     // The error deliberately does not repeat `args`: they can contain secrets.
-    let result = engine.execute_erased(method, params.params)?;
+    let future = engine.execute_erased(method, params.params);
+    let result = futures_lite::future::block_on(future)?;
 
     let result = serde_json::to_string(&result).map_err(|e| ErrorKind::Other {
         message: format!("Failed to serialize result: {e}").into(),

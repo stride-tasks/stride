@@ -1,14 +1,17 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
+
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LogEventHandler;
 
+#[async_trait]
 impl TypedCommandHandler for LogEventHandler {
     type Method = crate::api::LogEventMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         _: Arc<Engine>,
         method: Self::Method,
@@ -27,10 +30,11 @@ impl TypedCommandHandler for LogEventHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct LogGetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for LogGetHandler {
     type Method = crate::api::LogGetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _method: Self::Method,

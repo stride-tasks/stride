@@ -146,19 +146,25 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the command could not be executed for any reason.
-    pub fn execute_erased(self: &Arc<Self>, method: &str, args: api::Value) -> Result<api::Value> {
+    pub async fn execute_erased(
+        self: &Arc<Self>,
+        method: &str,
+        args: api::Value,
+    ) -> Result<api::Value> {
         let handler = self
             .commands
             .get(method)
             .ok_or_else(|| Error::HandlerNotFound {
                 method: method.into(),
             })?;
-        let result = handler
-            .handle(self.clone(), args)
-            .map_err(|err| Error::HandlerFailed {
-                method: method.into(),
-                cause: Box::new(err),
-            })?;
+        let result =
+            handler
+                .handle(self.clone(), args)
+                .await
+                .map_err(|err| Error::HandlerFailed {
+                    method: method.into(),
+                    cause: Box::new(err),
+                })?;
         Ok(result)
     }
 
@@ -167,12 +173,12 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the method could not be executed for any reason.
-    pub fn execute<T: api::Method>(self: &Arc<Self>, method: T) -> Result<T::Result> {
+    pub async fn execute<T: api::Method>(self: &Arc<Self>, method: T) -> Result<T::Result> {
         let method_name = T::NAME;
 
         let params = api::Value::from_type(method);
 
-        let result_value = self.execute_erased(method_name, params)?;
+        let result_value = self.execute_erased(method_name, params).await?;
         let result = api::Value::to_type::<T::Result>(&result_value).map_err(Error::Other)?;
         Ok(result)
     }

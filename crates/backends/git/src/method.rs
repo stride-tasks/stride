@@ -2,15 +2,17 @@ use std::sync::Arc;
 
 use crate::known_hosts::KnownHosts;
 
+use async_trait::async_trait;
 use stride_engine::{Engine, TypedCommandHandler, api};
 
 #[derive(Debug, Clone, Copy)]
 pub struct SshHostAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshHostAddHandler {
     type Method = api::SshHostAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         args: Self::Method,
