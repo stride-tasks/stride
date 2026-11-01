@@ -83,6 +83,7 @@ impl Plugin {
         };
         match notification_name {
             api::RepositoryTaskAddedNotification::NAME => events.create,
+            api::RepositoryTaskUpdatedNotification::NAME => events.modify,
             api::RepositoryChangedNotification::NAME => events.sync,
             _ => false,
         }
@@ -196,12 +197,7 @@ impl PluginManager {
 
         Ok(ParsePlugin {
             instance: PluginManifestInstance {
-                manifest: PluginManifest {
-                    api: manifest.api,
-                    name: manifest.name,
-                    event: manifest.event,
-                    permission: manifest.permission,
-                },
+                manifest,
                 state: PluginState::Enable {},
             },
             code: code_content.into_boxed_slice(),
