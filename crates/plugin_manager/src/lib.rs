@@ -12,12 +12,14 @@ use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
+pub mod async_wasm;
 mod error;
 mod logging;
 pub mod manager;
 
 pub use error::{Error, Result};
 
+pub use async_wasm::{AsyncFunc, AsyncTypedFunc};
 pub use manager::PluginManager;
 
 const EVENT_HANDLER_NAME: &str = "stride__event_handler";

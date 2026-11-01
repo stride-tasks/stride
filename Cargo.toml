@@ -71,6 +71,7 @@ zeroize = { version = "1.9.0", features = ["zeroize_derive"] }
 dirs = "7.0.0"
 toml = "1.1.6"
 zip = "8.6.0"
+wat = "1.263.0"
 wasmi = "2.0.0"
 wasmi_wasi = "2.0.0"
 reqwest = { version = "0.13.5", features = ["blocking"] }
@@ -85,6 +86,7 @@ indexmap = "2.14.2"
 smol = "2.0.2"
 async-channel = "2.5.0"
 futures-lite = "2.6.1"
+async-trait = "0.1.92"
 
 [profile.release]
 # strip = "debug"
