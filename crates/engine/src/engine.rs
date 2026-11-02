@@ -1,7 +1,9 @@
 use std::{
-    sync::{Arc, Mutex, MutexGuard},
+    sync::Arc,
     time::{Duration, Instant},
 };
+
+use smol::lock::{Mutex, MutexGuard};
 
 use stride_api as api;
 use stride_plugin_manager::PluginManager;
@@ -82,16 +84,12 @@ impl Engine {
         self.clone().notifier.notify(self, notification);
     }
 
-    pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
-        self.repositories
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    pub(crate) async fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
+        self.repositories.lock().await
     }
 
-    pub fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
-        self.plugin_manager
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    pub async fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
+        self.plugin_manager.lock().await
     }
 
     pub(crate) fn runtime(self: &Arc<Self>) -> &Runtime {
@@ -106,8 +104,8 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the repository could not be opened for any reason.
-    pub fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
-        let mut repositories = self.lock_repositories();
+    pub async fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
+        let mut repositories = self.lock_repositories().await;
         let now = Instant::now();
 
         if let Some(entry) = repositories.get_mut(id) {
@@ -132,8 +130,8 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the repository could not be removed for any reason.
-    pub fn remove_repository(self: &Arc<Self>, id: Uuid) -> Result<()> {
-        let mut repositories = self.lock_repositories();
+    pub async fn remove_repository(self: &Arc<Self>, id: Uuid) -> Result<()> {
+        let mut repositories = self.lock_repositories().await;
         repositories.remove(id);
 
         let root_path = self.known_paths().repository_path(id);

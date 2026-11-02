@@ -18,6 +18,7 @@ impl TypedCommandHandler for PluginListHandler {
     ) -> Result<crate::api::PluginListMethodResult> {
         let plugins = engine
             .lock_plugin_manager()
+            .await
             .list()
             .map(|plugin| plugin.instance.clone())
             .collect::<Vec<_>>();
@@ -40,6 +41,7 @@ impl TypedCommandHandler for PluginValidateHandler {
     ) -> Result<crate::api::PluginValidateMethodResult> {
         let plugin = engine
             .lock_plugin_manager()
+            .await
             .parse_plugin(Path::new(method.file_path.as_ref()))?;
 
         Ok(crate::api::PluginValidateMethodResult {
@@ -62,6 +64,7 @@ impl TypedCommandHandler for PluginImportHandler {
     ) -> Result<crate::api::PluginImportMethodResult> {
         engine
             .lock_plugin_manager()
+            .await
             .import(Path::new(method.file_path.as_ref()))?;
 
         Ok(crate::api::PluginImportMethodResult {})
@@ -80,7 +83,10 @@ impl TypedCommandHandler for PluginRemoveHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginRemoveMethodResult> {
-        engine.lock_plugin_manager().remove(&method.plugin_name)?;
+        engine
+            .lock_plugin_manager()
+            .await
+            .remove(&method.plugin_name)?;
 
         Ok(crate::api::PluginRemoveMethodResult {})
     }
@@ -100,6 +106,7 @@ impl TypedCommandHandler for PluginDisableHandler {
     ) -> Result<crate::api::PluginDisableMethodResult> {
         engine
             .lock_plugin_manager()
+            .await
             .disable(&method.plugin_name, method.reason)?;
 
         Ok(crate::api::PluginDisableMethodResult {})
@@ -118,7 +125,10 @@ impl TypedCommandHandler for PluginToggleHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginToggleMethodResult> {
-        engine.lock_plugin_manager().toggle(&method.plugin_name)?;
+        engine
+            .lock_plugin_manager()
+            .await
+            .toggle(&method.plugin_name)?;
 
         Ok(crate::api::PluginToggleMethodResult {})
     }

@@ -550,16 +550,16 @@ async fn async_main() -> anyhow::Result<ExitCode> {
         }
         Mode::Plugin { command } => match command {
             None => {
-                for plugin in engine.lock_plugin_manager().list() {
+                for plugin in engine.lock_plugin_manager().await.list() {
                     println!("{}", plugin.instance.manifest.name);
                 }
             }
             Some(command) => match command {
                 cli::PluginCommand::Import { filepath } => {
-                    engine.lock_plugin_manager().import(&filepath)?;
+                    engine.lock_plugin_manager().await.import(&filepath)?;
                 }
                 cli::PluginCommand::Toggle { plugin_name } => {
-                    engine.lock_plugin_manager().toggle(&plugin_name)?;
+                    engine.lock_plugin_manager().await.toggle(&plugin_name)?;
                 }
             },
         },

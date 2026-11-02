@@ -25,7 +25,7 @@ impl TypedCommandHandler for RepositoryAddHandler {
             name: method.name,
         };
 
-        engine.open_repository(repository_id)?;
+        engine.open_repository(repository_id).await?;
         engine
             .known_paths()
             .write_repository_descriptor(&descriptor)?;
@@ -135,7 +135,7 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
         let name = handler.name();
         let backend_id = Uuid::now_v7();
 
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
             .add_backend(&crate::api::BackendInstance {
@@ -161,7 +161,7 @@ impl TypedCommandHandler for RepositoryBackendRemoveHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendRemoveMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
             .delete_backend(method.backend_id)?;
@@ -182,7 +182,7 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendToggleMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let new_state = repository
             .lock_database()
             .toggle_backend(method.backend_id)?;
@@ -203,7 +203,7 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendGetMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let backend_instances = repository.lock_database().backends()?;
 
         let backend_instance = backend_instances
@@ -239,7 +239,7 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
             .update_backend(&method.backend_instance)?;
@@ -260,7 +260,7 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendListMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let backend_instances = repository.lock_database().backends()?;
 
         Ok(crate::api::RepositoryBackendListMethodResult {
@@ -281,7 +281,7 @@ impl TypedCommandHandler for RepositoryRemoveHandler {
         context: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryRemoveMethodResult> {
-        context.remove_repository(method.repository_id)?;
+        context.remove_repository(method.repository_id).await?;
         Ok(crate::api::RepositoryRemoveMethodResult {})
     }
 }
@@ -298,7 +298,7 @@ impl TypedCommandHandler for RepositorySyncHandler {
         context: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositorySyncMethodResult> {
-        let repository = context.open_repository(method.id)?;
+        let repository = context.open_repository(method.id).await?;
 
         let task = context.clone().runtime().spawn(async move {
             context.notify(Box::new(crate::api::RepositorySyncStartedNotification {
@@ -342,7 +342,7 @@ impl TypedCommandHandler for RepositoryTagListHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTagListMethodResult> {
-        let repository = engine.open_repository(method.id)?;
+        let repository = engine.open_repository(method.id).await?;
         let tags = repository.lock_database().used_tags()?;
         Ok(crate::api::RepositoryTagListMethodResult { tags })
     }
@@ -360,7 +360,7 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryProjectListMethodResult> {
-        let repository = engine.open_repository(method.id)?;
+        let repository = engine.open_repository(method.id).await?;
         let projects = repository.lock_database().used_projects()?;
 
         Ok(crate::api::RepositoryProjectListMethodResult { projects })
@@ -379,7 +379,7 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskAddMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let mut database = repository.lock_database();
         let mut transaction = database.transaction()?;
         transaction.insert_task(&method.task)?;
@@ -407,7 +407,7 @@ impl TypedCommandHandler for RepositoryTaskUpdateHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskUpdateMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let mut task = method.task;
         task.modified = Some(Utc::now());
 
@@ -442,7 +442,7 @@ impl TypedCommandHandler for RepositoryTaskRemoveHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskRemoveMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let mut database = repository.lock_database();
         let mut transaction = database.transaction()?;
         transaction.delete_task(method.task_id)?;
@@ -469,7 +469,7 @@ impl TypedCommandHandler for RepositoryTaskQueryHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskQueryMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let tasks = repository.lock_database().task_query(&method.query)?;
 
         Ok(crate::api::RepositoryTaskQueryMethodResult { tasks })
