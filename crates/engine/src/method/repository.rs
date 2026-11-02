@@ -138,6 +138,7 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
         let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
+            .await
             .add_backend(&crate::api::BackendInstance {
                 id: backend_id,
                 name,
@@ -164,6 +165,7 @@ impl TypedCommandHandler for RepositoryBackendRemoveHandler {
         let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
+            .await
             .delete_backend(method.backend_id)?;
 
         Ok(crate::api::RepositoryBackendRemoveMethodResult {})
@@ -185,6 +187,7 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
         let repository = engine.open_repository(method.repository_id).await?;
         let new_state = repository
             .lock_database()
+            .await
             .toggle_backend(method.backend_id)?;
 
         Ok(crate::api::RepositoryBackendToggleMethodResult { state: new_state })
@@ -204,7 +207,7 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendGetMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
-        let backend_instances = repository.lock_database().backends()?;
+        let backend_instances = repository.lock_database().await.backends()?;
 
         let backend_instance = backend_instances
             .into_iter()
@@ -242,6 +245,7 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
         let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
+            .await
             .update_backend(&method.backend_instance)?;
 
         Ok(crate::api::RepositoryBackendSetMethodResult {})
@@ -261,7 +265,7 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendListMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
-        let backend_instances = repository.lock_database().backends()?;
+        let backend_instances = repository.lock_database().await.backends()?;
 
         Ok(crate::api::RepositoryBackendListMethodResult {
             backends: backend_instances,
@@ -305,7 +309,7 @@ impl TypedCommandHandler for RepositorySyncHandler {
                 repository_id: method.id,
             }));
 
-            let changes_result = repository.sync(&context);
+            let changes_result = repository.sync(&context).await;
 
             context.notify(Box::new(crate::api::RepositorySyncStoppedNotification {
                 repository_id: method.id,
@@ -343,7 +347,7 @@ impl TypedCommandHandler for RepositoryTagListHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTagListMethodResult> {
         let repository = engine.open_repository(method.id).await?;
-        let tags = repository.lock_database().used_tags()?;
+        let tags = repository.lock_database().await.used_tags()?;
         Ok(crate::api::RepositoryTagListMethodResult { tags })
     }
 }
@@ -361,7 +365,7 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryProjectListMethodResult> {
         let repository = engine.open_repository(method.id).await?;
-        let projects = repository.lock_database().used_projects()?;
+        let projects = repository.lock_database().await.used_projects()?;
 
         Ok(crate::api::RepositoryProjectListMethodResult { projects })
     }
@@ -380,7 +384,7 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskAddMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
-        let mut database = repository.lock_database();
+        let mut database = repository.lock_database().await;
         let mut transaction = database.transaction()?;
         transaction.insert_task(&method.task)?;
         transaction.commit()?;
@@ -411,7 +415,7 @@ impl TypedCommandHandler for RepositoryTaskUpdateHandler {
         let mut task = method.task;
         task.modified = Some(Utc::now());
 
-        let mut database = repository.lock_database();
+        let mut database = repository.lock_database().await;
         let mut transaction = database.transaction()?;
         let mut previous = None;
         let current = transaction.update_task_with(task.id, |existing| {
@@ -443,7 +447,7 @@ impl TypedCommandHandler for RepositoryTaskRemoveHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskRemoveMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
-        let mut database = repository.lock_database();
+        let mut database = repository.lock_database().await;
         let mut transaction = database.transaction()?;
         transaction.delete_task(method.task_id)?;
         transaction.commit()?;
@@ -470,7 +474,7 @@ impl TypedCommandHandler for RepositoryTaskQueryHandler {
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskQueryMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
-        let tasks = repository.lock_database().task_query(&method.query)?;
+        let tasks = repository.lock_database().await.task_query(&method.query)?;
 
         Ok(crate::api::RepositoryTaskQueryMethodResult { tasks })
     }

@@ -118,7 +118,7 @@ impl Engine {
 
         repositories.evict_expired(now);
 
-        let repository = Repository::open(id, self.known_paths())?;
+        let repository = Repository::open(id, self.known_paths()).await?;
         let repository = Arc::new(repository);
 
         repositories.insert(id, repository.clone());
