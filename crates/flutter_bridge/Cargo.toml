@@ -23,6 +23,7 @@ stride_engine.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+async-trait.workspace = true
 futures-lite.workspace = true
 
 [lints]

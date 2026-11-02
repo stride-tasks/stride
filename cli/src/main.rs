@@ -1,4 +1,5 @@
 use anyhow::{Context as AnyhowContext, bail};
+use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
@@ -57,28 +58,35 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
 #[derive(Debug, Clone, Copy)]
 struct CliNotifier;
 
+#[async_trait]
 impl stride_engine::Notifier for CliNotifier {
-    fn notify(&self, context: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
+    async fn notify(
+        &self,
+        context: &Arc<Engine>,
+        notification: Box<dyn stride_engine::Notification>,
+    ) {
         log::trace!("Received: {}", notification.name());
         let notification_any: &dyn std::any::Any = &*notification;
         if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
-            let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
-            if let Some(description) = &prompt.description {
-                confirm = confirm.with_help_message(description);
-            }
-
             let input = {
+                let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
+                if let Some(description) = &prompt.description {
+                    confirm = confirm.with_help_message(description);
+                }
+
                 let _guard = LogLevelGuard::error();
                 confirm.prompt_skippable()
             };
+
             match input {
                 Err(err) => {
                     log::error!("Failed to prompt user: {err}");
                 }
                 Ok(Some(true)) => {
-                    let result =
-                        context.execute_erased(&prompt.target.method, prompt.target.params.clone());
-                    if let Err(err) = futures_lite::future::block_on(result) {
+                    let result = context
+                        .execute_erased(&prompt.target.method, prompt.target.params.clone())
+                        .await;
+                    if let Err(err) = result {
                         log::error!("Failed to execute prompt target: {err}");
                     }
                 }

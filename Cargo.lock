@@ -2238,6 +2238,7 @@ name = "stride_cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "chrono",
  "clap",
  "comfy-table",
@@ -2315,6 +2316,7 @@ dependencies = [
 name = "stride_flutter_bridge"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "futures-lite",
  "serde",
  "serde_json",

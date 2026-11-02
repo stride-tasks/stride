@@ -9,6 +9,7 @@ use std::{
     sync::{Arc, Mutex, PoisonError, RwLock},
 };
 
+use async_trait::async_trait;
 use stride_api as api;
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
@@ -92,8 +93,9 @@ static STREAM_CALLBACK: Mutex<OptionalStreamCallback> = Mutex::new(None);
 #[derive(Debug)]
 struct FlutterNotifier;
 
+#[async_trait]
 impl Notifier for FlutterNotifier {
-    fn notify(&self, _: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
+    async fn notify(&self, _: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
         let name = notification.name();
         let value = notification.to_value();
 

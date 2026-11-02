@@ -72,16 +72,12 @@ impl Engine {
     ///
     /// Returns an error if the notification could not be sent for any reason.
     pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) {
-        // let engine = self.clone();
-        // let name = notification.name();
-        // let value = notification.to_value();
+        let engine = self.clone();
         let task = self.clone().runtime().spawn(async move {
-            // process_pprocess_plugin_worklugin_work(&engine, name, &value);
+            engine.clone().notifier.notify(&engine, notification).await;
         });
 
         task.detach();
-
-        self.clone().notifier.notify(self, notification);
     }
 
     pub(crate) async fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
@@ -205,7 +201,7 @@ impl Engine {
     }
 }
 
-pub trait Notification: std::fmt::Debug + std::any::Any + 'static {
+pub trait Notification: std::fmt::Debug + std::any::Any + Send + 'static {
     fn name(&self) -> &'static str;
 
     fn to_value(&self) -> api::Value;
@@ -220,7 +216,7 @@ pub trait Notification: std::fmt::Debug + std::any::Any + 'static {
         Self: Sized;
 }
 
-impl<T: std::fmt::Debug + api::Notification + 'static> Notification for T {
+impl<T: std::fmt::Debug + api::Notification + Send + 'static> Notification for T {
     fn name(&self) -> &'static str {
         T::NAME
     }
@@ -262,7 +258,7 @@ impl<T: Prompt> PromptNotification<T> {
     }
 }
 
-impl<T: Prompt> Notification for PromptNotification<T> {
+impl<T: Prompt + Send> Notification for PromptNotification<T> {
     fn name(&self) -> &'static str {
         <api::UserPromptNotification as api::Notification>::NAME
     }
