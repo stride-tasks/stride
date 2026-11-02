@@ -40,10 +40,11 @@ pub trait BackendHandler: Debug + Sync + Send {
 
 /// This is the main trait, defining a "Backend".
 /// A backend governs how tasks are synced.
-pub trait Backend {
+#[async_trait::async_trait]
+pub trait Backend: Send {
     fn handler() -> Box<dyn BackendHandler>
     where
         Self: Sized;
 
-    fn sync(&mut self, context: Arc<Engine>, db: &mut Database) -> Result<VersionDifference>;
+    async fn sync(&mut self, context: Arc<Engine>, db: &mut Database) -> Result<VersionDifference>;
 }

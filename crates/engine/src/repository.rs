@@ -52,7 +52,8 @@ impl Repository {
         let mut db = self.lock_database().await;
         let diff = engine
             .backends()
-            .sync_all(self.uuid, &mut db, engine.known_paths(), engine)?;
+            .sync_all(self.uuid, &mut db, engine.known_paths(), engine)
+            .await?;
 
         Ok(db.transaction()?.task_changes_from_diff(&diff)?)
     }

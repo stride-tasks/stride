@@ -942,6 +942,7 @@ impl TypedCommandHandler for SshKeyRemoveHandler {
     }
 }
 
+#[async_trait]
 impl Backend for GitBackend {
     fn handler() -> Box<dyn BackendHandler>
     where
@@ -950,7 +951,7 @@ impl Backend for GitBackend {
         Box::new(Handler)
     }
 
-    fn sync(
+    async fn sync(
         &mut self,
         context: Arc<Engine>,
         db: &mut Database,
