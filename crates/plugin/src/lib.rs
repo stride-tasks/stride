@@ -60,26 +60,20 @@ macro_rules! plugin {
     };
 }
 
-#[derive(serde::Serialize)]
-struct MethodCall<'a, M> {
-    method: &'static str,
-    params: &'a M,
-}
-
 /// Emit a schema-backed API method call to the host.
 ///
 /// # Errors
 ///
 /// Returns an error if the method cannot be serialized.
 pub fn emit_method<M: api::Method>(method: &M) -> Result<(), serde_json::Error> {
-    let call = MethodCall {
-        method: M::NAME,
-        params: method,
-    };
-    let data = serde_json::to_vec(&call)?;
+    let mut buffer = Vec::new();
+    buffer.extend_from_slice(b"0:");
+    buffer.extend_from_slice(M::NAME.as_bytes());
+    buffer.push(b':');
+    serde_json::to_writer(&mut buffer, &method)?;
 
     unsafe {
-        stride__emit(data.as_ptr(), data.len());
+        stride__emit(buffer.as_ptr(), buffer.len());
     }
     Ok(())
 }

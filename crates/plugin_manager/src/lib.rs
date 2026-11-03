@@ -50,14 +50,14 @@ fn wasi_context(plugin_name: &str) -> WasiCtx {
 
 struct HostState {
     wasi: WasiCtx,
-    calls: VecDeque<api::Value>,
+    calls: VecDeque<(Box<str>, api::Value)>,
     call_error: Option<Box<str>>,
 }
 
 #[derive(Debug)]
 pub struct PluginCallQueue {
     pub plugin_name: Box<str>,
-    pub calls: VecDeque<api::Value>,
+    pub calls: VecDeque<(Box<str>, api::Value)>,
 }
 
 #[derive(Debug)]
@@ -314,8 +314,21 @@ impl PluginManager {
                     return;
                 };
 
+                let Some(index) = data.iter().position(|&b| b == b':') else {
+                    caller.data_mut().call_error = Some("plugin call missing prefix".into());
+                    return;
+                };
+
+                let (method, data) = data.split_at(index);
+                let data = &data[1..]; // skip the ':' separator
+
+                let Some(method) = std::str::from_utf8(method).ok().map(Into::into) else {
+                    caller.data_mut().call_error = Some("plugin call method not valid UTF8".into());
+                    return;
+                };
+
                 match serde_json::from_slice::<api::Value>(data) {
-                    Ok(call) => caller.data_mut().calls.push_back(call),
+                    Ok(call) => caller.data_mut().calls.push_back((method, call)),
                     Err(error) => caller.data_mut().call_error = Some(error.to_string().into()),
                 }
             },
