@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/storage.list.schema.json",
+    "description": "Lists all the key-value pairs in the global storage, or in the local repository storage if a repository is given.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "storage.list"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The repository whose storage is used. When omitted, the global (per application) storage is used."
+                }
+            }
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "The key-value pairs.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/storage.item.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "items"
+            ]
+        }
+    }
+}
