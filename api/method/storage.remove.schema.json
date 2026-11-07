@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/storage.remove.schema.json",
+    "description": "Removes the specified keys.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "storage.remove"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The repository whose storage is used. When omitted, the global (per application) storage is used."
+                },
+                "items": {
+                    "description": "The keys to remove.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "items"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}
