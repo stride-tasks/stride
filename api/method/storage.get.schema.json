@@ -1,0 +1,51 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/storage.get.schema.json",
+    "description": "Gets the values of the specified keys. Keys that are not stored are omitted from the result.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "storage.get"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The repository whose storage is used. When omitted, the global (per application) storage is used."
+                },
+                "items": {
+                    "description": "The keys to retrieve the values of.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "items"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "The key-value pairs that were found.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/storage.item.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "items"
+            ]
+        }
+    }
+}
