@@ -23,11 +23,13 @@ async fn with_storage<T>(
         let repository = engine.open_repository(repository_id).await?;
         let mut database = repository.lock_database().await;
         let transaction = database.transaction()?;
-        Ok(f(StorageTransaction::new(transaction))?)
+        let result = f(StorageTransaction::new(transaction))?;
+        Ok(result)
     } else {
         let mut database = engine.lock_global_database().await?;
         let transaction = database.transaction()?;
-        Ok(f(StorageTransaction::new(transaction))?)
+        let result = f(StorageTransaction::new(transaction))?;
+        Ok(result)
     }
 }
 
@@ -81,7 +83,8 @@ impl TypedCommandHandler for StorageSetHandler {
         method: Self::Method,
     ) -> Result<crate::api::StorageSetMethodResult> {
         with_storage(&engine, method.repository_id, |storage| {
-            storage.set(&method.key, &method.value)
+            storage.set(&method.key, &method.value)?;
+            storage.commit()
         })
         .await?;
 

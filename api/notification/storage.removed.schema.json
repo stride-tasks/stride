@@ -25,7 +25,7 @@
                 },
                 "key": {
                     "type": "string",
-                    "description": "The key that was removed."
+                    "description": "The `group:key` that was removed."
                 }
             }
         }

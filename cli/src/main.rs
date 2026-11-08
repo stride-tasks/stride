@@ -238,7 +238,7 @@ fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bo
     modified
 }
 
-const CURRENT_REPOSITORY_KEY: &str = "app.current-repository";
+const CURRENT_REPOSITORY_KEY: &str = "core:current-repository";
 
 async fn get_current_repository(engine: &Arc<Engine>) -> anyhow::Result<Option<Uuid>> {
     let result = engine

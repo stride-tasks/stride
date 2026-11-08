@@ -21,7 +21,7 @@
                     "description": "The repository whose storage is used. When omitted, the global (per application) storage is used."
                 },
                 "items": {
-                    "description": "The keys to retrieve the values of.",
+                    "description": "The `group:key` queries to retrieve the values of.",
                     "type": "array",
                     "items": {
                         "type": "string"

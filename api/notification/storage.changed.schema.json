@@ -26,7 +26,7 @@
                 },
                 "key": {
                     "type": "string",
-                    "description": "The key that was added or changed."
+                    "description": "The `group:key` that was added or changed."
                 },
                 "value": {
                     "$ref": "https://stride-tasks.github.io/stride/api/type/config.value.schema.json",

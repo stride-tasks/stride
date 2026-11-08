@@ -10,7 +10,7 @@
     "properties": {
         "key": {
             "type": "string",
-            "description": "Dot ('.') separated namespace and key, where the key is the last entry."
+            "description": "A `group:key` query: the group (like a namespace) and the key separated by a colon (':'), both made of '.' separated names."
         },
         "value": {
             "$ref": "https://stride-tasks.github.io/stride/api/type/config.value.schema.json",

@@ -6,10 +6,10 @@ import 'package:uuid/uuid.dart';
 /// The application settings, stored in the global storage.
 @immutable
 class Setting {
-  static const currentRepositoryKey = 'app.current-repository';
-  static const periodicSyncKey = 'app.periodic-sync';
-  static const periodicSyncIntervalKey = 'app.periodic-sync-interval';
-  static const darkModeKey = 'app.dark-mode';
+  static const currentRepositoryKey = 'core:current-repository';
+  static const periodicSyncKey = 'app:periodic-sync';
+  static const periodicSyncIntervalKey = 'app:periodic-sync-interval';
+  static const darkModeKey = 'app:dark-mode';
 
   static const keys = [
     currentRepositoryKey,

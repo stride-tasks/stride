@@ -98,7 +98,7 @@ fn storage_is_available_after_migrations() -> Result<(), Box<dyn std::error::Err
     let transaction = db.transaction()?;
     let storage = StorageTransaction::new(transaction);
     storage.set(
-        "test.key",
+        "test:key",
         &stride_api::ConfigValue::Boolean { value: true },
     )?;
     assert_eq!(storage.list()?.len(), 1);
