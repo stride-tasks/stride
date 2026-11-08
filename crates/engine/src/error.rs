@@ -18,12 +18,22 @@ pub enum Error {
         stride_database::Error,
     ),
 
+    #[error("storage error: {0}")]
+    Storage(
+        #[from]
+        #[source]
+        stride_sqlite::Error,
+    ),
+
     #[error("config error: {0}")]
     Config(
         #[from]
         #[source]
         stride_api::config::Error,
     ),
+
+    #[error("repository not found: {id}")]
+    RepositoryNotFound { id: uuid::Uuid },
 
     #[error("unknown backend: {name}")]
     UnknownBackend { name: Box<str> },

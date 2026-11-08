@@ -16,6 +16,7 @@ stride_api.workspace = true
 stride_crdt.workspace = true
 stride_database.workspace = true
 stride_plugin_manager.workspace = true
+stride_sqlite.workspace = true
 
 chrono.workspace = true
 toml.workspace = true

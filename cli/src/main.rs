@@ -9,8 +9,8 @@ use std::{
     sync::Arc,
 };
 use stride_api::{
-    self as api, RepositoryAddMethod, RepositoryListMethod, SettingGetMethod, SettingSetMethod,
-    Task, TaskPriority, TaskStatus,
+    self as api, ConfigValue, RepositoryAddMethod, RepositoryListMethod, StorageGetMethod,
+    StorageSetMethod, Task, TaskPriority, TaskStatus,
 };
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
@@ -238,6 +238,33 @@ fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bo
     modified
 }
 
+const CURRENT_REPOSITORY_KEY: &str = "app.current-repository";
+
+async fn get_current_repository(engine: &Arc<Engine>) -> anyhow::Result<Option<Uuid>> {
+    let result = engine
+        .execute(StorageGetMethod {
+            repository_id: None,
+            items: vec![CURRENT_REPOSITORY_KEY.into()],
+        })
+        .await?;
+
+    Ok(result.items.into_iter().find_map(|item| match item.value {
+        ConfigValue::Uuid { value } if item.key.as_ref() == CURRENT_REPOSITORY_KEY => Some(value),
+        _ => None,
+    }))
+}
+
+async fn set_current_repository(engine: &Arc<Engine>, id: Uuid) -> anyhow::Result<()> {
+    engine
+        .execute(StorageSetMethod {
+            repository_id: None,
+            key: CURRENT_REPOSITORY_KEY.into(),
+            value: ConfigValue::Uuid { value: id },
+        })
+        .await?;
+    Ok(())
+}
+
 fn main() -> anyhow::Result<ExitCode> {
     futures_lite::future::block_on(async_main())
 }
@@ -279,9 +306,7 @@ async fn async_main() -> anyhow::Result<ExitCode> {
         .command("ssh.key.remove", SshKeyRemoveHandler)
         .build();
 
-    let mut settings = engine.execute(SettingGetMethod {}).await?.setting;
-
-    let current_repository = match settings.current_repository {
+    let current_repository = match get_current_repository(&engine).await? {
         Some(uuid) => Some(uuid),
         None => engine
             .execute(RepositoryListMethod {})
@@ -295,13 +320,7 @@ async fn async_main() -> anyhow::Result<ExitCode> {
         uuid
     } else {
         let result = engine.execute(RepositoryAddMethod { name: None }).await?;
-        settings.current_repository = Some(result.repository_id);
-
-        engine
-            .execute(SettingSetMethod {
-                setting: settings.clone(),
-            })
-            .await?;
+        set_current_repository(&engine, result.repository_id).await?;
 
         result.repository_id
     };
@@ -397,7 +416,7 @@ async fn async_main() -> anyhow::Result<ExitCode> {
                 bail!("invalid task identifier expected index or UUID");
             };
 
-            let mut transaction = database.transaction()?;
+            let mut transaction = database.task_transaction()?;
             transaction.update_task_with(id, |mut task| {
                 task.status = Some(TaskStatus::Done);
                 task.modified = Some(Utc::now());
@@ -430,7 +449,7 @@ async fn async_main() -> anyhow::Result<ExitCode> {
             let modifications = parse_task_modifications(&modifiers)?;
             let new_title = task_title_from_modifications(&modifications);
 
-            let mut transaction = database.transaction()?;
+            let mut transaction = database.task_transaction()?;
             transaction.update_task_with(id, |mut task| {
                 let mut modified = apply_modifications(&mut task, &modifications);
                 if let Some(new_title) = new_title {
@@ -546,12 +565,7 @@ async fn async_main() -> anyhow::Result<ExitCode> {
                 .unwrap_or_else(|| "unnamed".to_string().into_boxed_str());
             println!("Switching to repository: {name}");
 
-            settings.current_repository = Some(uuid);
-            engine
-                .execute(SettingSetMethod {
-                    setting: settings.clone(),
-                })
-                .await?;
+            set_current_repository(&engine, uuid).await?;
         }
         Mode::Backend { command } => {
             backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;

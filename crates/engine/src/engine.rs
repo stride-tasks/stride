@@ -3,7 +3,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-use smol::lock::{Mutex, MutexGuard};
+use smol::lock::{Mutex, MutexGuard, OnceCell};
+use stride_sqlite::StorageDatabase;
 
 use stride_api as api;
 use stride_plugin_manager::PluginManager;
@@ -24,6 +25,7 @@ pub struct Engine {
     commands: CommandRegistry,
     backends: BackendRegistry,
     repositories: Mutex<Cache<Repository>>,
+    global_database: OnceCell<Mutex<StorageDatabase>>,
     plugin_manager: Mutex<PluginManager>,
     runtime: Runtime,
 }
@@ -53,6 +55,7 @@ impl Engine {
             commands,
             backends,
             repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
+            global_database: OnceCell::new(),
             plugin_manager: Mutex::new(plugin_manager),
             runtime: Runtime::new(None),
         })
@@ -82,6 +85,19 @@ impl Engine {
 
     pub(crate) async fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
         self.repositories.lock().await
+    }
+
+    /// Lock the global (per application) database, opening it on first use.
+    pub(crate) async fn lock_global_database(&self) -> Result<MutexGuard<'_, StorageDatabase>> {
+        let database = self
+            .global_database
+            .get_or_try_init(|| async {
+                std::fs::create_dir_all(&self.known_paths.support)?;
+                let path = self.known_paths.global_database_filepath();
+                Ok::<_, Error>(Mutex::new(StorageDatabase::open(&path)?))
+            })
+            .await?;
+        Ok(database.lock().await)
     }
 
     pub async fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {

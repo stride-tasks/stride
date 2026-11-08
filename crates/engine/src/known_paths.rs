@@ -15,7 +15,6 @@ pub struct KnownPaths {
 impl KnownPaths {
     const DATABASE_FILE_NAME: &str = "db.sqlite";
     const DESCRIPTOR_FILE_NAME: &str = "descriptor.toml";
-    const SETTING_FILE_NAME: &str = "setting.toml";
 
     const SSH_DIR: &str = ".ssh";
     const SSH_KEYS_DIR: &str = "keys";
@@ -40,8 +39,8 @@ impl KnownPaths {
     }
 
     #[must_use]
-    pub fn setting_filepath(&self) -> PathBuf {
-        self.support.join(Self::SETTING_FILE_NAME)
+    pub fn global_database_filepath(&self) -> PathBuf {
+        self.support.join(Self::DATABASE_FILE_NAME)
     }
 
     #[must_use]

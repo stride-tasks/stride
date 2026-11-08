@@ -6,6 +6,7 @@ import 'package:stride/api.dart';
 import 'package:stride/background.dart';
 import 'package:stride/bridge.dart';
 import 'package:stride/notifications.dart';
+import 'package:stride/setting.dart';
 import 'package:uuid/uuid.dart';
 
 @immutable
@@ -21,6 +22,7 @@ class RustContext {
   static final ValueNotifier<Map<UuidValue, RepositoryStatus>>
   syncingRepositories = ValueNotifier({});
 
+  static SettingStorage? _settingStorage;
   static late ValueNotifier<Setting> setting;
 
   // Every isolate attaches to the already running worker on first use.
@@ -78,6 +80,14 @@ class RustContext {
             body,
           );
         }
+      } else if (notification is StorageChangedNotification) {
+        if (notification.repositoryId == null) {
+          _settingStorage?.onChanged(notification.key, notification.value);
+        }
+      } else if (notification is StorageRemovedNotification) {
+        if (notification.repositoryId == null) {
+          _settingStorage?.onChanged(notification.key, null);
+        }
       } else if (notification is RepositorySyncStartedNotification) {
         syncingRepositories.value = {
           ...syncingRepositories.value,
@@ -94,12 +104,10 @@ class RustContext {
       }
     });
 
-    final result = await SettingGetMethod().execute();
-    setting = ValueNotifier(result.setting);
+    _settingStorage = await SettingStorage.load();
+    setting = _settingStorage!.notifier;
 
-    setting.addListener(() async {
-      await SettingSetMethod(setting: setting.value).execute();
-
+    setting.addListener(() {
       Background.configurePeriodicSync(
         enabled: RustContext.setting.value.periodicSync,
         repositoryIds: RustContext.repositories.value

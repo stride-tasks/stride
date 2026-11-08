@@ -55,6 +55,6 @@ impl Repository {
             .sync_all(self.uuid, &mut db, engine.known_paths(), engine)
             .await?;
 
-        Ok(db.transaction()?.task_changes_from_diff(&diff)?)
+        Ok(db.task_transaction()?.task_changes_from_diff(&diff)?)
     }
 }
