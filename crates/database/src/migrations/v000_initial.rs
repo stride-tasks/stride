@@ -1,8 +1,6 @@
 use stride_sqlite::Migration;
 
 const SQL: &str = r"
-BEGIN TRANSACTION;
-
 -------------------------------------------
 --                tasks                  --
 -------------------------------------------
@@ -144,7 +142,6 @@ CREATE TABLE backend_config_table (
 
 ANALYZE;
 
-COMMIT;
 ";
 
 pub(super) struct InitialMigration;

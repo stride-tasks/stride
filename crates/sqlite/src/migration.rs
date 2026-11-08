@@ -20,7 +20,7 @@ const SELECT_LAST_MIGRATION_INDEX: &str = "SELECT id FROM migration_table ORDER 
 /// The position of a migration in the list given to [`apply_migrations`] is its identity,
 /// so migrations must only ever be appended.
 pub trait Migration {
-    /// The SQL to execute, it is responsible for wrapping itself in a transaction.
+    /// The SQL to execute, it runs inside the transaction that applies all the migrations.
     fn sql(&self) -> &str;
 
     fn apply(&self, transaction: &mut Transaction<'_>) -> Result<()> {
@@ -53,15 +53,7 @@ pub fn apply_migrations(connection: &mut Connection, migrations: &[&dyn Migratio
 
     for (index, migration) in migrations.iter().enumerate().skip(next_migration_index) {
         migration.pre_apply(&mut transaction)?;
-        if let Err(error) = migration.apply(&mut transaction) {
-            // The migration's SQL manages its own transaction, don't leave it open on failure.
-            if !transaction.is_autocommit() {
-                // Note: we don't want to shadow the original error,
-                //       so we drop the result of rollback.
-                let _result = transaction.rollback();
-            }
-            return Err(error);
-        }
+        migration.apply(&mut transaction)?;
         transaction.execute(INSERT_MIGRATION_SQL, (index, migration.sql()))?;
         migration.post_apply(&mut transaction)?;
     }
