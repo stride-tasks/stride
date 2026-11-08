@@ -9,7 +9,6 @@ use stride_api::{
     TaskPriority, TaskQuery, TaskStatus, TaskUda,
 };
 use stride_crdt::{actor::ActorId, hlc::Clock};
-use url::Url;
 use uuid::Uuid;
 
 use std::{collections::HashSet, path::Path, rc::Rc};
@@ -485,33 +484,8 @@ impl Database {
 
                 Ok((
                     name,
-                    match typ.as_ref() {
-                        typ @ ("string" | "url") => {
-                            let value = row.get::<_, Vec<u8>>("value")?;
-                            let string = String::from_utf8(value).map_err(|e| {
-                                let error = e.utf8_error();
-                                rusqlite::Error::Utf8Error(error.valid_up_to(), error)
-                            })?;
-                            if typ == "string" {
-                                ConfigValue::String {
-                                    value: string.into_boxed_str(),
-                                }
-                            } else {
-                                ConfigValue::Url {
-                                    value: Url::parse(&string).map_err(|e| {
-                                        rusqlite::types::FromSqlError::Other(Box::new(e))
-                                    })?,
-                                }
-                            }
-                        }
-                        "uuid" => ConfigValue::Uuid {
-                            value: row.get::<_, Uuid>("value")?,
-                        },
-                        "bytes" => ConfigValue::Bytes {
-                            value: row.get::<_, Vec<u8>>("value")?.into_boxed_slice(),
-                        },
-                        _ => todo!(),
-                    },
+                    ConfigValue::from_type_name_and_bytes(&typ, &row.get::<_, Vec<u8>>("value")?)
+                        .map_err(|e| rusqlite::types::FromSqlError::Other(Box::new(e)))?,
                 ))
             })?;
 

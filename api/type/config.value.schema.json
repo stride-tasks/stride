@@ -56,6 +56,26 @@
                     "format": "uri"
                 }
             }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "boolean"
+                },
+                "value": {
+                    "type": "boolean"
+                }
+            }
+        },
+        {
+            "properties": {
+                "type": {
+                    "const": "integer"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
         }
     ]
 }

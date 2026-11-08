@@ -7,6 +7,14 @@ use base64::Engine;
 use crate::{Config, ConfigField, ConfigSchema, ConfigSchemaField, ConfigSchemaValue, ConfigValue};
 
 #[derive(thiserror::Error, Debug)]
+pub enum DecodeError {
+    #[error("unknown config value type: {type_name}")]
+    UnknownType { type_name: Box<str> },
+    #[error("invalid bytes for config value of type {type_name}")]
+    InvalidValue { type_name: Box<str> },
+}
+
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("missing schema field: {id}")]
     MissingField { id: Box<str> },
@@ -177,6 +185,8 @@ impl std::fmt::Display for ConfigValue {
             Self::Uuid { value } => std::fmt::Debug::fmt(value, f),
             Self::Bytes { value } => std::fmt::Debug::fmt(value, f),
             Self::Url { value } => std::fmt::Debug::fmt(value, f),
+            Self::Boolean { value } => std::fmt::Debug::fmt(value, f),
+            Self::Integer { value } => std::fmt::Debug::fmt(value, f),
         }
     }
 }
@@ -189,6 +199,8 @@ impl ConfigValue {
             Self::Uuid { .. } => "uuid",
             Self::Bytes { .. } => "bytes",
             Self::Url { .. } => "url",
+            Self::Boolean { .. } => "bool",
+            Self::Integer { .. } => "int",
         }
     }
 
@@ -210,6 +222,8 @@ impl ConfigValue {
                 .encode(value)
                 .into_boxed_str(),
             Self::Url { value } => value.to_string().into_boxed_str(),
+            Self::Boolean { value } => value.to_string().into_boxed_str(),
+            Self::Integer { value } => value.to_string().into_boxed_str(),
         }
     }
 
@@ -220,7 +234,51 @@ impl ConfigValue {
             Self::Uuid { value } => value.as_bytes().to_vec().into_boxed_slice(),
             Self::Bytes { value } => value.clone(),
             Self::Url { value } => value.as_str().as_bytes().to_vec().into_boxed_slice(),
+            Self::Boolean { value } => Box::new([u8::from(*value)]),
+            Self::Integer { value } => Box::new(value.to_le_bytes()),
         }
+    }
+
+    /// Decodes a value from its type name and raw bytes,
+    /// the inverse of [`Self::as_type_name`] and [`Self::as_value_boxed_slice`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the type name is unknown or the bytes are not valid for the type.
+    pub fn from_type_name_and_bytes(type_name: &str, bytes: &[u8]) -> Result<Self, DecodeError> {
+        let invalid = || DecodeError::InvalidValue {
+            type_name: type_name.into(),
+        };
+        Ok(match type_name {
+            "string" => Self::String {
+                value: std::str::from_utf8(bytes).map_err(|_| invalid())?.into(),
+            },
+            "url" => Self::Url {
+                value: std::str::from_utf8(bytes)
+                    .ok()
+                    .and_then(|string| url::Url::parse(string).ok())
+                    .ok_or_else(invalid)?,
+            },
+            "uuid" => Self::Uuid {
+                value: uuid::Uuid::from_slice(bytes).map_err(|_| invalid())?,
+            },
+            "bytes" => Self::Bytes {
+                value: bytes.into(),
+            },
+            "bool" => match bytes {
+                [0] => Self::Boolean { value: false },
+                [1] => Self::Boolean { value: true },
+                _ => return Err(invalid()),
+            },
+            "int" => Self::Integer {
+                value: i64::from_le_bytes(bytes.try_into().map_err(|_| invalid())?),
+            },
+            _ => {
+                return Err(DecodeError::UnknownType {
+                    type_name: type_name.into(),
+                });
+            }
+        })
     }
 
     /// Aligns the current configuration value with the given schema field.

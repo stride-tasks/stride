@@ -2289,7 +2289,6 @@ dependencies = [
  "stride_crdt",
  "stride_serialize",
  "thiserror 2.0.21",
- "url",
  "uuid",
 ]
 
