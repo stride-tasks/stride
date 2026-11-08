@@ -579,7 +579,7 @@ impl GitBackend {
 
         let mut remote_version_vector = VersionVector::default();
 
-        let mut transaction = db.transaction()?;
+        let mut transaction = db.task_transaction()?;
         for actor_path in std::fs::read_dir(&actors_dir)? {
             let actor_path = actor_path?;
             let metadata = actor_path.metadata()?;

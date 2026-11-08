@@ -2288,6 +2288,7 @@ dependencies = [
  "stride_api",
  "stride_crdt",
  "stride_serialize",
+ "stride_sqlite",
  "thiserror 2.0.21",
  "uuid",
 ]
@@ -2306,6 +2307,7 @@ dependencies = [
  "stride_crdt",
  "stride_database",
  "stride_plugin_manager",
+ "stride_sqlite",
  "thiserror 2.0.21",
  "toml",
  "uuid",
@@ -2378,6 +2380,16 @@ dependencies = [
  "thiserror 2.0.21",
  "uuid",
  "vint64",
+]
+
+[[package]]
+name = "stride_sqlite"
+version = "0.1.0"
+dependencies = [
+ "indoc",
+ "rusqlite",
+ "stride_api",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

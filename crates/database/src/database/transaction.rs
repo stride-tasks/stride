@@ -34,7 +34,7 @@ macro_rules! update_sql {
 }
 
 #[derive(Debug)]
-pub struct Transaction<'a> {
+pub struct TaskTransaction<'a> {
     actor_id: ActorId,
     clock: &'a mut Clock,
     version_vector: VersionVector,
@@ -42,8 +42,8 @@ pub struct Transaction<'a> {
     transaction: rusqlite::Transaction<'a>,
 }
 
-impl<'a> Transaction<'a> {
-    pub fn new(db: &'a mut Database) -> Result<Transaction<'a>> {
+impl<'a> TaskTransaction<'a> {
+    pub fn new(db: &'a mut Database) -> Result<TaskTransaction<'a>> {
         let transaction = db.connection.transaction()?;
         let mut sql = transaction.prepare(indoc! {"
                 SELECT

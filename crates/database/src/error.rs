@@ -6,6 +6,8 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub enum Error {
     #[error("sqlite error: {0}")]
     Sqlite(#[from] rusqlite::Error),
+    #[error("sqlite error: {0}")]
+    Migration(#[from] stride_sqlite::Error),
     #[error("crdt error: {0}")]
     Crdt(#[from] stride_crdt::Error),
     #[error("blob error: {0}")]

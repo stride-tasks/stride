@@ -7,6 +7,7 @@ members = [
   "crates/crdt",
   "crates/serialization",
   "crates/logging",
+  "crates/sqlite",
   "crates/database",
   "crates/backends/git",
   "crates/crypto",
@@ -37,6 +38,7 @@ stride_api_codegen_cli = { version = "~0.1.0", path = "crates/api_codegen_cli" }
 stride_crdt = { version = "~0.1.0", path = "crates/crdt" }
 stride_serialize = { version = "~0.1.0", path = "crates/serialization" }
 stride_logging = { version = "~0.1.0", path = "crates/logging" }
+stride_sqlite = { version = "~0.1.0", path = "crates/sqlite" }
 stride_database = { version = "~0.1.0", path = "crates/database" }
 stride_backend_git = { version = "~0.1.0", path = "crates/backends/git" }
 stride_crypto = { version = "~0.1.0", path = "crates/crypto" }

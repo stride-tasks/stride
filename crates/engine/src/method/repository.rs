@@ -385,7 +385,7 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
     ) -> Result<crate::api::RepositoryTaskAddMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
         let mut database = repository.lock_database().await;
-        let mut transaction = database.transaction()?;
+        let mut transaction = database.task_transaction()?;
         transaction.insert_task(&method.task)?;
         transaction.commit()?;
         drop(database);
@@ -416,7 +416,7 @@ impl TypedCommandHandler for RepositoryTaskUpdateHandler {
         task.modified = Some(Utc::now());
 
         let mut database = repository.lock_database().await;
-        let mut transaction = database.transaction()?;
+        let mut transaction = database.task_transaction()?;
         let mut previous = None;
         let current = transaction.update_task_with(task.id, |existing| {
             previous = Some(existing);
@@ -448,7 +448,7 @@ impl TypedCommandHandler for RepositoryTaskRemoveHandler {
     ) -> Result<crate::api::RepositoryTaskRemoveMethodResult> {
         let repository = engine.open_repository(method.repository_id).await?;
         let mut database = repository.lock_database().await;
-        let mut transaction = database.transaction()?;
+        let mut transaction = database.task_transaction()?;
         transaction.delete_task(method.task_id)?;
         transaction.commit()?;
 

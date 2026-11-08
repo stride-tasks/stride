@@ -7,6 +7,7 @@ use stride_crdt::{
     change::{Change, Operation, Sequence, TaskOperation},
     hlc::{Clock, SystemTimeProvider},
 };
+use stride_sqlite::StorageTransaction;
 use uuid::Uuid;
 
 use crate::{Database, Result};
@@ -75,7 +76,7 @@ fn add_operations_task_create() -> Result<(), Box<dyn std::error::Error>> {
             },
         ],
     };
-    let mut transaction = db.transaction()?;
+    let mut transaction = db.task_transaction()?;
     transaction.apply_change(&change)?;
     transaction.commit()?;
 
@@ -87,5 +88,19 @@ fn add_operations_task_create() -> Result<(), Box<dyn std::error::Error>> {
     task.entry = Some(date);
     assert_eq!(tasks[0], task);
 
+    Ok(())
+}
+
+#[test]
+fn storage_is_available_after_migrations() -> Result<(), Box<dyn std::error::Error>> {
+    let mut db = init()?;
+
+    let transaction = db.transaction()?;
+    let storage = StorageTransaction::new(transaction);
+    storage.set(
+        "test.key",
+        &stride_api::ConfigValue::Boolean { value: true },
+    )?;
+    assert_eq!(storage.list()?.len(), 1);
     Ok(())
 }

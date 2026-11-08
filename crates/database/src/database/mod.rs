@@ -14,7 +14,7 @@ use uuid::Uuid;
 use std::{collections::HashSet, path::Path, rc::Rc};
 
 use crate::{
-    Result, Sql, apply_migrations, database::transaction::Transaction, task_status_to_sql,
+    Result, Sql, apply_migrations, database::transaction::TaskTransaction, task_status_to_sql,
 };
 
 pub(crate) mod transaction;
@@ -231,8 +231,12 @@ impl Database {
         self.actor_id
     }
 
-    pub fn transaction(&mut self) -> Result<Transaction<'_>> {
-        Transaction::new(self)
+    pub fn transaction(&mut self) -> Result<rusqlite::Transaction<'_>> {
+        Ok(self.connection.transaction()?)
+    }
+
+    pub fn task_transaction(&mut self) -> Result<TaskTransaction<'_>> {
+        TaskTransaction::new(self)
     }
 
     #[inline]
