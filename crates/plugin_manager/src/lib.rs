@@ -7,7 +7,9 @@ use std::{collections::VecDeque, fmt::Debug, fs::File, io::Read, path::Path};
 
 use error::ToPluginError;
 use logging::PluginLogger;
-use stride_api::{self as api, Notification, PluginManifest, PluginManifestInstance, PluginState};
+use stride_api::{
+    self as api, Method, Notification, PluginManifest, PluginManifestInstance, PluginState,
+};
 use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
@@ -16,8 +18,10 @@ pub mod async_wasm;
 mod error;
 mod logging;
 pub mod manager;
+mod storage;
 
 pub use error::{Error, Result};
+use storage::{is_valid_plugin_name, sanitize_plugin_storage_call};
 
 pub use async_wasm::{AsyncFunc, AsyncTypedFunc};
 pub use manager::PluginManager;
@@ -183,7 +187,7 @@ impl PluginManager {
             return Err(Error::MissingManifest);
         };
 
-        if manifest.name.is_empty() || manifest.name.len() > 255 || !manifest.name.is_ascii() {
+        if manifest.name.len() > 255 || !is_valid_plugin_name(&manifest.name) {
             return Err(Error::InvalidName {
                 name: manifest.name.to_string(),
             });
@@ -392,10 +396,26 @@ impl PluginManager {
             .call(&mut store, (ret as i32, event_data.len() as i32))
             .to_error(&plugin.instance.manifest.name)?;
 
-        self.plugin_calls.push_back(PluginCallQueue {
-            plugin_name: plugin.instance.manifest.name.clone(),
-            calls: std::mem::take(&mut store.data_mut().calls),
-        });
+        let plugin_name = plugin.instance.manifest.name.clone();
+        let mut calls = std::mem::take(&mut store.data_mut().calls);
+        for (method, call) in &mut calls {
+            if matches!(
+                method.as_ref(),
+                api::StorageListMethod::NAME
+                    | api::StorageGetMethod::NAME
+                    | api::StorageSetMethod::NAME
+                    | api::StorageRemoveMethod::NAME
+            ) {
+                if let Some(error) = self.method_permission_error(&plugin_name, method) {
+                    return Err(Error::InvalidPluginCall(error));
+                }
+                sanitize_plugin_storage_call(&plugin_name, method, call)
+                    .map_err(Error::InvalidPluginCall)?;
+            }
+        }
+
+        self.plugin_calls
+            .push_back(PluginCallQueue { plugin_name, calls });
 
         Ok(true)
     }

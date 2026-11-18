@@ -76,3 +76,18 @@ fn groups_are_independent_and_removed_when_empty() -> Result<()> {
     assert_eq!(storage.list()?.len(), 2);
     Ok(())
 }
+
+#[test]
+fn list_group_returns_only_that_group() -> Result<()> {
+    let mut db = StorageDatabase::open_in_memory()?;
+    let storage = StorageTransaction::new(db.transaction()?);
+    let value = ConfigValue::Integer { value: 1 };
+    storage.set("plugin.one:key", &value)?;
+    storage.set("plugin.two:key", &value)?;
+
+    let items = storage.list_group("plugin.one")?;
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].key.as_ref(), "plugin.one:key");
+    assert!(storage.list_group("plugin..one").is_err());
+    Ok(())
+}

@@ -45,7 +45,14 @@ impl TypedCommandHandler for StorageListHandler {
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::StorageListMethodResult> {
-        let items = with_storage(&engine, method.repository_id, |storage| storage.list()).await?;
+        let items = with_storage(&engine, method.repository_id, |storage| {
+            if let Some(group) = method.group.as_deref() {
+                storage.list_group(group)
+            } else {
+                storage.list()
+            }
+        })
+        .await?;
         Ok(crate::api::StorageListMethodResult { items })
     }
 }

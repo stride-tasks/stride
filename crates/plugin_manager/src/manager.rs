@@ -136,6 +136,10 @@ impl PluginManager {
             api::RepositorySyncMethod::NAME => {
                 (task_permission.is_some_and(|task| task.sync), "task.sync")
             }
+            api::StorageListMethod::NAME
+            | api::StorageGetMethod::NAME
+            | api::StorageSetMethod::NAME
+            | api::StorageRemoveMethod::NAME => (true, "storage"),
             _ => return Some(format!("unsupported API method '{method}'").into()),
         };
 

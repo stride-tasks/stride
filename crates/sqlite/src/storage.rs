@@ -78,13 +78,25 @@ impl<'a> StorageTransaction<'a> {
 
     /// Lists all the stored items, ordered by group and key.
     pub fn list(&self) -> Result<Vec<StorageItem>> {
+        self.list_in_group(None)
+    }
+
+    /// Lists the stored items in one group, ordered by key.
+    pub fn list_group(&self, group: &str) -> Result<Vec<StorageItem>> {
+        let query = format!("{group}:_");
+        parse_key(&query)?;
+        self.list_in_group(Some(group))
+    }
+
+    fn list_in_group(&self, group: Option<&str>) -> Result<Vec<StorageItem>> {
         let mut sql = self.transaction.prepare_cached(indoc! {"
             SELECT n.name || ':' || i.key AS key, i.type, i.value
             FROM storage_item_table i
             JOIN storage_namespace_table n ON n.id = i.namespace_id
+            WHERE (?1 IS NULL OR n.name = ?1)
             ORDER BY n.name, i.key
         "})?;
-        let rows = sql.query_map((), Self::row_to_item)?;
+        let rows = sql.query_map([group], Self::row_to_item)?;
         rows.map(|row| row?).collect()
     }
 
