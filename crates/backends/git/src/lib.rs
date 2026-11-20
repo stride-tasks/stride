@@ -4,6 +4,7 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
+use async_trait::async_trait;
 use base64::{DecodeError, Engine as Base64Engine};
 use config::GitConfig;
 use git2::{
@@ -578,7 +579,7 @@ impl GitBackend {
 
         let mut remote_version_vector = VersionVector::default();
 
-        let mut transaction = db.transaction()?;
+        let mut transaction = db.task_transaction()?;
         for actor_path in std::fs::read_dir(&actors_dir)? {
             let actor_path = actor_path?;
             let metadata = actor_path.metadata()?;
@@ -726,10 +727,11 @@ impl Prompt for AddUnknownHostPrompt {
 #[derive(Debug, Clone, Copy)]
 pub struct SshHostListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshHostListHandler {
     type Method = api::SshHostListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _: Self::Method,
@@ -767,10 +769,11 @@ impl TypedCommandHandler for SshHostListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct SshHostRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshHostRemoveHandler {
     type Method = api::SshHostRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -806,10 +809,11 @@ impl TypedCommandHandler for SshHostRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct SshKeyListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshKeyListHandler {
     type Method = api::SshKeyListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _method: Self::Method,
@@ -850,10 +854,11 @@ fn ensure_supported_ssh_key_format(format: api::SshKeyFormat) -> stride_engine::
 #[derive(Debug, Clone, Copy)]
 pub struct SshKeyGenerateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshKeyGenerateHandler {
     type Method = api::SshKeyGenerateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -873,10 +878,11 @@ impl TypedCommandHandler for SshKeyGenerateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct SshKeyAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshKeyAddHandler {
     type Method = api::SshKeyAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -896,10 +902,11 @@ impl TypedCommandHandler for SshKeyAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct SshKeyUpdateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshKeyUpdateHandler {
     type Method = api::SshKeyUpdateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -919,10 +926,11 @@ impl TypedCommandHandler for SshKeyUpdateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct SshKeyRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for SshKeyRemoveHandler {
     type Method = api::SshKeyRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -934,6 +942,7 @@ impl TypedCommandHandler for SshKeyRemoveHandler {
     }
 }
 
+#[async_trait]
 impl Backend for GitBackend {
     fn handler() -> Box<dyn BackendHandler>
     where
@@ -942,7 +951,7 @@ impl Backend for GitBackend {
         Box::new(Handler)
     }
 
-    fn sync(
+    async fn sync(
         &mut self,
         context: Arc<Engine>,
         db: &mut Database,

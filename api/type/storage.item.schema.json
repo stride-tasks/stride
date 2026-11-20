@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://stride-tasks.github.io/stride/api/type/storage.item.schema.json",
+    "description": "A storage key-value pair.",
+    "type": "object",
+    "required": [
+        "key",
+        "value"
+    ],
+    "properties": {
+        "key": {
+            "type": "string",
+            "description": "A `group:key` query: the group (like a namespace) and the key separated by a colon (':'), both made of '.' separated names."
+        },
+        "value": {
+            "$ref": "https://stride-tasks.github.io/stride/api/type/config.value.schema.json",
+            "description": "The stored value."
+        }
+    }
+}

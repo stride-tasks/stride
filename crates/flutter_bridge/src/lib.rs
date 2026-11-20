@@ -9,6 +9,7 @@ use std::{
     sync::{Arc, Mutex, PoisonError, RwLock},
 };
 
+use async_trait::async_trait;
 use stride_api as api;
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
@@ -92,8 +93,9 @@ static STREAM_CALLBACK: Mutex<OptionalStreamCallback> = Mutex::new(None);
 #[derive(Debug)]
 struct FlutterNotifier;
 
+#[async_trait]
 impl Notifier for FlutterNotifier {
-    fn notify(&self, _: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
+    async fn notify(&self, _: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
         let name = notification.name();
         let value = notification.to_value();
 
@@ -185,7 +187,8 @@ fn execute_inner(method: &str, args: &str) -> Result<String, RustError> {
         .ok_or(ErrorKind::NotInitialized)?;
 
     // The error deliberately does not repeat `args`: they can contain secrets.
-    let result = engine.execute_erased(method, params.params)?;
+    let future = engine.execute_erased(method, params.params);
+    let result = futures_lite::future::block_on(future)?;
 
     let result = serde_json::to_string(&result).map_err(|e| ErrorKind::Other {
         message: format!("Failed to serialize result: {e}").into(),

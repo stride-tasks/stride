@@ -1,20 +1,24 @@
 use std::{path::Path, sync::Arc};
 
+use async_trait::async_trait;
+
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PluginListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginListHandler {
     type Method = crate::api::PluginListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _method: Self::Method,
     ) -> Result<crate::api::PluginListMethodResult> {
         let plugins = engine
             .lock_plugin_manager()
+            .await
             .list()
             .map(|plugin| plugin.instance.clone())
             .collect::<Vec<_>>();
@@ -26,16 +30,18 @@ impl TypedCommandHandler for PluginListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginValidateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginValidateHandler {
     type Method = crate::api::PluginValidateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginValidateMethodResult> {
         let plugin = engine
             .lock_plugin_manager()
+            .await
             .parse_plugin(Path::new(method.file_path.as_ref()))?;
 
         Ok(crate::api::PluginValidateMethodResult {
@@ -47,16 +53,18 @@ impl TypedCommandHandler for PluginValidateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginImportHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginImportHandler {
     type Method = crate::api::PluginImportMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginImportMethodResult> {
         engine
             .lock_plugin_manager()
+            .await
             .import(Path::new(method.file_path.as_ref()))?;
 
         Ok(crate::api::PluginImportMethodResult {})
@@ -66,15 +74,19 @@ impl TypedCommandHandler for PluginImportHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginRemoveHandler {
     type Method = crate::api::PluginRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginRemoveMethodResult> {
-        engine.lock_plugin_manager().remove(&method.plugin_name)?;
+        engine
+            .lock_plugin_manager()
+            .await
+            .remove(&method.plugin_name)?;
 
         Ok(crate::api::PluginRemoveMethodResult {})
     }
@@ -83,16 +95,18 @@ impl TypedCommandHandler for PluginRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginDisableHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginDisableHandler {
     type Method = crate::api::PluginDisableMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginDisableMethodResult> {
         engine
             .lock_plugin_manager()
+            .await
             .disable(&method.plugin_name, method.reason)?;
 
         Ok(crate::api::PluginDisableMethodResult {})
@@ -102,15 +116,19 @@ impl TypedCommandHandler for PluginDisableHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct PluginToggleHandler;
 
+#[async_trait]
 impl TypedCommandHandler for PluginToggleHandler {
     type Method = crate::api::PluginToggleMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::PluginToggleMethodResult> {
-        engine.lock_plugin_manager().toggle(&method.plugin_name)?;
+        engine
+            .lock_plugin_manager()
+            .await
+            .toggle(&method.plugin_name)?;
 
         Ok(crate::api::PluginToggleMethodResult {})
     }

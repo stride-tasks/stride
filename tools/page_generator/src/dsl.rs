@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TemplateValue {
+pub(crate) enum TemplateValue {
     Html(String),
     #[allow(unused)]
     Bool(bool),
@@ -11,14 +11,14 @@ pub enum TemplateValue {
 
 impl TemplateValue {
     #[allow(unused)]
-    pub fn as_html(&self) -> Option<&str> {
+    pub(crate) fn as_html(&self) -> Option<&str> {
         match self {
             TemplateValue::Html(value) => Some(value),
             TemplateValue::Bool(_) | TemplateValue::List(_) | TemplateValue::Map(_) => None,
         }
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         match self {
             TemplateValue::Html(value) => value.trim().is_empty(),
             TemplateValue::Bool(value) => !value,
@@ -29,16 +29,16 @@ impl TemplateValue {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct TemplateContext {
+pub(crate) struct TemplateContext {
     values: HashMap<String, TemplateValue>,
 }
 
 impl TemplateContext {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn insert(
+    pub(crate) fn insert(
         &mut self,
         key: impl Into<String>,
         value: TemplateValue,
@@ -46,7 +46,7 @@ impl TemplateContext {
         self.values.insert(key.into(), value)
     }
 
-    pub fn get(&self, key: &str) -> Option<&TemplateValue> {
+    pub(crate) fn get(&self, key: &str) -> Option<&TemplateValue> {
         let key = key.trim();
         if key.is_empty() {
             return None;
@@ -105,7 +105,7 @@ impl TemplateContext {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TemplateError {
+pub(crate) enum TemplateError {
     MissingVariable(String),
     UnterminatedIf(String),
     UnterminatedFor(String),
@@ -172,10 +172,14 @@ fn parse_call(raw: &str) -> Result<(&str, Vec<String>), TemplateError> {
     Ok((name.trim(), args))
 }
 
-pub fn render_template(template: &str, context: &TemplateContext) -> Result<String, TemplateError> {
+pub(crate) fn render_template(
+    template: &str,
+    context: &TemplateContext,
+) -> Result<String, TemplateError> {
     render_block(template, context)
 }
 
+#[allow(clippy::too_many_lines)]
 fn render_block(template: &str, context: &TemplateContext) -> Result<String, TemplateError> {
     let mut out = String::new();
     let mut cursor = 0usize;

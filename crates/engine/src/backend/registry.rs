@@ -43,7 +43,7 @@ impl BackendRegistry {
         self.map.values().map(Box::as_ref)
     }
 
-    pub fn sync_all(
+    pub async fn sync_all(
         &self,
         repository_id: Uuid,
         database: &mut Database,
@@ -78,7 +78,7 @@ impl BackendRegistry {
 
             let mut backend = handler.create(&backend.config, &path, known_paths)?;
 
-            let diff = backend.sync(context.clone(), database)?;
+            let diff = backend.sync(context.clone(), database).await?;
             combined_diff.extend(diff);
         }
 

@@ -1,4 +1,5 @@
 use anyhow::{Context as AnyhowContext, bail};
+use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveTime, Utc};
 use clap::Parser;
 use cli::{CliArgs, Mode};
@@ -8,8 +9,8 @@ use std::{
     sync::Arc,
 };
 use stride_api::{
-    self as api, RepositoryAddMethod, RepositoryListMethod, SettingGetMethod, SettingSetMethod,
-    Task, TaskPriority, TaskStatus,
+    self as api, ConfigValue, RepositoryAddMethod, RepositoryListMethod, StorageGetMethod,
+    StorageSetMethod, Task, TaskPriority, TaskStatus,
 };
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
@@ -57,27 +58,34 @@ fn choose_path_suffix(path: &Path) -> PathBuf {
 #[derive(Debug, Clone, Copy)]
 struct CliNotifier;
 
+#[async_trait]
 impl stride_engine::Notifier for CliNotifier {
-    fn notify(&self, context: &Arc<Engine>, notification: Box<dyn stride_engine::Notification>) {
+    async fn notify(
+        &self,
+        context: &Arc<Engine>,
+        notification: Box<dyn stride_engine::Notification>,
+    ) {
         log::trace!("Received: {}", notification.name());
         let notification_any: &dyn std::any::Any = &*notification;
         if let Some(prompt) = notification_any.downcast_ref::<api::UserPromptNotification>() {
-            let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
-            if let Some(description) = &prompt.description {
-                confirm = confirm.with_help_message(description);
-            }
-
             let input = {
+                let mut confirm = inquire::Confirm::new(&prompt.summary).with_default(true);
+                if let Some(description) = &prompt.description {
+                    confirm = confirm.with_help_message(description);
+                }
+
                 let _guard = LogLevelGuard::error();
                 confirm.prompt_skippable()
             };
+
             match input {
                 Err(err) => {
                     log::error!("Failed to prompt user: {err}");
                 }
                 Ok(Some(true)) => {
-                    let result =
-                        context.execute_erased(&prompt.target.method, prompt.target.params.clone());
+                    let result = context
+                        .execute_erased(&prompt.target.method, prompt.target.params.clone())
+                        .await;
                     if let Err(err) = result {
                         log::error!("Failed to execute prompt target: {err}");
                     }
@@ -230,8 +238,39 @@ fn apply_modifications(task: &mut Task, modifications: &TaskModifications) -> bo
     modified
 }
 
-#[allow(clippy::too_many_lines)]
+const CURRENT_REPOSITORY_KEY: &str = "core:current-repository";
+
+async fn get_current_repository(engine: &Arc<Engine>) -> anyhow::Result<Option<Uuid>> {
+    let result = engine
+        .execute(StorageGetMethod {
+            repository_id: None,
+            items: vec![CURRENT_REPOSITORY_KEY.into()],
+        })
+        .await?;
+
+    Ok(result.items.into_iter().find_map(|item| match item.value {
+        ConfigValue::Uuid { value } if item.key.as_ref() == CURRENT_REPOSITORY_KEY => Some(value),
+        _ => None,
+    }))
+}
+
+async fn set_current_repository(engine: &Arc<Engine>, id: Uuid) -> anyhow::Result<()> {
+    engine
+        .execute(StorageSetMethod {
+            repository_id: None,
+            key: CURRENT_REPOSITORY_KEY.into(),
+            value: ConfigValue::Uuid { value: id },
+        })
+        .await?;
+    Ok(())
+}
+
 fn main() -> anyhow::Result<ExitCode> {
+    futures_lite::future::block_on(async_main())
+}
+
+#[allow(clippy::too_many_lines)]
+async fn async_main() -> anyhow::Result<ExitCode> {
     let args = CliArgs::parse();
     let mode = args.mode.unwrap_or_else(|| Mode::Search {
         filter: Vec::default(),
@@ -267,12 +306,11 @@ fn main() -> anyhow::Result<ExitCode> {
         .command("ssh.key.remove", SshKeyRemoveHandler)
         .build();
 
-    let mut settings = engine.execute(SettingGetMethod {})?.setting;
-
-    let current_repository = match settings.current_repository {
+    let current_repository = match get_current_repository(&engine).await? {
         Some(uuid) => Some(uuid),
         None => engine
-            .execute(RepositoryListMethod {})?
+            .execute(RepositoryListMethod {})
+            .await?
             .repositories
             .first()
             .map(|repository| repository.id),
@@ -281,12 +319,8 @@ fn main() -> anyhow::Result<ExitCode> {
     let current_repository = if let Some(uuid) = current_repository {
         uuid
     } else {
-        let result = engine.execute(RepositoryAddMethod { name: None })?;
-        settings.current_repository = Some(result.repository_id);
-
-        engine.execute(SettingSetMethod {
-            setting: settings.clone(),
-        })?;
+        let result = engine.execute(RepositoryAddMethod { name: None }).await?;
+        set_current_repository(&engine, result.repository_id).await?;
 
         result.repository_id
     };
@@ -356,10 +390,12 @@ fn main() -> anyhow::Result<ExitCode> {
             let mut task = Task::new(title.into());
             apply_modifications(&mut task, &modifications);
 
-            engine.execute(api::RepositoryTaskAddMethod {
-                repository_id: current_repository,
-                task,
-            })?;
+            engine
+                .execute(api::RepositoryTaskAddMethod {
+                    repository_id: current_repository,
+                    task,
+                })
+                .await?;
         }
         Mode::Done { id } => {
             let id = if let Ok(id) = id.parse::<Uuid>() {
@@ -380,7 +416,7 @@ fn main() -> anyhow::Result<ExitCode> {
                 bail!("invalid task identifier expected index or UUID");
             };
 
-            let mut transaction = database.transaction()?;
+            let mut transaction = database.task_transaction()?;
             transaction.update_task_with(id, |mut task| {
                 task.status = Some(TaskStatus::Done);
                 task.modified = Some(Utc::now());
@@ -413,7 +449,7 @@ fn main() -> anyhow::Result<ExitCode> {
             let modifications = parse_task_modifications(&modifiers)?;
             let new_title = task_title_from_modifications(&modifications);
 
-            let mut transaction = database.transaction()?;
+            let mut transaction = database.task_transaction()?;
             transaction.update_task_with(id, |mut task| {
                 let mut modified = apply_modifications(&mut task, &modifications);
                 if let Some(new_title) = new_title {
@@ -431,10 +467,13 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!("undo")
         }
         Mode::Sync { backend: _name } => {
-            engine.clone().execute(api::RepositorySyncMethod {
-                id: current_repository,
-                backends: None,
-            })?;
+            engine
+                .clone()
+                .execute(api::RepositorySyncMethod {
+                    id: current_repository,
+                    backends: None,
+                })
+                .await?;
         }
         Mode::Log { .. } => {
             /// This is to prevent going though the git history in one go which allocates uses a of memory.
@@ -511,7 +550,7 @@ fn main() -> anyhow::Result<ExitCode> {
             todo!()
         }
         Mode::Repository { uuid } => {
-            let repositories = engine.execute(RepositoryListMethod {})?.repositories;
+            let repositories = engine.execute(RepositoryListMethod {}).await?.repositories;
 
             let mut repository = None;
             for candidate in repositories {
@@ -526,26 +565,23 @@ fn main() -> anyhow::Result<ExitCode> {
                 .unwrap_or_else(|| "unnamed".to_string().into_boxed_str());
             println!("Switching to repository: {name}");
 
-            settings.current_repository = Some(uuid);
-            engine.execute(SettingSetMethod {
-                setting: settings.clone(),
-            })?;
+            set_current_repository(&engine, uuid).await?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;
+            return backend::handle_command(command.as_ref(), engine.backends(), &mut database);
         }
         Mode::Plugin { command } => match command {
             None => {
-                for plugin in engine.lock_plugin_manager().list() {
+                for plugin in engine.lock_plugin_manager().await.list() {
                     println!("{}", plugin.instance.manifest.name);
                 }
             }
             Some(command) => match command {
                 cli::PluginCommand::Import { filepath } => {
-                    engine.lock_plugin_manager().import(&filepath)?;
+                    engine.lock_plugin_manager().await.import(&filepath)?;
                 }
                 cli::PluginCommand::Toggle { plugin_name } => {
-                    engine.lock_plugin_manager().toggle(&plugin_name)?;
+                    engine.lock_plugin_manager().await.toggle(&plugin_name)?;
                 }
             },
         },
@@ -595,7 +631,7 @@ fn main() -> anyhow::Result<ExitCode> {
             } else {
                 api::Value::Map(api::Map::new())
             };
-            let result = engine.clone().execute_erased(&method, params)?;
+            let result = engine.clone().execute_erased(&method, params).await?;
             println!("{result}");
         }
     }

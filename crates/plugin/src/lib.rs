@@ -1,142 +1,13 @@
 //! Core component library of a stride plugin.
 
-pub use stride_api::{self as api, constant::StorageErrorCode};
+pub use stride_api::{self as api};
 
 pub type PluginMessage = api::Value;
 
 #[link(wasm_import_module = "env")]
 unsafe extern "C" {
     fn stride__emit(data: *const u8, len: usize);
-    fn stride__storage_get(key: *const u8, key_len: usize, value: *mut u8) -> i32;
-    fn stride__storage_set(
-        key: *const u8,
-        key_len: usize,
-        value: *const u8,
-        value_len: usize,
-    ) -> i32;
-    fn stride__storage_remove(key: *const u8, key_len: usize) -> i32;
 }
-
-/// Errors returned while accessing plugin storage.
-#[derive(Debug)]
-pub enum StorageError {
-    Host(StorageErrorCode),
-    UnknownHostCode(i32),
-    Serde(serde_json::Error),
-    ChangedSize { expected: usize, actual: usize },
-}
-
-impl StorageError {
-    fn from_host_code(code: i32) -> Self {
-        match code {
-            value if value == StorageErrorCode::MissingMemoryExport as i32 => {
-                Self::Host(StorageErrorCode::MissingMemoryExport)
-            }
-            value if value == StorageErrorCode::InvalidKey as i32 => {
-                Self::Host(StorageErrorCode::InvalidKey)
-            }
-            value if value == StorageErrorCode::InvalidValue as i32 => {
-                Self::Host(StorageErrorCode::InvalidValue)
-            }
-            value if value == StorageErrorCode::OutOfStorage as i32 => {
-                Self::Host(StorageErrorCode::OutOfStorage)
-            }
-            value if value == StorageErrorCode::Permission as i32 => {
-                Self::Host(StorageErrorCode::Permission)
-            }
-            _ => Self::UnknownHostCode(code),
-        }
-    }
-}
-
-impl std::fmt::Display for StorageError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Host(code) => write!(f, "plugin storage host error: {code:?}"),
-            Self::UnknownHostCode(code) => write!(f, "unknown plugin storage host error: {code}"),
-            Self::Serde(error) => write!(f, "plugin storage serialization error: {error}"),
-            Self::ChangedSize { expected, actual } => write!(
-                f,
-                "plugin storage value changed size from {expected} to {actual} while reading"
-            ),
-        }
-    }
-}
-
-impl std::error::Error for StorageError {}
-
-impl From<serde_json::Error> for StorageError {
-    fn from(error: serde_json::Error) -> Self {
-        Self::Serde(error)
-    }
-}
-
-/// Access storage provided by the plugin host.
-#[derive(Clone, Copy, Debug)]
-pub struct Storage;
-
-impl Storage {
-    /// Retrieve a raw value, or `None` if the key does not exist.
-    ///
-    /// # Errors
-    ///
-    /// Returns a host error or a size-change error if the value cannot be read.
-    pub fn get_raw(key: &str) -> Result<Option<Vec<u8>>, StorageError> {
-        let size = unsafe { stride__storage_get(key.as_ptr(), key.len(), std::ptr::null_mut()) };
-        if size == StorageErrorCode::NotFound as i32 {
-            return Ok(None);
-        }
-        if size < 0 {
-            return Err(StorageError::from_host_code(size));
-        }
-
-        let expected = usize::try_from(size).map_err(|_| StorageError::UnknownHostCode(size))?;
-        let mut result = vec![0; expected];
-        let actual = unsafe { stride__storage_get(key.as_ptr(), key.len(), result.as_mut_ptr()) };
-        if actual < 0 {
-            return Err(StorageError::from_host_code(actual));
-        }
-        let actual = usize::try_from(actual).map_err(|_| StorageError::UnknownHostCode(actual))?;
-        if actual != expected {
-            return Err(StorageError::ChangedSize { expected, actual });
-        }
-        Ok(Some(result))
-    }
-
-    /// Retrieve and deserialize a JSON value.
-    ///
-    /// # Errors
-    ///
-    /// Returns a host error or a JSON deserialization error.
-    pub fn get<T: serde::de::DeserializeOwned>(key: &str) -> Result<Option<T>, StorageError> {
-        Self::get_raw(key)?
-            .map(|content| serde_json::from_slice(&content).map_err(StorageError::from))
-            .transpose()
-    }
-
-    /// Store a raw value.
-    #[must_use]
-    pub fn set_raw(key: &str, value: &[u8]) -> bool {
-        unsafe { stride__storage_set(key.as_ptr(), key.len(), value.as_ptr(), value.len()) == 0 }
-    }
-
-    /// Serialize and store a JSON value.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the value cannot be serialized.
-    pub fn set<T: serde::Serialize>(key: &str, value: &T) -> Result<bool, StorageError> {
-        let json = serde_json::to_vec(value)?;
-        Ok(Self::set_raw(key, &json))
-    }
-
-    /// Remove a stored value; returns whether a value was removed.
-    #[must_use]
-    pub fn remove(key: &str) -> bool {
-        unsafe { stride__storage_remove(key.as_ptr(), key.len()) == 1 }
-    }
-}
-
 /// Stateful plugin implementation used by [`plugin!`].
 pub trait Plugin: Sized {
     fn init() -> Self;
@@ -189,26 +60,167 @@ macro_rules! plugin {
     };
 }
 
-#[derive(serde::Serialize)]
-struct MethodCall<'a, M> {
-    method: &'static str,
-    params: &'a M,
-}
-
 /// Emit a schema-backed API method call to the host.
 ///
 /// # Errors
 ///
 /// Returns an error if the method cannot be serialized.
 pub fn emit_method<M: api::Method>(method: &M) -> Result<(), serde_json::Error> {
-    let call = MethodCall {
-        method: M::NAME,
-        params: method,
-    };
-    let data = serde_json::to_vec(&call)?;
+    let mut buffer = Vec::new();
+    buffer.extend_from_slice(M::NAME.as_bytes());
+    buffer.push(b':');
+    serde_json::to_writer(&mut buffer, &method)?;
 
     unsafe {
-        stride__emit(data.as_ptr(), data.len());
+        stride__emit(buffer.as_ptr(), buffer.len());
     }
     Ok(())
+}
+
+#[derive(Debug)]
+pub enum PluginStorageError {
+    InvalidKey(Box<str>),
+    Serialize(serde_json::Error),
+}
+
+impl std::fmt::Display for PluginStorageError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidKey(key) => write!(f, "invalid plugin storage key '{key}'"),
+            Self::Serialize(error) => {
+                write!(f, "could not serialize plugin storage method: {error}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for PluginStorageError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::InvalidKey(_) => None,
+            Self::Serialize(error) => Some(error),
+        }
+    }
+}
+
+impl From<serde_json::Error> for PluginStorageError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::Serialize(error)
+    }
+}
+
+/// Plugin-scoped access to global or repository storage.
+///
+/// Keys are unqualified; the plugin manager assigns each plugin its own group.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PluginStorage {
+    repository_id: Option<uuid::Uuid>,
+}
+
+impl PluginStorage {
+    /// Uses the application's global storage.
+    #[must_use]
+    pub const fn global() -> Self {
+        Self {
+            repository_id: None,
+        }
+    }
+
+    /// Uses storage belonging to the given repository.
+    #[must_use]
+    pub const fn repository(repository_id: uuid::Uuid) -> Self {
+        Self {
+            repository_id: Some(repository_id),
+        }
+    }
+
+    /// Emits a request to list this plugin's storage items.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the method cannot be serialized.
+    pub fn list(&self) -> Result<(), PluginStorageError> {
+        emit_method(&api::StorageListMethod {
+            repository_id: self.repository_id,
+            group: None,
+        })?;
+        Ok(())
+    }
+
+    /// Emits a request to retrieve the given unqualified keys.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a key is invalid or the method cannot be serialized.
+    pub fn get<K: AsRef<str>>(&self, keys: &[K]) -> Result<(), PluginStorageError> {
+        let items = keys
+            .iter()
+            .map(|key| unqualified_key(key.as_ref()))
+            .collect::<Result<Vec<_>, _>>()?;
+        emit_method(&api::StorageGetMethod {
+            repository_id: self.repository_id,
+            items,
+        })?;
+        Ok(())
+    }
+
+    /// Emits a request to set an unqualified key.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the key is invalid or the method cannot be serialized.
+    pub fn set(&self, key: &str, value: api::ConfigValue) -> Result<(), PluginStorageError> {
+        let key = unqualified_key(key)?;
+        emit_method(&api::StorageSetMethod {
+            repository_id: self.repository_id,
+            key,
+            value,
+        })?;
+        Ok(())
+    }
+
+    /// Emits a request to remove the given unqualified keys.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a key is invalid or the method cannot be serialized.
+    pub fn remove<K: AsRef<str>>(&self, keys: &[K]) -> Result<(), PluginStorageError> {
+        let items = keys
+            .iter()
+            .map(|key| unqualified_key(key.as_ref()))
+            .collect::<Result<Vec<_>, _>>()?;
+        emit_method(&api::StorageRemoveMethod {
+            repository_id: self.repository_id,
+            items,
+        })?;
+        Ok(())
+    }
+}
+
+fn unqualified_key(key: &str) -> Result<Box<str>, PluginStorageError> {
+    if key.is_empty()
+        || key.contains(':')
+        || !key.split('.').all(|part| {
+            !part.is_empty()
+                && part
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+        })
+    {
+        return Err(PluginStorageError::InvalidKey(key.into()));
+    }
+    Ok(key.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn plugin_storage_keys_must_be_unqualified_names() {
+        assert!(unqualified_key("settings.theme").is_ok());
+        for key in ["", "group:key", "a..b", "bad key", "é"] {
+            assert!(unqualified_key(key).is_err(), "{key}");
+        }
+    }
 }

@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
-pub struct Cli {
+#[allow(clippy::struct_field_names)]
+pub(crate) struct Cli {
     #[clap(short = 'a', long, default_value = "./api")]
     pub api_dir: PathBuf,
 

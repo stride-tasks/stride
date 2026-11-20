@@ -1,4 +1,5 @@
-use std::sync::{Mutex, MutexGuard};
+use smol::fs;
+use smol::lock::{Mutex, MutexGuard};
 use std::{path::PathBuf, sync::Arc};
 use stride_crdt::actor::ActorId;
 use stride_crdt::hlc::{Clock, SystemTimeProvider};
@@ -21,9 +22,9 @@ impl Repository {
     /// # Errors
     ///
     /// Returns an error if the repository could not be opened for any reason.
-    pub fn open(id: Uuid, known_paths: &KnownPaths) -> Result<Self> {
+    pub async fn open(id: Uuid, known_paths: &KnownPaths) -> Result<Self> {
         let root_path = known_paths.support.join("repository").join(id.to_string());
-        std::fs::create_dir_all(&root_path)?;
+        fs::create_dir_all(&root_path).await?;
 
         let time_provider = Arc::new(SystemTimeProvider::default());
         let clock = Clock::new(time_provider);
@@ -38,10 +39,8 @@ impl Repository {
         })
     }
 
-    pub fn lock_database(&self) -> MutexGuard<'_, Database> {
-        self.db
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    pub async fn lock_database(&self) -> MutexGuard<'_, Database> {
+        self.db.lock().await
     }
 
     /// Synchronize the repository with all backends.
@@ -49,12 +48,13 @@ impl Repository {
     /// # Errors
     ///
     /// Returns an error if the synchronization could not be performed for any reason.
-    pub fn sync(&self, engine: &Arc<Engine>) -> Result<Vec<crate::api::TaskChange>> {
-        let mut db = self.lock_database();
+    pub async fn sync(&self, engine: &Arc<Engine>) -> Result<Vec<crate::api::TaskChange>> {
+        let mut db = self.lock_database().await;
         let diff = engine
             .backends()
-            .sync_all(self.uuid, &mut db, engine.known_paths(), engine)?;
+            .sync_all(self.uuid, &mut db, engine.known_paths(), engine)
+            .await?;
 
-        Ok(db.transaction()?.task_changes_from_diff(&diff)?)
+        Ok(db.task_transaction()?.task_changes_from_diff(&diff)?)
     }
 }

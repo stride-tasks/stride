@@ -9,13 +9,12 @@ use stride_api::{
     TaskPriority, TaskQuery, TaskStatus, TaskUda,
 };
 use stride_crdt::{actor::ActorId, hlc::Clock};
-use url::Url;
 use uuid::Uuid;
 
 use std::{collections::HashSet, path::Path, rc::Rc};
 
 use crate::{
-    Result, Sql, apply_migrations, database::transaction::Transaction, task_status_to_sql,
+    Result, Sql, apply_migrations, database::transaction::TaskTransaction, task_status_to_sql,
 };
 
 pub(crate) mod transaction;
@@ -232,8 +231,12 @@ impl Database {
         self.actor_id
     }
 
-    pub fn transaction(&mut self) -> Result<Transaction<'_>> {
-        Transaction::new(self)
+    pub fn transaction(&mut self) -> Result<rusqlite::Transaction<'_>> {
+        Ok(self.connection.transaction()?)
+    }
+
+    pub fn task_transaction(&mut self) -> Result<TaskTransaction<'_>> {
+        TaskTransaction::new(self)
     }
 
     #[inline]
@@ -260,8 +263,7 @@ impl Database {
         let uda_values = row.get::<_, Option<Box<str>>>("uda_values")?;
         let tags = row
             .get::<_, Option<String>>("tags")?
-            .map(|tags| tags.split('\0').map(Box::<str>::from).collect::<Vec<_>>())
-            .unwrap_or_default();
+            .map_or_default(|tags| tags.split('\0').map(Box::<str>::from).collect::<Vec<_>>());
 
         let mut annotations = Vec::new();
         if let (Some(ids), Some(entries), Some(text)) =
@@ -485,33 +487,8 @@ impl Database {
 
                 Ok((
                     name,
-                    match typ.as_ref() {
-                        typ @ ("string" | "url") => {
-                            let value = row.get::<_, Vec<u8>>("value")?;
-                            let string = String::from_utf8(value).map_err(|e| {
-                                let error = e.utf8_error();
-                                rusqlite::Error::Utf8Error(error.valid_up_to(), error)
-                            })?;
-                            if typ == "string" {
-                                ConfigValue::String {
-                                    value: string.into_boxed_str(),
-                                }
-                            } else {
-                                ConfigValue::Url {
-                                    value: Url::parse(&string).map_err(|e| {
-                                        rusqlite::types::FromSqlError::Other(Box::new(e))
-                                    })?,
-                                }
-                            }
-                        }
-                        "uuid" => ConfigValue::Uuid {
-                            value: row.get::<_, Uuid>("value")?,
-                        },
-                        "bytes" => ConfigValue::Bytes {
-                            value: row.get::<_, Vec<u8>>("value")?.into_boxed_slice(),
-                        },
-                        _ => todo!(),
-                    },
+                    ConfigValue::from_type_name_and_bytes(&typ, &row.get::<_, Vec<u8>>("value")?)
+                        .map_err(|e| rusqlite::types::FromSqlError::Other(Box::new(e)))?,
                 ))
             })?;
 

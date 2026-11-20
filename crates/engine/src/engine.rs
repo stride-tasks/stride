@@ -1,7 +1,10 @@
 use std::{
-    sync::{Arc, Mutex, MutexGuard},
+    sync::Arc,
     time::{Duration, Instant},
 };
+
+use smol::lock::{Mutex, MutexGuard, OnceCell};
+use stride_sqlite::StorageDatabase;
 
 use stride_api as api;
 use stride_plugin_manager::PluginManager;
@@ -9,8 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     BackendRegistry, CommandDescription, CommandRegistry, EngineBuilder, Error, KnownPaths,
-    Notifier, Repository, Result, cache::Cache, engine::plugin::process_plugin_work,
-    runtime::Runtime,
+    Notifier, Repository, Result, cache::Cache, runtime::Runtime,
 };
 
 pub(super) mod builder;
@@ -23,6 +25,7 @@ pub struct Engine {
     commands: CommandRegistry,
     backends: BackendRegistry,
     repositories: Mutex<Cache<Repository>>,
+    global_database: OnceCell<Mutex<StorageDatabase>>,
     plugin_manager: Mutex<PluginManager>,
     runtime: Runtime,
 }
@@ -52,6 +55,7 @@ impl Engine {
             commands,
             backends,
             repositories: Mutex::new(Cache::new(Duration::from_secs(60))),
+            global_database: OnceCell::new(),
             plugin_manager: Mutex::new(plugin_manager),
             runtime: Runtime::new(None),
         })
@@ -72,27 +76,32 @@ impl Engine {
     /// Returns an error if the notification could not be sent for any reason.
     pub fn notify(self: &Arc<Self>, notification: Box<dyn Notification>) {
         let engine = self.clone();
-        let name = notification.name();
-        let value = notification.to_value();
         let task = self.clone().runtime().spawn(async move {
-            process_plugin_work(&engine, name, &value);
+            engine.clone().notifier.notify(&engine, notification).await;
         });
 
         task.detach();
-
-        self.clone().notifier.notify(self, notification);
     }
 
-    pub(crate) fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
-        self.repositories
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    pub(crate) async fn lock_repositories(self: &Arc<Self>) -> MutexGuard<'_, Cache<Repository>> {
+        self.repositories.lock().await
     }
 
-    pub fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
-        self.plugin_manager
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    /// Lock the global (per application) database, opening it on first use.
+    pub(crate) async fn lock_global_database(&self) -> Result<MutexGuard<'_, StorageDatabase>> {
+        let database = self
+            .global_database
+            .get_or_try_init(|| async {
+                std::fs::create_dir_all(&self.known_paths.support)?;
+                let path = self.known_paths.global_database_filepath();
+                Ok::<_, Error>(Mutex::new(StorageDatabase::open(&path)?))
+            })
+            .await?;
+        Ok(database.lock().await)
+    }
+
+    pub async fn lock_plugin_manager(self: &Arc<Self>) -> MutexGuard<'_, PluginManager> {
+        self.plugin_manager.lock().await
     }
 
     pub(crate) fn runtime(self: &Arc<Self>) -> &Runtime {
@@ -107,8 +116,8 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the repository could not be opened for any reason.
-    pub fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
-        let mut repositories = self.lock_repositories();
+    pub async fn open_repository(self: &Arc<Self>, id: Uuid) -> Result<Arc<Repository>> {
+        let mut repositories = self.lock_repositories().await;
         let now = Instant::now();
 
         if let Some(entry) = repositories.get_mut(id) {
@@ -121,7 +130,7 @@ impl Engine {
 
         repositories.evict_expired(now);
 
-        let repository = Repository::open(id, self.known_paths())?;
+        let repository = Repository::open(id, self.known_paths()).await?;
         let repository = Arc::new(repository);
 
         repositories.insert(id, repository.clone());
@@ -133,8 +142,8 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the repository could not be removed for any reason.
-    pub fn remove_repository(self: &Arc<Self>, id: Uuid) -> Result<()> {
-        let mut repositories = self.lock_repositories();
+    pub async fn remove_repository(self: &Arc<Self>, id: Uuid) -> Result<()> {
+        let mut repositories = self.lock_repositories().await;
         repositories.remove(id);
 
         let root_path = self.known_paths().repository_path(id);
@@ -147,19 +156,25 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the command could not be executed for any reason.
-    pub fn execute_erased(self: &Arc<Self>, method: &str, args: api::Value) -> Result<api::Value> {
+    pub async fn execute_erased(
+        self: &Arc<Self>,
+        method: &str,
+        args: api::Value,
+    ) -> Result<api::Value> {
         let handler = self
             .commands
             .get(method)
             .ok_or_else(|| Error::HandlerNotFound {
                 method: method.into(),
             })?;
-        let result = handler
-            .handle(self.clone(), args)
-            .map_err(|err| Error::HandlerFailed {
-                method: method.into(),
-                cause: Box::new(err),
-            })?;
+        let result =
+            handler
+                .handle(self.clone(), args)
+                .await
+                .map_err(|err| Error::HandlerFailed {
+                    method: method.into(),
+                    cause: Box::new(err),
+                })?;
         Ok(result)
     }
 
@@ -168,12 +183,12 @@ impl Engine {
     /// # Errors
     ///
     /// Returns an error if the method could not be executed for any reason.
-    pub fn execute<T: api::Method>(self: &Arc<Self>, method: T) -> Result<T::Result> {
+    pub async fn execute<T: api::Method>(self: &Arc<Self>, method: T) -> Result<T::Result> {
         let method_name = T::NAME;
 
         let params = api::Value::from_type(method);
 
-        let result_value = self.execute_erased(method_name, params)?;
+        let result_value = self.execute_erased(method_name, params).await?;
         let result = api::Value::to_type::<T::Result>(&result_value).map_err(Error::Other)?;
         Ok(result)
     }
@@ -202,7 +217,7 @@ impl Engine {
     }
 }
 
-pub trait Notification: std::fmt::Debug + std::any::Any + 'static {
+pub trait Notification: std::fmt::Debug + std::any::Any + Send + 'static {
     fn name(&self) -> &'static str;
 
     fn to_value(&self) -> api::Value;
@@ -217,7 +232,7 @@ pub trait Notification: std::fmt::Debug + std::any::Any + 'static {
         Self: Sized;
 }
 
-impl<T: std::fmt::Debug + api::Notification + 'static> Notification for T {
+impl<T: std::fmt::Debug + api::Notification + Send + 'static> Notification for T {
     fn name(&self) -> &'static str {
         T::NAME
     }
@@ -259,7 +274,7 @@ impl<T: Prompt> PromptNotification<T> {
     }
 }
 
-impl<T: Prompt> Notification for PromptNotification<T> {
+impl<T: Prompt + Send> Notification for PromptNotification<T> {
     fn name(&self) -> &'static str {
         <api::UserPromptNotification as api::Notification>::NAME
     }

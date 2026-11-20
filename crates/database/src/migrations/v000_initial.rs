@@ -1,19 +1,6 @@
-use super::Migration;
+use stride_sqlite::Migration;
 
 const SQL: &str = r"
-BEGIN TRANSACTION;
-
--------------------------------------------
---              migration                --
--------------------------------------------
-
-CREATE TABLE migration_table (
-    `id` INTEGER PRIMARY KEY,
-    `sql` TEXT NOT NULL
-) STRICT;
-
-
-
 -------------------------------------------
 --                tasks                  --
 -------------------------------------------
@@ -155,7 +142,6 @@ CREATE TABLE backend_config_table (
 
 ANALYZE;
 
-COMMIT;
 ";
 
 pub(super) struct InitialMigration;

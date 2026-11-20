@@ -1,14 +1,17 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
+
 use crate::{Engine, Result, TypedCommandHandler};
 
 #[derive(Debug, Clone, Copy)]
 pub struct BackendListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for BackendListHandler {
     type Method = crate::api::BackendListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _: Self::Method,
@@ -29,10 +32,11 @@ impl TypedCommandHandler for BackendListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct BackendGetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for BackendGetHandler {
     type Method = crate::api::BackendGetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,

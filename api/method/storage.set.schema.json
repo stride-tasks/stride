@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/storage.set.schema.json",
+    "description": "Adds or changes a key-value pair.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "storage.set"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The repository whose storage is used. When omitted, the global (per application) storage is used."
+                },
+                "key": {
+                    "type": "string",
+                    "description": "A `group:key` query: the group (like a namespace) and the key separated by a colon (':'), both made of '.' separated names."
+                },
+                "value": {
+                    "$ref": "https://stride-tasks.github.io/stride/api/type/config.value.schema.json",
+                    "description": "The value to store."
+                }
+            },
+            "required": [
+                "key",
+                "value"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+}

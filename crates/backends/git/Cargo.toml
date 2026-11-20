@@ -18,6 +18,7 @@ stride_crypto.workspace = true
 stride_database.workspace = true
 stride_engine.workspace = true
 
+async-trait.workspace = true
 uuid.workspace = true
 base64.workspace = true
 git2.workspace = true

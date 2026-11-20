@@ -12,7 +12,8 @@ use crate::{
         RepositoryBackendToggleHandler, RepositoryListHandler, RepositoryProjectListHandler,
         RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
         RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
-        RepositoryTaskUpdateHandler, RepositoryUpdateHandler, SettingGetHandler, SettingSetHandler,
+        RepositoryTaskUpdateHandler, RepositoryUpdateHandler, StorageGetHandler,
+        StorageListHandler, StorageRemoveHandler, StorageSetHandler,
     },
 };
 
@@ -101,8 +102,10 @@ impl EngineBuilder {
             .command("repository.task.update", RepositoryTaskUpdateHandler)
             .command("repository.task.remove", RepositoryTaskRemoveHandler)
             .command("repository.task.query", RepositoryTaskQueryHandler)
-            .command("setting.get", SettingGetHandler)
-            .command("setting.set", SettingSetHandler)
+            .command("storage.list", StorageListHandler)
+            .command("storage.get", StorageGetHandler)
+            .command("storage.set", StorageSetHandler)
+            .command("storage.remove", StorageRemoveHandler)
     }
 
     #[must_use]

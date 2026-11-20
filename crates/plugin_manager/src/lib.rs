@@ -3,36 +3,30 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::doc_markdown)]
 
-use std::{
-    collections::{HashMap, VecDeque},
-    fmt::Debug,
-    fs::File,
-    io::{BufReader, BufWriter, Read, Write},
-    path::Path,
-};
+use std::{collections::VecDeque, fmt::Debug, fs::File, io::Read, path::Path};
 
 use error::ToPluginError;
 use logging::PluginLogger;
 use stride_api::{
-    self as api, Notification, PluginManifest, PluginManifestInstance, PluginState,
-    constant::StorageErrorCode,
+    self as api, Method, Notification, PluginManifest, PluginManifestInstance, PluginState,
 };
 use wasmi::{Caller, Extern, Func, FuncType, Linker, Module, Store, ValType};
 use wasmi_wasi::{WasiCtx, WasiCtxBuilder};
 use zip::ZipArchive;
 
+pub mod async_wasm;
 mod error;
 mod logging;
 pub mod manager;
+mod storage;
 
 pub use error::{Error, Result};
+use storage::{is_valid_plugin_name, sanitize_plugin_storage_call};
 
+pub use async_wasm::{AsyncFunc, AsyncTypedFunc};
 pub use manager::PluginManager;
 
 const EVENT_HANDLER_NAME: &str = "stride__event_handler";
-const STORAGE_SET_NAME: &str = "stride__storage_set";
-const STORAGE_GET_NAME: &str = "stride__storage_get";
-const STORAGE_REMOVE_NAME: &str = "stride__storage_remove";
 
 /// Creates the [`WasiCtx`] for this session.
 fn wasi_context(plugin_name: &str) -> WasiCtx {
@@ -58,24 +52,16 @@ fn wasi_context(plugin_name: &str) -> WasiCtx {
     wasi_builder.build()
 }
 
-struct StorageState {
-    data: HashMap<Box<[u8]>, Box<[u8]>>,
-    max: usize,
-    size: usize,
-    needs_save: bool,
-}
-
 struct HostState {
     wasi: WasiCtx,
-    calls: VecDeque<api::Value>,
+    calls: VecDeque<(Box<str>, api::Value)>,
     call_error: Option<Box<str>>,
-    storage: Option<StorageState>,
 }
 
 #[derive(Debug)]
 pub struct PluginCallQueue {
-    plugin_name: Box<str>,
-    calls: VecDeque<api::Value>,
+    pub plugin_name: Box<str>,
+    pub calls: VecDeque<(Box<str>, api::Value)>,
 }
 
 #[derive(Debug)]
@@ -90,7 +76,8 @@ pub struct Plugin {
 }
 
 impl Plugin {
-    fn can_accept_notification(&self, notification_name: &str) -> bool {
+    #[must_use]
+    pub fn can_accept_notification(&self, notification_name: &str) -> bool {
         // TOOD: Implement is_* functions for enums in rust (api_codegen).
         if !matches!(self.instance.state, PluginState::Enable {}) {
             return false;
@@ -100,6 +87,7 @@ impl Plugin {
         };
         match notification_name {
             api::RepositoryTaskAddedNotification::NAME => events.create,
+            api::RepositoryTaskUpdatedNotification::NAME => events.modify,
             api::RepositoryChangedNotification::NAME => events.sync,
             _ => false,
         }
@@ -163,25 +151,6 @@ impl PluginManager {
             if name == EVENT_HANDLER_NAME {
                 check_signature_match(name, func, &[ValType::I32, ValType::I32], &[ValType::I32])?;
             }
-            if name == STORAGE_GET_NAME {
-                check_signature_match(
-                    name,
-                    func,
-                    &[ValType::I32, ValType::I32, ValType::I32],
-                    &[ValType::I32],
-                )?;
-            }
-            if name == STORAGE_SET_NAME {
-                check_signature_match(
-                    name,
-                    func,
-                    &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-                    &[ValType::I32],
-                )?;
-            }
-            if name == STORAGE_REMOVE_NAME {
-                check_signature_match(name, func, &[ValType::I32, ValType::I32], &[ValType::I32])?;
-            }
         }
         if !has_memory_export {
             return Err(Error::MissingMemoryExport);
@@ -218,7 +187,7 @@ impl PluginManager {
             return Err(Error::MissingManifest);
         };
 
-        if manifest.name.is_empty() || manifest.name.len() > 255 || !manifest.name.is_ascii() {
+        if manifest.name.len() > 255 || !is_valid_plugin_name(&manifest.name) {
             return Err(Error::InvalidName {
                 name: manifest.name.to_string(),
             });
@@ -232,12 +201,7 @@ impl PluginManager {
 
         Ok(ParsePlugin {
             instance: PluginManifestInstance {
-                manifest: PluginManifest {
-                    api: manifest.api,
-                    name: manifest.name,
-                    event: manifest.event,
-                    permission: manifest.permission,
-                },
+                manifest,
                 state: PluginState::Enable {},
             },
             code: code_content.into_boxed_slice(),
@@ -299,36 +263,13 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn emit_notification(&mut self, name: &str, value: &api::Value) {
-        for plugin in self.plugins.values() {
-            if !plugin.can_accept_notification(name) {
-                continue;
-            }
-            self.host_messages
-                .push_back((plugin.instance.manifest.name.clone(), value.clone()));
-        }
-    }
-
-    pub fn enqueue_plugin_message(&mut self, plugin_name: &str, message: api::Value) {
-        if let Some(plugin) = self.plugin(plugin_name)
-            && matches!(plugin.instance.state, PluginState::Enable {})
-        {
-            self.host_messages
-                .push_back((plugin.instance.manifest.name.clone(), message));
-        }
-    }
-
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_wrap)]
     #[allow(clippy::missing_panics_doc)]
     #[allow(clippy::too_many_lines)]
-    pub fn process_plugin_message(&mut self) -> Result<bool> {
-        let Some((plugin, message)) = self.host_messages.pop_front() else {
-            return Ok(false);
-        };
-
-        let Some(plugin) = self.plugins.get(&plugin) else {
+    pub fn process_plugin_message(&mut self, plugin: &str, message: &api::Value) -> Result<bool> {
+        let Some(plugin) = self.plugins.get(plugin) else {
             return Ok(false);
         };
 
@@ -344,56 +285,11 @@ impl PluginManager {
         let wasm = std::fs::read(code_path)?;
         let module = Module::new(&self.engine, &wasm).to_error(&plugin.instance.manifest.name)?;
 
-        let has_storage_permission = plugin.instance.manifest.permission.storage.is_some();
-
-        let storage_filepath = plugin_path.join("store");
-
-        let mut storage = HashMap::new();
-        let mut storage_size = 0;
-        if has_storage_permission && storage_filepath.exists() {
-            let file = File::open(&storage_filepath)?;
-            let mut reader = BufReader::new(file);
-            loop {
-                let mut size = 0u32.to_be_bytes();
-                let count = reader.read(&mut size)?;
-                if count == 0 {
-                    break;
-                }
-                let size = u32::from_be_bytes(size) as usize;
-                let mut key = vec![0u8; size];
-                reader.read_exact(&mut key)?;
-
-                let mut size = 0u32.to_be_bytes();
-                reader.read_exact(&mut size)?;
-                let size = u32::from_be_bytes(size) as usize;
-                let mut value = vec![0u8; size];
-                reader.read_exact(&mut value)?;
-
-                storage_size += key.len();
-                storage_size += value.len();
-
-                storage.insert(key.into_boxed_slice(), value.into_boxed_slice());
-            }
-        }
-
         let wasi_ctx = wasi_context(&plugin.instance.manifest.name);
         let host_state = HostState {
             wasi: wasi_ctx,
             calls: VecDeque::default(),
             call_error: None,
-            storage: has_storage_permission.then(|| StorageState {
-                data: storage,
-                size: storage_size,
-                max: plugin
-                    .instance
-                    .manifest
-                    .permission
-                    .storage
-                    .as_ref()
-                    .map_or(0, |storage| storage.max_size)
-                    * 1024,
-                needs_save: false,
-            }),
         };
         let mut store = Store::new(&self.engine, host_state);
 
@@ -422,137 +318,26 @@ impl PluginManager {
                     return;
                 };
 
+                let Some(index) = data.iter().position(|&b| b == b':') else {
+                    caller.data_mut().call_error = Some("plugin call missing prefix".into());
+                    return;
+                };
+
+                let (method, data) = data.split_at(index);
+                let data = &data[1..]; // skip the ':' separator
+
+                let Some(method) = std::str::from_utf8(method).ok().map(Into::into) else {
+                    caller.data_mut().call_error = Some("plugin call method not valid UTF8".into());
+                    return;
+                };
+
                 match serde_json::from_slice::<api::Value>(data) {
-                    Ok(call) => caller.data_mut().calls.push_back(call),
+                    Ok(call) => caller.data_mut().calls.push_back((method, call)),
                     Err(error) => caller.data_mut().call_error = Some(error.to_string().into()),
                 }
             },
         );
         linker.define("env", "stride__emit", stride_emit)?;
-
-        let stride_storage_get = Func::wrap(
-            &mut store,
-            |mut caller: Caller<'_, HostState>, key: i32, key_len: i32, value_ptr: i32| -> i32 {
-                let export = caller.get_export("memory");
-                let Some(memory_export) = export.and_then(Extern::into_memory) else {
-                    return StorageErrorCode::MissingMemoryExport as i32;
-                };
-
-                let (memory, host_state) = memory_export.data_and_store_mut(&mut caller);
-
-                let Some(storage) = &mut host_state.storage else {
-                    return StorageErrorCode::Permission as i32;
-                };
-
-                let key = key as usize;
-                let key_len = key_len as usize;
-                let key = memory.get(key..key + key_len);
-
-                let Some(key) = key else {
-                    return StorageErrorCode::InvalidKey as i32;
-                };
-
-                if value_ptr == 0 {
-                    if let Some(value) = storage.data.get(key) {
-                        return value.len() as i32;
-                    }
-                    return StorageErrorCode::NotFound as i32;
-                }
-                if let Some(value) = storage.data.get(key) {
-                    let value_ptr = value_ptr as usize;
-                    memory[value_ptr..value_ptr + value.len()].copy_from_slice(value);
-                    return value.len() as i32;
-                }
-
-                StorageErrorCode::NotFound as i32
-            },
-        );
-        linker.define("env", "stride__storage_get", stride_storage_get)?;
-
-        let stride_storage_set = Func::wrap(
-            &mut store,
-            |mut caller: Caller<'_, HostState>,
-             key: i32,
-             key_len: i32,
-             value_ptr: i32,
-             value_len: i32|
-             -> i32 {
-                let export = caller.get_export("memory");
-                let Some(memory_export) = export.and_then(Extern::into_memory) else {
-                    return StorageErrorCode::MissingMemoryExport as i32;
-                };
-
-                let (memory, host_state) = memory_export.data_and_store_mut(&mut caller);
-
-                let Some(storage) = &mut host_state.storage else {
-                    return StorageErrorCode::Permission as i32;
-                };
-
-                let key = key as usize;
-                let key_len = key_len as usize;
-                let key = memory.get(key..key + key_len);
-
-                let Some(key) = key else {
-                    return StorageErrorCode::InvalidKey as i32;
-                };
-
-                let value =
-                    memory.get((value_ptr as usize)..(value_ptr as usize) + value_len as usize);
-
-                let Some(value) = value else {
-                    return StorageErrorCode::InvalidValue as i32;
-                };
-
-                storage.size += key.len();
-                storage.size += value.len();
-
-                if storage.size > storage.max {
-                    return StorageErrorCode::OutOfStorage as i32;
-                }
-
-                storage.data.insert(
-                    key.to_vec().into_boxed_slice(),
-                    value.to_vec().into_boxed_slice(),
-                );
-                storage.needs_save = true;
-
-                0
-            },
-        );
-        linker.define("env", "stride__storage_set", stride_storage_set)?;
-
-        let stride_storage_remove = Func::wrap(
-            &mut store,
-            |mut caller: Caller<'_, HostState>, key: i32, key_len: i32| -> i32 {
-                let export = caller.get_export("memory");
-                let Some(memory_export) = export.and_then(Extern::into_memory) else {
-                    return StorageErrorCode::MissingMemoryExport as i32;
-                };
-
-                let (memory, host_state) = memory_export.data_and_store_mut(&mut caller);
-
-                let Some(storage) = &mut host_state.storage else {
-                    return StorageErrorCode::Permission as i32;
-                };
-
-                let key = key as usize;
-                let key_len = key_len as usize;
-                let key = memory.get(key..key + key_len);
-
-                let Some(key) = key else {
-                    return StorageErrorCode::InvalidKey as i32;
-                };
-
-                let value = storage.data.remove(key);
-                if let Some(value) = &value {
-                    storage.size = storage.size.saturating_sub(key.len());
-                    storage.size = storage.size.saturating_sub(value.len());
-                }
-                storage.needs_save = true;
-                i32::from(value.is_some())
-            },
-        );
-        linker.define("env", "stride__storage_remove", stride_storage_remove)?;
 
         let instance = linker
             .instantiate_and_start(&mut store, &module)
@@ -611,26 +396,26 @@ impl PluginManager {
             .call(&mut store, (ret as i32, event_data.len() as i32))
             .to_error(&plugin.instance.manifest.name)?;
 
-        if let Some(storage) = store.data_mut().storage.take()
-            && storage.needs_save
-        {
-            let file = File::create(&storage_filepath)?;
-            let mut writer = BufWriter::new(file);
-
-            for (key, value) in storage.data {
-                let key_len = key.len() as u32;
-                let value_len = value.len() as u32;
-                writer.write_all(&key_len.to_be_bytes())?;
-                writer.write_all(&key)?;
-                writer.write_all(&value_len.to_be_bytes())?;
-                writer.write_all(&value)?;
+        let plugin_name = plugin.instance.manifest.name.clone();
+        let mut calls = std::mem::take(&mut store.data_mut().calls);
+        for (method, call) in &mut calls {
+            if matches!(
+                method.as_ref(),
+                api::StorageListMethod::NAME
+                    | api::StorageGetMethod::NAME
+                    | api::StorageSetMethod::NAME
+                    | api::StorageRemoveMethod::NAME
+            ) {
+                if let Some(error) = self.method_permission_error(&plugin_name, method) {
+                    return Err(Error::InvalidPluginCall(error));
+                }
+                sanitize_plugin_storage_call(&plugin_name, method, call)
+                    .map_err(Error::InvalidPluginCall)?;
             }
         }
 
-        self.plugin_calls.push_back(PluginCallQueue {
-            plugin_name: plugin.instance.manifest.name.clone(),
-            calls: std::mem::take(&mut store.data_mut().calls),
-        });
+        self.plugin_calls
+            .push_back(PluginCallQueue { plugin_name, calls });
 
         Ok(true)
     }

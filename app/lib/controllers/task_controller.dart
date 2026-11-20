@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' hide Notification;
 import 'package:stride/api.dart';
 import 'package:stride/context.dart';
 import 'package:stride/logging.dart';
+import 'package:stride/setting.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskState {
@@ -50,6 +51,15 @@ class TaskController {
     _subscriptions.add(
       RustContext.listenTo<RepositoryTaskUpdatedNotification>((event) async {
         if (event.repositoryId == repositoryUuid) {
+          await fetch();
+        }
+      }),
+    );
+    _subscriptions.add(
+      RustContext.listenTo<StorageChangedNotification>((event) async {
+        if (event.repositoryId == null &&
+            event.key == Setting.currentRepositoryKey) {
+          repositoryUuid = (event.value as ConfigValue_Uuid).value;
           await fetch();
         }
       }),

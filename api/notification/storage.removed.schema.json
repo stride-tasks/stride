@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/notification/storage.removed.schema.json",
+    "description": "Emitted after a key is removed from a storage.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "storage.removed"
+        },
+        "params": {
+            "type": "object",
+            "required": [
+                "key"
+            ],
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The repository the key belongs to, absent for the global storage."
+                },
+                "key": {
+                    "type": "string",
+                    "description": "The `group:key` that was removed."
+                }
+            }
+        }
+    }
+}

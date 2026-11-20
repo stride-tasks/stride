@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
 use chrono::Utc;
 use stride_api::Config;
 use uuid::Uuid;
@@ -9,10 +10,11 @@ use crate::{Engine, Result, TypedCommandHandler};
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryAddHandler {
     type Method = crate::api::RepositoryAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -23,7 +25,7 @@ impl TypedCommandHandler for RepositoryAddHandler {
             name: method.name,
         };
 
-        engine.open_repository(repository_id)?;
+        engine.open_repository(repository_id).await?;
         engine
             .known_paths()
             .write_repository_descriptor(&descriptor)?;
@@ -35,10 +37,11 @@ impl TypedCommandHandler for RepositoryAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryUpdateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryUpdateHandler {
     type Method = crate::api::RepositoryUpdateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -54,10 +57,11 @@ impl TypedCommandHandler for RepositoryUpdateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryListHandler {
     type Method = crate::api::RepositoryListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         _: Self::Method,
@@ -118,10 +122,11 @@ impl TypedCommandHandler for RepositoryListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendAddHandler {
     type Method = crate::api::RepositoryBackendAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
@@ -130,9 +135,10 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
         let name = handler.name();
         let backend_id = Uuid::now_v7();
 
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
+            .await
             .add_backend(&crate::api::BackendInstance {
                 id: backend_id,
                 name,
@@ -147,17 +153,19 @@ impl TypedCommandHandler for RepositoryBackendAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendRemoveHandler {
     type Method = crate::api::RepositoryBackendRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendRemoveMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
+            .await
             .delete_backend(method.backend_id)?;
 
         Ok(crate::api::RepositoryBackendRemoveMethodResult {})
@@ -167,17 +175,19 @@ impl TypedCommandHandler for RepositoryBackendRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendToggleHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendToggleHandler {
     type Method = crate::api::RepositoryBackendToggleMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendToggleMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let new_state = repository
             .lock_database()
+            .await
             .toggle_backend(method.backend_id)?;
 
         Ok(crate::api::RepositoryBackendToggleMethodResult { state: new_state })
@@ -187,16 +197,17 @@ impl TypedCommandHandler for RepositoryBackendToggleHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendGetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendGetHandler {
     type Method = crate::api::RepositoryBackendGetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendGetMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
-        let backend_instances = repository.lock_database().backends()?;
+        let repository = engine.open_repository(method.repository_id).await?;
+        let backend_instances = repository.lock_database().await.backends()?;
 
         let backend_instance = backend_instances
             .into_iter()
@@ -222,17 +233,19 @@ impl TypedCommandHandler for RepositoryBackendGetHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendSetHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendSetHandler {
     type Method = crate::api::RepositoryBackendSetMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendSetMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         repository
             .lock_database()
+            .await
             .update_backend(&method.backend_instance)?;
 
         Ok(crate::api::RepositoryBackendSetMethodResult {})
@@ -242,16 +255,17 @@ impl TypedCommandHandler for RepositoryBackendSetHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryBackendListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryBackendListHandler {
     type Method = crate::api::RepositoryBackendListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryBackendListMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
-        let backend_instances = repository.lock_database().backends()?;
+        let repository = engine.open_repository(method.repository_id).await?;
+        let backend_instances = repository.lock_database().await.backends()?;
 
         Ok(crate::api::RepositoryBackendListMethodResult {
             backends: backend_instances,
@@ -262,15 +276,16 @@ impl TypedCommandHandler for RepositoryBackendListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryRemoveHandler {
     type Method = crate::api::RepositoryRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         context: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryRemoveMethodResult> {
-        context.remove_repository(method.repository_id)?;
+        context.remove_repository(method.repository_id).await?;
         Ok(crate::api::RepositoryRemoveMethodResult {})
     }
 }
@@ -278,22 +293,23 @@ impl TypedCommandHandler for RepositoryRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositorySyncHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositorySyncHandler {
     type Method = crate::api::RepositorySyncMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         context: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositorySyncMethodResult> {
-        let repository = context.open_repository(method.id)?;
+        let repository = context.open_repository(method.id).await?;
 
         let task = context.clone().runtime().spawn(async move {
             context.notify(Box::new(crate::api::RepositorySyncStartedNotification {
                 repository_id: method.id,
             }));
 
-            let changes_result = repository.sync(&context);
+            let changes_result = repository.sync(&context).await;
 
             context.notify(Box::new(crate::api::RepositorySyncStoppedNotification {
                 repository_id: method.id,
@@ -321,16 +337,17 @@ impl TypedCommandHandler for RepositorySyncHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTagListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTagListHandler {
     type Method = crate::api::RepositoryTagListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTagListMethodResult> {
-        let repository = engine.open_repository(method.id)?;
-        let tags = repository.lock_database().used_tags()?;
+        let repository = engine.open_repository(method.id).await?;
+        let tags = repository.lock_database().await.used_tags()?;
         Ok(crate::api::RepositoryTagListMethodResult { tags })
     }
 }
@@ -338,16 +355,17 @@ impl TypedCommandHandler for RepositoryTagListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryProjectListHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryProjectListHandler {
     type Method = crate::api::RepositoryProjectListMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryProjectListMethodResult> {
-        let repository = engine.open_repository(method.id)?;
-        let projects = repository.lock_database().used_projects()?;
+        let repository = engine.open_repository(method.id).await?;
+        let projects = repository.lock_database().await.used_projects()?;
 
         Ok(crate::api::RepositoryProjectListMethodResult { projects })
     }
@@ -356,17 +374,18 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskAddHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskAddHandler {
     type Method = crate::api::RepositoryTaskAddMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskAddMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
-        let mut database = repository.lock_database();
-        let mut transaction = database.transaction()?;
+        let repository = engine.open_repository(method.repository_id).await?;
+        let mut database = repository.lock_database().await;
+        let mut transaction = database.task_transaction()?;
         transaction.insert_task(&method.task)?;
         transaction.commit()?;
         drop(database);
@@ -383,20 +402,21 @@ impl TypedCommandHandler for RepositoryTaskAddHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskUpdateHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskUpdateHandler {
     type Method = crate::api::RepositoryTaskUpdateMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskUpdateMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
+        let repository = engine.open_repository(method.repository_id).await?;
         let mut task = method.task;
         task.modified = Some(Utc::now());
 
-        let mut database = repository.lock_database();
-        let mut transaction = database.transaction()?;
+        let mut database = repository.lock_database().await;
+        let mut transaction = database.task_transaction()?;
         let mut previous = None;
         let current = transaction.update_task_with(task.id, |existing| {
             previous = Some(existing);
@@ -417,17 +437,18 @@ impl TypedCommandHandler for RepositoryTaskUpdateHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskRemoveHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskRemoveHandler {
     type Method = crate::api::RepositoryTaskRemoveMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskRemoveMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
-        let mut database = repository.lock_database();
-        let mut transaction = database.transaction()?;
+        let repository = engine.open_repository(method.repository_id).await?;
+        let mut database = repository.lock_database().await;
+        let mut transaction = database.task_transaction()?;
         transaction.delete_task(method.task_id)?;
         transaction.commit()?;
 
@@ -443,16 +464,17 @@ impl TypedCommandHandler for RepositoryTaskRemoveHandler {
 #[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskQueryHandler;
 
+#[async_trait]
 impl TypedCommandHandler for RepositoryTaskQueryHandler {
     type Method = crate::api::RepositoryTaskQueryMethod;
 
-    fn handle(
+    async fn handle(
         &self,
         engine: Arc<Engine>,
         method: Self::Method,
     ) -> Result<crate::api::RepositoryTaskQueryMethodResult> {
-        let repository = engine.open_repository(method.repository_id)?;
-        let tasks = repository.lock_database().task_query(&method.query)?;
+        let repository = engine.open_repository(method.repository_id).await?;
+        let tasks = repository.lock_database().await.task_query(&method.query)?;
 
         Ok(crate::api::RepositoryTaskQueryMethodResult { tasks })
     }
