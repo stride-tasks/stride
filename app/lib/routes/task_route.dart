@@ -275,6 +275,7 @@ class _TaskRouteState extends State<TaskRoute> {
                         return TextFormField(
                           controller: controller,
                           focusNode: focusNode,
+                          textInputAction: .done,
                           decoration: const InputDecoration(
                             border: .none,
                             hintText: 'Project',
@@ -285,6 +286,7 @@ class _TaskRouteState extends State<TaskRoute> {
                                 ? null
                                 : newValue.trim();
                           },
+                          onFieldSubmitted: (_) => onFieldSubmitted(),
                           onSaved: (newValue) {
                             project =
                                 newValue == null || newValue.trim().isEmpty
