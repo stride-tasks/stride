@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::collections::{HashMap, HashSet};
+use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 use stride_api_codegen::{parse, Node, TypeNode};
@@ -32,7 +33,7 @@ struct SchemaDoc {
     sub_sections: Vec<SchemaDoc>,
 }
 
-pub fn generate_all_html(api_dir: &Path, output_dir: &Path) -> Result<()> {
+pub(crate) fn generate_all_html(api_dir: &Path, output_dir: &Path) -> Result<()> {
     let nodes = parse(api_dir)?;
     let docs = build_docs_from_nodes(&nodes);
 
@@ -352,22 +353,19 @@ fn nested_sections_for_type_node(
         seen.insert(self_name.to_owned());
     }
 
-    match type_node {
-        TypeNode::Struct(node) => {
-            seen.insert(node.name.clone());
-            nested_sections_for_fields(node, struct_by_name, type_titles, &mut seen)
-        }
-        _ => {
-            let mut sections = Vec::new();
-            append_nested_type_node(
-                type_node,
-                struct_by_name,
-                type_titles,
-                &mut seen,
-                &mut sections,
-            );
-            sections
-        }
+    if let TypeNode::Struct(node) = type_node {
+        seen.insert(node.name.clone());
+        nested_sections_for_fields(node, struct_by_name, type_titles, &mut seen)
+    } else {
+        let mut sections = Vec::new();
+        append_nested_type_node(
+            type_node,
+            struct_by_name,
+            type_titles,
+            &mut seen,
+            &mut sections,
+        );
+        sections
     }
 }
 
@@ -393,7 +391,7 @@ fn append_nested_type_node(
 ) {
     match type_node {
         TypeNode::Struct(node) => {
-            append_struct_section(node, struct_by_name, type_titles, seen, sections)
+            append_struct_section(node, struct_by_name, type_titles, seen, sections);
         }
         TypeNode::Enum(node) => {
             let doc = enum_doc(node, type_titles);
@@ -458,10 +456,7 @@ fn properties_for_type_node(
     )
 }
 
-fn type_node_to_string(
-    type_node: &stride_api_codegen::TypeNode,
-    type_titles: &HashMap<String, String>,
-) -> String {
+fn type_node_to_string(type_node: &TypeNode, type_titles: &HashMap<String, String>) -> String {
     match type_node {
         TypeNode::Struct(node) => schema_title_for_struct(node),
         TypeNode::Enum(node) => schema_title_for_enum(node),
@@ -556,9 +551,6 @@ fn slugify(value: &str) -> String {
 
 fn group_badge_class(group: &str) -> String {
     match group {
-        "method" => {
-            "inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300".to_string()
-        }
         "notification" => {
             "inline-flex items-center rounded-full border border-violet-200 bg-violet-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-300".to_string()
         }
@@ -581,6 +573,7 @@ fn render_home_page() -> String {
         .replace("@SECONDARY_CTA@", "Download")
 }
 
+#[allow(clippy::too_many_lines)]
 fn render_page(docs: &[SchemaDoc]) -> String {
     let type_anchor_lookup = build_type_anchor_lookup(docs);
 
@@ -598,18 +591,14 @@ fn render_page(docs: &[SchemaDoc]) -> String {
         let mut group_items = String::new();
         for doc in group_docs {
             let anchor = slugify(&doc.title);
-            group_items.push_str(&format!(
-                "<li class=\"mb-1\" data-toc-item=\"{anchor}\"><a href=\"#{anchor}\" data-toc-link=\"{anchor}\" class=\"text-emerald-700 hover:underline dark:text-emerald-400\">{}</a></li>",
-                escape_html(&doc.title)
-            ));
+            let _ = write!(group_items, "<li class=\"mb-1\" data-toc-item=\"{anchor}\"><a href=\"#{anchor}\" data-toc-link=\"{anchor}\" class=\"text-emerald-700 hover:underline dark:text-emerald-400\">{}</a></li>",
+                escape_html(&doc.title));
         }
 
-        toc.push_str(&format!(
-            "<li class=\"mb-3\" data-toc-group=\"{group}\"><div class=\"mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400\"><span>{}</span><span data-toc-group-count class=\"inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200\">{}</span></div><ul class=\"space-y-1 pl-3\">{}</ul></li>",
+        let _ = write!(toc, "<li class=\"mb-3\" data-toc-group=\"{group}\"><div class=\"mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400\"><span>{}</span><span data-toc-group-count class=\"inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200\">{}</span></div><ul class=\"space-y-1 pl-3\">{}</ul></li>",
             escape_html(group),
             group_count,
-            group_items,
-        ));
+            group_items);
     }
 
     let mut body = String::new();
@@ -720,9 +709,8 @@ fn render_table_html(
     rows: Option<&[PropertyRow]>,
     type_anchor_lookup: &HashMap<String, String>,
 ) -> String {
-    let rows = match rows {
-        Some(r) => r,
-        None => return String::new(),
+    let Some(rows) = rows else {
+        return String::new();
     };
     if rows.is_empty() {
         return String::new();
@@ -813,9 +801,7 @@ fn render_rows(
                     r#"<td class="px-3 py-3 font-mono text-slate-600 dark:text-slate-300">{default}</td>"#,
                     default = row
                         .default
-                        .as_deref()
-                        .map(escape_html)
-                        .unwrap_or_else(|| "-".to_string()),
+                        .as_deref().map_or_else(|| "-".to_string(), escape_html),
                 )));
             }
             columns.push(TemplateValue::Html(format!(
@@ -959,8 +945,8 @@ mod tests {
             .unwrap()
             .as_nanos();
         let dir = std::env::temp_dir().join(format!("stride_page_generator_defaults_{unique}"));
-        std::fs::create_dir_all(dir.join("type")).unwrap();
-        std::fs::write(
+        fs::create_dir_all(dir.join("type")).unwrap();
+        fs::write(
             dir.join("type").join("settings.schema.json"),
             r#"{
                 "type": "object",
@@ -975,7 +961,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        std::fs::write(
+        fs::write(
             dir.join("type").join("manifest.api.schema.json"),
             r#"{
                 "type": "string",

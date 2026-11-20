@@ -263,8 +263,7 @@ impl Database {
         let uda_values = row.get::<_, Option<Box<str>>>("uda_values")?;
         let tags = row
             .get::<_, Option<String>>("tags")?
-            .map(|tags| tags.split('\0').map(Box::<str>::from).collect::<Vec<_>>())
-            .unwrap_or_default();
+            .map_or_default(|tags| tags.split('\0').map(Box::<str>::from).collect::<Vec<_>>());
 
         let mut annotations = Vec::new();
         if let (Some(ids), Some(entries), Some(text)) =

@@ -1,3 +1,5 @@
+//! Stride Page Generator
+
 use std::path::Path;
 
 use anyhow::Result;

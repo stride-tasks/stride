@@ -568,7 +568,7 @@ async fn async_main() -> anyhow::Result<ExitCode> {
             set_current_repository(&engine, uuid).await?;
         }
         Mode::Backend { command } => {
-            backend::handle_command(command.as_ref(), engine.backends(), &mut database)?;
+            return backend::handle_command(command.as_ref(), engine.backends(), &mut database);
         }
         Mode::Plugin { command } => match command {
             None => {

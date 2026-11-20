@@ -27,7 +27,7 @@ CREATE TABLE storage_item_table (
 
 ";
 
-/// Creates the table used by [`Storage`].
+/// Creates the table used by [`StorageTransaction`].
 ///
 /// Add it to the migration list of any database that should have a key-value storage.
 #[derive(Debug, Clone, Copy)]
