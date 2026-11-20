@@ -113,10 +113,7 @@ class TagsWidgetState extends State<TagsWidget> {
                 filled: true,
                 fillColor: theme.colorScheme.surface,
               ),
-              onSubmitted: (_) {
-                _addTags(controller.text);
-                controller.clear();
-              },
+              onSubmitted: (_) => onFieldSubmitted(),
             );
           },
         ),
