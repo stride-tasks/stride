@@ -123,10 +123,15 @@ class TaskItem extends StatelessWidget {
           ),
         ),
       );
-      widget = ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: widget,
-        children: children.toList(),
+      widget = ListTileTheme.merge(
+        minVerticalPadding: 0,
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(),
+          collapsedShape: const RoundedRectangleBorder(),
+          title: widget,
+          children: children.toList(),
+        ),
       );
     }
 
