@@ -55,6 +55,7 @@ class TaskItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final urgency = Text(_urgency(task).toStringAsFixed(2));
     Widget? subtitle;
     if (task.project != null || task.due != null || task.tags.isNotEmpty) {
       subtitle = Wrap(
@@ -96,17 +97,17 @@ class TaskItem extends StatelessWidget {
       } catch (_) {}
     }
 
-    Widget widget = ListTile(
-      title: Text(task.title ?? '<missing title>'),
-      onLongPress: onLongPress,
-      subtitle: subtitle,
-      onTap: onTap,
-      trailing: Text(_urgency(task).toStringAsFixed(2)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
-      leading: onTap == null ? null : const Icon(Icons.open_in_new),
-    );
+    Widget widget;
 
-    if (task.annotations.isNotEmpty) {
+    if (task.annotations.isEmpty) {
+      widget = ListTile(
+        title: Text(task.title ?? '<missing title>'),
+        onLongPress: onLongPress,
+        subtitle: subtitle,
+        trailing: urgency,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
+      );
+    } else {
       final children = task.annotations.map(
         (annotation) => ListTile(
           title: RichText(
@@ -123,10 +124,46 @@ class TaskItem extends StatelessWidget {
           ),
         ),
       );
-      widget = ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: widget,
-        children: children.toList(),
+      var expanded = false;
+      widget = GestureDetector(
+        onLongPress: onLongPress,
+        child: ListTileTheme.merge(
+          minVerticalPadding: 0,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 10.0),
+                shape: const RoundedRectangleBorder(),
+                collapsedShape: const RoundedRectangleBorder(),
+                leading: onTap == null
+                    ? null
+                    : IconButton(
+                        tooltip: 'Open link',
+                        onPressed: onTap,
+                        icon: const Icon(Icons.open_in_new),
+                      ),
+                title: Text(task.title ?? '<missing title>'),
+                subtitle: subtitle,
+                onExpansionChanged: (value) {
+                  setState(() => expanded = value);
+                },
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedRotation(
+                      turns: expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(Icons.expand_more),
+                    ),
+                    const SizedBox(width: 8),
+                    urgency,
+                  ],
+                ),
+                children: children.toList(),
+              );
+            },
+          ),
+        ),
       );
     }
 

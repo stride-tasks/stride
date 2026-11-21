@@ -18,18 +18,21 @@ class TagsWidget extends StatefulWidget {
 
 class TagsWidgetState extends State<TagsWidget> {
   late Set<String> items;
-  late TextEditingController _tagController;
+  late final TextEditingController _tagController;
+  late final FocusNode _tagFocusNode;
 
   @override
   void initState() {
     super.initState();
     items = widget.tags.toSet();
     _tagController = TextEditingController();
+    _tagFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _tagController.dispose();
+    _tagFocusNode.dispose();
     super.dispose();
   }
 
@@ -86,10 +89,11 @@ class TagsWidgetState extends State<TagsWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Autocomplete<String>(
+          textEditingController: _tagController,
+          focusNode: _tagFocusNode,
           optionsBuilder: (value) => _suggestions(value.text),
           onSelected: _selectTag,
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            _tagController = controller;
             return TextField(
               controller: controller,
               focusNode: focusNode,
@@ -109,10 +113,7 @@ class TagsWidgetState extends State<TagsWidget> {
                 filled: true,
                 fillColor: theme.colorScheme.surface,
               ),
-              onSubmitted: (_) {
-                _addTags(controller.text);
-                controller.clear();
-              },
+              onSubmitted: (_) => onFieldSubmitted(),
             );
           },
         ),
