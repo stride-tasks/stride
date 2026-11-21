@@ -37,13 +37,16 @@ mv "$BUILD_DIR/stride" "$BUILD_DIR/$APPNAME"
 
 ICON_SIZE=512 "$SCRIPTS_DIR/rasterize-image" "$FLUTTER_DIR/assets/icon/logo.svg" "$BUILD_DIR/logo.png"
 
-# Keep glibc-provided libraries from the host. Bundling them would also require
-# bundling a matching dynamic loader and can break compatibility with the host.
+# Keep system ABI and graphics-stack libraries from the host. Bundling these can
+# conflict with host configuration or GPU vendor libraries at runtime.
 is_host_library() {
   case "$(basename "$1")" in
     ld-linux*.so*|ld64.so*|libanl.so*|libBrokenLocale.so*|libc.so*|\
     libdl.so*|libm.so*|libnsl.so*|libnss_*.so*|libpthread.so*|\
-    libresolv.so*|librt.so*|libutil.so*)
+    libresolv.so*|librt.so*|libutil.so*|\
+    libfontconfig.so*|libexpat.so*|libepoxy.so*|\
+    libEGL*.so*|libGL*.so*|libGLES*.so*|libOpenGL.so*|\
+    libgbm.so*|libdrm*.so*|libwayland-*.so*|libvulkan.so*)
       return 0
       ;;
   esac
