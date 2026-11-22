@@ -1,7 +1,16 @@
 #!/bin/sh
 
+DEV_BUILD=false
+if [ "${1:-}" = "--dev" ] && [ "$#" -eq 1 ]; then
+  DEV_BUILD=true
+elif [ "$#" -ne 0 ]; then
+  echo "Usage: $(basename "$0") [--dev]" >&2
+  exit 1
+fi
+
 if [ -z "$(command -v ffmpeg)" ]; then
   echo "ERROR: Missing ffmpeg program, please install it!"
+  exit 1
 fi
 
 # Get location of the script
@@ -21,6 +30,18 @@ cd "$FLUTTER_DIR/assets/icon"
 export ICON_SIZE=1024
 
 "$SCRIPTS_DIR/rasterize-image" logo.svg logo.png
+
+if [ "$DEV_BUILD" = true ]; then
+  ffmpeg \
+      -y \
+      -i logo.png \
+      -width "$ICON_SIZE" \
+      -height "$ICON_SIZE" \
+      -i dev-badge.svg \
+      -filter_complex "[0:v][1:v]overlay=0:0" \
+      logo-dev.png
+  mv logo-dev.png logo.png
+fi
 
 # Padding which is used for adaptive launcher foreground icon.
 PADDING=0.30
