@@ -262,3 +262,33 @@ jobs:
           gh release upload development "${artifacts[@]}" \
             --repo "$REPOSITORY" \
             --clobber
+
+  publish-fdroid:
+    if: >-
+      ${{
+        always() &&
+        needs.build.result == 'success' &&
+        (
+          github.event_name == 'release' ||
+          (
+            github.event_name == 'push' &&
+            github.ref == 'refs/heads/main' &&
+            needs.publish-development.result == 'success'
+          )
+        )
+      }}
+    needs: [build, publish-development]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger F-Droid rebuild
+        env:
+          GH_TOKEN: ${{ secrets.FDROID_DISPATCH_TOKEN }}
+          CHANNEL: ${{ github.event_name == 'release' && 'release' || 'development' }}
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || 'development' }}
+        run: |
+          gh api \
+            --method POST \
+            repos/stride-tasks/fdroid/dispatches \
+            -f event_type=stride-android-build \
+            -f "client_payload[channel]=$CHANNEL" \
+            -f "client_payload[release_tag]=$RELEASE_TAG"
