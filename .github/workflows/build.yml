@@ -215,3 +215,41 @@ jobs:
           file: "mapping.tar.gz"
           asset_name: mapping.tar.gz
           tag: ${{ github.ref }}
+
+  publish-development:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [appimage, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download development artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: development-artifacts
+
+      - name: Publish development pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if gh release view development --repo "$REPOSITORY" >/dev/null 2>&1; then
+            gh release edit development \
+              --repo "$REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --title "Development" \
+              --notes "Development build from $REPOSITORY@$GITHUB_SHA."
+          else
+            gh release create development \
+              --repo "$REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --title "Development" \
+              --notes "Development build from $REPOSITORY@$GITHUB_SHA."
+          fi
+
+          mapfile -t artifacts < <(
+            find development-artifacts -type f -print
+          )
+          gh release upload development "${artifacts[@]}" \
+            --repo "$REPOSITORY" \
+            --clobber
