@@ -23,7 +23,7 @@ const SQL_ALL: &str = r"
 WITH task_depends_cte AS (
     SELECT
         parent_task_id AS id,
-        GROUP_CONCAT(child_task_id) AS depends
+        stride_blob_concat(child_task_id) AS depends
     FROM
         task_dependency_table
     GROUP BY
@@ -98,7 +98,7 @@ const SQL_BY_ID: &str = r"
 WITH task_depends_cte AS (
     SELECT
         parent_task_id AS id,
-        GROUP_CONCAT(child_task_id) AS depends
+        stride_blob_concat(child_task_id) AS depends
     FROM
         task_dependency_table
     GROUP BY
