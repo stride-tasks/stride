@@ -92,6 +92,11 @@ jobs:
         with:
           cmdline-tools-version: ${{ env.CMDLINE_TOOLS_VERSION }}
 
+      - name: Install icon generation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg jpegoptim optipng
+
       # Workaround: https://github.com/android-actions/setup-android/issues/461
       - name: Access Android SDK build-tools
         run:
@@ -115,6 +120,8 @@ jobs:
           key: ${{ runner.os }}-gradle
 
       - name: Build APKs
+        env:
+          STRIDE_APPLICATION_ID: ${{ github.event_name == 'release' && 'org.stridetasks.stride' || 'org.stridetasks.stride.dev' }}
         run: |
           # Use the same build dir, this speeds up the build process
           export REUSE_BUILD=1
@@ -127,7 +134,7 @@ jobs:
           tar -czvf mapping.tar.gz --directory=app/build/reproducible/mapping mapping
 
       - name: Sign APKs
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'push'
         env:
           KEYSTORE: ${{ secrets.KEYSTORE }}
           KEYALIAS: ${{ secrets.KEYALIAS }}
@@ -136,6 +143,8 @@ jobs:
         run: |
           echo "$KEYSTORE" | base64 -d - > keystore.p12
           for name in armeabi-v7a-release arm64-v8a-release x86_64-release release; do
+            apk="app/build/reproducible/flutter-apk/app-${name}.apk"
+            signed_apk="app/build/reproducible/flutter-apk/app-${name}-signed.apk"
             apksigner sign \
               --ks ./keystore.p12 \
               --ks-key-alias "$KEYALIAS" \
@@ -144,8 +153,9 @@ jobs:
               --v1-signing-enabled true \
               --v2-signing-enabled true \
               --v3-signing-enabled true \
-              --out "app-${name}.apk" \
-              "app/build/reproducible/flutter-apk/app-${name}.apk"
+              --out "$signed_apk" \
+              "$apk"
+            mv "$signed_apk" "$apk"
           done
           rm keystore.p12
 
@@ -166,7 +176,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "app-armeabi-v7a-release.apk"
+          file: "app/build/reproducible/flutter-apk/app-armeabi-v7a-release.apk"
           asset_name: stride-armeabi-v7a.apk
           tag: ${{ github.ref }}
 
@@ -175,7 +185,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "app-arm64-v8a-release.apk"
+          file: "app/build/reproducible/flutter-apk/app-arm64-v8a-release.apk"
           asset_name: stride-arm64-v8a.apk
           tag: ${{ github.ref }}
 
@@ -184,7 +194,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "app-x86_64-release.apk"
+          file: "app/build/reproducible/flutter-apk/app-x86_64-release.apk"
           asset_name: stride-x86_64.apk
           tag: ${{ github.ref }}
 
@@ -193,7 +203,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: "app-release.apk"
+          file: "app/build/reproducible/flutter-apk/app-release.apk"
           asset_name: stride.apk
           tag: ${{ github.ref }}
 
