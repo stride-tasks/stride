@@ -39,6 +39,10 @@ fi
 
 cd "$BUILD_DIR"
 
+if [ "$APPLICATION_ID" != "${STRIDE_APPLICATION_ID:-$APPLICATION_ID}" ]; then
+    ./app/scripts/generate-icons --dev
+fi
+
 ./scripts/rustup-setup
 ./app/flutter pub get --enforce-lockfile
 ./app/flutter build $@ --no-pub
