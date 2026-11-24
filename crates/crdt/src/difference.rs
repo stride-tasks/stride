@@ -179,6 +179,27 @@ pub fn push_task_diff_operations(
         _ => {}
     }
 
+    match previous {
+        Some(previous) if current.depends != previous.depends => {
+            for (depend, ty) in difference_between(&previous.depends, &current.depends) {
+                let kind = match ty {
+                    DifferenceType::Addition => TaskOperation::AddDependency { depend: *depend },
+                    DifferenceType::Deletion => TaskOperation::RemoveDependency { depend: *depend },
+                };
+                ops.push(Operation::new(id, kind));
+            }
+        }
+        None => {
+            for depend in &current.depends {
+                ops.push(Operation::new(
+                    id,
+                    TaskOperation::AddDependency { depend: *depend },
+                ));
+            }
+        }
+        _ => {}
+    }
+
     push_annotation_diff_operations(
         id,
         &current.annotations,
