@@ -372,6 +372,66 @@ impl TypedCommandHandler for RepositoryProjectListHandler {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct RepositoryExportHandler;
+
+#[async_trait]
+impl TypedCommandHandler for RepositoryExportHandler {
+    type Method = crate::api::RepositoryExportMethod;
+
+    async fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryExportMethodResult> {
+        let repository = engine.open_repository(method.repository_id).await?;
+        let mut tasks = repository.lock_database().await.all_tasks()?;
+        tasks.sort_unstable_by_key(|task| task.id);
+
+        Ok(crate::api::RepositoryExportMethodResult { tasks })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RepositoryImportHandler;
+
+#[async_trait]
+impl TypedCommandHandler for RepositoryImportHandler {
+    type Method = crate::api::RepositoryImportMethod;
+
+    async fn handle(
+        &self,
+        engine: Arc<Engine>,
+        method: Self::Method,
+    ) -> Result<crate::api::RepositoryImportMethodResult> {
+        let repository = engine.open_repository(method.repository_id).await?;
+        let imported = method.tasks.len();
+        let mut database = repository.lock_database().await;
+        let mut transaction = database.task_transaction()?;
+        let mut dependencies = Vec::with_capacity(imported);
+
+        for mut task in method.tasks {
+            let id = task.id;
+            dependencies.push((id, std::mem::take(&mut task.depends)));
+            if transaction.task_by_id(id)?.is_some() {
+                transaction.update_task_with(id, |_| Ok(task))?;
+            } else {
+                transaction.insert_task(&task)?;
+            }
+        }
+
+        for (id, depends) in dependencies {
+            transaction.update_task_with(id, |mut task| {
+                task.depends = depends;
+                Ok(task)
+            })?;
+        }
+
+        transaction.commit()?;
+        Ok(crate::api::RepositoryImportMethodResult { imported })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct RepositoryTaskAddHandler;
 
 #[async_trait]

@@ -13,9 +13,10 @@ pub use plugin::{
 pub use repository::{
     RepositoryAddHandler, RepositoryBackendAddHandler, RepositoryBackendGetHandler,
     RepositoryBackendListHandler, RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
-    RepositoryBackendToggleHandler, RepositoryListHandler, RepositoryProjectListHandler,
-    RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
-    RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
-    RepositoryTaskUpdateHandler, RepositoryUpdateHandler,
+    RepositoryBackendToggleHandler, RepositoryExportHandler, RepositoryImportHandler,
+    RepositoryListHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
+    RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
+    RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
+    RepositoryUpdateHandler,
 };
 pub use storage::{StorageGetHandler, StorageListHandler, StorageRemoveHandler, StorageSetHandler};

@@ -9,11 +9,12 @@ use crate::{
         PluginToggleHandler, PluginValidateHandler, RepositoryAddHandler,
         RepositoryBackendAddHandler, RepositoryBackendGetHandler, RepositoryBackendListHandler,
         RepositoryBackendRemoveHandler, RepositoryBackendSetHandler,
-        RepositoryBackendToggleHandler, RepositoryListHandler, RepositoryProjectListHandler,
-        RepositoryRemoveHandler, RepositorySyncHandler, RepositoryTagListHandler,
-        RepositoryTaskAddHandler, RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler,
-        RepositoryTaskUpdateHandler, RepositoryUpdateHandler, StorageGetHandler,
-        StorageListHandler, StorageRemoveHandler, StorageSetHandler,
+        RepositoryBackendToggleHandler, RepositoryExportHandler, RepositoryImportHandler,
+        RepositoryListHandler, RepositoryProjectListHandler, RepositoryRemoveHandler,
+        RepositorySyncHandler, RepositoryTagListHandler, RepositoryTaskAddHandler,
+        RepositoryTaskQueryHandler, RepositoryTaskRemoveHandler, RepositoryTaskUpdateHandler,
+        RepositoryUpdateHandler, StorageGetHandler, StorageListHandler, StorageRemoveHandler,
+        StorageSetHandler,
     },
 };
 
@@ -102,6 +103,8 @@ impl EngineBuilder {
             .command("repository.task.update", RepositoryTaskUpdateHandler)
             .command("repository.task.remove", RepositoryTaskRemoveHandler)
             .command("repository.task.query", RepositoryTaskQueryHandler)
+            .command("repository.export", RepositoryExportHandler)
+            .command("repository.import", RepositoryImportHandler)
             .command("storage.list", StorageListHandler)
             .command("storage.get", StorageGetHandler)
             .command("storage.set", StorageSetHandler)
