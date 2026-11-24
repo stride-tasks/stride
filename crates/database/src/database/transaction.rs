@@ -324,6 +324,21 @@ impl<'a> TaskTransaction<'a> {
                         )?
                         .execute((Sql::from(row_id), depend))?;
                     }
+                    OperationKind::Task(TaskOperation::AddUda { key, value }) => {
+                        self.transaction
+                            .prepare_cached(indoc! {"
+                                INSERT INTO uda_table (task_id, key, value) VALUES (?1, ?2, ?3)
+                                ON CONFLICT(task_id, key) DO UPDATE SET value = excluded.value
+                            "})?
+                            .execute((Sql::from(row_id), key, value))?;
+                    }
+                    OperationKind::Task(TaskOperation::RemoveUda { key }) => {
+                        self.transaction
+                            .prepare_cached(
+                                "DELETE FROM uda_table WHERE task_id = ?1 AND key = ?2",
+                            )?
+                            .execute((Sql::from(row_id), key))?;
+                    }
                     OperationKind::Annotation(operation) => match operation {
                         AnnotationOperation::Delete => {
                             self.transaction

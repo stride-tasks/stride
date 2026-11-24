@@ -200,6 +200,38 @@ pub fn push_task_diff_operations(
         _ => {}
     }
 
+    let previous_udas = previous.map_or(&[][..], |task| task.udas.as_slice());
+    for current_uda in &current.udas {
+        if previous_udas
+            .iter()
+            .any(|previous_uda| previous_uda == current_uda)
+        {
+            continue;
+        }
+        ops.push(Operation::new(
+            id,
+            TaskOperation::AddUda {
+                key: current_uda.key.clone(),
+                value: current_uda.value.clone(),
+            },
+        ));
+    }
+    for previous_uda in previous_udas {
+        if current
+            .udas
+            .iter()
+            .any(|current_uda| current_uda.key == previous_uda.key)
+        {
+            continue;
+        }
+        ops.push(Operation::new(
+            id,
+            TaskOperation::RemoveUda {
+                key: previous_uda.key.clone(),
+            },
+        ));
+    }
+
     push_annotation_diff_operations(
         id,
         &current.annotations,

@@ -124,6 +124,8 @@ pub enum TaskOperation {
     RemoveTag { tag: Box<str> },
     AddDependency { depend: Uuid },
     RemoveDependency { depend: Uuid },
+    AddUda { key: Box<str>, value: Box<str> },
+    RemoveUda { key: Box<str> },
 }
 
 impl From<TaskOperation> for OperationKind {
@@ -184,6 +186,11 @@ pub mod serialize {
                 }
                 TaskOperation::AddDependency { depend }
                 | TaskOperation::RemoveDependency { depend } => depend.to_blob(blob),
+                TaskOperation::AddUda { key, value } => {
+                    key.as_ref().to_blob(blob);
+                    value.as_ref().to_blob(blob);
+                }
+                TaskOperation::RemoveUda { key } => key.as_ref().to_blob(blob),
             },
             OperationKind::Annotation(operation) => match operation {
                 AnnotationOperation::Delete => {}
@@ -242,6 +249,13 @@ pub mod serialize {
                 12 => TaskOperation::RemoveDependency {
                     depend: Uuid::from_blob(blob)?,
                 },
+                13 => TaskOperation::AddUda {
+                    key: <&str>::from_blob(blob)?.to_owned().into_boxed_str(),
+                    value: <&str>::from_blob(blob)?.to_owned().into_boxed_str(),
+                },
+                14 => TaskOperation::RemoveUda {
+                    key: <&str>::from_blob(blob)?.to_owned().into_boxed_str(),
+                },
                 value => todo!("operation from data {value}"),
             }
             .into(),
@@ -282,6 +296,8 @@ pub mod serialize {
                     TaskOperation::RemoveTag { .. } => 10,
                     TaskOperation::AddDependency { .. } => 11,
                     TaskOperation::RemoveDependency { .. } => 12,
+                    TaskOperation::AddUda { .. } => 13,
+                    TaskOperation::RemoveUda { .. } => 14,
                 };
 
                 0 | (value << 8)

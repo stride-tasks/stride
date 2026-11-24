@@ -13,7 +13,7 @@ publish = false
 
 [dependencies]
 stride_api.workspace = true
-stride_crdt.workspace = true
+stride_crdt = { workspace = true, features = ["serialize"] }
 stride_serialize.workspace = true
 stride_sqlite.workspace = true
 
