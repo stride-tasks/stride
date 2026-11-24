@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.import.schema.json",
+    "description": "Imports tasks into a repository, updating tasks with matching identifiers.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "repository.import"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The unique identifier of the repository."
+                },
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "repository-id",
+                "tasks"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "imported": {
+                    "type": "integer",
+                    "format": "uint",
+                    "description": "The number of imported tasks."
+                }
+            },
+            "required": [
+                "imported"
+            ]
+        }
+    }
+}
