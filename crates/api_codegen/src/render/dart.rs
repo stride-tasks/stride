@@ -105,7 +105,8 @@ dynamic _omitEmptyListFields(dynamic value) {
   if (value is Map<String, dynamic>) {
     return <String, dynamic>{
       for (final entry in value.entries)
-        if (entry.value is! List || (entry.value as List).isNotEmpty)
+        if (entry.value != null &&
+            (entry.value is! List || (entry.value as List).isNotEmpty))
           entry.key: _omitEmptyListFields(entry.value),
     };
   }
