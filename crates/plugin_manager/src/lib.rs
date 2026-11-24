@@ -167,7 +167,7 @@ impl PluginManager {
 
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).map_err(Error::from)?;
-            let filename = file.name();
+            let filename = file.name()?;
             if filename == "manifest.toml" {
                 let mut contents = String::new();
                 file.read_to_string(&mut contents)?;
