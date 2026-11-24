@@ -101,6 +101,23 @@ abstract class Notification {
   String getName();
 }
 
+dynamic _omitEmptyListFields(dynamic value) {
+  if (value is Map<String, dynamic>) {
+    return <String, dynamic>{
+      for (final entry in value.entries)
+        if (entry.value != null &&
+            (entry.value is! List || (entry.value as List).isNotEmpty))
+          entry.key: _omitEmptyListFields(entry.value),
+    };
+  }
+
+  if (value is List) {
+    return value.map(_omitEmptyListFields).toList();
+  }
+
+  return value;
+}
+
 ";
 
 #[must_use]
@@ -471,7 +488,7 @@ fn render_struct(this: &StructNode, operation: Option<Operation<'_>>) -> String 
 class _{name}Serde implements SerdeFactory<{name}> {{
   const _{name}Serde();
   @override
-  dynamic serialize({name} value) => value.toJson();
+  dynamic serialize({name} value) => _omitEmptyListFields(value.toJson());
 
   @override
   {name} deserialize(dynamic json) => {name}.fromJson(json as Map<String, dynamic>);
@@ -499,7 +516,17 @@ fn render_factory_params(fields: &[FieldNode]) -> Vec<String> {
         let default = field
             .default
             .as_ref()
-            .and_then(|default| dart_default_value(&field.typ, default));
+            .and_then(|default| dart_default_value(&field.typ, default))
+            .or_else(|| {
+                let TypeNode::Array(inner) = &field.typ else {
+                    return None;
+                };
+                if field.required {
+                    Some(format!("const <{}>[]", render_type_node(inner)))
+                } else {
+                    None
+                }
+            });
         if let Some(default) = &default {
             lines.push(format!("    @Default({default})"));
         }
@@ -645,7 +672,7 @@ fn render_tagged_enum(this: &EnumNode) -> String {
 class _{name}Serde implements SerdeFactory<{name}> {{
   const _{name}Serde();
   @override
-  dynamic serialize({name} value) => value.toJson();
+  dynamic serialize({name} value) => _omitEmptyListFields(value.toJson());
 
   @override
   {name} deserialize(dynamic json) => {name}.fromJson(json as Map<String, dynamic>);
@@ -737,7 +764,7 @@ fn render_enum(this: &EnumNode) -> String {
 class _{name}Serde implements SerdeFactory<{name}> {{
   const _{name}Serde();
   @override
-  dynamic serialize({name} value) => value.toJson();
+  dynamic serialize({name} value) => _omitEmptyListFields(value.toJson());
 
   @override
   {name} deserialize(dynamic json) => {name}.fromJson(json);

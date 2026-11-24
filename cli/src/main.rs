@@ -9,8 +9,8 @@ use std::{
     sync::Arc,
 };
 use stride_api::{
-    self as api, ConfigValue, RepositoryAddMethod, RepositoryListMethod, StorageGetMethod,
-    StorageSetMethod, Task, TaskPriority, TaskStatus,
+    self as api, ConfigValue, RepositoryAddMethod, RepositoryExportMethod, RepositoryImportMethod,
+    RepositoryListMethod, StorageGetMethod, StorageSetMethod, Task, TaskPriority, TaskStatus,
 };
 use stride_backend_git::{
     GitBackend, SshHostListHandler, SshHostRemoveHandler, SshKeyAddHandler, SshKeyGenerateHandler,
@@ -528,26 +528,34 @@ async fn async_main() -> anyhow::Result<ExitCode> {
             //     }
             // }
         }
-        Mode::Export { filepath: _ } => {
-            // let contents = repository.borrow_mut().export()?;
-            // if let Some(filepath) = filepath {
-            //     fs::write(filepath, contents)?;
-            // } else {
-            //     println!("{contents}");
-            // }
-
-            todo!()
+        Mode::Export { filepath } => {
+            let tasks = engine
+                .execute(RepositoryExportMethod {
+                    repository_id: current_repository,
+                })
+                .await?
+                .tasks;
+            let contents = serde_json::to_string_pretty(&tasks)?;
+            if let Some(filepath) = filepath {
+                std::fs::write(filepath, contents)?;
+            } else {
+                println!("{contents}");
+            }
         }
-        Mode::Import { filepath: _ } => {
-            // let contents = if let Some(filepath) = filepath {
-            //     fs::read_to_string(filepath)?
-            // } else {
-            //     let mut contents = String::new();
-            //     std::io::stdin().read_to_string(&mut contents)?;
-            //     contents
-            // };
-            // repository.borrow_mut().import(&contents)?;
-            todo!()
+        Mode::Import { filepath } => {
+            let contents = if let Some(filepath) = filepath {
+                std::fs::read_to_string(filepath)?
+            } else {
+                std::io::read_to_string(std::io::stdin())?
+            };
+            let tasks: Vec<Task> =
+                serde_json::from_str(&contents).context("invalid task export")?;
+            engine
+                .execute(RepositoryImportMethod {
+                    repository_id: current_repository,
+                    tasks,
+                })
+                .await?;
         }
         Mode::Repository { uuid } => {
             let repositories = engine.execute(RepositoryListMethod {}).await?.repositories;

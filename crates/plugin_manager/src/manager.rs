@@ -133,6 +133,13 @@ impl PluginManager {
             api::RepositoryTaskQueryMethod::NAME => {
                 (task_permission.is_some_and(|task| task.query), "task.query")
             }
+            api::RepositoryExportMethod::NAME => {
+                (task_permission.is_some_and(|task| task.query), "task.query")
+            }
+            api::RepositoryImportMethod::NAME => (
+                task_permission.is_some_and(|task| task.create && task.modify),
+                "task.create and task.modify",
+            ),
             api::RepositorySyncMethod::NAME => {
                 (task_permission.is_some_and(|task| task.sync), "task.sync")
             }

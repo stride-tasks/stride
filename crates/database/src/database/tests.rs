@@ -92,6 +92,29 @@ fn add_operations_task_create() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn task_dependency_is_persisted() -> Result<(), Box<dyn std::error::Error>> {
+    let mut db = init()?;
+    let dependency = Task::new("Dependency".into());
+    let mut task = Task::new("Task".into());
+    task.depends.push(dependency.id);
+
+    let mut transaction = db.task_transaction()?;
+    transaction.insert_task(&dependency)?;
+    transaction.insert_task(&task)?;
+    transaction.commit()?;
+
+    let dependency_count =
+        db.connection
+            .query_row("SELECT COUNT(*) FROM task_dependency_table", (), |row| {
+                row.get::<_, usize>(0)
+            })?;
+    assert_eq!(dependency_count, 1);
+    assert_eq!(db.task_by_id(task.id)?.unwrap().depends, task.depends);
+
+    Ok(())
+}
+
+#[test]
 fn storage_is_available_after_migrations() -> Result<(), Box<dyn std::error::Error>> {
     let mut db = init()?;
 

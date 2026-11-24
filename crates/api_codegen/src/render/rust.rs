@@ -127,12 +127,20 @@ fn rust_field_serde_attributes(
             "default = \"{}::__serde_default_{index}\"",
             strukt.name
         ));
-    } else if !field.required {
+    } else if !field.required || matches!(field.typ, TypeNode::Array(_)) {
         attributes.push("default".to_owned());
     }
 
+    attributes.extend(rust_field_value_serde_attributes(field));
+    attributes
+}
+
+fn rust_field_value_serde_attributes(field: &crate::node::FieldNode) -> Vec<String> {
+    let mut attributes = Vec::new();
     if !field.required {
         attributes.push("skip_serializing_if = \"Option::is_none\"".to_owned());
+    } else if matches!(field.typ, TypeNode::Array(_)) {
+        attributes.push("skip_serializing_if = \"Vec::is_empty\"".to_owned());
     }
     if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
         attributes.push(format!(
@@ -318,22 +326,24 @@ fn render_tagged_enum(this: &EnumNode) -> String {
             }
             let rust_name = rust_field_name(&field.name);
             let field_type = render_type_node(&field.typ);
-            if field.required {
-                if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
-                    lines.push(format!(
-                        "        #[serde(with = \"{}\")]",
-                        bytes_serde_adapter(true)
-                    ));
-                }
+            let mut serde_attributes = Vec::new();
+            if !field.required || matches!(field.typ, TypeNode::Array(_)) {
+                serde_attributes.push("default".to_owned());
+            }
+            serde_attributes.extend(rust_field_value_serde_attributes(field));
+            if serde_attributes.is_empty() {
                 lines.push(format!("        {rust_name}: {field_type},"));
-            } else if matches!(field.typ, TypeNode::Primitive(PrimitiveType::Bytes)) {
+                continue;
+            }
+            if field.required {
                 lines.push(format!(
-                    "        #[serde(default, skip_serializing_if = \"Option::is_none\", with = \"{}\")]\n        {rust_name}: Option<{field_type}>,",
-                    bytes_serde_adapter(false)
+                    "        #[serde({})]\n        {rust_name}: {field_type},",
+                    serde_attributes.join(", ")
                 ));
             } else {
                 lines.push(format!(
-                    "        #[serde(default, skip_serializing_if = \"Option::is_none\")]\n        {rust_name}: Option<{field_type}>,"
+                    "        #[serde({})]\n        {rust_name}: Option<{field_type}>,",
+                    serde_attributes.join(", ")
                 ));
             }
         }

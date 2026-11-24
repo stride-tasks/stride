@@ -1,0 +1,48 @@
+name: Version Code
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ensure-bumped:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Ensure version code increased
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          version_code() {
+            local file="$1"
+            local version
+            version="$(sed -nE 's/^version:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)[[:space:]]*$/\1/p' "$file")"
+            if [[ ! "$version" =~ ^[0-9]+$ ]]; then
+              echo "Unable to read an integer version code from $file" >&2
+              exit 1
+            fi
+            printf '%s' "$version"
+          }
+
+          base_file="$(mktemp)"
+          trap 'rm -f "$base_file"' EXIT
+          git show "$BASE_SHA:app/pubspec.yaml" > "$base_file"
+
+          base_code="$(version_code "$base_file")"
+          head_code="$(version_code app/pubspec.yaml)"
+
+          if (( 10#$head_code <= 10#$base_code )); then
+            echo "::error file=app/pubspec.yaml,line=7::Version code must be greater than the base branch ($base_code). Current: $head_code."
+            exit 1
+          fi
+
+          echo "Version code increased from $base_code to $head_code."

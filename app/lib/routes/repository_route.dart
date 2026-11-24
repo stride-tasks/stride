@@ -1,7 +1,11 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:stride/api.dart';
 import 'package:stride/context.dart';
 import 'package:stride/controllers/task_controller.dart';
+import 'package:stride/logging.dart';
 import 'package:stride/routes/backend/list_route.dart';
 import 'package:stride/utils/functions.dart';
 import 'package:stride/widgets/settings_widget.dart';
@@ -47,17 +51,18 @@ class RepositoryRoute extends StatelessWidget {
                       await RustContext.refreshRepositories();
                     },
                   ),
-                  // TODO: Currently only work for the currently loaded repository.
-                  // SettingsTile(
-                  //   leading: const Icon(Icons.save_alt),
-                  //   title: const Text('Export Tasks'),
-                  //   onTap: _exportTasks,
-                  // ),
-                  // SettingsTile(
-                  //   leading: const Icon(Icons.file_open),
-                  //   title: const Text('Import Tasks'),
-                  //   onTap: _importTasks,
-                  // ),
+                  SettingsTile(
+                    leading: const Icon(Icons.save_alt),
+                    title: const Text('Export Tasks'),
+                    onTap: (context) =>
+                        _exportTasks(context, repositoryDescriptor.id),
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.file_open),
+                    title: const Text('Import Tasks'),
+                    onTap: (context) =>
+                        _importTasks(context, repositoryDescriptor.id),
+                  ),
                   SettingsTileNavigation(
                     leading: const Icon(Icons.backup),
                     title: const Text('Backends'),
@@ -119,58 +124,75 @@ class RepositoryRoute extends StatelessWidget {
     );
   }
 
-  // Future<void> _exportTasks(BuildContext context) async {
-  //   final taskBloc = context.read<TaskBloc>();
+  Future<void> _exportTasks(
+    BuildContext context,
+    UuidValue repositoryId,
+  ) async {
+    await Log.catch_(message: 'export tasks', () async {
+      final result = await RepositoryExportMethod(
+        repositoryId: repositoryId,
+      ).execute();
+      final contents = const JsonEncoder.withIndent(' ').convert(
+        result.tasks.map((task) => task.serde.serialize(task)).toList(),
+      );
+      final bytes = utf8.encode(contents);
+      final filepath = await FilePicker.saveFile(
+        dialogTitle: 'Export Tasks',
+        fileName: 'tasks.json',
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+        bytes: bytes,
+      );
 
-  //   await Log.catch_(message: 'export tasks', () async {
-  //     final contents = await taskBloc.repository()?.export_() ?? '';
-  //     final filepath = await FilePicker.platform.saveFile(
-  //       dialogTitle: 'Export Tasks',
-  //       fileName: 'tasks.json',
-  //       bytes: const Utf8Encoder().convert(contents),
-  //     );
+      if (filepath == null) return;
 
-  //     // On mobile `bytes` saves the file, and doing a write later can error,
-  //     // due to permission errors. So return early.
-  //     if (Platform.isAndroid || Platform.isIOS) {
-  //       return;
-  //     }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Exported ${result.tasks.length} tasks.')),
+        );
+      }
+    });
+  }
 
-  //     // Canceled.
-  //     if (filepath == null) {
-  //       return;
-  //     }
+  Future<void> _importTasks(
+    BuildContext context,
+    UuidValue repositoryId,
+  ) async {
+    final taskController = context.taskController;
+    await Log.catch_(message: 'import tasks', () async {
+      final result = await FilePicker.pickFiles(
+        dialogTitle: 'Import Tasks',
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+      );
+      final file = result?.files.firstOrNull;
+      if (file == null) return;
 
-  //     // On Desktop `bytes` does not write, it only gives the path to the
-  //     // non-existant file. So we have to write to it directly.
-  //     await File(filepath).writeAsString(contents, flush: true);
-  //   });
-  // }
+      final decoded = jsonDecode(await file.xFile.readAsString());
+      if (decoded is! List) {
+        throw const FormatException('Task import must contain a JSON array.');
+      }
 
-  // Future<void> _importTasks(BuildContext context) async {
-  //   final taskBloc = context.read<TaskBloc>();
+      final tasks = decoded.map((value) {
+        if (value is! Map<String, dynamic>) {
+          throw const FormatException(
+            'Each imported task must be a JSON object.',
+          );
+        }
+        return Task.fromJson(value);
+      }).toList();
 
-  //   await Log.catch_(message: 'import tasks', () async {
-  //     // TODO: Maybe allow importing multiple files.
-  //     final result = await FilePicker.platform.pickFiles(
-  //       dialogTitle: 'Import tasks',
-  //     );
+      final imported = await RepositoryImportMethod(
+        repositoryId: repositoryId,
+        tasks: tasks,
+      ).execute();
+      await taskController.fetch();
 
-  //     if (result == null) {
-  //       return;
-  //     }
-
-  //     final file = result.files.firstOrNull;
-  //     if (file == null) {
-  //       logging.error(message: 'import file not selected.');
-  //       return;
-  //     }
-
-  //     final content = await file.xFile.readAsString();
-
-  //     taskBloc.repository()?.import_(content: content);
-  //     taskBloc.repository()?.addAndCommit(message: r'$IMPORT');
-  //     taskBloc.add(TaskFetchEvent());
-  //   });
-  // }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Imported ${imported.imported} tasks.')),
+        );
+      }
+    });
+  }
 }

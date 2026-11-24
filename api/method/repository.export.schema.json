@@ -1,0 +1,43 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://stride-tasks.github.io/stride/api/method/repository.export.schema.json",
+    "description": "Exports all tasks from a repository.",
+    "type": "object",
+    "required": [
+        "method",
+        "params"
+    ],
+    "properties": {
+        "method": {
+            "type": "string",
+            "const": "repository.export"
+        },
+        "params": {
+            "type": "object",
+            "properties": {
+                "repository-id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The unique identifier of the repository."
+                }
+            },
+            "required": [
+                "repository-id"
+            ]
+        },
+        "result": {
+            "type": "object",
+            "properties": {
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "https://stride-tasks.github.io/stride/api/type/task.schema.json"
+                    }
+                }
+            },
+            "required": [
+                "tasks"
+            ]
+        }
+    }
+}

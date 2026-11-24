@@ -23,7 +23,7 @@ const SQL_ALL: &str = r"
 WITH task_depends_cte AS (
     SELECT
         parent_task_id AS id,
-        GROUP_CONCAT(child_task_id) AS depends
+        stride_blob_concat(child_task_id) AS depends
     FROM
         task_dependency_table
     GROUP BY
@@ -98,7 +98,7 @@ const SQL_BY_ID: &str = r"
 WITH task_depends_cte AS (
     SELECT
         parent_task_id AS id,
-        GROUP_CONCAT(child_task_id) AS depends
+        stride_blob_concat(child_task_id) AS depends
     FROM
         task_dependency_table
     GROUP BY
@@ -255,7 +255,16 @@ impl Database {
         let modified = row.get::<_, Sql<Option<DateTime<Utc>>>>("modified")?.value;
         let due = row.get::<_, Sql<Option<DateTime<Utc>>>>("due")?.value;
         let wait = row.get::<_, Sql<Option<DateTime<Utc>>>>("wait")?.value;
-        let depends = row.get::<_, Sql<Vec<Uuid>>>("depends")?.value;
+        let depends = row
+            .get::<_, Option<Vec<u8>>>("depends")?
+            .map_or_default(|depends| {
+                depends
+                    .as_chunks::<16>()
+                    .0
+                    .iter()
+                    .map(|bytes| Uuid::from_bytes(*bytes))
+                    .collect()
+            });
         let annoation_ids = row.get::<_, Option<Vec<u8>>>("annotation_ids")?;
         let annoation_entries = row.get::<_, Option<Box<str>>>("annotation_entries")?;
         let annoation_texts = row.get::<_, Option<Box<str>>>("annotation_texts")?;
