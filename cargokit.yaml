@@ -1,3 +1,0 @@
-cargo:
-  release:
-    toolchain: 1.100.1
