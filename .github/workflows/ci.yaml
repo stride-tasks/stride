@@ -42,7 +42,7 @@ jobs:
         run: cargo run --manifest-path tools/page_generator/Cargo.toml -- --api-dir ./api --assets-dir ./assets --output-dir ./site
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -51,7 +51,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   rust-lint:
     name: Rust Format & Lint

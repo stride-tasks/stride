@@ -24,7 +24,7 @@ exclude = ["app"]
 [workspace.package]
 edition = "2024"
 version = "0.1.0"
-rust-version = "1.99.0"
+rust-version = "1.100.0"
 authors = ["Haled Odat <haledodat@gmail.com>"]
 repository = "https://github.com/HalidOdat/stride"
 license = "AGPL-3.0-or-later"
@@ -44,11 +44,11 @@ stride_plugin_manager = { version = "~0.1.0", path = "crates/plugin_manager" }
 stride_engine = { version = "~0.1.0", path = "crates/engine" }
 
 # Shared Dependencies
-rusqlite = { version = "0.40.2", features = ["bundled", "uuid", "array", "fallible_uint"] }
+rusqlite = { version = "0.43.0", features = ["bundled", "uuid", "array", "fallible_uint"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_with = "3.24"
+serde_with = "3.25"
 serde_json = "1.0"
-uuid = { version = "1.27.0", features = ["v7", "serde"] }
+uuid = { version = "1.29.3", features = ["v7", "serde"] }
 chrono = { version = "0.4.45", features = ["serde", "now"] }
 anyhow = "1.0"
 git2 = { version = "0.21.0", default-features = false, features = [
@@ -57,23 +57,23 @@ git2 = { version = "0.21.0", default-features = false, features = [
   "vendored-openssl",
 ] }
 base64 = "0.23.1"
-openssl = { version = "0.10.81", features = ["vendored"] }
-log = { version = "0.4.34" }
-env_logger = { version = "0.11.11", default-features = false }
+openssl = { version = "0.10.82", features = ["vendored"] }
+log = { version = "0.4.35" }
+env_logger = { version = "0.11.12", default-features = false }
 getrandom = "0.4.3"
-zeroize = { version = "1.9.0", features = ["zeroize_derive"] }
+zeroize = { version = "1.9.2", features = ["zeroize_derive"] }
 dirs = "7.0.0"
-toml = "1.1.6"
-zip = "8.6.0"
+toml = "1.2.3"
+zip = "9.9.0"
 wat = "1.263.0"
-wasmi = "2.0.0"
-wasmi_wasi = "2.0.0"
-clap = { version = "4.6.7", features = ["derive"] }
-url = { version = "2.5.8", features = ["serde"] }
+wasmi = "2.0.4"
+wasmi_wasi = "2.0.4"
+clap = { version = "4.6.10", features = ["derive"] }
+url = { version = "2.5.9", features = ["serde"] }
 thiserror = "2.0.21"
-indoc = "2.0.7"
+indoc = "2.0.8"
 vint64 = "=1.0.1"
-inquire = "0.9.4"
+inquire = "0.9.5"
 comfy-table = "8.0.1"
 indexmap = "2.14.2"
 smol = "2.0.2"

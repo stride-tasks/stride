@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=1.29.0
+VERSION=1.29.3
 
 SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 PROJECT_DIR="$SCRIPTS_DIR/.."
