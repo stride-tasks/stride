@@ -245,16 +245,29 @@ jobs:
               --repo "$REPOSITORY" \
               --target "$GITHUB_SHA" \
               --prerelease \
-              --title "Development" \
+              --title "development" \
               --notes "Development build from $REPOSITORY@$GITHUB_SHA."
           else
             gh release create development \
               --repo "$REPOSITORY" \
               --target "$GITHUB_SHA" \
               --prerelease \
-              --title "Development" \
+              --title "development" \
               --notes "Development build from $REPOSITORY@$GITHUB_SHA."
           fi
+
+          # Delete existing assets from the development release before uploading new ones.
+          mapfile -t existing_assets < <(
+            gh release view development \
+              --repo "$REPOSITORY" \
+              --json assets \
+              --jq '.assets[].name'
+          )
+          for asset in "${existing_assets[@]}"; do
+            gh release delete-asset development "$asset" \
+              --repo "$REPOSITORY" \
+              --yes
+          done
 
           mapfile -t artifacts < <(
             find development-artifacts -type f -print
